@@ -22,6 +22,7 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'short_name'=>'required',
             'name' => 'required',
             'telephone_no' => 'nullable',
             'credit_limit' => 'required|numeric',
@@ -39,6 +40,7 @@ class CustomerController extends Controller
     public function update(Request $request, Customer $customer)
     {
         $request->validate([
+            'short_name'=>'required',
             'name' => 'required',
             'telephone_no' => 'nullable',
             'credit_limit' => 'required|numeric',

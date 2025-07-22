@@ -12,6 +12,7 @@
     <table class="table table-bordered">
         <thead>
             <tr>
+                <th>Short Name</th>
                 <th>Name</th>
                 <th>Address</th>
                 <th>Telephone</th>
@@ -22,6 +23,7 @@
         <tbody>
         @foreach($customers as $customer)
             <tr>
+                <td>{{ $customer->short_name }}</td>
                 <td>{{ $customer->name }}</td>
                 <td>{{ $customer->address }}</td>
                 <td>{{ $customer->telephone_no }}</td>

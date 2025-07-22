@@ -6,6 +6,7 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\GrnEntryController;
+use App\Http\Controllers\SalesEntryController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,11 +30,12 @@ Route::resource('customers', CustomerController::class);
 Route::resource('suppliers', SupplierController::class);
 //GRN
 Route::resource('grn', GrnEntryController::class);
-
 Route::get('/grn/{id}/edit', [GrnEntryController::class, 'edit'])->name('grn.edit');
 Route::put('/grn/{id}', [GrnEntryController::class, 'update'])->name('grn.update');
 Route::delete('/grn/{id}', [GrnEntryController::class, 'destroy'])->name('grn.destroy');
-
+//Sales
+Route::get('/grn-entry', [SalesEntryController::class, 'create'])->name('grn.form');
+Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.store');
 
 
 require __DIR__.'/auth.php';

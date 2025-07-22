@@ -6,6 +6,11 @@
 
     <form action="{{ route('customers.store') }}" method="POST">
         @csrf
+          <div class="mb-3">
+            <label for="short_name_field">Short Name</label> {{-- Added for="short_name_field" for accessibility --}}
+            <input type="text" name="short_name" id="short_name_field" class="form-control" required> {{-- FIX IS HERE: changed name to short_name and added type="text" and id --}}
+        </div>
+         
         <div class="mb-3">
             <label>Name</label>
             <input name="name" class="form-control" required>

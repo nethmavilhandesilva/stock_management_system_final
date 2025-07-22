@@ -6,6 +6,10 @@
 
     <form action="{{ route('customers.update', $customer->id) }}" method="POST">
         @csrf @method('PUT')
+        <div class="mb-3">
+            <label>Name</label>
+            <input name="name" value="{{ $customer->short_name }}" class="form-control" required>
+        </div>
 
         <div class="mb-3">
             <label>Name</label>
