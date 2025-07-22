@@ -16,6 +16,10 @@
             class="flex items-center px-3 py-2 rounded-lg hover:bg-blue-50 text-gray-700 transition">
             <span class="material-icons text-blue-600 mr-3">local_shipping</span> සැපයුම්කරුවන් (Suppliers)
         </a>
+        <a href="{{ route('grn.index') }}"
+           class="flex items-center px-3 py-2 rounded-lg hover:bg-blue-50 text-gray-700 transition">
+            <span class="material-icons text-blue-600 mr-3">assignment_turned_in</span> GRN-4
+        </a>
 
 
     </div>

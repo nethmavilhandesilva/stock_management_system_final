@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\GrnEntryController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,6 +27,13 @@ Route::resource('items', ItemController::class);
 Route::resource('customers', CustomerController::class);
 //Supliers
 Route::resource('suppliers', SupplierController::class);
+//GRN
+Route::resource('grn', GrnEntryController::class);
+
+Route::get('/grn/{id}/edit', [GrnEntryController::class, 'edit'])->name('grn.edit');
+Route::put('/grn/{id}', [GrnEntryController::class, 'update'])->name('grn.update');
+Route::delete('/grn/{id}', [GrnEntryController::class, 'destroy'])->name('grn.destroy');
+
 
 
 require __DIR__.'/auth.php';
