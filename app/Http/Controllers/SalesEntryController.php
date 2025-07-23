@@ -18,16 +18,24 @@ class SalesEntryController extends Controller
         $sales = Sale::latest()->get(); 
         $customers = Customer::all();
         $totalSum = $sales->sum('total');
+        $customersWithSales = Sale::select('customer_code', 'customer_name')
+                                ->distinct()
+                                ->orderBy('customer_name')
+                                ->get();
+        
+
 
         
-        return view('dashboard.sales.form', compact('suppliers', 'items', 'entries','sales','customers','totalSum'));
+        return view('dashboard.sales.form', compact('suppliers', 'items', 'entries','sales','customers','totalSum','customersWithSales'));
     }
 
-    public function store(Request $request)
+ public function store(Request $request)
 {
     // Validate input
     $validated = $request->validate([
         'supplier_code' => 'required',
+        'customer_code' => 'required|string|max:255',
+        'customer_name' => 'required|string|max:255',
         'code' => 'required',
         'item_code' => 'required',
         'item_name' => 'required',
@@ -35,14 +43,30 @@ class SalesEntryController extends Controller
         'price_per_kg' => 'required|numeric',
         'total' => 'required|numeric',
         'packs' => 'required|integer',
-       
     ]);
 
-    // Create the sale entry
-    Sale::create($validated);
+    try {
+        Sale::create([
+            'supplier_code' => $validated['supplier_code'],
+            'customer_code' => $validated['customer_code'],
+            'customer_name' => $validated['customer_name'],
+            'code' => $validated['code'],
+            'item_code' => $validated['item_code'],
+            'item_name' => $validated['item_name'],
+            'weight' => $validated['weight'],
+            'price_per_kg' => $validated['price_per_kg'],
+            'total' => $validated['total'],
+            'packs' => $validated['packs'],
+        ]);
 
-    return redirect()->back()->with('success', 'GRN Entry successfully added to Sales!');
-
+        return redirect()->back()
+                         ->with('success', 'GRN Entry successfully added to Sales!')
+                         ->withInput($request->only(['customer_code', 'customer_name'])); // Only flash these two inputs
+    } catch (\Exception $e) {
+        return redirect()->back()
+                         ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
+                         ->withInput($request->only(['customer_code', 'customer_name'])); // Only flash these two inputs for errors
+    }
 }
 public function moveToHistory(Request $request)
 {
@@ -59,5 +83,14 @@ public function moveToHistory(Request $request)
 
     return response()->json(['success' => true]);
 }
+ public function getCustomerSales($customerCode)
+    {
+        $sales = Sales::where('customer_code', $customerCode)
+                      ->orderBy('created_at', 'desc')
+                      ->get();
+
+        return response()->json(['sales' => $sales]);
+    }
+
 
 }

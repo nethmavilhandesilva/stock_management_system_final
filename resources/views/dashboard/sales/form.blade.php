@@ -390,93 +390,172 @@
             @endif
         });
     </script>
-    <script>
-        document.addEventListener('keydown', function(e) {
-            if (e.key === "F1") {
-                e.preventDefault(); // prevent default F1 behavior (browser help)
+   <script>
+    document.addEventListener('keydown', function(e) {
+        if (e.key === "F1") {
+            e.preventDefault(); // prevent default F1 behavior (browser help)
 
-                const salesContent = `
-                    <div style="padding: 20px; font-family: Arial;">
-                        <h2 style="text-align: center;">Sales Invoice</h2>
-                        <table border="1" cellspacing="0" cellpadding="8" width="100%" style="border-collapse: collapse;">
-                            <thead style="background-color: #f2f2f2;">
+            // Get current date and time for the receipt
+            const now = new Date();
+            const date = now.toLocaleDateString();
+            const time = now.toLocaleTimeString();
+
+            // Assuming you have access to customer_code and customer_name from somewhere
+            // For example, if they are available in a JavaScript variable or a hidden input field:
+            const customerCode = document.getElementById('customer_code_input_id') ? document.getElementById('customer_code_input_id').value : 'N/A';
+            const customerName = document.getElementById('customer_name_input_id') ? document.getElementById('customer_name_input_id').value : 'N/A';
+
+            const salesContent = `
+                <div class="receipt-container">
+                    <div class="header-section">
+                        <h2>Your Grocery Shop</h2>
+                        <p>123 Main Street, Colombo 01</p>
+                        <p>Phone: +94 11 234 5678</p>
+                        <p>Date: ${date}</p>
+                        <p>Time: ${time}</p>
+                        <p>Customer Code: ${customerCode}</p>
+                        <p>Customer Name: ${customerName}</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="items-section">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <th>Code</th>
-                                    <th>Item Code</th>
-                                    <th>Item</th>
-                                    <th>Weight (kg)</th>
-                                    <th>Price/Kg</th>
-                                    <th>Total</th>
-                                    <th>Packs</th>
+                                    <th class="item-name-col">Item</th>
+                                    <th class="qty-col">Qty</th>
+                                    <th class="price-col">Unit Price</th>
+                                    <th class="total-col">Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($sales as $sale)
                                     <tr>
-                                        <td>{{ $sale->code }}</td>
-                                        <td>{{ $sale->item_code }}</td>
-                                        <td>{{ $sale->item_name }}</td>
-                                        <td>{{ number_format($sale->weight, 2) }}</td>
-                                        <td>{{ number_format($sale->price_per_kg, 2) }}</td>
-                                        <td>{{ number_format($sale->total, 2) }}</td>
-                                        <td>{{ $sale->packs }}</td>
+                                        <td>{{ $sale->item_name }} ({{ $sale->item_code }})</td>
+                                        <td class="align-right">{{ number_format($sale->weight, 2) }} kg x {{ $sale->packs }} packs</td>
+                                        <td class="align-right">{{ number_format($sale->price_per_kg, 2) }}</td>
+                                        <td class="align-right">{{ number_format($sale->total, 2) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
-                        <h3 style="text-align: right; margin-top: 20px;">
-                            Total Sales Value: Rs. {{ number_format($totalSum, 2) }}
-                        </h3>
                     </div>
-                `;
 
-                const printWindow = window.open('', '_blank', 'width=800,height=600');
-                printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>Sales Invoice</title>
-                            <style>
-                                body { font-family: Arial; margin: 40px; }
-                                table { width: 100%; border-collapse: collapse; }
-                                th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-                                th { background-color: #f2f2f2; }
-                            </style>
-                        </head>
-                        <body>
-                            ${salesContent}
-                            <script>
-                                window.onload = function() {
-                                    window.print();
-                                };
-                                window.onafterprint = function() {
-                                    window.close();
-                                };
-                            <\/script>
-                        </body>
-                    </html>
-                `);
-                printWindow.document.close();
+                    <div class="divider"></div>
 
-                // Watch for when the print window closes
-                const checkClosed = setInterval(function() {
-                    if (printWindow.closed) {
-                        clearInterval(checkClosed);
+                    <div class="totals-section">
+                        <p>Total Items: {{ count($sales) }}</p>
+                        <p class="grand-total">Total Amount: <span>Rs. {{ number_format($totalSum, 2) }}</span></p>
+                    </div>
 
-                        // Send request to move records silently
-                        fetch("{{ route('sales.moveToHistory') }}", {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({})
-                        })
-                        .then(() => {
-                            location.reload(); // Reload the page to refresh table
-                        });
-                    }
-                }, 500);
-            }
-        });
-    </script>
+                    <div class="footer-section">
+                        <p>Thank you for your purchase!</p>
+                        <p>Please come again.</p>
+                    </div>
+                </div>
+            `;
+
+            const printWindow = window.open('', '_blank', 'width=400,height=600'); // Narrower width for receipt
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Sales Receipt</title>
+                        <style>
+                            body {
+                                font-family: 'Consolas', 'Courier New', monospace; /* Monospaced font for receipt feel */
+                                margin: 0;
+                                padding: 20px;
+                                box-sizing: border-box;
+                                font-size: 12px; /* Smaller font size */
+                            }
+                            .receipt-container {
+                                width: 100%;
+                                max-width: 380px; /* Max width for receipt */
+                                margin: 0 auto;
+                                border: 1px dashed #000; /* Dashed border for receipt feel */
+                                padding: 15px;
+                            }
+                            .header-section, .footer-section {
+                                text-align: center;
+                                margin-bottom: 10px;
+                            }
+                            .header-section h2 {
+                                margin: 0;
+                                font-size: 1.5em;
+                            }
+                            .header-section p {
+                                margin: 2px 0;
+                            }
+                            .divider {
+                                border-bottom: 1px dashed #000;
+                                margin: 10px 0;
+                            }
+                            .items-section table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 10px;
+                            }
+                            .items-section th, .items-section td {
+                                padding: 4px 0;
+                                border: none; /* No internal borders */
+                            }
+                            .items-section thead th {
+                                border-bottom: 1px solid #000;
+                                padding-bottom: 5px;
+                                text-align: left;
+                            }
+                            .item-name-col { width: 40%; text-align: left; }
+                            .qty-col { width: 30%; text-align: right; }
+                            .price-col { width: 15%; text-align: right; }
+                            .total-col { width: 15%; text-align: right; }
+
+                            .align-right { text-align: right; }
+                            .totals-section {
+                                text-align: right;
+                                margin-top: 10px;
+                            }
+                            .totals-section p {
+                                margin: 2px 0;
+                            }
+                            .grand-total {
+                                font-size: 1.2em;
+                                font-weight: bold;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${salesContent}
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                            };
+                            window.onafterprint = function() {
+                                window.close();
+                            };
+                        <\/script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+
+            const checkClosed = setInterval(function() {
+                if (printWindow.closed) {
+                    clearInterval(checkClosed);
+                    fetch("{{ route('sales.moveToHistory') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(() => {
+                        location.reload();
+                    });
+                }
+            }, 500);
+        }
+    });
+</script>
 @endsection

@@ -11,7 +11,8 @@ class Sale extends Model
 
     // Columns you want to be mass assignable
     protected $fillable = [
-        'customer_id',
+       
+        'customer_name',
         'supplier_code',
         'code',
         'item_code',
