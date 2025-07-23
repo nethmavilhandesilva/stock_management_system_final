@@ -27,15 +27,24 @@ class SalesEntryController extends Controller
          $sales = Sale::where('Processed', 'N')->get();
         $customers = Customer::all();
         $totalSum = $sales->sum('total'); // Sum will now be for all displayed sales
+        $unprocessedSales = Sale::where('Processed', 'N')->get();
+          $salesPrinted  = Sale::where('bill_printed', 'Y')
+                            ->orderBy('customer_name') // Order for easier viewing
+                            ->get()
+                            ->groupBy('customer_code');
+         $totalUnprocessedSum = $unprocessedSales->sum('total');
+          $salesNotPrinted = Sale::where('bill_printed', 'N')
+                            ->orderBy('customer_code')
+                            ->get()
+                            ->groupBy('customer_code'); // Group by customer for the display
 
-        return view('dashboard.sales.form', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum'));
+        // Calculate total for unprocessed sales
+        $totalUnprintedSum = Sale::where('bill_printed', 'N')->sum('total');
+
+        return view('dashboard.sales.form', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum','unprocessedSales','salesPrinted','totalUnprocessedSum','salesNotPrinted','totalUnprintedSum'));
     }
 
-    /**
-     * Stores a new sales entry.
-     * New sales are always initially marked as 'bill_printed = N' and 'Processed = N'.
-     * (No changes here, this remains correct for initial state).
-     */
+    
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -78,12 +87,7 @@ class SalesEntryController extends Controller
         }
     }
 
-    /**
-     * Marks specified sales records as 'bill_printed = Y' AND 'Processed = Y'.
-     * This method is called via AJAX when F1 is pressed (bill printed).
-     * These flags are for internal tracking only; records will remain visible.
-     * (No changes here, this remains correct for F1 action).
-     */
+    
     public function markSalesAsPrinted(Request $request)
     {
         $request->validate([
