@@ -20,12 +20,7 @@ class Sale extends Model
         'price_per_kg',
         'total',
          'packs',
-         'txn_date',
-          'grn_no',
-        'quantity',
-        'unit_price',
-        'total_price',
-        'sale_date',
+        
     ];
 
     // If you're using timestamps (created_at and updated_at), keep this

@@ -36,6 +36,8 @@ Route::delete('/grn/{id}', [GrnEntryController::class, 'destroy'])->name('grn.de
 //Sales
 Route::get('/grn-entry', [SalesEntryController::class, 'create'])->name('grn.form');
 Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.store');
+Route::post('/sales/move-to-history', [SalesEntryController::class, 'moveToHistory'])->name('sales.moveToHistory');
+
 
 
 require __DIR__.'/auth.php';

@@ -6,6 +6,7 @@ use App\Models\Supplier;
 use App\Models\Sale;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use App\Models\SalesHistory;
 
 class SalesEntryController extends Controller
 {
@@ -16,8 +17,10 @@ class SalesEntryController extends Controller
         $entries = GrnEntry::latest()->take(10)->get(); // Show recent 10 entries
         $sales = Sale::latest()->get(); 
         $customers = Customer::all();
+        $totalSum = $sales->sum('total');
+
         
-        return view('dashboard.sales.form', compact('suppliers', 'items', 'entries','sales','customers'));
+        return view('dashboard.sales.form', compact('suppliers', 'items', 'entries','sales','customers','totalSum'));
     }
 
     public function store(Request $request)
@@ -39,5 +42,22 @@ class SalesEntryController extends Controller
     Sale::create($validated);
 
     return redirect()->back()->with('success', 'GRN Entry successfully added to Sales!');
+
 }
+public function moveToHistory(Request $request)
+{
+    // Get all sales records
+    $sales = Sale::all();
+
+    // Move each record to sales_history
+    foreach ($sales as $sale) {
+        SalesHistory::create($sale->toArray());
+    }
+
+    // Delete all from sales table
+    Sale::truncate();
+
+    return response()->json(['success' => true]);
+}
+
 }
