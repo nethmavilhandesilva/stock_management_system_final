@@ -11,17 +11,19 @@ class Sale extends Model
 
     // Columns you want to be mass assignable
     protected $fillable = [
-       
+
         'customer_name',
         'supplier_code',
         'code',
         'item_code',
-        'item_name', 
+        'item_name',
         'weight',
         'price_per_kg',
         'total',
-         'packs',
-        
+        'packs',
+        'bill_printed', // <-- ADD THIS
+        'Processed',    // <-- ADD THIS
+
     ];
 
     // If you're using timestamps (created_at and updated_at), keep this

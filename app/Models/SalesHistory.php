@@ -21,4 +21,8 @@ class SalesHistory extends Model
         'total',
         'packs',
     ];
+     public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+    }
 }

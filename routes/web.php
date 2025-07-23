@@ -36,8 +36,8 @@ Route::delete('/grn/{id}', [GrnEntryController::class, 'destroy'])->name('grn.de
 //Sales
 Route::get('/grn-entry', [SalesEntryController::class, 'create'])->name('grn.form');
 Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.store');
-Route::post('/sales/move-to-history', [SalesEntryController::class, 'moveToHistory'])->name('sales.moveToHistory');
-Route::get('/sales/customer/{customerCode}', [SalesEntryController::class, 'getCustomerSales'])->name('sales.customerSales');
-
+// Route for the AJAX call to mark sales as printed and processed (triggered by F1 key press)
+Route::post('/sales/mark-as-printed', [SalesEntryController::class, 'markSalesAsPrinted'])->name('sales.markAsPrinted');
+Route::post('/sales/mark-all-processed', [SalesEntryController::class, 'markAllAsProcessed'])->name('sales.markAllAsProcessed');
 
 require __DIR__.'/auth.php';
