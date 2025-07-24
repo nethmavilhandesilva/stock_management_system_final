@@ -1,5 +1,59 @@
 @extends('layouts.app')
 
+@section('horizontal_sidebar')
+    {{-- This section will contain the content that was originally in the vertical sidebar --}}
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm rounded-bottom px-3 py-2">
+        <div class="container-fluid">
+            {{-- Optional: Add a brand/logo if needed --}}
+            {{-- <a class="navbar-brand" href="#">Menu</a> --}}
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavHorizontal"
+                aria-controls="navbarNavHorizontal" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNavHorizontal">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center">
+                            <span class="material-icons me-2 text-primary">dashboard</span> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('items.index') }}"
+                            class="nav-link d-flex align-items-center {{ Request::routeIs('items.index') ? 'active' : '' }}"
+                            aria-current="{{ Request::routeIs('items.index') ? 'page' : '' }}">
+                            <span class="material-icons me-2 text-success">inventory_2</span> භාණ්ඩ (Items)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('customers.index') }}" class="nav-link d-flex align-items-center">
+                            <span class="material-icons me-2 text-primary">people</span> Customers
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('suppliers.index') }}" class="nav-link d-flex align-items-center">
+                            <span class="material-icons me-2 text-blue-600">local_shipping</span> සැපයුම්කරුවන් (Suppliers)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('grn.index') }}" class="nav-link d-flex align-items-center">
+                            <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> GRN-4
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('grn.form') }}"
+                            class="nav-link d-flex align-items-center {{ Request::routeIs('grn.form') ? 'active' : '' }}"
+                            aria-current="{{ Request::routeIs('grn.form') ? 'page' : '' }}">
+                            <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> Sales
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+@endsection
+
 @section('content')
     {{-- CSS Includes --}}
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -39,7 +93,8 @@
             padding: 10px 15px;
             background-color: #fff;
             border-top: 1px solid #e0e0e0;
-            display: none; /* Bootstrap's .collapse class handles visibility */
+            display: none;
+            /* Bootstrap's .collapse class handles visibility */
         }
 
         .customer-details.show {
@@ -103,14 +158,11 @@
                                         $totalForCustomer = $salesGroup->sum('total');
                                     @endphp
                                     <li>
-                                        {{-- Clickable header for customer, triggers collapse --}}
-                                        <div class="customer-header" data-bs-toggle="collapse"
-                                            data-bs-target="#customer-printed-{{ $customerCode }}" aria-expanded="false"
-                                            aria-controls="customer-printed-{{ $customerCode }}">
+                                        <div class="customer-header" data-customer-code="{{ $customerCode }}"
+                                            data-customer-name="{{ $customerName }}" data-bill-type="printed">
                                             <span>{{ $customerName }} ({{ $customerCode }})</span>
                                             <i class="material-icons arrow-icon">keyboard_arrow_right</i>
                                         </div>
-                                        {{-- Collapsible details for the customer's sales --}}
                                         <div id="customer-printed-{{ $customerCode }}" class="customer-details collapse">
                                             <table>
                                                 <thead>
@@ -178,36 +230,14 @@
                         </div>
                     @endif
 
-                    <div class="mb-4">
-                        <label for="grn_display" class="form-label font-semibold">Select Previous GRN Record</label>
-                        <input type="text" id="grn_display" class="form-control mb-2" placeholder="Select GRN Entry..."
-                            readonly>
-                        <select id="grn_select" class="form-select select2 d-none">
-                            <option value="">-- Select GRN Entry --</option>
-                            @foreach ($entries as $entry)
-                                <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
-                                    data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
-                                    data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
-                                    data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
-                                    data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
-                                    data-txn-date="{{ $entry->txn_date }}">
-                                    {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
-                                    {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
-                                    {{ $entry->txn_date }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <hr class="my-2">
-
                     <form method="POST" action="{{ route('grn.store') }}">
                         @csrf
                         <div class="row g-4">
-                            <div class="col-md-6 col-lg-4">
-                                <label for="customer_code" class="form-label">Select Customer</label>
+                            {{-- MOVED: Select Customer field to the top --}}
+                            <div class="col-12 mb-4"> {{-- Changed to col-12 for full width, added mb-4 for spacing --}}
+                                <label for="customer_code" class="form-label fs-5">Select Customer</label> {{-- Larger font size --}}
                                 <select name="customer_code" id="customer_code"
-                                    class="form-select select2 @error('customer_code') is-invalid @enderror" required>
+                                    class="form-select select2-large @error('customer_code') is-invalid @enderror" required>
                                     <option value="">-- Select Customer --</option>
                                     @foreach ($customers as $customer)
                                         <option value="{{ $customer->short_name }}"
@@ -229,6 +259,31 @@
                                 value="{{ old('customer_code_hidden') }}">
                             <input type="hidden" name="customer_name" id="customer_name_hidden"
                                 value="{{ old('customer_name') }}">
+
+                            <hr class="my-2"> {{-- Added a separator after customer selection --}}
+
+                            <div class="col-12 mb-4">
+                                <label for="grn_display" class="form-label font-semibold">Select Previous GRN Record</label>
+                                <input type="text" id="grn_display" class="form-control mb-2" placeholder="Select GRN Entry..."
+                                    readonly>
+                                <select id="grn_select" class="form-select select2 d-none">
+                                    <option value="">-- Select GRN Entry --</option>
+                                    @foreach ($entries as $entry)
+                                        <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
+                                            data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
+                                            data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
+                                            data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
+                                            data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
+                                            data-txn-date="{{ $entry->txn_date }}">
+                                            {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
+                                            {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
+                                            {{ $entry->txn_date }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <hr class="my-2">
 
                             <div class="col-md-6 col-lg-4">
                                 <label for="supplier_code" class="form-label">Supplier</label>
@@ -388,9 +443,8 @@
                                         $totalForCustomer = $salesGroup->sum('total');
                                     @endphp
                                     <li>
-                                        <div class="customer-header" data-bs-toggle="collapse"
-                                            data-bs-target="#customer-unprinted-{{ $customerCode }}" aria-expanded="false"
-                                            aria-controls="customer-unprinted-{{ $customerCode }}">
+                                        <div class="customer-header" data-customer-code="{{ $customerCode }}"
+                                            data-customer-name="{{ $customerName }}" data-bill-type="unprinted">
                                             <span>{{ $customerName }} ({{ $customerCode }})</span>
                                             <i class="material-icons arrow-icon">keyboard_arrow_right</i>
                                         </div>
@@ -437,13 +491,39 @@
         </div>
     </div>
 
-    {{-- Debug URL display (remains as it was) --}}
-    <p>Debug F5 Route URL: {{ route('sales.markAllAsProcessed') }}</p>
+    <div class="modal fade" id="salesDetailModal" tabindex="-1" aria-labelledby="salesDetailModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="salesDetailModalLabel">Sales Details for <span id="modalCustomerName"></span> (<span id="modalCustomerCode"></span>)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Bill Type:</strong> <span id="modalBillType"></span></p>
+                    <div id="modalSalesTableContainer">
+                        {{-- Sales data will be injected here by JavaScript --}}
+                    </div>
+                    <div class="total-for-customer text-end mt-3">
+                        Total for this Customer: Rs. <span id="modalCustomerTotal">0.00</span>
+                    </div>
+                    <div class="text-center mt-3" id="modalPrintButtonContainer">
+                        {{-- Print button for unprinted bills will be shown here --}}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     {{-- JavaScript Includes (jQuery and Select2 should always be loaded before your custom script that uses them) --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> {{-- Ensure Bootstrap JS is loaded for collapse --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Ensure Bootstrap JS is loaded for collapse --}}
 
 
     {{-- ALL Custom JavaScript Consolidated Here --}}
@@ -487,6 +567,7 @@
         calculateTotal(); // Initial calculation on page load
 
         $(document).ready(function() {
+            // Initialize Select2 for GRN and Customer select fields
             $('#grn_select').select2({
                 dropdownParent: $('#grn_select').parent(),
                 placeholder: "-- Select GRN Entry --",
@@ -502,18 +583,24 @@
             });
 
             $('#customer_code').select2({
-                dropdownParent: $('#customer_code').parent(),
+                dropdownParent: $('#customer_code').parent(), // Ensure dropdown appears correctly
                 placeholder: "-- Select Customer --",
                 width: '100%',
                 allowClear: true,
+                // Custom template to show both name and code in dropdown
                 templateResult: function(data) {
-                    if (data.loading || !data.id) return data.text;
-                    return $(data.element).text();
+                    if (data.loading) return data.text;
+                    if (!data.id) return data.text; // For the placeholder
+
+                    return $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`);
                 },
+                // Custom template for selected item
                 templateSelection: function(data) {
-                    return data.text;
+                    if (!data.id) return data.text;
+                    return $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`);
                 }
             });
+
 
             $('#grn_display').on('click', function() {
                 $('#grn_select').select2('open');
@@ -535,13 +622,16 @@
 
             $('#customer_code').on('select2:select', function(e) {
                 const selectedOption = $(e.currentTarget).find('option:selected');
-                const selectedText = selectedOption.text();
-                customerCodeField.value = selectedOption.val() || '';
-                const customerFullNameMatch = selectedText.match(/(.*) \((.*)\)/);
-                customerNameField.value = customerFullNameMatch ? customerFullNameMatch[1].trim() :
-                    selectedText;
-                weightField.focus();
+                const selectedCustomerCode = selectedOption.val();
+                const selectedCustomerName = selectedOption.data('customer-name'); // Get the full name from data attribute
+
+                customerCodeField.value = selectedCustomerCode || '';
+                customerNameField.value = selectedCustomerName || '';
+
+                // You might want to focus on the next logical field after selecting a customer
+                supplierSelect.focus();
             });
+
 
             $('#grn_select').on('select2:clear', function() {
                 $('#grn_display').val('');
@@ -580,12 +670,14 @@
                     calculateTotal();
                 }
                 const oldCustomerCodeValueForHidden = "{{ old('customer_code') }}";
-                const oldCustomerNameValueForHidden = "{{ old('customer_name') }}";
+                const oldCustomerNameValueForHidden = "{{ old('customer_name') }}"; // This is already being set correctly by the customer_code change event
                 if (oldCustomerCodeValueForHidden) {
+                    $('#customer_code').val(oldCustomerCodeValueForHidden).trigger('change'); // Trigger change for Select2 to update
                     customerCodeField.value = oldCustomerCodeValueForHidden;
                     customerNameField.value = oldCustomerNameValueForHidden;
                 }
             @endif
+
 
             // --- JavaScript for F1 and F5 Key Presses (ORIGINAL LOGIC RESTORED) ---
             document.addEventListener('keydown', function(e) {
@@ -758,13 +850,89 @@
                 }
             });
 
+            // Store the PHP data in JavaScript variables for easier access
+            const printedSalesData = @json($salesPrinted->toArray());
+            const unprintedSalesData = @json($salesNotPrinted->toArray());
+
             // Collapse functionality for both Printed and Unprinted Sales sections
             $('.customer-header').on('click', function() {
-                $(this).find('.arrow-icon').toggleClass('rotated');
+                const customerCode = $(this).data('customer-code');
+                const customerName = $(this).data('customer-name');
+                const billType = $(this).data('bill-type'); // 'printed' or 'unprinted'
+
+                let salesGroup;
+                let totalForCustomer = 0;
+
+                if (billType === 'printed') {
+                    salesGroup = printedSalesData[customerCode];
+                    totalForCustomer = salesGroup.reduce((sum, sale) => sum + parseFloat(sale.total), 0);
+                } else if (billType === 'unprinted') {
+                    salesGroup = unprintedSalesData[customerCode];
+                    totalForCustomer = salesGroup.reduce((sum, sale) => sum + parseFloat(sale.total), 0);
+                }
+
+                if (!salesGroup) {
+                    alert('No sales data found for this customer.');
+                    return;
+                }
+
+                // Populate Modal
+                $('#modalCustomerName').text(customerName);
+                $('#modalCustomerCode').text(customerCode);
+                $('#modalBillType').text(billType.charAt(0).toUpperCase() + billType.slice(1)); // Capitalize
+                $('#modalCustomerTotal').text(totalForCustomer.toFixed(2));
+
+                let modalTableHtml = `
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Wt (kg)</th>
+                                    <th>Price/Kg</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                salesGroup.forEach(sale => {
+                    modalTableHtml += `
+                        <tr>
+                            <td>${sale.item_name}</td>
+                            <td>${parseFloat(sale.weight).toFixed(2)}</td>
+                            <td>${parseFloat(sale.price_per_kg).toFixed(2)}</td>
+                            <td>${parseFloat(sale.total).toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                modalTableHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                $('#modalSalesTableContainer').html(modalTableHtml);
+
+                // Show/Hide Print Bill button in modal
+                const printButtonContainer = $('#modalPrintButtonContainer');
+                printButtonContainer.empty(); // Clear previous button
+
+                if (billType === 'unprinted') {
+                    printButtonContainer.append(`
+                        <button class="btn btn-primary print-bill-modal-btn" data-customer-code="${customerCode}">
+                            Print Bill (Modal)
+                        </button>
+                    `);
+                }
+
+                // Show the modal
+                var salesDetailModal = new bootstrap.Modal(document.getElementById('salesDetailModal'));
+                salesDetailModal.show();
             });
 
-            // Handle Print Bill button click for unprinted bills
-            $('.print-bill-btn').on('click', function() {
+
+            // Handle Print Bill button click for unprinted bills (both from list and modal)
+            $(document).on('click', '.print-bill-btn, .print-bill-modal-btn', function() {
                 var customerCode = $(this).data('customer-code');
                 if (confirm('Are you sure you want to print the bill for ' + customerCode +
                         '? This will mark all *unprinted* sales for this customer as printed and processed.')) {
