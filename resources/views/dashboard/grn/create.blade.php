@@ -11,7 +11,7 @@
                 <h2 class="mb-4">Register New GRN Entry</h2> {{-- Simplified header to match target style --}}
                 {{-- The descriptive paragraph is removed to match the simpler header style of the target --}}
 
-                <form method="POST" action="{{ route('grn.store') }}">
+                <form method="POST" action="{{ route('grn.store2') }}">
                     @csrf
 
                     {{-- Item Selection --}}

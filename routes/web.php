@@ -28,12 +28,13 @@ Route::resource('customers', CustomerController::class);
 Route::resource('suppliers', SupplierController::class);
 //GRN
 Route::resource('grn', GrnEntryController::class);
+Route::post('/grn/store', [GrnEntryController::class, 'store'])->name('grn.store2');
 Route::get('/grn/{id}/edit', [GrnEntryController::class, 'edit'])->name('grn.edit');
 Route::put('/grn/{id}', [GrnEntryController::class, 'update'])->name('grn.update');
 Route::delete('/grn/{id}', [GrnEntryController::class, 'destroy'])->name('grn.destroy');
 //Sales
 Route::get('/dashboard', [SalesEntryController::class, 'create'])->name('dashboard');
-Route::post('/grn-entry', [GrnEntryController::class, 'store'])->name('grn.store');
+Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.store');
 // Route for the AJAX call to mark sales as printed and processed (triggered by F1 key press)
 Route::post('/sales/mark-as-printed', [SalesEntryController::class, 'markSalesAsPrinted'])->name('sales.markAsPrinted');
 Route::post('/sales/mark-all-processed', [SalesEntryController::class, 'markAllAsProcessed'])->name('sales.markAllAsProcessed');
