@@ -431,8 +431,7 @@
             <div class="col-md-3">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
                     <h3 class="mb-4 text-center">Unprinted Sales Records</h3>
-                    <h5 class="text-end mb-3"><strong>Total Unprinted Sales Value:</strong> Rs.
-                        {{ number_format($totalUnprintedSum, 2) }}</h5>
+                 
 
                     @if ($salesNotPrinted->count())
                         <div class="unprinted-sales-list">

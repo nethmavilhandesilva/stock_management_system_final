@@ -72,7 +72,7 @@ class SalesEntryController extends Controller
                 'price_per_kg' => $validated['price_per_kg'],
                 'total' => $validated['total'],
                 'packs' => $validated['packs'],
-                'bill_printed' => 'N', // Newly added sales are never printed initially
+                // Newly added sales are never printed initially
                 'Processed' => 'N',    // Newly added sales are unprocessed initially
             ]);
 
@@ -115,38 +115,35 @@ class SalesEntryController extends Controller
     }
     // In your SalesController.php
 
-    public function markAllAsProcessed(Request $request)
-    {
-        try {
-            // Find all sales records where 'Processed' is 'N' and 'bill_printed' is 'N'
-            // This is based on previous discussion where we wanted F5 to only process *unprocessed* sales.
-            // If the requirement changed to process *all* currently displayed sales, adjust this query.
-            $salesToProcess = Sale::where('Processed', 'N')
-                ->where('bill_printed', 'N')
-                ->update(['Processed' => 'Y']);
+   public function markAllAsProcessed(Request $request)
+{
+    try {
+        DB::beginTransaction();
 
-            // Or if you want to update *all* sales currently displayed on the form (which would be passed differently if that's the case)
-            // For now, let's assume it's updating unprocessed/unprinted ones as that was the prior context for F5.
+        Sale::where('Processed', 'N')->update([
+            'Processed' => 'Y',
+            'bill_printed' => DB::raw("IFNULL(bill_printed, 'N')") // Set to 'N' only if currently NULL
+        ]);
 
-            // If you need to update based on specific IDs passed from frontend:
-            // $salesIds = $request->input('sales_ids'); // Assuming you eventually pass IDs for F5 like F1
-            // Sale::whereIn('id', $salesIds)->update(['Processed' => 'Y']);
+        DB::commit();
 
-            return response()->json([
-                'success' => true, // <-- THIS IS THE CRUCIAL CHANGE
-                'message' => 'All displayed sales marked as processed successfully.'
-            ]);
+        return response()->json([
+            'success' => true,
+            'message' => 'All sales with Processed = N are now marked as processed, and NULL bill_printed values set to N.'
+        ]);
 
-        } catch (\Exception $e) {
-            // Log the error for debugging
-            \Log::error('Error marking all sales as processed: ' . $e->getMessage());
+    } catch (\Exception $e) {
+        DB::rollBack();
 
-            return response()->json([
-                'success' => false, // <-- And this for errors
-                'message' => 'Failed to mark sales as processed: ' . $e->getMessage()
-            ], 500); // 500 Internal Server Error status code
-        }
+        \Log::error('Error marking all sales as processed: ' . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to mark sales as processed: ' . $e->getMessage()
+        ], 500);
     }
+}
+
 
 
 
