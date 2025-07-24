@@ -41,7 +41,7 @@ class SalesEntryController extends Controller
         // Calculate total for unprocessed sales
         $totalUnprintedSum = Sale::where('bill_printed', 'N')->sum('total');
 
-        return view('dashboard.sales.form', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum','unprocessedSales','salesPrinted','totalUnprocessedSum','salesNotPrinted','totalUnprintedSum'));
+        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum','unprocessedSales','salesPrinted','totalUnprocessedSum','salesNotPrinted','totalUnprintedSum'));
     }
 
     

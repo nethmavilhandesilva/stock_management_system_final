@@ -13,9 +13,7 @@ Route::get('/', function () {
 })->name('welcome');
 
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -34,7 +32,7 @@ Route::get('/grn/{id}/edit', [GrnEntryController::class, 'edit'])->name('grn.edi
 Route::put('/grn/{id}', [GrnEntryController::class, 'update'])->name('grn.update');
 Route::delete('/grn/{id}', [GrnEntryController::class, 'destroy'])->name('grn.destroy');
 //Sales
-Route::get('/grn-entry', [SalesEntryController::class, 'create'])->name('grn.form');
+Route::get('/dashboard', [SalesEntryController::class, 'create'])->name('dashboard');
 Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.store');
 // Route for the AJAX call to mark sales as printed and processed (triggered by F1 key press)
 Route::post('/sales/mark-as-printed', [SalesEntryController::class, 'markSalesAsPrinted'])->name('sales.markAsPrinted');
