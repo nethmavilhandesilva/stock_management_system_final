@@ -38,7 +38,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('grn.index') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> GRN-4
+                            <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> GRN
                         </a>
                     </li>
                    
@@ -140,7 +140,7 @@
             {{-- NEW SECTION: Printed Sales Records (bill_printed = 'Y') - Left Column --}}
             <div class="col-md-3">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h3 class="mb-4 text-center">Printed Sales Records</h3>
+                    <h3 class="mb-4 text-center">මුද්‍රිත විකුණුම් වාර්තා</h3>
 
                     @if ($salesPrinted->count())
                         <div class="printed-sales-list">
@@ -161,10 +161,10 @@
                                             <table>
                                                 <thead>
                                                     <tr>
-                                                        <th>Item</th>
-                                                        <th>Wt (kg)</th>
-                                                        <th>Price/Kg</th>
-                                                        <th>Total</th>
+                                                        <th>අයිතමය</th>
+                                                        <th>බර (kg)</th>
+                                                        <th>මිල/Kg</th>
+                                                        <th>සමස්ත</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -179,7 +179,7 @@
                                                 </tbody>
                                             </table>
                                             <div class="total-for-customer">
-                                                Customer Total: Rs. {{ number_format($totalForCustomer, 2) }}
+                                               පාරිභෝගික එකතුව: රු.{{ number_format($totalForCustomer, 2) }}
                                             </div>
                                         </div>
                                     </li>
@@ -187,7 +187,7 @@
                             </ul>
                         </div>
                     @else
-                        <div class="alert alert-info text-center">No printed sales records found.</div>
+                        <div class="alert alert-info text-center">මුද්‍රිත විකුණුම් වාර්තා හමු නොවීය..</div>
                     @endif
                 </div>
             </div>
@@ -196,7 +196,7 @@
             {{-- Adjusted from col-md-9 to col-md-6 --}}
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h2 class="mb-4 text-center">Add New Sales Entry</h2>
+                    <h2 class="mb-4 text-center">නව විකුණුම් ඇතුළත් කිරීමක් එක් කරන්න</h2>
 
                     @if ($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -229,7 +229,7 @@
                         <div class="row g-4">
                             {{-- MOVED: Select Customer field to the top --}}
                             <div class="col-12 mb-4"> {{-- Changed to col-12 for full width, added mb-4 for spacing --}}
-                                <label for="customer_code" class="form-label fs-5">Select Customer</label> {{-- Larger font size --}}
+                                <label for="customer_code" class="form-label fs-5">පාරිභෝගිකයා තෝරන්න</label> {{-- Larger font size --}}
                                 <select name="customer_code" id="customer_code"
                                     class="form-select select2-large @error('customer_code') is-invalid @enderror" required>
                                     <option value="">-- Select Customer --</option>
@@ -257,11 +257,11 @@
                             <hr class="my-2"> {{-- Added a separator after customer selection --}}
 
                             <div class="col-12 mb-4">
-                                <label for="grn_display" class="form-label font-semibold">Select Previous GRN Record</label>
+                                <label for="grn_display" class="form-label font-semibold">පෙර GRN වාර්තාව තෝරන්න</label>
                                 <input type="text" id="grn_display" class="form-control mb-2" placeholder="Select GRN Entry..."
                                     readonly>
                                 <select id="grn_select" class="form-select select2 d-none">
-                                    <option value="">-- Select GRN Entry --</option>
+                                    <option value="">-- GRN ප්‍රවේශය තෝරන්න --</option>
                                     @foreach ($entries as $entry)
                                         <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
                                             data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
@@ -280,10 +280,10 @@
                             <hr class="my-2">
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="supplier_code" class="form-label">Supplier</label>
+                                <label for="supplier_code" class="form-label">සැපයුම්කරු</label>
                                 <select name="supplier_code" id="supplier_code"
                                     class="form-select @error('supplier_code') is-invalid @enderror" required>
-                                    <option value="">Select a Supplier</option>
+                                    <option value="">සැපයුම්කරුවෙකු තෝරන්න</option>
                                     @foreach ($suppliers as $supplier)
                                         <option value="{{ $supplier->code }}" {{ old('supplier_code') == $supplier->code ? 'selected' : '' }}>{{ $supplier->name }} ({{ $supplier->code }})</option>
                                     @endforeach
@@ -296,9 +296,9 @@
                             </div>
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="item_select" class="form-label">Select Item</label>
+                                <label for="item_select" class="form-label">අයිතමය තෝරන්න</label>
                                 <select id="item_select" class="form-select @error('item_code') is-invalid @enderror">
-                                    <option value="">Select an Item</option>
+                                    <option value="">අයිතමය තෝරන්න</option>
                                     @foreach ($items as $item)
                                         <option value="{{ $item->item_code }}" data-code="{{ $item->code }}"
                                             data-item-code="{{ $item->item_code }}" data-item-name="{{ $item->item_name }}"
@@ -319,7 +319,7 @@
                             <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="weight" class="form-label">Weight (kg)</label>
+                                <label for="weight" class="form-label">බර (kg)</label>
                                 <input type="number" name="weight" id="weight" step="0.01"
                                     class="form-control @error('weight') is-invalid @enderror"
                                     value="{{ old('weight') }}" required>
@@ -331,7 +331,7 @@
                             </div>
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="price_per_kg" class="form-label">Price per Kg</label>
+                                <label for="price_per_kg" class="form-label">මිල අනුව Kg</label>
                                 <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
                                     class="form-control @error('price_per_kg') is-invalid @enderror"
                                     value="{{ old('price_per_kg') }}" required>
@@ -343,7 +343,7 @@
                             </div>
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="total" class="form-label">Total</label>
+                                <label for="total" class="form-label">සමස්ත</label>
                                 <input type="number" name="total" id="total"
                                     class="form-control bg-light @error('total') is-invalid @enderror"
                                     value="{{ old('total') }}" readonly>
@@ -355,7 +355,7 @@
                             </div>
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="packs" class="form-label">Packs</label>
+                                <label for="packs" class="form-label">ඇසුරුම්</label>
                                 <input type="number" name="packs" id="packs"
                                     class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
                                     required>
@@ -378,20 +378,20 @@
                     {{-- The table will now always show all sales, regardless of Processed status --}}
                     @if ($sales->count())
                         <div class="mt-5">
-                            <h3 class="mb-4 text-center">All Sales Records</h3> {{-- Changed heading --}}
-                            <h5 class="text-end mb-3"><strong>Total Sales Value:</strong> Rs. {{ number_format($totalSum, 2) }}</h5>
+                            <h3 class="mb-4 text-center">සියලුම විකුණුම් වාර්තා</h3> {{-- Changed heading --}}
+                            <h5 class="text-end mb-3"><strong>මුළු විකුණුම් වටිනාකම:</strong> Rs. {{ number_format($totalSum, 2) }}</h5>
 
                             <div class="table-responsive">
                                 <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden">
                                     <thead class="table-light">
                                         <tr>
-                                            <th scope="col">Code</th>
-                                            <th scope="col">Item Code</th>
-                                            <th scope="col">Item</th>
-                                            <th scope="col">Weight (kg)</th>
-                                            <th scope="col">Price/Kg</th>
-                                            <th scope="col">Total</th>
-                                            <th scope="col">Packs</th>
+                                            <th scope="col">කේතය</th>
+                                            <th scope="col">අයිතම කේතය</th>
+                                            <th scope="col">අයිතමය</th>
+                                            <th scope="col">බර (kg)</th>
+                                            <th scope="col">මිල/Kg</th>
+                                            <th scope="col">සමස්ත</th>
+                                            <th scope="col">ඇසුරුම්</th>
                                             {{-- Add new columns for Processed and Bill Printed flags --}}
                                           
                                         </tr>
@@ -414,7 +414,7 @@
                             </div>
                         </div>
                     @else
-                        <div class="mt-5 alert alert-info text-center">No sales records found.</div>
+                        <div class="mt-5 alert alert-info text-center">විකුණුම් වාර්තා හමු නොවීය.</div>
                     @endif
                 </div>
             </div>
@@ -422,7 +422,7 @@
             {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
             <div class="col-md-3">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h3 class="mb-4 text-center">Unprinted Sales Records</h3>
+                    <h3 class="mb-4 text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා</h3>
                  
 
                     @if ($salesNotPrinted->count())
@@ -443,10 +443,10 @@
                                             <table>
                                                 <thead>
                                                     <tr>
-                                                        <th>Item</th>
-                                                        <th>Wt (kg)</th>
-                                                        <th>Price/Kg</th>
-                                                        <th>Total</th>
+                                                        <th>අයිතමය</th>
+                                                        <th>බර (kg)</th>
+                                                        <th>මිල/Kg</th>
+                                                        <th>සමස්ත</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -461,12 +461,12 @@
                                                 </tbody>
                                             </table>
                                             <div class="total-for-customer">
-                                                Customer Total: Rs. {{ number_format($totalForCustomer, 2) }}
+                                                පාරිභෝගික එකතුව: රු. {{ number_format($totalForCustomer, 2) }}
                                             </div>
                                             <div class="mt-2 text-center">
                                                 <button class="btn btn-sm btn-outline-primary print-bill-btn"
                                                     data-customer-code="{{ $customerCode }}">
-                                                    Print Bill
+                                                    බිල්පත මුද්‍රණය කරන්න
                                                 </button>
                                             </div>
                                         </div>
@@ -475,7 +475,7 @@
                             </ul>
                         </div>
                     @else
-                        <div class="alert alert-info text-center">No unprinted sales records found.</div>
+                        <div class="alert alert-info text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා හමු නොවීය.</div>
                     @endif
                 </div>
             </div>
@@ -487,16 +487,16 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="salesDetailModalLabel">Sales Details for <span id="modalCustomerName"></span> (<span id="modalCustomerCode"></span>)</h5>
+                    <h5 class="modal-title" id="salesDetailModalLabel">සඳහා විකුණුම් විස්තර <span id="modalCustomerName"></span> (<span id="modalCustomerCode"></span>)</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Bill Type:</strong> <span id="modalBillType"></span></p>
+                    <p><strong>බිල්පත් වර්ගය:</strong> <span id="modalBillType"></span></p>
                     <div id="modalSalesTableContainer">
                         {{-- Sales data will be injected here by JavaScript --}}
                     </div>
                     <div class="total-for-customer text-end mt-3">
-                        Total for this Customer: Rs. <span id="modalCustomerTotal">0.00</span>
+                        මෙම පාරිභෝගිකයා සඳහා මුළු මුදල: රු. <span id="modalCustomerTotal">0.00</span>
                     </div>
                     <div class="text-center mt-3" id="modalPrintButtonContainer">
                         {{-- Print button for unprinted bills will be shown here --}}
@@ -878,10 +878,10 @@
                         <table class="table table-sm table-bordered">
                             <thead>
                                 <tr>
-                                    <th>Item</th>
-                                    <th>Wt (kg)</th>
-                                    <th>Price/Kg</th>
-                                    <th>Total</th>
+                                    <th>අයිතමය</th>
+                                    <th>බර(kg)</th>
+                                    <th>මිල/Kg</th>
+                                    <th>සමස්ත</th>
                                 </tr>
                             </thead>
                             <tbody>

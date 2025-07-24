@@ -1,13 +1,27 @@
 <?php
-// app/Models/GrnEntry.php
-namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+namespace App\Models; // <--- MISSING: This is crucial
+
+use Illuminate\Database\Eloquent\Model; // <--- MISSING: This is crucial
 
 class GrnEntry extends Model
 {
+    // If your table name is not 'grn_entries', specify it here:
+    // protected $table = 'your_grn_entries_table_name';
+
     protected $fillable = [
-        'auto_purchase_no', 'code', 'supplier_code', 'item_code', 'item_name',
-        'packs', 'weight', 'txn_date', 'grn_no','warehouse_no'
+        'auto_purchase_no',
+        'code',
+        'supplier_code',
+        'item_code',
+        'item_name',
+        'packs',
+        'weight',
+        'txn_date',
+        'grn_no',
+        'warehouse_no',
     ];
+
+    // Optional: If you don't want timestamps (created_at, updated_at)
+    // public $timestamps = false;
 }

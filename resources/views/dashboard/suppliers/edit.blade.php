@@ -16,8 +16,8 @@
             <label>ලිපිනය (Address)</label>
             <textarea name="address" class="form-control" required>{{ $supplier->address }}</textarea>
         </div>
-        <button type="submit" class="btn btn-success">Update</button>
-        <a href="{{ route('suppliers.index') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-success">එක් කරන්න</button>
+        <a href="{{ route('suppliers.index') }}" class="btn btn-secondary">අවලංගු කරන්න</a>
     </form>
 </div>
 @endsection

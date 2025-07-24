@@ -16,7 +16,7 @@
                 <form action="{{ route('items.store') }}" method="POST">
                     @csrf
                     <div class="mb-3">
-                        <label for="no" class="form-label">ක අංකය</label>
+                        <label for="no" class="form-label"> අංකය</label>
                         <input type="text" id="no" name="no" class="form-control" required>
                     </div>
                     <div class="mb-3">
