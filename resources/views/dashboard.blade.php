@@ -1,3 +1,5 @@
+
+
 @extends('layouts.app')
 
 @section('horizontal_sidebar')
@@ -41,7 +43,7 @@
                             <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> GRN-4
                         </a>
                     </li>
-                   
+
                 </ul>
             </div>
         </div>
@@ -135,365 +137,116 @@
         }
     </style>
 
-    <div class="container-fluid mt-4">
-        <div class="row justify-content-center">
-            {{-- NEW SECTION: Printed Sales Records (bill_printed = 'Y') - Left Column --}}
-            <div class="col-md-3">
-                <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h3 class="mb-4 text-center">Printed Sales Records</h3>
+    <style>
+        /* Page background green */
+        body,
+        html {
+            background-color: #e6ffe6;
+            /* Light green background */
+        }
 
-                    @if ($salesPrinted->count())
-                        <div class="printed-sales-list">
-    <ul>
-        {{-- Loop directly over each individual Sale model --}}
-        @forelse ($salesPrinted as $sale)
-            <li>
-                {{-- Each $sale is now a single Sale record/bill --}}
-              <div class="customer-header"
-    data-customer-code="{{ $sale->customer_code }}"
-    data-customer-name="{{ $sale->customer_name }}"
-    data-bill-type="printed"
-    data-item-name="{{ $sale->item_name }}"
-    data-item-code="{{ $sale->item_code }}"
-    data-code="{{ $sale->code }}"
-    data-supplier-code="{{ $sale->supplier_code}}"
-    data-weight="{{ $sale->weight }}"
-    data-price-per-kg="{{ $sale->price_per_kg }}"
-    data-total="{{ $sale->total }}"
-    data-packs="{{ $sale->packs }}"
-    style="cursor: pointer;">
-    {{-- Display details to identify this specific bill --}}
-    <span>
-       ({{ $sale->customer_code }}) -
-        Bill No: {{ $sale->bill_no ?? 'N/A' }} 
-        
-    </span>
-    <i class="material-icons arrow-icon">keyboard_arrow_right</i>
-</div>
+        /* Bold black labels */
+        label.form-label {
+            font-weight: 700;
+            color: #000000;
+        }
 
-                {{-- Use the unique ID of the sale for the collapse target --}}
-                <div id="customer-printed-{{ $sale->id }}" class="customer-details collapse">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th>Wt (kg)</th>
-                                <th>Price/Kg</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{-- IMPORTANT: No inner loop here! $sale already contains the item details for this bill. --}}
-                            <tr class="sale-item-row">
-                                <td>{{ $sale->item_name }}</td>
-                                <td>{{ number_format($sale->weight, 2) }}</td>
-                                <td>{{ number_format($sale->price_per_kg, 2) }}</td>
-                                <td>{{ number_format($sale->total, 2) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div class="total-for-customer">
-                        Bill Total: Rs. {{ number_format($sale->total, 2) }}
-                    </div>
-                </div>
-            </li>
-        @empty
-            <div class="alert alert-info text-center">No printed sales records found.</div>
-        @endforelse
-    </ul>
-</div>
-                    @else
-                        <div class="alert alert-info text-center">No printed sales records found.</div>
-                    @endif
-                </div>
-            </div>
+        /* Smaller input fields and selects, with borders */
+        input.form-control-sm,
+        select.form-select-sm {
+            border: 1.5px solid #000000 !important;
+            /* stronger black border */
+            font-weight: 600;
+            font-size: 0.875rem;
+            /* smaller font */
+        }
 
-            {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
-            {{-- Adjusted from col-md-9 to col-md-6 --}}
-            <div class="col-md-6">
-                <div class="card shadow-sm border-0 rounded-3 p-4">
-                 
+        /* Align certain form groups horizontally with smaller width */
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
 
-                    @if ($errors->any())
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <strong>Whoops!</strong> There were some problems with your input.
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
+        .form-row>div {
+            flex: 1 1 150px;
+            /* allow shrink/grow, min width 150px */
+        }
 
-                    @if (session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <strong>Success!</strong> {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
+        /* Adjust card background to white for contrast */
+        .card {
+            background-color: #ffffff !important;
+        }
 
-                    @if (session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <strong>Error!</strong> {{ session('error') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
+        /* Select2 specific styling adjustments for smaller size */
+        .select2-container--bootstrap-5 .select2-selection--single {
+            min-height: calc(1.5em + 0.5rem + 2px);
+            /* Matches form-control-sm height */
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            /* Matches form-control-sm font-size */
+            border: 1.5px solid #000000 !important; /* Apply border to select2 */
+        }
 
-                    <form method="POST" action="{{ route('grn.store') }}">
-                        @csrf
-                        <div class="row g-4">
-                          <div class="row mb-3 align-items-end"> {{-- Align fields bottom to bottom --}}
-    {{-- Select Customer Dropdown --}}
-    <div class="col-md-6">
-        <label for="customer_code_select" class="form-label small">Select Customer (Existing)</label>
-        <select name="customer_code_select" id="customer_code_select"
-            class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror w-100">
-            <option value="">-- Select Customer --</option>
-            @foreach ($customers as $customer)
-                <option value="{{ $customer->short_name }}"
-                    data-customer-code="{{ $customer->short_name }}"
-                    data-customer-name="{{ $customer->name }}"
-                    {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
-                    {{ $customer->name }} ({{ $customer->short_name }})
-                </option>
-            @endforeach
-        </select>
-        @error('customer_code')
-            <div class="invalid-feedback">
-                {{ $message }}
-            </div>
-        @enderror
-    </div>
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            line-height: calc(1.5em + 0.5rem + 2px);
+            padding-left: 0;
+            /* Remove default padding as it's set on the selection */
+        }
 
-    {{-- New/Selected Customer Code Input --}}
-    <div class="col-md-6">
-        <label for="new_customer_code" class="form-label small">Customer Code (New/Selected)</label>
-        <input type="text" name="customer_code" id="new_customer_code"
-            class="form-control form-control-sm @error('customer_code') is-invalid @enderror"
-            value="{{ old('customer_code') }}" placeholder="Enter or select customer code" required>
-        @error('customer_code')
-            <div class="invalid-feedback">
-                {{ $message }}
-            </div>
-        @enderror
-    </div>
-</div>
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            height: calc(1.5em + 0.5rem + 2px);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    </style>
 
-                            {{-- END NEW INPUT --}}
 
-                            <input type="hidden" name="customer_name" id="customer_name_hidden"
-                                value="{{ old('customer_name') }}">
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        {{-- NEW SECTION: Printed Sales Records (bill_printed = 'Y') - Left Column --}}
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 p-4">
+                <h3 class="mb-4 text-center">මුද්‍රිත විකුණුම් වාර්තා</h3>
 
-                            <hr class="my-2"> {{-- Added a separator after customer selection --}}
-
-                            <div class="col-12 mb-4">
-                                <label for="grn_display" class="form-label font-semibold">Select Previous GRN Record</label>
-                                <input type="text" id="grn_display" class="form-control mb-2" placeholder="Select GRN Entry..."
-                                    readonly>
-                                <select id="grn_select" class="form-select select2 d-none">
-                                    <option value="">-- Select GRN Entry --</option>
-                                    @foreach ($entries as $entry)
-                                        <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
-                                            data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
-                                            data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
-                                            data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
-                                            data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
-                                            data-txn-date="{{ $entry->txn_date }}">
-                                            {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
-                                            {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
-                                            {{ $entry->txn_date }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <hr class="my-2">
-
-                            <div class="col-md-6 col-lg-4">
-                                <label for="supplier_code" class="form-label">Supplier</label>
-                                <select name="supplier_code" id="supplier_code"
-                                    class="form-select @error('supplier_code') is-invalid @enderror" required>
-                                    <option value="">Select a Supplier</option>
-                                    @foreach ($suppliers as $supplier)
-                                        <option value="{{ $supplier->code }}" {{ old('supplier_code') == $supplier->code ? 'selected' : '' }}>{{ $supplier->name }} ({{ $supplier->code }})</option>
-                                    @endforeach
-                                </select>
-                                @error('supplier_code')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <label for="item_select" class="form-label">Select Item</label>
-                                <select id="item_select" class="form-select @error('item_code') is-invalid @enderror">
-                                    <option value="">Select an Item</option>
-                                    @foreach ($items as $item)
-                                        <option value="{{ $item->item_code }}" data-code="{{ $item->code }}"
-                                            data-item-code="{{ $item->item_code }}" data-item-name="{{ $item->item_name }}"
-                                            {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
-                                            {{ $item->item_name }} ({{ $item->item_code }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('item_code')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <input type="hidden" name="code" id="code" value="{{ old('code') }}">
-                            <input type="hidden" name="item_code" id="item_code" value="{{ old('item_code') }}">
-                            <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
-
-                            <div class="col-md-6 col-lg-4">
-                                <label for="weight" class="form-label">Weight (kg)</label>
-                                <input type="number" name="weight" id="weight" step="0.01"
-                                    class="form-control @error('weight') is-invalid @enderror"
-                                    value="{{ old('weight') }}" required>
-                                @error('weight')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <label for="price_per_kg" class="form-label">Price per Kg</label>
-                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-                                    class="form-control @error('price_per_kg') is-invalid @enderror"
-                                    value="{{ old('price_per_kg') }}" required>
-                                @error('price_per_kg')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <label for="total" class="form-label">Total</label>
-                                <input type="number" name="total" id="total"
-                                    class="form-control bg-light @error('total') is-invalid @enderror"
-                                    value="{{ old('total') }}" readonly>
-                                @error('total')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 col-lg-4">
-                                <label for="packs" class="form-label">Packs</label>
-                                <input type="number" name="packs" id="packs"
-                                    class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
-                                    required>
-                                @error('packs')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-5">
-                            <button type="submit" class="btn btn-primary btn-lg shadow-sm d-none">
-                                <i class="material-icons me-2">add_circle_outline</i>Add Sales Entry
-                            </button>
-                        </div>
-                    </form>
-
-                    <hr class="my-2">
-                    {{-- The table will now always show all sales, regardless of Processed status --}}
-                    @if ($sales->count())
-                        <div class="mt-5">
-                            <h3 class="mb-4 text-center">All Sales Records</h3> {{-- Changed heading --}}
-                            <h5 class="text-end mb-3"><strong>Total Sales Value:</strong> Rs. {{ number_format($totalSum, 2) }}</h5>
-
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th scope="col">Code</th>
-                                            <th scope="col">Item Code</th>
-                                            <th scope="col">Item</th>
-                                            <th scope="col">Weight (kg)</th>
-                                            <th scope="col">Price/Kg</th>
-                                            <th scope="col">Total</th>
-                                            <th scope="col">Packs</th>
-                                            {{-- Add new columns for Processed and Bill Printed flags --}}
-                                          
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($sales as $sale)
-                                            <tr>
-                                                <td>{{ $sale->code }}</td>
-                                                <td>{{ $sale->item_code }}</td>
-                                                <td>{{ $sale->item_name }}</td>
-                                                <td>{{ number_format($sale->weight, 2) }}</td>
-                                                <td>{{ number_format($sale->price_per_kg, 2) }}</td>
-                                                <td>{{ number_format($sale->total, 2) }}</td>
-                                                <td>{{ $sale->packs }}</td>
-                                                
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    @else
-                        <div class="mt-5 alert alert-info text-center">No sales records found.</div>
-                    @endif
-                </div>
-            </div>
-
-            {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
-           <div class="col-md-3">
-                <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h3 class="mb-4 text-center">Unprinted Sales Records</h3>
-
-                    @forelse ($salesNotPrinted as $sale) {{-- Loop directly over each individual Sale model --}}
-                        <div class="unprinted-sales-list">
-                            <ul>
+                @if ($salesPrinted->count())
+                    <div class="printed-sales-list">
+                        <ul>
+                            {{-- Loop directly over each individual Sale model --}}
+                            @forelse ($salesPrinted as $sale)
                                 <li>
-                                    <div class="customer-header bill-clickable"
+                                    <div class="customer-header"
                                         data-customer-code="{{ $sale->customer_code }}"
                                         data-customer-name="{{ $sale->customer_name }}"
+                                        data-bill-type="printed"
                                         data-item-name="{{ $sale->item_name }}"
                                         data-item-code="{{ $sale->item_code }}"
+                                        data-code="{{ $sale->code }}"
+                                        data-supplier-code="{{ $sale->supplier_code}}"
                                         data-weight="{{ $sale->weight }}"
                                         data-price-per-kg="{{ $sale->price_per_kg }}"
                                         data-total="{{ $sale->total }}"
-                                          data-code="{{ $sale->code }}"
                                         data-packs="{{ $sale->packs }}"
-                                        data-bill-type="unprinted"
-                                        data-sale-id="{{ $sale->id }}"
-                                        data-bill-no="{{ $sale->bill_no ?? '' }}"
-                                        data-txn-date="{{ optional($sale->txn_date)->format('Y-m-d') }}"
-                                        data-supplier-code="{{ $sale->supplier_code ?? '' }}"
-                                        >
+                                        style="cursor: pointer;">
                                         <span>
-                                          ({{ $sale->customer_code }}) 
-                                           
-                                           
+                                            ({{ $sale->customer_code }}) -
+                                            Bill No: {{ $sale->bill_no ?? 'N/A' }}
                                         </span>
                                         <i class="material-icons arrow-icon">keyboard_arrow_right</i>
                                     </div>
-                                    <div id="customer-unprinted-{{ $sale->id }}" class="customer-details collapse">
+
+                                    <div id="customer-printed-{{ $sale->id }}" class="customer-details collapse">
                                         <table>
                                             <thead>
                                                 <tr>
-                                                    <th>Item</th>
-                                                    <th>Wt (kg)</th>
-                                                    <th>Price/Kg</th>
-                                                    <th>Total</th>
+                                                    <th>අයිතමය</th>
+                                                    <th>බර(kg)</th>
+                                                    <th>මිල/Kg</th>
+                                                    <th>සමස්ත</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {{-- IMPORTANT: No inner loop here! $sale already contains the item details for this bill. --}}
                                                 <tr class="sale-item-row">
                                                     <td>{{ $sale->item_name }}</td>
                                                     <td>{{ number_format($sale->weight, 2) }}</td>
@@ -503,52 +256,361 @@
                                             </tbody>
                                         </table>
                                         <div class="total-for-customer">
-                                            Bill Total: Rs. {{ number_format($sale->total, 2) }}
-                                        </div>
-                                        <div class="mt-2 text-center">
-                                            <button class="btn btn-sm btn-outline-primary print-bill-btn"
-                                                data-customer-code="{{ $sale->customer_code }}">
-                                                Print Bill
-                                            </button>
+                                            බිල්පතේ මුළු මුදල: රු. {{ number_format($sale->total, 2) }}
                                         </div>
                                     </div>
                                 </li>
-                            </ul>
-                        </div>
-                    @empty
-                        <div class="alert alert-info text-center">No unprinted sales records found.</div>
-                    @endforelse
-                </div>
+                            @empty
+                                <div class="alert alert-info text-center">No printed sales records found.</div>
+                            @endforelse
+                        </ul>
+                    </div>
+                @else
+                    <div class="alert alert-info text-center">No printed sales records found.</div>
+                @endif
             </div>
         </div>
-    </div>
 
-    <div class="modal fade" id="salesDetailModal" tabindex="-1" aria-labelledby="salesDetailModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="salesDetailModalLabel">Sales Details for <span id="modalCustomerName"></span> (<span id="modalCustomerCode"></span>)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Bill Type:</strong> <span id="modalBillType"></span></p>
-                    <div id="modalSalesTableContainer">
-                        {{-- Sales data will be injected here by JavaScript --}}
+        {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 p-4">
+                <h6 style="font-weight: bold; color: black; font-size: 0.85rem; text-align: center; margin-bottom: 1rem;">
+    අලුතින් බිල් අතුලත් කිරීම
+</h6>
+
+
+                @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Whoops!</strong> There were some problems with your input.
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                    <div class="total-for-customer text-end mt-3">
-                        Total for this Customer: Rs. <span id="modalCustomerTotal">0.00</span>
+                @endif
+
+                @if (session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <strong>Success!</strong> {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                    <div class="text-center mt-3" id="modalPrintButtonContainer">
-                        {{-- Print button for unprinted bills will be shown here --}}
+                @endif
+
+                @if (session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error!</strong> {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
+                @endif
+
+                <form method="POST" action="{{ route('grn.store') }}">
+                    @csrf
+                    <div class="row g-3 form-row">
+                        {{-- Select Customer Dropdown --}}
+                        <div>
+                            <label for="customer_code_select" class="form-label small">පාරිභෝගිකයා තෝරන්න</label>
+                            <select name="customer_code_select" id="customer_code_select"
+                                class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror w-100">
+                                <option value="">-- Select Customer --</option>
+                                @foreach ($customers as $customer)
+                                    <option value="{{ $customer->short_name }}"
+                                        data-customer-code="{{ $customer->short_name }}"
+                                        data-customer-name="{{ $customer->name }}"
+                                        {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
+                                        {{ $customer->name }} ({{ $customer->short_name }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('customer_code')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        {{-- New/Selected Customer Code Input --}}
+                        <div>
+                            <label for="new_customer_code" class="form-label small">පාරිභෝගික කේතය</label>
+                            <input type="text" name="customer_code" id="new_customer_code"
+                                class="form-control form-control-sm @error('customer_code') is-invalid @enderror"
+                                value="{{ old('customer_code') }}" placeholder="Enter or select customer code" required>
+                            @error('customer_code')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="customer_name" id="customer_name_hidden"
+                        value="{{ old('customer_name') }}">
+
+                    <hr style="margin: 0.3rem 0; height: 1px;">
+
+                    <div class="row g-3 form-row">
+                        <div>
+                          
+                            <input type="text" id="grn_display" class="form-control form-control-sm mb-2" placeholder="Select GRN Entry..." readonly>
+                            <select id="grn_select" class="form-select form-select-sm select2 d-none">
+                                <option value="">-- Select GRN Entry --</option>
+                                @foreach ($entries as $entry)
+                                    <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
+                                        data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
+                                        data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
+                                        data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
+                                        data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
+                                        data-txn-date="{{ $entry->txn_date }}">
+                                        {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
+                                        {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
+                                        {{ $entry->txn_date }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="my-2">
+
+                    <div class="row g-3 form-row">
+                        <div>
+                            <label for="supplier_code" class="form-label" style="font-size: 0.9rem;">සැපයුම්කරු</label>
+                            <select name="supplier_code" id="supplier_code"
+                                class="form-select form-select-sm @error('supplier_code') is-invalid @enderror" required>
+                                <option value="">Select a Supplier</option>
+                                @foreach ($suppliers as $supplier)
+                                    <option value="{{ $supplier->code }}" {{ old('supplier_code') == $supplier->code ? 'selected' : '' }}>
+                                        {{ $supplier->name }} ({{ $supplier->code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('supplier_code')
+                                <div class="invalid-feedback" style="font-size: 0.8rem;">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="item_select" class="form-label" style="font-size: 0.9rem;">අයිතමය තෝරන්න</label>
+                            <select id="item_select" class="form-select form-select-sm @error('item_code') is-invalid @enderror">
+                                <option value="">Select an Item</option>
+                                @foreach ($items as $item)
+                                    <option value="{{ $item->item_code }}" data-code="{{ $item->code }}"
+                                        data-item-code="{{ $item->item_code }}" data-item-name="{{ $item->item_name }}"
+                                        {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
+                                        {{ $item->item_name }} ({{ $item->item_code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('item_code')
+                                <div class="invalid-feedback" style="font-size: 0.8rem;">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <input type="hidden" name="code" id="code" value="{{ old('code') }}">
+                        <input type="hidden" name="item_code" id="item_code" value="{{ old('item_code') }}">
+                        <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
+
+                        <div>
+                            <label for="weight" class="form-label" style="font-size: 0.9rem;">බර (kg)</label>
+                            <input type="number" name="weight" id="weight" step="0.01"
+                                class="form-control form-control-sm @error('weight') is-invalid @enderror"
+                                value="{{ old('weight') }}" required>
+                            @error('weight')
+                                <div class="invalid-feedback" style="font-size: 0.8rem;">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="price_per_kg" class="form-label" style="font-size: 0.9rem;">කිලෝග්‍රෑමයකට මිල</label>
+                            <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+                                class="form-control form-control-sm @error('price_per_kg') is-invalid @enderror"
+                                value="{{ old('price_per_kg') }}" required>
+                            @error('price_per_kg')
+                                <div class="invalid-feedback" style="font-size: 0.8rem;">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="total" class="form-label" style="font-size: 0.9rem;">සමස්ත</label>
+                            <input type="number" name="total" id="total"
+                                class="form-control form-control-sm bg-light @error('total') is-invalid @enderror"
+                                value="{{ old('total') }}" readonly>
+                            @error('total')
+                                <div class="invalid-feedback" style="font-size: 0.8rem;">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <div style="flex: 1 1 100px;">
+                            <label for="packs" class="form-label">ඇසුරුම්</label>
+                            <input type="number" name="packs" id="packs"
+                                class="form-control form-control-sm @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
+                                required>
+                            @error('packs')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm d-none">
+                            <i class="material-icons me-2">add_circle_outline</i>Add Sales Entry
+                        </button>
+                    </div>
+                </form>
+
+              <hr class="my-3" style="margin-top: 0.5rem; margin-bottom: 0.5rem; height: 1px;">
+
+                @if ($sales->count())
+                    <div class="mt-2">
+                       
+                      <h5 class="text-end mb-3" style="font-size: 0.85rem;">
+  <strong>Total Sales Value:</strong> Rs. {{ number_format($totalSum, 2) }}
+</h5>
+
+
+                        <div class="table-responsive">
+                           <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden" style="font-size: 0.85rem;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">කේතය</th>
+                                        <th scope="col">අයිතම කේතය</th>
+                                        <th scope="col">අයිතමය</th>
+                                        <th scope="col">බර (kg)</th>
+                                        <th scope="col">මිල/කිලෝග්‍රෑමය</th>
+                                        <th scope="col">සමස්ත</th>
+                                        <th scope="col">ඇසුරුම්</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($sales as $sale)
+                                        <tr>
+                                            <td>{{ $sale->code }}</td>
+                                            <td>{{ $sale->item_code }}</td>
+                                            <td>{{ $sale->item_name }}</td>
+                                            <td>{{ number_format($sale->weight, 2) }}</td>
+                                            <td>{{ number_format($sale->price_per_kg, 2) }}</td>
+                                            <td>{{ number_format($sale->total, 2) }}</td>
+                                            <td>{{ $sale->packs }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @else
+                    <div class="mt-5 alert alert-info text-center">No sales records found.</div>
+                @endif
+            </div>
+        </div>
+
+        {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 p-4">
+                <h3 class="mb-4 text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා</h3>
+
+                @forelse ($salesNotPrinted as $sale)
+                    <div class="unprinted-sales-list">
+                        <ul>
+                            <li>
+                                <div class="customer-header bill-clickable"
+                                    data-customer-code="{{ $sale->customer_code }}"
+                                    data-customer-name="{{ $sale->customer_name }}"
+                                    data-item-name="{{ $sale->item_name }}"
+                                    data-item-code="{{ $sale->item_code }}"
+                                    data-weight="{{ $sale->weight }}"
+                                    data-price-per-kg="{{ $sale->price_per_kg }}"
+                                    data-total="{{ $sale->total }}"
+                                    data-code="{{ $sale->code }}"
+                                    data-packs="{{ $sale->packs }}"
+                                    data-bill-type="unprinted"
+                                    data-sale-id="{{ $sale->id }}"
+                                    data-bill-no="{{ $sale->bill_no ?? '' }}"
+                                    data-txn-date="{{ optional($sale->txn_date)->format('Y-m-d') }}"
+                                    data-supplier-code="{{ $sale->supplier_code ?? '' }}">
+                                    <span>
+                                        ({{ $sale->customer_code }})
+                                    </span>
+                                    <i class="material-icons arrow-icon">keyboard_arrow_right</i>
+                                </div>
+                                <div id="customer-unprinted-{{ $sale->id }}" class="customer-details collapse">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Item</th>
+                                                <th>Wt (kg)</th>
+                                                <th>Price/Kg</th>
+                                                <th>Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="sale-item-row">
+                                                <td>{{ $sale->item_name }}</td>
+                                                <td>{{ number_format($sale->weight, 2) }}</td>
+                                                <td>{{ number_format($sale->price_per_kg, 2) }}</td>
+                                                <td>{{ number_format($sale->total, 2) }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="total-for-customer">
+                                        Bill Total: Rs. {{ number_format($sale->total, 2) }}
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <button class="btn btn-sm btn-outline-primary print-bill-btn"
+                                            data-customer-code="{{ $sale->customer_code }}">
+                                            Print Bill
+                                        </button>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                @empty
+                    <div class="alert alert-info text-center">No unprinted sales records found.</div>
+                @endforelse
             </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="salesDetailModal" tabindex="-1" aria-labelledby="salesDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="salesDetailModalLabel">Sales Details for <span id="modalCustomerName"></span> (<span id="modalCustomerCode"></span>)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Bill Type:</strong> <span id="modalBillType"></span></p>
+                <div id="modalSalesTableContainer">
+                    {{-- Sales data will be injected here by JavaScript --}}
+                </div>
+                <div class="total-for-customer text-end mt-3">
+                    Total for this Customer: Rs. <span id="modalCustomerTotal">0.00</span>
+                </div>
+                <div class="text-center mt-3" id="modalPrintButtonContainer">
+                    {{-- Print button for unprinted bills will be shown here --}}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
     {{-- JavaScript Includes (jQuery and Select2 should always be loaded before your custom script that uses them) --}}
