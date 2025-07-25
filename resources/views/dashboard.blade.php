@@ -144,48 +144,64 @@
 
                     @if ($salesPrinted->count())
                         <div class="printed-sales-list">
-                            <ul>
-                                @foreach ($salesPrinted as $customerCode => $salesGroup)
-                                    @php
-                                        // Get the customer name from the first sale in the group
-                                        $customerName = $salesGroup->first()->customer_name ?? 'Unknown Customer';
-                                        $totalForCustomer = $salesGroup->sum('total');
-                                    @endphp
-                                    <li>
-                                        <div class="customer-header" data-customer-code="{{ $customerCode }}"
-                                            data-customer-name="{{ $customerName }}" data-bill-type="printed">
-                                            <span>{{ $customerName }} ({{ $customerCode }})</span>
-                                            <i class="material-icons arrow-icon">keyboard_arrow_right</i>
-                                        </div>
-                                        <div id="customer-printed-{{ $customerCode }}" class="customer-details collapse">
-                                            <table>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Item</th>
-                                                        <th>Wt (kg)</th>
-                                                        <th>Price/Kg</th>
-                                                        <th>Total</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($salesGroup as $sale)
-                                                        <tr class="sale-item-row">
-                                                            <td>{{ $sale->item_name }}</td>
-                                                            <td>{{ number_format($sale->weight, 2) }}</td>
-                                                            <td>{{ number_format($sale->price_per_kg, 2) }}</td>
-                                                            <td>{{ number_format($sale->total, 2) }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                            <div class="total-for-customer">
-                                                Customer Total: Rs. {{ number_format($totalForCustomer, 2) }}
-                                            </div>
-                                        </div>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
+    <ul>
+        {{-- Loop directly over each individual Sale model --}}
+        @forelse ($salesPrinted as $sale)
+            <li>
+                {{-- Each $sale is now a single Sale record/bill --}}
+              <div class="customer-header"
+    data-customer-code="{{ $sale->customer_code }}"
+    data-customer-name="{{ $sale->customer_name }}"
+    data-bill-type="printed"
+    data-item-name="{{ $sale->item_name }}"
+    data-item-code="{{ $sale->item_code }}"
+    data-code="{{ $sale->code }}"
+    data-supplier-code="{{ $sale->supplier_code}}"
+    data-weight="{{ $sale->weight }}"
+    data-price-per-kg="{{ $sale->price_per_kg }}"
+    data-total="{{ $sale->total }}"
+    data-packs="{{ $sale->packs }}"
+    style="cursor: pointer;">
+    {{-- Display details to identify this specific bill --}}
+    <span>
+        {{ $sale->customer_name }} ({{ $sale->customer_code }}) -
+        Bill No: {{ $sale->bill_no ?? 'N/A' }} -
+        Date: {{ optional($sale->created_at)->format('Y-m-d H:i') }}
+    </span>
+    <i class="material-icons arrow-icon">keyboard_arrow_right</i>
+</div>
+
+                {{-- Use the unique ID of the sale for the collapse target --}}
+                <div id="customer-printed-{{ $sale->id }}" class="customer-details collapse">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Wt (kg)</th>
+                                <th>Price/Kg</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- IMPORTANT: No inner loop here! $sale already contains the item details for this bill. --}}
+                            <tr class="sale-item-row">
+                                <td>{{ $sale->item_name }}</td>
+                                <td>{{ number_format($sale->weight, 2) }}</td>
+                                <td>{{ number_format($sale->price_per_kg, 2) }}</td>
+                                <td>{{ number_format($sale->total, 2) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="total-for-customer">
+                        Bill Total: Rs. {{ number_format($sale->total, 2) }}
+                    </div>
+                </div>
+            </li>
+        @empty
+            <div class="alert alert-info text-center">No printed sales records found.</div>
+        @endforelse
+    </ul>
+</div>
                     @else
                         <div class="alert alert-info text-center">No printed sales records found.</div>
                     @endif
@@ -437,63 +453,73 @@
             </div>
 
             {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
-            <div class="col-md-3">
+           <div class="col-md-3">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
                     <h3 class="mb-4 text-center">Unprinted Sales Records</h3>
 
-
-                    @if ($salesNotPrinted->count())
+                    @forelse ($salesNotPrinted as $sale) {{-- Loop directly over each individual Sale model --}}
                         <div class="unprinted-sales-list">
                             <ul>
-                                @foreach ($salesNotPrinted as $customerCode => $salesGroup)
-                                    @php
-                                        $customerName = $salesGroup->first()->customer_name ?? 'Unknown Customer';
-                                        $totalForCustomer = $salesGroup->sum('total');
-                                    @endphp
-                                    <li>
-                                        <div class="customer-header" data-customer-code="{{ $customerCode }}"
-                                            data-customer-name="{{ $customerName }}" data-bill-type="unprinted">
-                                            <span>{{ $customerName }} ({{ $customerCode }})</span>
-                                            <i class="material-icons arrow-icon">keyboard_arrow_right</i>
+                                <li>
+                                    <div class="customer-header bill-clickable"
+                                        data-customer-code="{{ $sale->customer_code }}"
+                                        data-customer-name="{{ $sale->customer_name }}"
+                                        data-item-name="{{ $sale->item_name }}"
+                                        data-item-code="{{ $sale->item_code }}"
+                                        data-weight="{{ $sale->weight }}"
+                                        data-price-per-kg="{{ $sale->price_per_kg }}"
+                                        data-total="{{ $sale->total }}"
+                                          data-code="{{ $sale->code }}"
+                                        data-packs="{{ $sale->packs }}"
+                                        data-bill-type="unprinted"
+                                        data-sale-id="{{ $sale->id }}"
+                                        data-bill-no="{{ $sale->bill_no ?? '' }}"
+                                        data-txn-date="{{ optional($sale->txn_date)->format('Y-m-d') }}"
+                                        data-supplier-code="{{ $sale->supplier_code ?? '' }}"
+                                        >
+                                        <span>
+                                            {{ $sale->customer_name }} ({{ $sale->customer_code }}) -
+                                            Bill No: {{ $sale->bill_no ?? 'N/A' }} -
+                                            Date: {{ optional($sale->created_at)->format('Y-m-d H:i') }}
+                                        </span>
+                                        <i class="material-icons arrow-icon">keyboard_arrow_right</i>
+                                    </div>
+                                    <div id="customer-unprinted-{{ $sale->id }}" class="customer-details collapse">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Item</th>
+                                                    <th>Wt (kg)</th>
+                                                    <th>Price/Kg</th>
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{-- IMPORTANT: No inner loop here! $sale already contains the item details for this bill. --}}
+                                                <tr class="sale-item-row">
+                                                    <td>{{ $sale->item_name }}</td>
+                                                    <td>{{ number_format($sale->weight, 2) }}</td>
+                                                    <td>{{ number_format($sale->price_per_kg, 2) }}</td>
+                                                    <td>{{ number_format($sale->total, 2) }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <div class="total-for-customer">
+                                            Bill Total: Rs. {{ number_format($sale->total, 2) }}
                                         </div>
-                                        <div id="customer-unprinted-{{ $customerCode }}" class="customer-details collapse">
-                                            <table>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Item</th>
-                                                        <th>Wt (kg)</th>
-                                                        <th>Price/Kg</th>
-                                                        <th>Total</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($salesGroup as $sale)
-                                                        <tr class="sale-item-row">
-                                                            <td>{{ $sale->item_name }}</td>
-                                                            <td>{{ number_format($sale->weight, 2) }}</td>
-                                                            <td>{{ number_format($sale->price_per_kg, 2) }}</td>
-                                                            <td>{{ number_format($sale->total, 2) }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                            <div class="total-for-customer">
-                                                Customer Total: Rs. {{ number_format($totalForCustomer, 2) }}
-                                            </div>
-                                            <div class="mt-2 text-center">
-                                                <button class="btn btn-sm btn-outline-primary print-bill-btn"
-                                                    data-customer-code="{{ $customerCode }}">
-                                                    Print Bill
-                                                </button>
-                                            </div>
+                                        <div class="mt-2 text-center">
+                                            <button class="btn btn-sm btn-outline-primary print-bill-btn"
+                                                data-customer-code="{{ $sale->customer_code }}">
+                                                Print Bill
+                                            </button>
                                         </div>
-                                    </li>
-                                @endforeach
+                                    </div>
+                                </li>
                             </ul>
                         </div>
-                    @else
+                    @empty
                         <div class="alert alert-info text-center">No unprinted sales records found.</div>
-                    @endif
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -536,513 +562,614 @@
 
     {{-- ALL Custom JavaScript Consolidated Here --}}
     <script>
-        // --- Form Calculations & Select2 Interactions ---
-        const itemSelect = document.getElementById('item_select');
-        const codeField = document.getElementById('code');
-        const itemCodeField = document.getElementById('item_code');
-        const itemNameField = document.getElementById('item_name');
-        const supplierSelect = document.getElementById('supplier_code');
-        const weightField = document.getElementById('weight');
-        const pricePerKgField = document.getElementById('price_per_kg');
-        const totalField = document.getElementById('total');
-        const packsField = document.getElementById('packs');
-        const grnDisplay = document.getElementById('grn_display');
+    // --- Form Calculations & Select2 Interactions ---
+    const itemSelect = document.getElementById('item_select');
+    const codeField = document.getElementById('code');
+    const itemCodeField = document.getElementById('item_code');
+    const itemNameField = document.getElementById('item_name');
+    const supplierSelect = document.getElementById('supplier_code');
+    const weightField = document.getElementById('weight');
+    const pricePerKgField = document.getElementById('price_per_kg');
+    const totalField = document.getElementById('total');
+    const packsField = document.getElementById('packs');
+    const grnDisplay = document.getElementById('grn_display');
 
-        const customerSelect = document.getElementById('customer_code_select'); // Renamed ID
-        const newCustomerCodeField = document.getElementById('new_customer_code'); // New input field
-        const customerNameField = document.getElementById('customer_name_hidden');
+    const customerSelect = document.getElementById('customer_code_select'); // Renamed ID
+    const newCustomerCodeField = document.getElementById('new_customer_code'); // New input field
+    const customerNameField = document.getElementById('customer_name_hidden');
 
-        function calculateTotal() {
-            const weight = parseFloat(weightField.value) || 0;
-            const price = parseFloat(pricePerKgField.value) || 0;
-            totalField.value = (weight * price).toFixed(2);
+    function calculateTotal() {
+        const weight = parseFloat(weightField.value) || 0;
+        const price = parseFloat(pricePerKgField.value) || 0;
+        totalField.value = (weight * price).toFixed(2);
+    }
+
+    itemSelect.addEventListener('change', function() {
+        const selected = this.options[this.selectedIndex];
+        if (selected && selected.dataset) {
+            codeField.value = selected.dataset.code || '';
+            itemCodeField.value = selected.dataset.itemCode || '';
+            itemNameField.value = selected.dataset.itemName || '';
+        } else {
+            codeField.value = '';
+            itemCodeField.value = '';
+            itemNameField.value = '';
         }
-
-        itemSelect.addEventListener('change', function() {
-            const selected = this.options[this.selectedIndex];
-            if (selected && selected.dataset) {
-                codeField.value = selected.dataset.code || '';
-                itemCodeField.value = selected.dataset.itemCode || '';
-                itemNameField.value = selected.dataset.itemName || '';
-            } else {
-                codeField.value = '';
-                itemCodeField.value = '';
-                itemNameField.value = '';
-            }
-        });
-
-        weightField.addEventListener('input', calculateTotal);
-        pricePerKgField.addEventListener('input', calculateTotal);
-        calculateTotal(); // Initial calculation on page load
-
-        $(document).ready(function() {
-            // Initialize Select2 for GRN and Customer select fields
-            $('#grn_select').select2({
-                dropdownParent: $('#grn_select').parent(),
-                placeholder: "-- Select GRN Entry --",
-                width: '100%',
-                allowClear: true,
-                templateResult: function(data) {
-                    if (data.loading || !data.id) return data.text;
-                    return $(data.element).text();
-                },
-                templateSelection: function(data) {
-                    return data.text;
-                }
-            });
-
-            $('#customer_code_select').select2({ // Updated ID here
-                dropdownParent: $('#customer_code_select').parent(), // Ensure dropdown appears correctly
-                placeholder: "-- Select Customer --",
-                width: '100%',
-                allowClear: true,
-                // Custom template to show both name and code in dropdown
-                templateResult: function(data) {
-                    if (data.loading) return data.text;
-                    if (!data.id) return data.text; // For the placeholder
-
-                    return $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`);
-                },
-                // Custom template for selected item
-                templateSelection: function(data) {
-                    if (!data.id) return data.text;
-                    return $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`);
-                }
-            });
-
-
-            $('#grn_display').on('click', function() {
-                $('#grn_select').select2('open');
-            });
-
-            $('#grn_select').on('select2:select', function(e) {
-                const selectedOption = $(e.currentTarget).find('option:selected');
-                const data = selectedOption.data();
-                $('#grn_display').val(data.code || '');
-                supplierSelect.value = data.supplierCode || '';
-                itemSelect.value = data.itemCode || '';
-                itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item fields
-                weightField.value = '';
-                pricePerKgField.value = '';
-                packsField.value = '';
-                calculateTotal();
-                weightField.focus();
-            });
-
-            $('#customer_code_select').on('select2:select', function(e) { // Updated ID here
-                const selectedOption = $(e.currentTarget).find('option:selected');
-                const selectedCustomerCode = selectedOption.val();
-                const selectedCustomerName = selectedOption.data('customer-name'); // Get the full name from data attribute
-
-                newCustomerCodeField.value = selectedCustomerCode || ''; // Set the new input field
-                newCustomerCodeField.readOnly = true; // Make it read-only
-                customerNameField.value = selectedCustomerName || '';
-
-                // You might want to focus on the next logical field after selecting a customer
-                $('#grn_select').select2('open');
-            });
-
-
-            $('#grn_select').on('select2:clear', function() {
-                $('#grn_display').val('');
-                supplierSelect.value = '';
-                itemSelect.value = '';
-                itemSelect.dispatchEvent(new Event('change')); // Clear hidden item fields
-                weightField.value = '';
-                pricePerKgField.value = '';
-                packsField.value = '';
-                calculateTotal();
-            });
-
-            $('#customer_code_select').on('select2:clear', function() { // Updated ID here
-                newCustomerCodeField.value = ''; // Clear the new input field
-                newCustomerCodeField.readOnly = false; // Make it editable again
-                customerNameField.value = '';
-            });
-
-            // Handle manual input in new_customer_code
-            $('#new_customer_code').on('input', function() {
-                // If typing, ensure the select2 is cleared
-                if ($(this).val() !== '') {
-                    $('#customer_code_select').val(null).trigger('change'); // Clear select2
-                    customerNameField.value = ''; // Clear customer name if manually typing code
-                }
-            });
-
-
-          // Handle old input values on page load
-           $(document).ready(function() {
-        // Initialize Select2 on your dropdown
-        $('#grn_select').select2({
-            placeholder: "-- Select GRN Entry --",
-            allowClear: true
-        });
-
-        // Event listener to focus the search input when the Select2 dropdown opens
-        $(document).on('select2:open', function() {
-            // Find the search input field within the open Select2 dropdown and focus it
-            document.querySelector('.select2-search__field').focus();
-        });
-
-        @if (old('customer_code_select') || old('customer_code'))
-            const oldGrnCode = "{{ old('code') }}";
-            const oldSupplierCode = "{{ old('supplier_code') }}";
-            const oldItemCode = "{{ old('item_code') }}";
-            const oldWeight = "{{ old('weight') }}";
-            const oldPricePerKg = "{{ old('price_per_kg') }}";
-            const oldPacks = "{{ old('packs') }}";
-            const oldGrnOption = $('#grn_select option').filter(function() {
-                return $(this).val() === oldGrnCode && $(this).data('supplierCode') ===
-                    oldSupplierCode && $(this).data('itemCode') === oldItemCode;
-            });
-
-            if (oldGrnOption.length) {
-                $('#grn_select').val(oldGrnOption.val()).trigger('change');
-                $('#grn_display').val(oldGrnOption.data('code'));
-                $('#weight').val(oldWeight);
-                $('#price_per_kg').val(oldPricePerKg);
-                $('#packs').val(oldPacks);
-                calculateTotal(); // Assuming calculateTotal() is defined elsewhere
-            }
-
-            // Define these variables if they are not globally accessible
-            // Replace with your actual IDs
-            const newCustomerCodeField = document.getElementById('customer_code');
-            const customerNameField = document.getElementById('customer_name');
-
-
-            const oldSelectedCustomerCode = "{{ old('customer_code_select') }}";
-            const oldEnteredCustomerCode = "{{ old('customer_code') }}";
-            const oldCustomerNameValue = "{{ old('customer_name') }}";
-
-            if (oldSelectedCustomerCode) {
-                // If a customer was selected from the dropdown
-                $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
-                if (newCustomerCodeField) {
-                    newCustomerCodeField.value = oldSelectedCustomerCode;
-                    newCustomerCodeField.readOnly = true;
-                }
-                if (customerNameField) {
-                    customerNameField.value = oldCustomerNameValue;
-                }
-            } else if (oldEnteredCustomerCode) {
-                // If a customer code was manually entered (and not selected from dropdown)
-                if (newCustomerCodeField) {
-                    newCustomerCodeField.value = oldEnteredCustomerCode;
-                    newCustomerCodeField.readOnly = false;
-                }
-                if (customerNameField) {
-                    customerNameField.value = oldCustomerNameValue;
-                }
-            }
-
-            // Open the grn_select Select2 dropdown
-            $('#grn_select').select2('open');
-            // The 'select2:open' event listener will now handle the focus automatically
-        @endif
     });
 
-            // Listen for when the GRN Select2 dropdown is opened and focus its search field
-            $('#grn_select').on('select2:open', function() {
-                $('.select2-container--open .select2-search__field').focus();
+    weightField.addEventListener('input', calculateTotal);
+    pricePerKgField.addEventListener('input', calculateTotal);
+    calculateTotal(); // Initial calculation on page load
+
+    $(document).ready(function() {
+        // Initialize Select2 for GRN and Customer select fields
+        $('#grn_select').select2({
+            dropdownParent: $('#grn_select').parent(),
+            placeholder: "-- Select GRN Entry --",
+            width: '100%',
+            allowClear: true,
+            templateResult: function(data) {
+                if (data.loading || !data.id) return data.text;
+                return $(data.element).text();
+            },
+            templateSelection: function(data) {
+                return data.text;
+            }
+        });
+
+        $('#customer_code_select').select2({ // Updated ID here
+            dropdownParent: $('#customer_code_select').parent(), // Ensure dropdown appears correctly
+            placeholder: "-- Select Customer --",
+            width: '100%',
+            allowClear: true,
+            // Custom template to show both name and code in dropdown
+            templateResult: function(data) {
+                if (data.loading) return data.text;
+                if (!data.id) return data.text; // For the placeholder
+
+                return $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`);
+            },
+            // Custom template for selected item
+            templateSelection: function(data) {
+                if (!data.id) return data.text;
+                return $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`);
+            }
+        });
+
+
+        $('#grn_display').on('click', function() {
+            $('#grn_select').select2('open');
+        });
+
+        $('#grn_select').on('select2:select', function(e) {
+            const selectedOption = $(e.currentTarget).find('option:selected');
+            const data = selectedOption.data();
+            $('#grn_display').val(data.code || '');
+            supplierSelect.value = data.supplierCode || '';
+            itemSelect.value = data.itemCode || '';
+            itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item fields
+            weightField.value = '';
+            pricePerKgField.value = '';
+            packsField.value = '';
+            calculateTotal();
+            weightField.focus();
+        });
+
+        $('#customer_code_select').on('select2:select', function(e) { // Updated ID here
+            const selectedOption = $(e.currentTarget).find('option:selected');
+            const selectedCustomerCode = selectedOption.val();
+            const selectedCustomerName = selectedOption.data('customer-name'); // Get the full name from data attribute
+
+            newCustomerCodeField.value = selectedCustomerCode || ''; // Set the new input field
+            newCustomerCodeField.readOnly = true; // Make it read-only
+            customerNameField.value = selectedCustomerName || '';
+
+            // You might want to focus on the next logical field after selecting a customer
+            $('#grn_select').select2('open');
+        });
+
+
+        $('#grn_select').on('select2:clear', function() {
+            $('#grn_display').val('');
+            supplierSelect.value = '';
+            itemSelect.value = '';
+            itemSelect.dispatchEvent(new Event('change')); // Clear hidden item fields
+            weightField.value = '';
+            pricePerKgField.value = '';
+            packsField.value = '';
+            calculateTotal();
+        });
+
+        $('#customer_code_select').on('select2:clear', function() { // Updated ID here
+            newCustomerCodeField.value = ''; // Clear the new input field
+            newCustomerCodeField.readOnly = false; // Make it editable again
+            customerNameField.value = '';
+        });
+
+        // Handle manual input in new_customer_code
+        $('#new_customer_code').on('input', function() {
+            // If typing, ensure the select2 is cleared
+            if ($(this).val() !== '') {
+                $('#customer_code_select').val(null).trigger('change'); // Clear select2
+                customerNameField.value = ''; // Clear customer name if manually typing code
+            }
+        });
+
+
+        // Handle old input values on page load
+        $(document).ready(function() {
+            // Initialize Select2 on your dropdown
+            $('#grn_select').select2({
+                placeholder: "-- Select GRN Entry --",
+                allowClear: true
             });
 
-            // --- JavaScript for F1 and F5 Key Presses (ORIGINAL LOGIC RESTORED) ---
-            document.addEventListener('keydown', function(e) {
-                console.log('Key pressed:', e.key); // DEBUG: Log any key pressed
+            // Event listener to focus the search input when the Select2 dropdown opens
+            $(document).on('select2:open', function() {
+                // Find the search input field within the open Select2 dropdown and focus it
+                document.querySelector('.select2-search__field').focus();
+            });
 
-                // F1 Key Press Logic (Print Receipt and Mark Sales as Printed and Processed)
-                if (e.key === "F1") {
-                    e.preventDefault(); // Prevent default F1 behavior (browser help)
-                    console.log('F1 key pressed - attempting to print and mark sales...'); // DEBUG
+            @if (old('customer_code_select') || old('customer_code'))
+                const oldGrnCode = "{{ old('code') }}";
+                const oldSupplierCode = "{{ old('supplier_code') }}";
+                const oldItemCode = "{{ old('item_code') }}";
+                const oldWeight = "{{ old('weight') }}";
+                const oldPricePerKg = "{{ old('price_per_kg') }}";
+                const oldPacks = "{{ old('packs') }}";
+                const oldGrnOption = $('#grn_select option').filter(function() {
+                    return $(this).val() === oldGrnCode && $(this).data('supplierCode') ===
+                        oldSupplierCode && $(this).data('itemCode') === oldItemCode;
+                });
 
-                    // IMPORTANT: Using `unprocessedSales` for printing
-                    const salesDataForReceipt = @json($unprocessedSales); // Get currently displayed unprocessed sales
+                if (oldGrnOption.length) {
+                    $('#grn_select').val(oldGrnOption.val()).trigger('change');
+                    $('#grn_display').val(oldGrnOption.data('code'));
+                    $('#weight').val(oldWeight);
+                    $('#price_per_kg').val(oldPricePerKg);
+                    $('#packs').val(oldPacks);
+                    calculateTotal(); // Assuming calculateTotal() is defined elsewhere
+                }
 
-                    if (salesDataForReceipt.length === 0) {
-                        alert('No unprocessed sales records to print!');
-                        return;
+                // Define these variables if they are not globally accessible
+                // Replace with your actual IDs
+                const newCustomerCodeField = document.getElementById('customer_code');
+                const customerNameField = document.getElementById('customer_name');
+
+
+                const oldSelectedCustomerCode = "{{ old('customer_code_select') }}";
+                const oldEnteredCustomerCode = "{{ old('customer_code') }}";
+                const oldCustomerNameValue = "{{ old('customer_name') }}";
+
+                if (oldSelectedCustomerCode) {
+                    // If a customer was selected from the dropdown
+                    $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
+                    if (newCustomerCodeField) {
+                        newCustomerCodeField.value = oldSelectedCustomerCode;
+                        newCustomerCodeField.readOnly = true;
                     }
-
-                    const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
-
-                    // Construct receipt content
-                    const now = new Date();
-                    const date = now.toLocaleDateString();
-                    const time = now.toLocaleTimeString();
-                    const customerCode = document.getElementById('new_customer_code').value || 'N/A'; // Get from the new input
-                    const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
-                    let itemsHtml = '';
-                    let totalItemsCount = 0;
-                    let totalAmountSum = 0;
-                    salesDataForReceipt.forEach(sale => {
-                        itemsHtml += `
-                            <tr>
-                                <td>${sale.item_name} (${sale.item_code})</td>
-                                <td class="align-right">${sale.weight.toFixed(2)} kg x ${sale.packs} packs</td>
-                                <td class="align-right">${sale.price_per_kg.toFixed(2)}</td>
-                                <td class="align-right">${sale.total.toFixed(2)}</td>
-                            </tr>
-                        `;
-                        totalItemsCount++;
-                        totalAmountSum += parseFloat(sale.total);
-                    });
-                    const salesContent = `
-                        <div class="receipt-container">
-                            <div class="header-section"><h2>Your Grocery Shop</h2><p>123 Main Street, Gonawala, Sri Lanka</p><p>Phone: +94 11 234 5678</p><p>Date: ${date}</p><p>Time: ${time}</p><p>Customer Code: ${customerCode}</p><p>Customer Name: ${customerName}</p></div>
-                            <div class="divider"></div>
-                            <div class="items-section"><table><thead><tr><th class="item-name-col">Item</th><th class="qty-col">Qty</th><th class="price-col">Unit Price</th><th class="total-col">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
-                            <div class="divider"></div>
-                            <div class="totals-section"><p>Total Items: ${totalItemsCount}</p><p class="grand-total">Total Amount: <span>Rs. ${totalAmountSum.toFixed(2)}</span></p></div>
-                            <div class="footer-section"><p>Thank you for your purchase!</p><p>Please come again.</p></div>
-                        </div>
-                    `;
-
-                    const printWindow = window.open('', '_blank', 'width=400,height=600');
-                    printWindow.document.write(`
-                        <html>
-                            <head>
-                                <title>Sales Receipt</title>
-                                <style>
-                                    body { font-family: 'Consolas', 'Courier New', monospace; margin: 0; padding: 20px; box-sizing: border-box; font-size: 12px; }
-                                    .receipt-container { width: 100%; max-width: 380px; margin: 0 auto; border: 1px dashed #000; padding: 15px; }
-                                    .header-section, .footer-section { text-align: center; margin-bottom: 10px; }
-                                    .header-section h2 { margin: 0; font-size: 1.5em; }
-                                    .header-section p { margin: 2px 0; }
-                                    .divider { border-bottom: 1px dashed #000; margin: 10px 0; }
-                                    .items-section table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-                                    .items-section th, .items-section td { padding: 4px 0; border: none; }
-                                    .items-section thead th { border-bottom: 1px solid #000; padding-bottom: 5px; text-align: left; }
-                                    .item-name-col { width: 40%; text-align: left; }
-                                    .qty-col { width: 30%; text-align: right; }
-                                    .price-col { width: 15%; text-align: right; }
-                                    .total-col { width: 15%; text-align: right; }
-                                    .align-right { text-align: right; }
-                                    .totals-section { text-align: right; margin-top: 10px; }
-                                    .totals-section p { margin: 2px 0; }
-                                    .grand-total { font-size: 1.2em; font-weight: bold; }
-                                </style>
-                            </head>
-                            <body>
-                                ${salesContent}
-                                <script>
-                                    window.onload = function() { window.print(); };
-                                    window.onafterprint = function() { window.close(); };
-                                <\/script>
-                            </body>
-                        </html>
-                    `);
-                    printWindow.document.close();
-
-                    // Monitor if the print window is closed by the user
-                    const checkClosed = setInterval(function() {
-                        if (printWindow.closed) {
-                            clearInterval(checkClosed); // Stop checking
-
-                            // Send sales IDs to backend to mark as bill_printed = 'Y' AND Processed = 'Y'
-                            console.log(
-                                'F1: Print window closed. Sending request to mark sales as printed and processed.'
-                            ); // DEBUG
-                            fetch("{{ route('sales.markAsPrinted') }}", {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify({
-                                        sales_ids: salesIdsToMarkPrintedAndProcessed
-                                    })
-                                })
-                                .then(response => {
-                                    if (!response.ok) {
-                                        return response.text().then(text => {
-                                            throw new Error(
-                                                `HTTP error! status: ${response.status}, message: ${text}`
-                                            )
-                                        });
-                                    }
-                                    return response.json();
-                                })
-                                .then(data => {
-                                    console.log('F1: Sales marked as printed and processed response:',
-                                        data); // DEBUG
-                                    // Set a flag in sessionStorage to focus on customer select after reload
-                                    sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                    window.location.reload();
-                                })
-                                .catch(error => {
-                                    console.error('F1: Error marking sales as printed and processed:',
-                                        error); // DEBUG
-                                    alert('Failed to mark sales as printed. Please check console for details.');
-                                });
-                        }
-                    }, 500); // Check every 500ms
-                }
-                // F5 Key Press Logic (Mark All Displayed Sales as Processed)
-                else if (e.key === "F5") {
-                    e.preventDefault(); // Prevent default F5 behavior (browser refresh)
-                    console.log('F5 key pressed - attempting to mark all displayed sales as processed...'); // DEBUG
-
-                    fetch("{{ route('sales.markAllAsProcessed') }}", {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            }
-                        })
-                        .then(response => {
-                            // Check if response is OK (status 200-299)
-                            if (!response.ok) {
-                                return response.text().then(text => {
-                                    throw new Error(
-                                        `HTTP error! status: ${response.status}, message: ${text}`
-                                    )
-                                });
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('Response from sales.markAllAsProcessed (F5):', data); // DEBUG
-                            if (data.success) {
-                                console.log(data.message);
-                                // Set a flag in sessionStorage to focus on customer select after reload
-                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                window.location.reload();
-                            } else {
-                                console.error('Server reported an error:', data.message);
-                                alert('Operation failed: ' + data.message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error marking sales as processed by F5:', error); // DEBUG
-                            alert('Failed to process sales on F5. Check console for details.');
-                        });
-                }
-            });
-
-            // Store the PHP data in JavaScript variables for easier access
-            const printedSalesData = @json($salesPrinted->toArray());
-            const unprintedSalesData = @json($salesNotPrinted->toArray());
-
-            // Collapse functionality for both Printed and Unprinted Sales sections
-            $('.customer-header').on('click', function() {
-                const customerCode = $(this).data('customer-code');
-                const customerName = $(this).data('customer-name');
-                const billType = $(this).data('bill-type'); // 'printed' or 'unprinted'
-
-                let salesGroup;
-                let totalForCustomer = 0;
-
-                if (billType === 'printed') {
-                    salesGroup = printedSalesData[customerCode];
-                    totalForCustomer = salesGroup.reduce((sum, sale) => sum + parseFloat(sale.total), 0);
-                } else if (billType === 'unprinted') {
-                    salesGroup = unprintedSalesData[customerCode];
-                    totalForCustomer = salesGroup.reduce((sum, sale) => sum + parseFloat(sale.total), 0);
+                    if (customerNameField) {
+                        customerNameField.value = oldCustomerNameValue;
+                    }
+                } else if (oldEnteredCustomerCode) {
+                    // If a customer code was manually entered (and not selected from dropdown)
+                    if (newCustomerCodeField) {
+                        newCustomerCodeField.value = oldEnteredCustomerCode;
+                        newCustomerCodeField.readOnly = false;
+                    }
+                    if (customerNameField) {
+                        customerNameField.value = oldCustomerNameValue;
+                    }
                 }
 
-                if (!salesGroup) {
-                    alert('No sales data found for this customer.');
+                // Open the grn_select Select2 dropdown
+                $('#grn_select').select2('open');
+                // The 'select2:open' event listener will now handle the focus automatically
+            @endif
+        });
+
+        // Listen for when the GRN Select2 dropdown is opened and focus its search field
+        $('#grn_select').on('select2:open', function() {
+            $('.select2-container--open .select2-search__field').focus();
+        });
+
+        // --- JavaScript for F1 and F5 Key Presses (ORIGINAL LOGIC RESTORED) ---
+        document.addEventListener('keydown', function(e) {
+            console.log('Key pressed:', e.key); // DEBUG: Log any key pressed
+
+            // F1 Key Press Logic (Print Receipt and Mark Sales as Printed and Processed)
+            if (e.key === "F1") {
+                e.preventDefault(); // Prevent default F1 behavior (browser help)
+                console.log('F1 key pressed - attempting to print and mark sales...'); // DEBUG
+
+                // IMPORTANT: Using `unprocessedSales` for printing
+                const salesDataForReceipt = @json($unprocessedSales); // Get currently displayed unprocessed sales
+
+                if (salesDataForReceipt.length === 0) {
+                    alert('No unprocessed sales records to print!');
                     return;
                 }
 
-                // Populate Modal
-                $('#modalCustomerName').text(customerName);
-                $('#modalCustomerCode').text(customerCode);
-                $('#modalBillType').text(billType.charAt(0).toUpperCase() + billType.slice(1)); // Capitalize
-                $('#modalCustomerTotal').text(totalForCustomer.toFixed(2));
+                const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
 
-                let modalTableHtml = `
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Wt (kg)</th>
-                                    <th>Price/Kg</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-                salesGroup.forEach(sale => {
-                    modalTableHtml += `
+                // Construct receipt content
+                const now = new Date();
+                const date = now.toLocaleDateString();
+                const time = now.toLocaleTimeString();
+                const customerCode = document.getElementById('new_customer_code').value || 'N/A'; // Get from the new input
+                const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
+                let itemsHtml = '';
+                let totalItemsCount = 0;
+                let totalAmountSum = 0;
+                salesDataForReceipt.forEach(sale => {
+                    itemsHtml += `
                         <tr>
-                            <td>${sale.item_name}</td>
-                            <td>${parseFloat(sale.weight).toFixed(2)}</td>
-                            <td>${parseFloat(sale.price_per_kg).toFixed(2)}</td>
-                            <td>${parseFloat(sale.total).toFixed(2)}</td>
+                            <td>${sale.item_name} (${sale.item_code})</td>
+                            <td class="align-right">${sale.weight.toFixed(2)} kg x ${sale.packs} packs</td>
+                            <td class="align-right">${sale.price_per_kg.toFixed(2)}</td>
+                            <td class="align-right">${sale.total.toFixed(2)}</td>
                         </tr>
                     `;
+                    totalItemsCount++;
+                    totalAmountSum += parseFloat(sale.total);
                 });
-                modalTableHtml += `
-                            </tbody>
-                        </table>
+                const salesContent = `
+                    <div class="receipt-container">
+                        <div class="header-section"><h2>Your Grocery Shop</h2><p>123 Main Street, Gonawala, Sri Lanka</p><p>Phone: +94 11 234 5678</p><p>Date: ${date}</p><p>Time: ${time}</p><p>Customer Code: ${customerCode}</p><p>Customer Name: ${customerName}</p></div>
+                        <div class="divider"></div>
+                        <div class="items-section"><table><thead><tr><th class="item-name-col">Item</th><th class="qty-col">Qty</th><th class="price-col">Unit Price</th><th class="total-col">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
+                        <div class="divider"></div>
+                        <div class="totals-section"><p>Total Items: ${totalItemsCount}</p><p class="grand-total">Total Amount: <span>Rs. ${totalAmountSum.toFixed(2)}</span></p></div>
+                        <div class="footer-section"><p>Thank you for your purchase!</p><p>Please come again.</p></div>
                     </div>
                 `;
 
-                $('#modalSalesTableContainer').html(modalTableHtml);
+                const printWindow = window.open('', '_blank', 'width=400,height=600');
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>Sales Receipt</title>
+                            <style>
+                                body { font-family: 'Consolas', 'Courier New', monospace; margin: 0; padding: 20px; box-sizing: border-box; font-size: 12px; }
+                                .receipt-container { width: 100%; max-width: 380px; margin: 0 auto; border: 1px dashed #000; padding: 15px; }
+                                .header-section, .footer-section { text-align: center; margin-bottom: 10px; }
+                                .header-section h2 { margin: 0; font-size: 1.5em; }
+                                .header-section p { margin: 2px 0; }
+                                .divider { border-bottom: 1px dashed #000; margin: 10px 0; }
+                                .items-section table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+                                .items-section th, .items-section td { padding: 4px 0; border: none; }
+                                .items-section thead th { border-bottom: 1px solid #000; padding-bottom: 5px; text-align: left; }
+                                .item-name-col { width: 40%; text-align: left; }
+                                .qty-col { width: 30%; text-align: right; }
+                                .price-col { width: 15%; text-align: right; }
+                                .total-col { width: 15%; text-align: right; }
+                                .align-right { text-align: right; }
+                                .totals-section { text-align: right; margin-top: 10px; }
+                                .totals-section p { margin: 2px 0; }
+                                .grand-total { font-size: 1.2em; font-weight: bold; }
+                            </style>
+                        </head>
+                        <body>
+                            ${salesContent}
+                            <script>
+                                window.onload = function() { window.print(); };
+                                window.onafterprint = function() { window.close(); };
+                            <\/script>
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
 
-                // Show/Hide Print Bill button in modal
-                const printButtonContainer = $('#modalPrintButtonContainer');
-                printButtonContainer.empty(); // Clear previous button
+                // Monitor if the print window is closed by the user
+                const checkClosed = setInterval(function() {
+                    if (printWindow.closed) {
+                        clearInterval(checkClosed); // Stop checking
 
-                if (billType === 'unprinted') {
-                    printButtonContainer.append(`
-                        <button class="btn btn-primary print-bill-modal-btn" data-customer-code="${customerCode}">
-                            Print Bill (Modal)
-                        </button>
-                    `);
-                }
-
-                // Show the modal
-                var salesDetailModal = new bootstrap.Modal(document.getElementById('salesDetailModal'));
-                salesDetailModal.show();
-            });
-
-
-            // Handle Print Bill button click for unprinted bills (both from list and modal)
-            $(document).on('click', '.print-bill-btn, .print-bill-modal-btn', function() {
-                var customerCode = $(this).data('customer-code');
-                if (confirm('Are you sure you want to print the bill for ' + customerCode +
-                        '? This will mark all *unprinted* sales for this customer as printed and processed.')) {
-                    // Send an AJAX request to update bill_printed status
-                    $.ajax({
-                        url: '/sales/print-bill/' +
-                            customerCode, // Adjust this route to your actual route for updating bill_printed
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            customer_code: customerCode
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                alert(response.message);
+                        // Send sales IDs to backend to mark as bill_printed = 'Y' AND Processed = 'Y'
+                        console.log(
+                            'F1: Print window closed. Sending request to mark sales as printed and processed.'
+                        ); // DEBUG
+                        fetch("{{ route('sales.markAsPrinted') }}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    sales_ids: salesIdsToMarkPrintedAndProcessed
+                                })
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.text().then(text => {
+                                        throw new Error(
+                                            `HTTP error! status: ${response.status}, message: ${text}`
+                                        )
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('F1: Sales marked as printed and processed response:',
+                                    data); // DEBUG
                                 // Set a flag in sessionStorage to focus on customer select after reload
                                 sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                location.reload(); // Reload the page to update the lists
-                            } else {
-                                alert('Error: ' + response.message);
-                            }
-                        },
-                        error: function(xhr) {
-                            console.error("AJAX error:", xhr.responseText);
-                            alert('An error occurred while trying to print the bill.');
-                        }
-                    });
-                }
-            });
-            
+                                window.location.reload();
+                            })
+                            .catch(error => {
+                                console.error('F1: Error marking sales as printed and processed:',
+                                    error); // DEBUG
+                                alert('Failed to mark sales as printed. Please check console for details.');
+                            });
+                    }
+                }, 500); // Check every 500ms
+            }
+            // F5 Key Press Logic (Mark All Displayed Sales as Processed)
+            else if (e.key === "F5") {
+                e.preventDefault(); // Prevent default F5 behavior (browser refresh)
+                console.log('F5 key pressed - attempting to mark all displayed sales as processed...'); // DEBUG
 
-            // Check sessionStorage on page load for F1/F5 focus
-            if (sessionStorage.getItem('focusOnCustomerSelect') === 'true') {
-                $(document).on('select2:open', function() {
-            // Find the search input field within the open Select2 dropdown and focus it
-            document.querySelector('.select2-search__field').focus();
-        });
-                $('#customer_code_select').select2('open'); // Open the Select2 dropdown
-                sessionStorage.removeItem('focusOnCustomerSelect'); // Clear the flag
+                fetch("{{ route('sales.markAllAsProcessed') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(response => {
+                        // Check if response is OK (status 200-299)
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error(
+                                    `HTTP error! status: ${response.status}, message: ${text}`
+                                )
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response from sales.markAllAsProcessed (F5):', data); // DEBUG
+                        if (data.success) {
+                            console.log(data.message);
+                            // Set a flag in sessionStorage to focus on customer select after reload
+                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                            window.location.reload();
+                        } else {
+                            console.error('Server reported an error:', data.message);
+                            alert('Operation failed: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error marking sales as processed by F5:', error); // DEBUG
+                        alert('Failed to process sales on F5. Check console for details.');
+                    });
             }
         });
-    </script>
+
+        // Store the PHP data in JavaScript variables for easier access
+        const printedSalesData = @json($salesPrinted->toArray());
+        const unprintedSalesData = @json($salesNotPrinted->toArray());
+
+        // Collapse functionality for both Printed and Unprinted Sales sections
+        $('.customer-header').on('click', function() {
+            const customerCode = $(this).data('customer-code');
+            const customerName = $(this).data('customer-name');
+            const billType = $(this).data('bill-type'); // 'printed' or 'unprinted'
+
+            let salesGroup;
+            let totalForCustomer = 0;
+
+            if (billType === 'printed') {
+                salesGroup = printedSalesData[customerCode];
+                totalForCustomer = salesGroup.reduce((sum, sale) => sum + parseFloat(sale.total), 0);
+            } else if (billType === 'unprinted') {
+                salesGroup = unprintedSalesData[customerCode];
+                totalForCustomer = salesGroup.reduce((sum, sale) => sum + parseFloat(sale.total), 0);
+            }
+
+            if (!salesGroup) {
+                alert('No sales data found for this customer.');
+                return;
+            }
+
+            // Populate Modal
+            $('#modalCustomerName').text(customerName);
+            $('#modalCustomerCode').text(customerCode);
+            $('#modalBillType').text(billType.charAt(0).toUpperCase() + billType.slice(1)); // Capitalize
+            $('#modalCustomerTotal').text(totalForCustomer.toFixed(2));
+
+            let modalTableHtml = `
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Wt (kg)</th>
+                                <th>Price/Kg</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            salesGroup.forEach(sale => {
+                modalTableHtml += `
+                    <tr>
+                        <td>${sale.item_name}</td>
+                        <td>${parseFloat(sale.weight).toFixed(2)}</td>
+                        <td>${parseFloat(sale.price_per_kg).toFixed(2)}</td>
+                        <td>${parseFloat(sale.total).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            modalTableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            $('#modalSalesTableContainer').html(modalTableHtml);
+
+            // Show/Hide Print Bill button in modal
+            const printButtonContainer = $('#modalPrintButtonContainer');
+            printButtonContainer.empty(); // Clear previous button
+
+            if (billType === 'unprinted') {
+                printButtonContainer.append(`
+                    <button class="btn btn-primary print-bill-modal-btn" data-customer-code="${customerCode}">
+                        Print Bill (Modal)
+                    </button>
+                `);
+            }
+
+            // Show the modal
+            var salesDetailModal = new bootstrap.Modal(document.getElementById('salesDetailModal'));
+            salesDetailModal.show();
+        });
+
+
+        // Handle Print Bill button click for unprinted bills (both from list and modal)
+        $(document).on('click', '.print-bill-btn, .print-bill-modal-btn', function() {
+            var customerCode = $(this).data('customer-code');
+            if (confirm('Are you sure you want to print the bill for ' + customerCode +
+                    '? This will mark all *unprinted* sales for this customer as printed and processed.')) {
+                // Send an AJAX request to update bill_printed status
+                $.ajax({
+                    url: '/sales/print-bill/' +
+                        customerCode, // Adjust this route to your actual route for updating bill_printed
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        customer_code: customerCode
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            // Set a flag in sessionStorage to focus on customer select after reload
+                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                            location.reload(); // Reload the page to update the lists
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error("AJAX error:", xhr.responseText);
+                        alert('An error occurred while trying to print the bill.');
+                    }
+                });
+            }
+        });
+
+
+        // Check sessionStorage on page load for F1/F5 focus
+        if (sessionStorage.getItem('focusOnCustomerSelect') === 'true') {
+            $(document).on('select2:open', function() {
+                // Find the search input field within the open Select2 dropdown and focus it
+                document.querySelector('.select2-search__field').focus();
+            });
+            $('#customer_code_select').select2('open'); // Open the Select2 dropdown
+            sessionStorage.removeItem('focusOnCustomerSelect'); // Clear the flag
+        }
+    });
+
+    // --- New Script for Populating Form on Customer Header Click ---
+   document.addEventListener('DOMContentLoaded', function() {
+    const customerHeaders = document.querySelectorAll('.customer-header');
+
+    customerHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            // Get all data from the clicked element's data attributes
+            const customerCode = this.dataset.customerCode;
+            const customerName = this.dataset.customerName;
+            const itemName = this.dataset.itemName;
+            const itemCode = this.dataset.itemCode;
+            const grnCodeFromHeader = this.dataset.code; // This is the GRN code (e.g., "GRN-001")
+            const supplierCodeFromHeader = this.dataset.supplierCode; // NEW: Get supplier code from header
+            const itemCodeFromHeader = this.dataset.itemCode; // NEW: Get item code from header
+            const weight = this.dataset.weight;
+            const pricePerKg = this.dataset.pricePerKg;
+            const total = this.dataset.total;
+            const packs = this.dataset.packs;
+
+            // 1. Populate ALL main entry form fields directly from the clicked header's data.
+            document.getElementById('new_customer_code').value = customerCode;
+            document.getElementById('customer_name_hidden').value = customerName;
+            document.getElementById('item_name').value = itemName; // Populated directly
+            document.getElementById('item_code').value = itemCode; // Populated directly
+
+            // Assuming 'code' is a hidden field for an item's internal code or similar.
+            // Keep this if it's separate from item_code and needs direct population.
+            document.getElementById('code').value = itemCode; // Example: Populating item's internal code field
+
+            document.getElementById('weight').value = weight;
+            document.getElementById('price_per_kg').value = pricePerKg;
+            document.getElementById('total').value = total;
+            document.getElementById('packs').value = packs;
+
+            // Make customer code read-only as it's selected/populated
+            document.getElementById('new_customer_code').readOnly = true;
+
+            // Clear the Select2 customer dropdown if a manual entry is now populated
+            $('#customer_code_select').val(null).trigger('change');
+
+            // Recalculate total just in case values needed formatting or re-computation
+            if (typeof calculateTotal === 'function') {
+                calculateTotal();
+            }
+
+            // --- NEW: Populate Supplier Select2 ---
+            const supplierSelectElement = $('#supplier_code');
+            if (supplierCodeFromHeader) {
+                supplierSelectElement.val(supplierCodeFromHeader).trigger('change');
+            } else {
+                supplierSelectElement.val(null).trigger('change'); // Clear if no supplier code
+            }
+
+            // --- NEW: Populate Item Select2 ---
+            const itemSelectElement = $('#item_select');
+            if (itemCodeFromHeader) {
+                itemSelectElement.val(itemCodeFromHeader).trigger('change');
+                // The item_select's own change listener (which you likely have)
+                // will then populate item_name, item_code, and 'code' field if necessary.
+                // We're already populating item_name/item_code directly above,
+                // so this ensures the Select2 display is correct.
+            } else {
+                itemSelectElement.val(null).trigger('change'); // Clear if no item code
+            }
+
+
+            // 2. Programmatically select the GRN entry in the dropdown.
+            // This logic explicitly uses 'grnCodeFromHeader' to select the GRN.
+            // Your existing grn_select:select listener will then update 'grn_display' field.
+            const grnSelectElement = $('#grn_select');
+            let grnOptionFound = false;
+
+            // Find the option in grn_select that matches the grnCodeFromHeader
+            grnSelectElement.find('option').each(function() {
+                const optionValue = $(this).val(); // This is the 'value' attribute of the option
+                if (optionValue === grnCodeFromHeader) {
+                    // Set the value of the Select2 dropdown and trigger its change event.
+                    grnSelectElement.val(grnCodeFromHeader).trigger('change');
+                    grnOptionFound = true;
+
+                    // Directly update grn_display as previously discussed (e.g., "GRN-001" only)
+                    document.getElementById('grn_display').value = grnCodeFromHeader;
+
+                    return false; // Stop iterating once found
+                }
+            });
+
+            if (!grnOptionFound) {
+                // If the GRN code from the header was not found, clear the GRN select and display.
+                grnSelectElement.val(null).trigger('change');
+                document.getElementById('grn_display').value = '';
+            }
+
+            // Ensure focus is on the next logical input after all fields are populated
+            if (typeof weightField !== 'undefined' && weightField !== null) {
+                weightField.focus();
+            }
+        });
+    });
+});
+ </script>
 @endsection

@@ -28,15 +28,15 @@ class SalesEntryController extends Controller
         $customers = Customer::all();
         $totalSum = $sales->sum('total'); // Sum will now be for all displayed sales
         $unprocessedSales = Sale::where('Processed', 'N')->get();
-          $salesPrinted  = Sale::where('bill_printed', 'Y')
-                            ->orderBy('customer_name') // Order for easier viewing
-                            ->get()
-                            ->groupBy('customer_code');
+        $salesPrinted = Sale::where('bill_printed', 'Y')
+                    ->orderBy('customer_name')
+                    ->orderBy('bill_no') // Or ->orderBy('created_at') for chronological order
+                    ->get();
          $totalUnprocessedSum = $unprocessedSales->sum('total');
           $salesNotPrinted = Sale::where('bill_printed', 'N')
                             ->orderBy('customer_code')
-                            ->get()
-                            ->groupBy('customer_code'); // Group by customer for the display
+                            ->get();
+                          
 
         // Calculate total for unprocessed sales
         $totalUnprintedSum = Sale::where('bill_printed', 'N')->sum('total');
