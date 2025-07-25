@@ -164,9 +164,9 @@
     style="cursor: pointer;">
     {{-- Display details to identify this specific bill --}}
     <span>
-        {{ $sale->customer_name }} ({{ $sale->customer_code }}) -
-        Bill No: {{ $sale->bill_no ?? 'N/A' }} -
-        Date: {{ optional($sale->created_at)->format('Y-m-d H:i') }}
+       ({{ $sale->customer_code }}) -
+        Bill No: {{ $sale->bill_no ?? 'N/A' }} 
+        
     </span>
     <i class="material-icons arrow-icon">keyboard_arrow_right</i>
 </div>
@@ -424,8 +424,7 @@
                                             <th scope="col">Total</th>
                                             <th scope="col">Packs</th>
                                             {{-- Add new columns for Processed and Bill Printed flags --}}
-                                            <th scope="col">Proc</th>
-                                            <th scope="col">Bill P.</th>
+                                          
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -438,8 +437,7 @@
                                                 <td>{{ number_format($sale->price_per_kg, 2) }}</td>
                                                 <td>{{ number_format($sale->total, 2) }}</td>
                                                 <td>{{ $sale->packs }}</td>
-                                                <td>{{ $sale->Processed }}</td>
-                                                <td>{{ $sale->bill_printed }}</td>
+                                                
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -478,9 +476,9 @@
                                         data-supplier-code="{{ $sale->supplier_code ?? '' }}"
                                         >
                                         <span>
-                                            {{ $sale->customer_name }} ({{ $sale->customer_code }}) -
-                                            Bill No: {{ $sale->bill_no ?? 'N/A' }} -
-                                            Date: {{ optional($sale->created_at)->format('Y-m-d H:i') }}
+                                          ({{ $sale->customer_code }}) 
+                                           
+                                           
                                         </span>
                                         <i class="material-icons arrow-icon">keyboard_arrow_right</i>
                                     </div>
@@ -791,15 +789,17 @@
 
     const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
 
-    const now = new Date();
-    const date = now.toLocaleDateString();
-    const time = now.toLocaleTimeString();
-    const customerCode = document.getElementById('new_customer_code').value || 'N/A';
-    const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
+                const now = new Date();
+                const date = now.toLocaleDateString();
+                const time = now.toLocaleTimeString();
+                const customerCode = document.getElementById('new_customer_code').value || 'N/A';
+                const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
+                const mobile = '0702758908'; // Hardcoded phone number
 
     // 🔽 Auto-generate Bill No: format "BILL-yyyyMMdd-HHmmss"
-    const pad = (n) => n.toString().padStart(2, '0');
-    const billNo = `BILL-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const random4Digit = Math.floor(1000 + Math.random() * 9000); // random between 1000-9999
+     const billNo = `BILL-${random4Digit}`;
+
 
     let itemsHtml = '';
     let totalItemsCount = 0;
@@ -818,49 +818,118 @@
     });
 
     const salesContent = `
-        <div class="receipt-container">
-            <div class="header-section"><h2>Your Grocery Shop</h2><p>123 Main Street, Gonawala, Sri Lanka</p><p>Phone: +94 11 234 5678</p><p>Date: ${date}</p><p>Time: ${time}</p><p>Customer Code: ${customerCode}</p><p>Customer Name: ${customerName}</p><p>Bill No: ${billNo}</p></div>
-            <div class="divider"></div>
-            <div class="items-section"><table><thead><tr><th class="item-name-col">Item</th><th class="qty-col">Qty</th><th class="price-col">Unit Price</th><th class="total-col">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
-            <div class="divider"></div>
-            <div class="totals-section"><p>Total Items: ${totalItemsCount}</p><p class="grand-total">Total Amount: <span>Rs. ${totalAmountSum.toFixed(2)}</span></p></div>
-            <div class="footer-section"><p>Thank you for your purchase!</p><p>Please come again.</p></div>
-        </div>
+          <div class="receipt-container">
+                    <div class="header-section">
+                        <h2>ග්‍රාමී</h2>
+                        <p>දිනය: ${date}</p>
+                        <p>වෙලාව: ${time}</p>
+                        <p>බිල් අංකය: ${billNo}</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="customer-info">
+                        <p>පාරිභෝගික කේතය: ${customerCode}</p>
+                        <p>නම: ${customerName}</p>
+                        <p>දුරකථන: ${mobile}</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="items-section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="item-name-col">අයිතමය</th>
+                                    <th class="qty-col">ප්‍රමාණය</th>
+                                    <th class="price-col">ඒකක මිල</th>
+                                    <th class="total-col">මුළු මුදල</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="totals-section">
+                        <p>මුළු අයිතම ගණන: ${totalItemsCount}</p>
+                        <p>මුළු මුදල: Rs. ${totalAmountSum.toFixed(2)}</p>
+                        <p class="grand-total">ගෙවිය යුතු මුළු මුදල: <strong>Rs. ${(totalAmountSum).toFixed(2)}</strong></p>
+                    </div>
+
+                    <div class="footer-section">
+                        <p>ගෙවීමට ස්තුතියි!</p>
+                        <p>නැවත පැමිණෙන්න!</p>
+                    </div>
+                </div>
     `;
 
     const printWindow = window.open('', '_blank', 'width=400,height=600');
     printWindow.document.write(`
-        <html>
-            <head>
-                <title>Sales Receipt</title>
-                <style>
-                    body { font-family: 'Consolas', 'Courier New', monospace; margin: 0; padding: 20px; box-sizing: border-box; font-size: 12px; }
-                    .receipt-container { width: 100%; max-width: 380px; margin: 0 auto; border: 1px dashed #000; padding: 15px; }
-                    .header-section, .footer-section { text-align: center; margin-bottom: 10px; }
-                    .header-section h2 { margin: 0; font-size: 1.5em; }
-                    .header-section p { margin: 2px 0; }
-                    .divider { border-bottom: 1px dashed #000; margin: 10px 0; }
-                    .items-section table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-                    .items-section th, .items-section td { padding: 4px 0; border: none; }
-                    .items-section thead th { border-bottom: 1px solid #000; padding-bottom: 5px; text-align: left; }
-                    .item-name-col { width: 40%; text-align: left; }
-                    .qty-col { width: 30%; text-align: right; }
-                    .price-col { width: 15%; text-align: right; }
-                    .total-col { width: 15%; text-align: right; }
-                    .align-right { text-align: right; }
-                    .totals-section { text-align: right; margin-top: 10px; }
-                    .totals-section p { margin: 2px 0; }
-                    .grand-total { font-size: 1.2em; font-weight: bold; }
-                </style>
-            </head>
-            <body>
-                ${salesContent}
-                <script>
-                    window.onload = function() { window.print(); };
-                    window.onafterprint = function() { window.close(); };
-                <\/script>
-            </body>
-        </html>
+         <html>
+                    <head>
+                        <title>විකුණුම් කුපිත්තුව</title>
+                        <style>
+                            @font-face {
+                                font-family: 'NotoSansSinhala';
+                                src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+                            }
+                            body {
+                                font-family: 'Noto Sans Sinhala', sans-serif;
+                                margin: 0;
+                                padding: 20px;
+                                font-size: 12px;
+                            }
+                            .receipt-container {
+                                width: 100%;
+                                max-width: 380px;
+                                margin: auto;
+                                border: 1px dashed #000;
+                                padding: 15px;
+                            }
+                            .header-section, .footer-section, .customer-info {
+                                text-align: center;
+                                margin-bottom: 10px;
+                            }
+                            .divider {
+                                border-top: 1px dashed #000;
+                                margin: 10px 0;
+                            }
+                            .items-section table {
+                                width: 100%;
+                                border-collapse: collapse;
+                            }
+                            .items-section th, .items-section td {
+                                padding: 3px;
+                                text-align: right;
+                            }
+                            .item-name-col {
+                                text-align: left;
+                                width: 40%;
+                            }
+                            .qty-col {
+                                width: 15%;
+                            }
+                            .price-col {
+                                width: 20%;
+                            }
+                            .total-col {
+                                width: 25%;
+                            }
+                            .totals-section {
+                                text-align: right;
+                            }
+                            .grand-total {
+                                font-weight: bold;
+                                font-size: 1.1em;
+                            }
+                        </style>
+                    </head>
+                    <body>${salesContent}</body>
+                </html>
     `);
     printWindow.document.close();
 
