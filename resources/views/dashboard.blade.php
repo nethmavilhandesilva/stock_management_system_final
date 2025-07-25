@@ -196,7 +196,7 @@
             {{-- Adjusted from col-md-9 to col-md-6 --}}
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h2 class="mb-4 text-center">Add New Sales Entry</h2>
+                 
 
                     @if ($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -227,40 +227,43 @@
                     <form method="POST" action="{{ route('grn.store') }}">
                         @csrf
                         <div class="row g-4">
-                            {{-- MOVED: Select Customer field to the top --}}
-                            <div class="col-12 mb-2"> {{-- Changed to col-12 for full width, adjusted mb for spacing --}}
-                                <label for="customer_code" class="form-label fs-5">Select Customer (Existing)</label> {{-- Larger font size --}}
-                                <select name="customer_code_select" id="customer_code_select"
-                                    class="form-select select2-large @error('customer_code') is-invalid @enderror">
-                                    <option value="">-- Select Customer --</option>
-                                    @foreach ($customers as $customer)
-                                        <option value="{{ $customer->short_name }}"
-                                            data-customer-code="{{ $customer->short_name }}"
-                                            data-customer-name="{{ $customer->name }}"
-                                            {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
-                                            {{ $customer->name }} ({{ $customer->short_name }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('customer_code')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
+                          <div class="row mb-3 align-items-end"> {{-- Align fields bottom to bottom --}}
+    {{-- Select Customer Dropdown --}}
+    <div class="col-md-6">
+        <label for="customer_code_select" class="form-label small">Select Customer (Existing)</label>
+        <select name="customer_code_select" id="customer_code_select"
+            class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror w-100">
+            <option value="">-- Select Customer --</option>
+            @foreach ($customers as $customer)
+                <option value="{{ $customer->short_name }}"
+                    data-customer-code="{{ $customer->short_name }}"
+                    data-customer-name="{{ $customer->name }}"
+                    {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
+                    {{ $customer->name }} ({{ $customer->short_name }})
+                </option>
+            @endforeach
+        </select>
+        @error('customer_code')
+            <div class="invalid-feedback">
+                {{ $message }}
+            </div>
+        @enderror
+    </div>
 
-                            {{-- NEW: Input for customer_code (for new or displaying selected) --}}
-                            <div class="col-12 mb-4">
-                                <label for="new_customer_code" class="form-label fs-5">Customer Code (New/Selected)</label>
-                                <input type="text" name="customer_code" id="new_customer_code"
-                                    class="form-control @error('customer_code') is-invalid @enderror"
-                                    value="{{ old('customer_code') }}" placeholder="Enter or select customer code" required>
-                                @error('customer_code')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
+    {{-- New/Selected Customer Code Input --}}
+    <div class="col-md-6">
+        <label for="new_customer_code" class="form-label small">Customer Code (New/Selected)</label>
+        <input type="text" name="customer_code" id="new_customer_code"
+            class="form-control form-control-sm @error('customer_code') is-invalid @enderror"
+            value="{{ old('customer_code') }}" placeholder="Enter or select customer code" required>
+        @error('customer_code')
+            <div class="invalid-feedback">
+                {{ $message }}
+            </div>
+        @enderror
+    </div>
+</div>
+
                             {{-- END NEW INPUT --}}
 
                             <input type="hidden" name="customer_name" id="customer_name_hidden"
@@ -668,46 +671,76 @@
 
 
           // Handle old input values on page load
-            @if (old('customer_code_select') || old('customer_code'))
-                const oldGrnCode = "{{ old('code') }}";
-                const oldSupplierCode = "{{ old('supplier_code') }}";
-                const oldItemCode = "{{ old('item_code') }}";
-                const oldWeight = "{{ old('weight') }}";
-                const oldPricePerKg = "{{ old('price_per_kg') }}";
-                const oldPacks = "{{ old('packs') }}";
-                const oldGrnOption = $('#grn_select option').filter(function() {
-                    return $(this).val() === oldGrnCode && $(this).data('supplierCode') ===
-                        oldSupplierCode && $(this).data('itemCode') === oldItemCode;
-                });
-                if (oldGrnOption.length) {
-                    $('#grn_select').val(oldGrnOption.val()).trigger('change');
-                    $('#grn_display').val(oldGrnOption.data('code'));
-                    $('#weight').val(oldWeight);
-                    $('#price_per_kg').val(oldPricePerKg);
-                    $('#packs').val(oldPacks);
-                    calculateTotal();
-                }
+           $(document).ready(function() {
+        // Initialize Select2 on your dropdown
+        $('#grn_select').select2({
+            placeholder: "-- Select GRN Entry --",
+            allowClear: true
+        });
 
-                // Handle old values for the new customer code input and select
-                const oldSelectedCustomerCode = "{{ old('customer_code_select') }}";
-                const oldEnteredCustomerCode = "{{ old('customer_code') }}";
-                const oldCustomerNameValue = "{{ old('customer_name') }}";
+        // Event listener to focus the search input when the Select2 dropdown opens
+        $(document).on('select2:open', function() {
+            // Find the search input field within the open Select2 dropdown and focus it
+            document.querySelector('.select2-search__field').focus();
+        });
 
-                if (oldSelectedCustomerCode) {
-                    // If a customer was selected from the dropdown
-                    $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
+        @if (old('customer_code_select') || old('customer_code'))
+            const oldGrnCode = "{{ old('code') }}";
+            const oldSupplierCode = "{{ old('supplier_code') }}";
+            const oldItemCode = "{{ old('item_code') }}";
+            const oldWeight = "{{ old('weight') }}";
+            const oldPricePerKg = "{{ old('price_per_kg') }}";
+            const oldPacks = "{{ old('packs') }}";
+            const oldGrnOption = $('#grn_select option').filter(function() {
+                return $(this).val() === oldGrnCode && $(this).data('supplierCode') ===
+                    oldSupplierCode && $(this).data('itemCode') === oldItemCode;
+            });
+
+            if (oldGrnOption.length) {
+                $('#grn_select').val(oldGrnOption.val()).trigger('change');
+                $('#grn_display').val(oldGrnOption.data('code'));
+                $('#weight').val(oldWeight);
+                $('#price_per_kg').val(oldPricePerKg);
+                $('#packs').val(oldPacks);
+                calculateTotal(); // Assuming calculateTotal() is defined elsewhere
+            }
+
+            // Define these variables if they are not globally accessible
+            // Replace with your actual IDs
+            const newCustomerCodeField = document.getElementById('customer_code');
+            const customerNameField = document.getElementById('customer_name');
+
+
+            const oldSelectedCustomerCode = "{{ old('customer_code_select') }}";
+            const oldEnteredCustomerCode = "{{ old('customer_code') }}";
+            const oldCustomerNameValue = "{{ old('customer_name') }}";
+
+            if (oldSelectedCustomerCode) {
+                // If a customer was selected from the dropdown
+                $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
+                if (newCustomerCodeField) {
                     newCustomerCodeField.value = oldSelectedCustomerCode;
                     newCustomerCodeField.readOnly = true;
-                    customerNameField.value = oldCustomerNameValue;
-                } else if (oldEnteredCustomerCode) {
-                    // If a customer code was manually entered (and not selected from dropdown)
-                    newCustomerCodeField.value = oldEnteredCustomerCode;
-                    newCustomerCodeField.readOnly = false; // Keep it editable if it was manually entered
-                    customerNameField.value = oldCustomerNameValue; // This might be empty if it was a new customer
                 }
-                // Open the grn_select Select2 dropdown
-                $('#grn_select').select2('open');
-            @endif
+                if (customerNameField) {
+                    customerNameField.value = oldCustomerNameValue;
+                }
+            } else if (oldEnteredCustomerCode) {
+                // If a customer code was manually entered (and not selected from dropdown)
+                if (newCustomerCodeField) {
+                    newCustomerCodeField.value = oldEnteredCustomerCode;
+                    newCustomerCodeField.readOnly = false;
+                }
+                if (customerNameField) {
+                    customerNameField.value = oldCustomerNameValue;
+                }
+            }
+
+            // Open the grn_select Select2 dropdown
+            $('#grn_select').select2('open');
+            // The 'select2:open' event listener will now handle the focus automatically
+        @endif
+    });
 
             // Listen for when the GRN Select2 dropdown is opened and focus its search field
             $('#grn_select').on('select2:open', function() {
@@ -999,9 +1032,14 @@
                     });
                 }
             });
+            
 
             // Check sessionStorage on page load for F1/F5 focus
             if (sessionStorage.getItem('focusOnCustomerSelect') === 'true') {
+                $(document).on('select2:open', function() {
+            // Find the search input field within the open Select2 dropdown and focus it
+            document.querySelector('.select2-search__field').focus();
+        });
                 $('#customer_code_select').select2('open'); // Open the Select2 dropdown
                 sessionStorage.removeItem('focusOnCustomerSelect'); // Clear the flag
             }
