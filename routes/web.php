@@ -7,6 +7,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\GrnEntryController;
 use App\Http\Controllers\SalesEntryController;
+use App\Http\Controllers\BillController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -36,7 +37,8 @@ Route::delete('/grn/{id}', [GrnEntryController::class, 'destroy'])->name('grn.de
 Route::get('/dashboard', [SalesEntryController::class, 'create'])->name('dashboard');
 Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.store');
 // Route for the AJAX call to mark sales as printed and processed (triggered by F1 key press)
-Route::post('/sales/mark-as-printed', [SalesEntryController::class, 'markSalesAsPrinted'])->name('sales.markAsPrinted');
-Route::post('/sales/mark-all-processed', [SalesEntryController::class, 'markAllAsProcessed'])->name('sales.markAllAsProcessed');
 
+Route::post('/sales/mark-all-processed', [SalesEntryController::class, 'markAllAsProcessed'])->name('sales.markAllAsProcessed');
+//Bill printing
+Route::post('/sales/mark-printed', [SalesEntryController::class, 'markAsPrinted'])->name('sales.markAsPrinted');
 require __DIR__.'/auth.php';

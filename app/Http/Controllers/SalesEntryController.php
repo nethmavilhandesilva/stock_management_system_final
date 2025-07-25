@@ -88,31 +88,7 @@ class SalesEntryController extends Controller
     }
 
     
-    public function markSalesAsPrinted(Request $request)
-    {
-        $request->validate([
-            'sales_ids' => 'required|array',
-            'sales_ids.*' => 'exists:sales,id',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            Sale::whereIn('id', $request->input('sales_ids'))
-                ->update([
-                    'bill_printed' => 'Y', // Mark as printed
-                    'Processed' => 'Y'     // Also mark as processed
-                ]);
-
-            DB::commit();
-
-            return response()->json(['message' => 'Sales marked as printed and processed successfully.']);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error marking sales as printed and processed: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to mark sales as printed and processed.'], 500);
-        }
-    }
+    
     // In your SalesController.php
 
    public function markAllAsProcessed(Request $request)
@@ -143,6 +119,48 @@ class SalesEntryController extends Controller
         ], 500);
     }
 }
+public function markAsPrinted(Request $request)
+    {
+        // Debugging step: Log the incoming request data
+        \Log::info('markAsPrinted Request Data:', $request->all());
+
+        $salesIds = $request->input('sales_ids');
+        $billNo = $request->input('bill_no');
+
+        if (empty($salesIds)) {
+            return response()->json(['status' => 'error', 'message' => 'No sales IDs provided.'], 400);
+        }
+
+        try {
+            // This is the critical part to check for errors
+            Sale::whereIn('id', $salesIds)->update([
+                'bill_printed' => 'Y', // Ensure this column name is correct in your DB
+                'processed' => 'Y', // Ensure this column name is correct in your DB
+                'bill_no' => $billNo // Ensure this column name is correct and can accept the value
+            ]);
+
+            // Debugging step: Log success
+            \Log::info('Sales records updated successfully for IDs:', $salesIds);
+
+            return response()->json(['status' => 'success', 'message' => 'Sales marked as printed and processed successfully!']);
+
+        } catch (\Exception $e) {
+            // Debugging step: Log the exception details
+            \Log::error('Error updating sales records:', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(), // This is very detailed, useful for debugging
+                'sales_ids' => $salesIds,
+                'bill_no' => $billNo
+            ]);
+            return response()->json(['status' => 'error', 'message' => 'Failed to update sales records.'], 500);
+        }
+    }
+
+
+
+
 
 
 

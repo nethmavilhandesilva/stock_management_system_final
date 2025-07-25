@@ -778,132 +778,129 @@
             console.log('Key pressed:', e.key); // DEBUG: Log any key pressed
 
             // F1 Key Press Logic (Print Receipt and Mark Sales as Printed and Processed)
-            if (e.key === "F1") {
-                e.preventDefault(); // Prevent default F1 behavior (browser help)
-                console.log('F1 key pressed - attempting to print and mark sales...'); // DEBUG
+          if (e.key === "F1") {
+    e.preventDefault(); // Prevent default F1 behavior (browser help)
+    console.log('F1 key pressed - attempting to print and mark sales...'); // DEBUG
 
-                // IMPORTANT: Using `unprocessedSales` for printing
-                const salesDataForReceipt = @json($unprocessedSales); // Get currently displayed unprocessed sales
+    const salesDataForReceipt = @json($unprocessedSales);
 
-                if (salesDataForReceipt.length === 0) {
-                    alert('No unprocessed sales records to print!');
-                    return;
+    if (salesDataForReceipt.length === 0) {
+        alert('No unprocessed sales records to print!');
+        return;
+    }
+
+    const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
+
+    const now = new Date();
+    const date = now.toLocaleDateString();
+    const time = now.toLocaleTimeString();
+    const customerCode = document.getElementById('new_customer_code').value || 'N/A';
+    const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
+
+    // 🔽 Auto-generate Bill No: format "BILL-yyyyMMdd-HHmmss"
+    const pad = (n) => n.toString().padStart(2, '0');
+    const billNo = `BILL-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+    let itemsHtml = '';
+    let totalItemsCount = 0;
+    let totalAmountSum = 0;
+    salesDataForReceipt.forEach(sale => {
+        itemsHtml += `
+            <tr>
+                <td>${sale.item_name} (${sale.item_code})</td>
+                <td class="align-right">${sale.weight.toFixed(2)} kg x ${sale.packs} packs</td>
+                <td class="align-right">${sale.price_per_kg.toFixed(2)}</td>
+                <td class="align-right">${sale.total.toFixed(2)}</td>
+            </tr>
+        `;
+        totalItemsCount++;
+        totalAmountSum += parseFloat(sale.total);
+    });
+
+    const salesContent = `
+        <div class="receipt-container">
+            <div class="header-section"><h2>Your Grocery Shop</h2><p>123 Main Street, Gonawala, Sri Lanka</p><p>Phone: +94 11 234 5678</p><p>Date: ${date}</p><p>Time: ${time}</p><p>Customer Code: ${customerCode}</p><p>Customer Name: ${customerName}</p><p>Bill No: ${billNo}</p></div>
+            <div class="divider"></div>
+            <div class="items-section"><table><thead><tr><th class="item-name-col">Item</th><th class="qty-col">Qty</th><th class="price-col">Unit Price</th><th class="total-col">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
+            <div class="divider"></div>
+            <div class="totals-section"><p>Total Items: ${totalItemsCount}</p><p class="grand-total">Total Amount: <span>Rs. ${totalAmountSum.toFixed(2)}</span></p></div>
+            <div class="footer-section"><p>Thank you for your purchase!</p><p>Please come again.</p></div>
+        </div>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Sales Receipt</title>
+                <style>
+                    body { font-family: 'Consolas', 'Courier New', monospace; margin: 0; padding: 20px; box-sizing: border-box; font-size: 12px; }
+                    .receipt-container { width: 100%; max-width: 380px; margin: 0 auto; border: 1px dashed #000; padding: 15px; }
+                    .header-section, .footer-section { text-align: center; margin-bottom: 10px; }
+                    .header-section h2 { margin: 0; font-size: 1.5em; }
+                    .header-section p { margin: 2px 0; }
+                    .divider { border-bottom: 1px dashed #000; margin: 10px 0; }
+                    .items-section table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+                    .items-section th, .items-section td { padding: 4px 0; border: none; }
+                    .items-section thead th { border-bottom: 1px solid #000; padding-bottom: 5px; text-align: left; }
+                    .item-name-col { width: 40%; text-align: left; }
+                    .qty-col { width: 30%; text-align: right; }
+                    .price-col { width: 15%; text-align: right; }
+                    .total-col { width: 15%; text-align: right; }
+                    .align-right { text-align: right; }
+                    .totals-section { text-align: right; margin-top: 10px; }
+                    .totals-section p { margin: 2px 0; }
+                    .grand-total { font-size: 1.2em; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                ${salesContent}
+                <script>
+                    window.onload = function() { window.print(); };
+                    window.onafterprint = function() { window.close(); };
+                <\/script>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+
+    const checkClosed = setInterval(function() {
+        if (printWindow.closed) {
+            clearInterval(checkClosed);
+            console.log('F1: Print window closed. Sending request to mark sales as printed and processed.');
+
+            fetch("{{ route('sales.markAsPrinted') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    sales_ids: salesIdsToMarkPrintedAndProcessed,
+                    bill_no: billNo // 🔽 Send bill_no with the request
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP error! status: ${response.status}, message: ${text}`)
+                    });
                 }
+                return response.json();
+            })
+            .then(data => {
+                console.log('F1: Sales marked as printed and processed response:', data);
+                sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('F1: Error marking sales as printed and processed:', error);
+                alert('Failed to mark sales as printed. Please check console for details.');
+            });
+        }
+    }, 500);
+}
 
-                const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
-
-                // Construct receipt content
-                const now = new Date();
-                const date = now.toLocaleDateString();
-                const time = now.toLocaleTimeString();
-                const customerCode = document.getElementById('new_customer_code').value || 'N/A'; // Get from the new input
-                const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
-                let itemsHtml = '';
-                let totalItemsCount = 0;
-                let totalAmountSum = 0;
-                salesDataForReceipt.forEach(sale => {
-                    itemsHtml += `
-                        <tr>
-                            <td>${sale.item_name} (${sale.item_code})</td>
-                            <td class="align-right">${sale.weight.toFixed(2)} kg x ${sale.packs} packs</td>
-                            <td class="align-right">${sale.price_per_kg.toFixed(2)}</td>
-                            <td class="align-right">${sale.total.toFixed(2)}</td>
-                        </tr>
-                    `;
-                    totalItemsCount++;
-                    totalAmountSum += parseFloat(sale.total);
-                });
-                const salesContent = `
-                    <div class="receipt-container">
-                        <div class="header-section"><h2>Your Grocery Shop</h2><p>123 Main Street, Gonawala, Sri Lanka</p><p>Phone: +94 11 234 5678</p><p>Date: ${date}</p><p>Time: ${time}</p><p>Customer Code: ${customerCode}</p><p>Customer Name: ${customerName}</p></div>
-                        <div class="divider"></div>
-                        <div class="items-section"><table><thead><tr><th class="item-name-col">Item</th><th class="qty-col">Qty</th><th class="price-col">Unit Price</th><th class="total-col">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
-                        <div class="divider"></div>
-                        <div class="totals-section"><p>Total Items: ${totalItemsCount}</p><p class="grand-total">Total Amount: <span>Rs. ${totalAmountSum.toFixed(2)}</span></p></div>
-                        <div class="footer-section"><p>Thank you for your purchase!</p><p>Please come again.</p></div>
-                    </div>
-                `;
-
-                const printWindow = window.open('', '_blank', 'width=400,height=600');
-                printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>Sales Receipt</title>
-                            <style>
-                                body { font-family: 'Consolas', 'Courier New', monospace; margin: 0; padding: 20px; box-sizing: border-box; font-size: 12px; }
-                                .receipt-container { width: 100%; max-width: 380px; margin: 0 auto; border: 1px dashed #000; padding: 15px; }
-                                .header-section, .footer-section { text-align: center; margin-bottom: 10px; }
-                                .header-section h2 { margin: 0; font-size: 1.5em; }
-                                .header-section p { margin: 2px 0; }
-                                .divider { border-bottom: 1px dashed #000; margin: 10px 0; }
-                                .items-section table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-                                .items-section th, .items-section td { padding: 4px 0; border: none; }
-                                .items-section thead th { border-bottom: 1px solid #000; padding-bottom: 5px; text-align: left; }
-                                .item-name-col { width: 40%; text-align: left; }
-                                .qty-col { width: 30%; text-align: right; }
-                                .price-col { width: 15%; text-align: right; }
-                                .total-col { width: 15%; text-align: right; }
-                                .align-right { text-align: right; }
-                                .totals-section { text-align: right; margin-top: 10px; }
-                                .totals-section p { margin: 2px 0; }
-                                .grand-total { font-size: 1.2em; font-weight: bold; }
-                            </style>
-                        </head>
-                        <body>
-                            ${salesContent}
-                            <script>
-                                window.onload = function() { window.print(); };
-                                window.onafterprint = function() { window.close(); };
-                            <\/script>
-                        </body>
-                    </html>
-                `);
-                printWindow.document.close();
-
-                // Monitor if the print window is closed by the user
-                const checkClosed = setInterval(function() {
-                    if (printWindow.closed) {
-                        clearInterval(checkClosed); // Stop checking
-
-                        // Send sales IDs to backend to mark as bill_printed = 'Y' AND Processed = 'Y'
-                        console.log(
-                            'F1: Print window closed. Sending request to mark sales as printed and processed.'
-                        ); // DEBUG
-                        fetch("{{ route('sales.markAsPrinted') }}", {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({
-                                    sales_ids: salesIdsToMarkPrintedAndProcessed
-                                })
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    return response.text().then(text => {
-                                        throw new Error(
-                                            `HTTP error! status: ${response.status}, message: ${text}`
-                                        )
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('F1: Sales marked as printed and processed response:',
-                                    data); // DEBUG
-                                // Set a flag in sessionStorage to focus on customer select after reload
-                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                window.location.reload();
-                            })
-                            .catch(error => {
-                                console.error('F1: Error marking sales as printed and processed:',
-                                    error); // DEBUG
-                                alert('Failed to mark sales as printed. Please check console for details.');
-                            });
-                    }
-                }, 500); // Check every 500ms
-            }
             // F5 Key Press Logic (Mark All Displayed Sales as Processed)
             else if (e.key === "F5") {
                 e.preventDefault(); // Prevent default F5 behavior (browser refresh)
