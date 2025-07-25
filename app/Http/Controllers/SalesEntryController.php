@@ -50,7 +50,7 @@ class SalesEntryController extends Controller
         $validated = $request->validate([
             'supplier_code' => 'required',
             'customer_code' => 'required|string|max:255',
-            'customer_name' => 'required|string|max:255',
+            'customer_name' => 'nullable',
             'code' => 'required',
             'item_code' => 'required',
             'item_name' => 'required',

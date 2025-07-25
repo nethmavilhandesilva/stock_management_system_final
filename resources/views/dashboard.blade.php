@@ -16,7 +16,7 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-primary">dashboard</span>උපකරණ පුවරුව(Dashboard)
+                            <span class="material-icons me-2 text-primary">dashboard</span> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
@@ -28,7 +28,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('customers.index') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-primary">people</span>පාරිභෝගිකයින්(Customers)
+                            <span class="material-icons me-2 text-primary">people</span> Customers
                         </a>
                     </li>
                     <li class="nav-item">
@@ -38,7 +38,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('grn.index') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> GRN
+                            <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> GRN-4
                         </a>
                     </li>
                    
@@ -140,7 +140,7 @@
             {{-- NEW SECTION: Printed Sales Records (bill_printed = 'Y') - Left Column --}}
             <div class="col-md-3">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h3 class="mb-4 text-center">මුද්‍රිත විකුණුම් වාර්තා</h3>
+                    <h3 class="mb-4 text-center">Printed Sales Records</h3>
 
                     @if ($salesPrinted->count())
                         <div class="printed-sales-list">
@@ -161,10 +161,10 @@
                                             <table>
                                                 <thead>
                                                     <tr>
-                                                        <th>අයිතමය</th>
-                                                        <th>බර (kg)</th>
-                                                        <th>මිල/Kg</th>
-                                                        <th>සමස්ත</th>
+                                                        <th>Item</th>
+                                                        <th>Wt (kg)</th>
+                                                        <th>Price/Kg</th>
+                                                        <th>Total</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -179,7 +179,7 @@
                                                 </tbody>
                                             </table>
                                             <div class="total-for-customer">
-                                               පාරිභෝගික එකතුව: රු.{{ number_format($totalForCustomer, 2) }}
+                                                Customer Total: Rs. {{ number_format($totalForCustomer, 2) }}
                                             </div>
                                         </div>
                                     </li>
@@ -187,7 +187,7 @@
                             </ul>
                         </div>
                     @else
-                        <div class="alert alert-info text-center">මුද්‍රිත විකුණුම් වාර්තා හමු නොවීය..</div>
+                        <div class="alert alert-info text-center">No printed sales records found.</div>
                     @endif
                 </div>
             </div>
@@ -196,7 +196,7 @@
             {{-- Adjusted from col-md-9 to col-md-6 --}}
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h2 class="mb-4 text-center">නව විකුණුම් ඇතුළත් කිරීමක් එක් කරන්න</h2>
+                    <h2 class="mb-4 text-center">Add New Sales Entry</h2>
 
                     @if ($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -228,16 +228,16 @@
                         @csrf
                         <div class="row g-4">
                             {{-- MOVED: Select Customer field to the top --}}
-                            <div class="col-12 mb-4"> {{-- Changed to col-12 for full width, added mb-4 for spacing --}}
-                                <label for="customer_code" class="form-label fs-5">පාරිභෝගිකයා තෝරන්න</label> {{-- Larger font size --}}
-                                <select name="customer_code" id="customer_code"
-                                    class="form-select select2-large @error('customer_code') is-invalid @enderror" required>
+                            <div class="col-12 mb-2"> {{-- Changed to col-12 for full width, adjusted mb for spacing --}}
+                                <label for="customer_code" class="form-label fs-5">Select Customer (Existing)</label> {{-- Larger font size --}}
+                                <select name="customer_code_select" id="customer_code_select"
+                                    class="form-select select2-large @error('customer_code') is-invalid @enderror">
                                     <option value="">-- Select Customer --</option>
                                     @foreach ($customers as $customer)
                                         <option value="{{ $customer->short_name }}"
                                             data-customer-code="{{ $customer->short_name }}"
                                             data-customer-name="{{ $customer->name }}"
-                                            {{ old('customer_code') == $customer->short_name ? 'selected' : '' }}>
+                                            {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
                                             {{ $customer->name }} ({{ $customer->short_name }})
                                         </option>
                                     @endforeach
@@ -249,19 +249,31 @@
                                 @enderror
                             </div>
 
-                            <input type="hidden" name="customer_code_hidden" id="customer_code_hidden"
-                                value="{{ old('customer_code_hidden') }}">
+                            {{-- NEW: Input for customer_code (for new or displaying selected) --}}
+                            <div class="col-12 mb-4">
+                                <label for="new_customer_code" class="form-label fs-5">Customer Code (New/Selected)</label>
+                                <input type="text" name="customer_code" id="new_customer_code"
+                                    class="form-control @error('customer_code') is-invalid @enderror"
+                                    value="{{ old('customer_code') }}" placeholder="Enter or select customer code" required>
+                                @error('customer_code')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                            {{-- END NEW INPUT --}}
+
                             <input type="hidden" name="customer_name" id="customer_name_hidden"
                                 value="{{ old('customer_name') }}">
 
                             <hr class="my-2"> {{-- Added a separator after customer selection --}}
 
                             <div class="col-12 mb-4">
-                                <label for="grn_display" class="form-label font-semibold">පෙර GRN වාර්තාව තෝරන්න</label>
+                                <label for="grn_display" class="form-label font-semibold">Select Previous GRN Record</label>
                                 <input type="text" id="grn_display" class="form-control mb-2" placeholder="Select GRN Entry..."
                                     readonly>
                                 <select id="grn_select" class="form-select select2 d-none">
-                                    <option value="">-- GRN ප්‍රවේශය තෝරන්න --</option>
+                                    <option value="">-- Select GRN Entry --</option>
                                     @foreach ($entries as $entry)
                                         <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
                                             data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
@@ -280,10 +292,10 @@
                             <hr class="my-2">
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="supplier_code" class="form-label">සැපයුම්කරු</label>
+                                <label for="supplier_code" class="form-label">Supplier</label>
                                 <select name="supplier_code" id="supplier_code"
                                     class="form-select @error('supplier_code') is-invalid @enderror" required>
-                                    <option value="">සැපයුම්කරුවෙකු තෝරන්න</option>
+                                    <option value="">Select a Supplier</option>
                                     @foreach ($suppliers as $supplier)
                                         <option value="{{ $supplier->code }}" {{ old('supplier_code') == $supplier->code ? 'selected' : '' }}>{{ $supplier->name }} ({{ $supplier->code }})</option>
                                     @endforeach
@@ -296,9 +308,9 @@
                             </div>
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="item_select" class="form-label">අයිතමය තෝරන්න</label>
+                                <label for="item_select" class="form-label">Select Item</label>
                                 <select id="item_select" class="form-select @error('item_code') is-invalid @enderror">
-                                    <option value="">අයිතමය තෝරන්න</option>
+                                    <option value="">Select an Item</option>
                                     @foreach ($items as $item)
                                         <option value="{{ $item->item_code }}" data-code="{{ $item->code }}"
                                             data-item-code="{{ $item->item_code }}" data-item-name="{{ $item->item_name }}"
@@ -319,7 +331,7 @@
                             <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="weight" class="form-label">බර (kg)</label>
+                                <label for="weight" class="form-label">Weight (kg)</label>
                                 <input type="number" name="weight" id="weight" step="0.01"
                                     class="form-control @error('weight') is-invalid @enderror"
                                     value="{{ old('weight') }}" required>
@@ -331,7 +343,7 @@
                             </div>
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="price_per_kg" class="form-label">මිල අනුව Kg</label>
+                                <label for="price_per_kg" class="form-label">Price per Kg</label>
                                 <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
                                     class="form-control @error('price_per_kg') is-invalid @enderror"
                                     value="{{ old('price_per_kg') }}" required>
@@ -343,7 +355,7 @@
                             </div>
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="total" class="form-label">සමස්ත</label>
+                                <label for="total" class="form-label">Total</label>
                                 <input type="number" name="total" id="total"
                                     class="form-control bg-light @error('total') is-invalid @enderror"
                                     value="{{ old('total') }}" readonly>
@@ -355,7 +367,7 @@
                             </div>
 
                             <div class="col-md-6 col-lg-4">
-                                <label for="packs" class="form-label">ඇසුරුම්</label>
+                                <label for="packs" class="form-label">Packs</label>
                                 <input type="number" name="packs" id="packs"
                                     class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
                                     required>
@@ -378,22 +390,23 @@
                     {{-- The table will now always show all sales, regardless of Processed status --}}
                     @if ($sales->count())
                         <div class="mt-5">
-                            <h3 class="mb-4 text-center">සියලුම විකුණුම් වාර්තා</h3> {{-- Changed heading --}}
-                            <h5 class="text-end mb-3"><strong>මුළු විකුණුම් වටිනාකම:</strong> Rs. {{ number_format($totalSum, 2) }}</h5>
+                            <h3 class="mb-4 text-center">All Sales Records</h3> {{-- Changed heading --}}
+                            <h5 class="text-end mb-3"><strong>Total Sales Value:</strong> Rs. {{ number_format($totalSum, 2) }}</h5>
 
                             <div class="table-responsive">
                                 <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden">
                                     <thead class="table-light">
                                         <tr>
-                                            <th scope="col">කේතය</th>
-                                            <th scope="col">අයිතම කේතය</th>
-                                            <th scope="col">අයිතමය</th>
-                                            <th scope="col">බර (kg)</th>
-                                            <th scope="col">මිල/Kg</th>
-                                            <th scope="col">සමස්ත</th>
-                                            <th scope="col">ඇසුරුම්</th>
+                                            <th scope="col">Code</th>
+                                            <th scope="col">Item Code</th>
+                                            <th scope="col">Item</th>
+                                            <th scope="col">Weight (kg)</th>
+                                            <th scope="col">Price/Kg</th>
+                                            <th scope="col">Total</th>
+                                            <th scope="col">Packs</th>
                                             {{-- Add new columns for Processed and Bill Printed flags --}}
-                                          
+                                            <th scope="col">Proc</th>
+                                            <th scope="col">Bill P.</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -406,7 +419,8 @@
                                                 <td>{{ number_format($sale->price_per_kg, 2) }}</td>
                                                 <td>{{ number_format($sale->total, 2) }}</td>
                                                 <td>{{ $sale->packs }}</td>
-                                               
+                                                <td>{{ $sale->Processed }}</td>
+                                                <td>{{ $sale->bill_printed }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -414,7 +428,7 @@
                             </div>
                         </div>
                     @else
-                        <div class="mt-5 alert alert-info text-center">විකුණුම් වාර්තා හමු නොවීය.</div>
+                        <div class="mt-5 alert alert-info text-center">No sales records found.</div>
                     @endif
                 </div>
             </div>
@@ -422,8 +436,8 @@
             {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
             <div class="col-md-3">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h3 class="mb-4 text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා</h3>
-                 
+                    <h3 class="mb-4 text-center">Unprinted Sales Records</h3>
+
 
                     @if ($salesNotPrinted->count())
                         <div class="unprinted-sales-list">
@@ -443,10 +457,10 @@
                                             <table>
                                                 <thead>
                                                     <tr>
-                                                        <th>අයිතමය</th>
-                                                        <th>බර (kg)</th>
-                                                        <th>මිල/Kg</th>
-                                                        <th>සමස්ත</th>
+                                                        <th>Item</th>
+                                                        <th>Wt (kg)</th>
+                                                        <th>Price/Kg</th>
+                                                        <th>Total</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -461,12 +475,12 @@
                                                 </tbody>
                                             </table>
                                             <div class="total-for-customer">
-                                                පාරිභෝගික එකතුව: රු. {{ number_format($totalForCustomer, 2) }}
+                                                Customer Total: Rs. {{ number_format($totalForCustomer, 2) }}
                                             </div>
                                             <div class="mt-2 text-center">
                                                 <button class="btn btn-sm btn-outline-primary print-bill-btn"
                                                     data-customer-code="{{ $customerCode }}">
-                                                    බිල්පත මුද්‍රණය කරන්න
+                                                    Print Bill
                                                 </button>
                                             </div>
                                         </div>
@@ -475,7 +489,7 @@
                             </ul>
                         </div>
                     @else
-                        <div class="alert alert-info text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා හමු නොවීය.</div>
+                        <div class="alert alert-info text-center">No unprinted sales records found.</div>
                     @endif
                 </div>
             </div>
@@ -487,16 +501,16 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="salesDetailModalLabel">සඳහා විකුණුම් විස්තර <span id="modalCustomerName"></span> (<span id="modalCustomerCode"></span>)</h5>
+                    <h5 class="modal-title" id="salesDetailModalLabel">Sales Details for <span id="modalCustomerName"></span> (<span id="modalCustomerCode"></span>)</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>බිල්පත් වර්ගය:</strong> <span id="modalBillType"></span></p>
+                    <p><strong>Bill Type:</strong> <span id="modalBillType"></span></p>
                     <div id="modalSalesTableContainer">
                         {{-- Sales data will be injected here by JavaScript --}}
                     </div>
                     <div class="total-for-customer text-end mt-3">
-                        මෙම පාරිභෝගිකයා සඳහා මුළු මුදල: රු. <span id="modalCustomerTotal">0.00</span>
+                        Total for this Customer: Rs. <span id="modalCustomerTotal">0.00</span>
                     </div>
                     <div class="text-center mt-3" id="modalPrintButtonContainer">
                         {{-- Print button for unprinted bills will be shown here --}}
@@ -530,8 +544,9 @@
         const totalField = document.getElementById('total');
         const packsField = document.getElementById('packs');
         const grnDisplay = document.getElementById('grn_display');
-        const customerSelect = document.getElementById('customer_code');
-        const customerCodeField = document.getElementById('customer_code_hidden');
+
+        const customerSelect = document.getElementById('customer_code_select'); // Renamed ID
+        const newCustomerCodeField = document.getElementById('new_customer_code'); // New input field
         const customerNameField = document.getElementById('customer_name_hidden');
 
         function calculateTotal() {
@@ -573,8 +588,8 @@
                 }
             });
 
-            $('#customer_code').select2({
-                dropdownParent: $('#customer_code').parent(), // Ensure dropdown appears correctly
+            $('#customer_code_select').select2({ // Updated ID here
+                dropdownParent: $('#customer_code_select').parent(), // Ensure dropdown appears correctly
                 placeholder: "-- Select Customer --",
                 width: '100%',
                 allowClear: true,
@@ -611,16 +626,17 @@
                 weightField.focus();
             });
 
-            $('#customer_code').on('select2:select', function(e) {
+            $('#customer_code_select').on('select2:select', function(e) { // Updated ID here
                 const selectedOption = $(e.currentTarget).find('option:selected');
                 const selectedCustomerCode = selectedOption.val();
                 const selectedCustomerName = selectedOption.data('customer-name'); // Get the full name from data attribute
 
-                customerCodeField.value = selectedCustomerCode || '';
+                newCustomerCodeField.value = selectedCustomerCode || ''; // Set the new input field
+                newCustomerCodeField.readOnly = true; // Make it read-only
                 customerNameField.value = selectedCustomerName || '';
 
                 // You might want to focus on the next logical field after selecting a customer
-                supplierSelect.focus();
+                $('#grn_select').select2('open');
             });
 
 
@@ -635,13 +651,24 @@
                 calculateTotal();
             });
 
-            $('#customer_code').on('select2:clear', function() {
-                customerCodeField.value = '';
+            $('#customer_code_select').on('select2:clear', function() { // Updated ID here
+                newCustomerCodeField.value = ''; // Clear the new input field
+                newCustomerCodeField.readOnly = false; // Make it editable again
                 customerNameField.value = '';
             });
 
-            // Handle old input values on page load
-            @if (old('grn_no') || old('customer_code'))
+            // Handle manual input in new_customer_code
+            $('#new_customer_code').on('input', function() {
+                // If typing, ensure the select2 is cleared
+                if ($(this).val() !== '') {
+                    $('#customer_code_select').val(null).trigger('change'); // Clear select2
+                    customerNameField.value = ''; // Clear customer name if manually typing code
+                }
+            });
+
+
+          // Handle old input values on page load
+            @if (old('customer_code_select') || old('customer_code'))
                 const oldGrnCode = "{{ old('code') }}";
                 const oldSupplierCode = "{{ old('supplier_code') }}";
                 const oldItemCode = "{{ old('item_code') }}";
@@ -660,15 +687,32 @@
                     $('#packs').val(oldPacks);
                     calculateTotal();
                 }
-                const oldCustomerCodeValueForHidden = "{{ old('customer_code') }}";
-                const oldCustomerNameValueForHidden = "{{ old('customer_name') }}"; // This is already being set correctly by the customer_code change event
-                if (oldCustomerCodeValueForHidden) {
-                    $('#customer_code').val(oldCustomerCodeValueForHidden).trigger('change'); // Trigger change for Select2 to update
-                    customerCodeField.value = oldCustomerCodeValueForHidden;
-                    customerNameField.value = oldCustomerNameValueForHidden;
+
+                // Handle old values for the new customer code input and select
+                const oldSelectedCustomerCode = "{{ old('customer_code_select') }}";
+                const oldEnteredCustomerCode = "{{ old('customer_code') }}";
+                const oldCustomerNameValue = "{{ old('customer_name') }}";
+
+                if (oldSelectedCustomerCode) {
+                    // If a customer was selected from the dropdown
+                    $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
+                    newCustomerCodeField.value = oldSelectedCustomerCode;
+                    newCustomerCodeField.readOnly = true;
+                    customerNameField.value = oldCustomerNameValue;
+                } else if (oldEnteredCustomerCode) {
+                    // If a customer code was manually entered (and not selected from dropdown)
+                    newCustomerCodeField.value = oldEnteredCustomerCode;
+                    newCustomerCodeField.readOnly = false; // Keep it editable if it was manually entered
+                    customerNameField.value = oldCustomerNameValue; // This might be empty if it was a new customer
                 }
+                // Open the grn_select Select2 dropdown
+                $('#grn_select').select2('open');
             @endif
 
+            // Listen for when the GRN Select2 dropdown is opened and focus its search field
+            $('#grn_select').on('select2:open', function() {
+                $('.select2-container--open .select2-search__field').focus();
+            });
 
             // --- JavaScript for F1 and F5 Key Presses (ORIGINAL LOGIC RESTORED) ---
             document.addEventListener('keydown', function(e) {
@@ -693,7 +737,7 @@
                     const now = new Date();
                     const date = now.toLocaleDateString();
                     const time = now.toLocaleTimeString();
-                    const customerCode = document.getElementById('customer_code_hidden').value || 'N/A';
+                    const customerCode = document.getElementById('new_customer_code').value || 'N/A'; // Get from the new input
                     const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
                     let itemsHtml = '';
                     let totalItemsCount = 0;
@@ -789,7 +833,8 @@
                                 .then(data => {
                                     console.log('F1: Sales marked as printed and processed response:',
                                         data); // DEBUG
-                                    // Reload the page to update the lists, as sales should now move from 'Unprocessed' to 'Printed' (or disappear)
+                                    // Set a flag in sessionStorage to focus on customer select after reload
+                                    sessionStorage.setItem('focusOnCustomerSelect', 'true');
                                     window.location.reload();
                                 })
                                 .catch(error => {
@@ -827,7 +872,8 @@
                             console.log('Response from sales.markAllAsProcessed (F5):', data); // DEBUG
                             if (data.success) {
                                 console.log(data.message);
-                                // Refresh the page to reflect changes
+                                // Set a flag in sessionStorage to focus on customer select after reload
+                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
                                 window.location.reload();
                             } else {
                                 console.error('Server reported an error:', data.message);
@@ -878,10 +924,10 @@
                         <table class="table table-sm table-bordered">
                             <thead>
                                 <tr>
-                                    <th>අයිතමය</th>
-                                    <th>බර(kg)</th>
-                                    <th>මිල/Kg</th>
-                                    <th>සමස්ත</th>
+                                    <th>Item</th>
+                                    <th>Wt (kg)</th>
+                                    <th>Price/Kg</th>
+                                    <th>Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -939,6 +985,8 @@
                         success: function(response) {
                             if (response.success) {
                                 alert(response.message);
+                                // Set a flag in sessionStorage to focus on customer select after reload
+                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
                                 location.reload(); // Reload the page to update the lists
                             } else {
                                 alert('Error: ' + response.message);
@@ -951,6 +999,12 @@
                     });
                 }
             });
+
+            // Check sessionStorage on page load for F1/F5 focus
+            if (sessionStorage.getItem('focusOnCustomerSelect') === 'true') {
+                $('#customer_code_select').select2('open'); // Open the Select2 dropdown
+                sessionStorage.removeItem('focusOnCustomerSelect'); // Clear the flag
+            }
         });
     </script>
 @endsection
