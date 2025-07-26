@@ -80,7 +80,6 @@ class SalesEntryController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('success', 'GRN Entry successfully added to Sales!')
                 ->withInput($request->only(['customer_code', 'customer_name']));
         } catch (\Exception | \Illuminate\Database\QueryException $e) {
             Log::error('Failed to add sales entry: ' . $e->getMessage());

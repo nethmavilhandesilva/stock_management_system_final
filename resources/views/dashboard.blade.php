@@ -207,7 +207,7 @@
             {{-- NEW SECTION: Printed Sales Records (bill_printed = 'Y') - Left Column --}}
             <div class="col-md-3">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h3 class="mb-4 text-center">මුද්‍රිත විකුණුම් වාර්තා</h3>
+                   <h6 class="mb-1 text-center">මුද්‍රිත විකුණුම් වාර්තා</h6>
 
                     @if ($salesPrinted->count())
                         <div class="printed-sales-list">
@@ -220,7 +220,7 @@
                                     <li>
                                         {{-- Display the Customer Name/Code header --}}
                                         <div class="customer-group-header">
-                                            <strong>{{ $customerName }} ({{ $customerCode }})</strong>
+                                            <strong> ({{ $customerCode }})</strong>
                                         </div>
 
                                         <ul>
@@ -288,77 +288,89 @@
                         @csrf
 
                         {{-- NEW TOP ROW: Select Customer Dropdown --}}
-                        <div class="row justify-content-end" style="margin-top: -10px;">
-                            <div class="col-md-4"> {{-- Reduced width from 6 to 4 for compact size --}}
-                                <select name="customer_code_select" id="customer_code_select"
-                                    class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror"
-                                    style="height: 26px; font-size: 12px; padding-top: 2px; padding-bottom: 2px;">
-                                    <option value="" disabled selected style="color: #999;">-- Select Customer --</option>
-                                    @foreach ($customers as $customer)
-                                        <option value="{{ $customer->short_name }}"
-                                            data-customer-code="{{ $customer->short_name }}"
-                                            data-customer-name="{{ $customer->name }}"
-                                            {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
-                                            {{ $customer->name }} ({{ $customer->short_name }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('customer_code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
+                      
+<div class="row justify-content-end" style="margin-top: -15px;"> {{-- Reduced margin-top for compactness --}}
+    <div class="col-md-3"> {{-- Further reduced width for smaller size --}}
+        <select name="customer_code_select" id="customer_code_select"
+            class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror"
+            style="
+                height: 24px;
+                font-size: 11px;
+                padding-top: 1px;
+                padding-bottom: 1px;
+                padding-left: 6px;
+                line-height: 1.2;
+            ">
+            <option value="" disabled selected style="color: #999;">-- පාරිභෝගිකයා තෝරන්න --</option>
+            @foreach ($customers as $customer)
+                <option value="{{ $customer->short_name }}"
+                    data-customer-code="{{ $customer->short_name }}"
+                    data-customer-name="{{ $customer->name }}"
+                    {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
+                    {{ $customer->name }} ({{ $customer->short_name }})
+                </option>
+            @endforeach
+        </select>
+        @error('customer_code')
+            <div class="invalid-feedback" style="font-size: 11px;">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+
+{{-- Second Row: Customer Code Input and GRN Entry --}}
+<div class="row g-3 form-row align-items-start mt-1"> {{-- Changed mt-2 to mt-1 for less space --}}
+    {{-- Customer Code Input (col-md-6, adjusted width) --}}
+    <div class="col-md-6" style="margin-bottom: 2px;"> {{-- Reduced margin-bottom --}}
+        <label for="new_customer_code" class="form-label small">පාරිභෝගික කේතය</label>
+        <input type="text" name="customer_code" id="new_customer_code"
+            class="form-control form-control-sm @error('customer_code') is-invalid @enderror"
+            value="{{ old('customer_code') }}" placeholder="Enter or select customer code"
+            style="height: 28px; font-size: 12px;" required>
+        @error('customer_code')
+            <div class="invalid-feedback">
+                {{ $message }}
+            </div>
+        @enderror
+    </div>
+
+    {{-- GRN Entry Field (col-md-6, adjusted width) --}}
+    <div class="col-md-6" style="margin-bottom: 2px;"> {{-- Reduced margin-bottom --}}
+        <label for="grn_display" class="form-label small">GRN Entry</label>
+        <input type="text" id="grn_display" class="form-control form-control-sm"
+            placeholder="Select GRN Entry..." readonly style="height: 28px; font-size: 12px;">
+        <select id="grn_select" class="form-select form-select-sm select2 d-none">
+            <option value="">-- Select GRN Entry --</option>
+            @foreach ($entries as $entry)
+                <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
+                    data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
+                    data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
+                    data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
+                    data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
+                    data-txn-date="{{ $entry->txn_date }}">
+                    {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
+                    {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
+                    {{ $entry->txn_date }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    {{-- Hidden Customer Name (kept for form submission) --}}
+    <input type="hidden" name="customer_name" id="customer_name_hidden"
+        value="{{ old('customer_name') }}">
+</div>
+
+<hr style="margin: 0.1rem 0; height: 1px;"> {{-- Reduced margin for the horizontal rule --}}
 
 
-                        {{-- Second Row: Customer Code Input and GRN Entry --}}
-                        <div class="row g-3 form-row align-items-start mt-2">
-                            {{-- Added mt-2 for spacing from the select above --}}
-                            {{-- Customer Code Input (col-md-6, adjusted width) --}}
-                            <div class="col-md-6" style="margin-bottom: 4px;">
-                                <label for="new_customer_code" class="form-label small">පාරිභෝගික කේතය</label>
-                                <input type="text" name="customer_code" id="new_customer_code"
-                                    class="form-control form-control-sm @error('customer_code') is-invalid @enderror"
-                                    value="{{ old('customer_code') }}" placeholder="Enter or select customer code"
-                                    style="height: 28px; font-size: 12px;" required>
-                                @error('customer_code')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
 
-                            {{-- GRN Entry Field (col-md-6, adjusted width) --}}
-                            <div class="col-md-6" style="margin-bottom: 4px;">
-                                <label for="grn_display" class="form-label small">GRN Entry</label>
-                                <input type="text" id="grn_display" class="form-control form-control-sm"
-                                    placeholder="Select GRN Entry..." readonly style="height: 28px; font-size: 12px;">
-                                <select id="grn_select" class="form-select form-select-sm select2 d-none">
-                                    <option value="">-- Select GRN Entry --</option>
-                                    @foreach ($entries as $entry)
-                                        <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
-                                            data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
-                                            data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
-                                            data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
-                                            data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
-                                            data-txn-date="{{ $entry->txn_date }}">
-                                            {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
-                                            {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
-                                            {{ $entry->txn_date }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
 
-                            {{-- Hidden Customer Name (kept for form submission) --}}
-                            <input type="hidden" name="customer_name" id="customer_name_hidden"
-                                value="{{ old('customer_name') }}">
-                        </div>
 
-                        <hr style="margin: 0.3rem 0; height: 1px;">
 
-                   <div class="row g-3 form-row">
-    <div class="col-md-6">
-        <label for="supplier_code" class="form-label" style="font-size: 0.9rem;">සැපයුම්කරු</label>
+    
+<div class="row g-3 form-row">
+    {{-- Supplier Code --}}
+    <div class="col-md-6 mb-0">
         <select name="supplier_code_display" id="supplier_code_display"
             class="form-select form-select-sm @error('supplier_code') is-invalid @enderror" disabled
             style="
@@ -367,8 +379,9 @@
                 appearance: none;         /* Standard property */
                 background-image: none;   /* Remove any default arrow image */
                 padding-right: 12px;      /* Adjust padding if text goes too far right */
+                color: #888; /* Light color for placeholder-like text */
             ">
-            <option value="">Select a Supplier</option>
+            <option value="" disabled selected>සැපයුම්කරු (Supplier)</option> {{-- Placeholder as option --}}
             @php
                 $currentSupplierCode = old('supplier_code', $sale->supplier_code ?? '');
             @endphp
@@ -389,106 +402,113 @@
         @enderror
     </div>
 
+    {{-- Item Select --}}
+    <div class="col-md-6 mb-0">
+        <input type="hidden" name="item_code" value="{{ old('item_code') }}">
 
+        <select id="item_select"
+            class="form-select form-select-sm @error('item_code') is-invalid @enderror"
+            disabled
+            style="
+                background-color: #e9ecef;
+                cursor: not-allowed;
+                pointer-events: none;
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                background-image: none;
+                color: #888; /* Light color for placeholder-like text */
+            ">
+            <option value="" disabled selected>අයිතමය තෝරන්න (Select Item)</option> {{-- Placeholder as option --}}
+            @foreach ($items as $item)
+                <option value="{{ $item->item_code }}"
+                    data-code="{{ $item->code }}"
+                    data-item-code="{{ $item->item_code }}"
+                    data-item-name="{{ $item->item_name }}"
+                    {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
+                    {{ $item->item_name }} ({{ $item->item_code }})
+                </option>
+            @endforeach
+        </select>
 
-                           <div class="col-md-6">
-    <label for="item_select" class="form-label" style="font-size: 0.9rem;">අයිතමය තෝරන්න</label>
+        @error('item_code')
+            <div class="invalid-feedback" style="font-size: 0.8rem;">
+                {{ $message }}
+            </div>
+        @enderror
+    </div>
 
-    <!-- Hidden input to retain the selected value for form submission -->
-    <input type="hidden" name="item_code" value="{{ old('item_code') }}">
+    {{-- Hidden inputs --}}
+    <input type="hidden" name="code" id="code" value="{{ old('code') }}">
+    <input type="hidden" name="item_code" id="item_code" value="{{ old('item_code') }}">
+    <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
 
-    <select id="item_select"
-        class="form-select form-select-sm @error('item_code') is-invalid @enderror"
-        disabled
-        style="
-            background-color: #e9ecef;
-            cursor: not-allowed;
-            pointer-events: none;
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            background-image: none;
-        ">
-        <option value="">Select an Item</option>
-        @foreach ($items as $item)
-            <option value="{{ $item->item_code }}"
-                data-code="{{ $item->code }}"
-                data-item-code="{{ $item->item_code }}"
-                data-item-name="{{ $item->item_name }}"
-                {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
-                {{ $item->item_name }} ({{ $item->item_code }})
-            </option>
-        @endforeach
-    </select>
+    {{-- Weight --}}
+    <div class="col-md-3 mb-0">
+        <input type="number" name="weight" id="weight" step="0.01"
+            class="form-control form-control-sm @error('weight') is-invalid @enderror"
+            value="{{ old('weight') }}" placeholder="බර (kg)" {{-- Placeholder added --}}
+            style="color: #888;" {{-- Light color for placeholder --}}
+            required>
+        @error('weight')
+            <div class="invalid-feedback" style="font-size: 0.8rem;">
+                {{ $message }}
+            </div>
+        @enderror
+    </div>
 
-    @error('item_code')
+   {{-- Price per KG --}}
+<div class="col-md-3 mb-0">
+    <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+        class="form-control form-control-sm @error('price_per_kg') is-invalid @enderror"
+        value="{{ old('price_per_kg') }}"
+        placeholder="කිලෝග්‍රෑමයකට මිල (Price/kg)"
+        style="color: black;" {{-- Changed to black for typed text --}}
+        required>
+    @error('price_per_per_kg')
         <div class="invalid-feedback" style="font-size: 0.8rem;">
             {{ $message }}
         </div>
     @enderror
 </div>
 
+   {{-- Total --}}
+<div class="col-md-3 mb-0">
+    <input type="number" name="total" id="total"
+        class="form-control form-control-sm bg-light @error('total') is-invalid @enderror"
+        value="{{ old('total') }}"
+        placeholder="සමස්ත (Total)"
+        style="color: black;" {{-- Changed to black for the displayed total --}}
+        readonly>
+    @error('total')
+        <div class="invalid-feedback" style="font-size: 0.8rem;">
+            {{ $message }}
+        </div>
+    @enderror
+</div>
 
-                            <input type="hidden" name="code" id="code" value="{{ old('code') }}">
-                            <input type="hidden" name="item_code" id="item_code" value="{{ old('item_code') }}">
-                            <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
-
-                            <div class="col-md-3">
-                                <label for="weight" class="form-label" style="font-size: 0.9rem;">බර (kg)</label>
-                                <input type="number" name="weight" id="weight" step="0.01"
-                                    class="form-control form-control-sm @error('weight') is-invalid @enderror"
-                                    value="{{ old('weight') }}" required>
-                                @error('weight')
-                                    <div class="invalid-feedback" style="font-size: 0.8rem;">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label for="price_per_kg" class="form-label" style="font-size: 0.9rem;">කිලෝග්‍රෑමයකට
-                                    මිල</label>
-                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-                                    class="form-control form-control-sm @error('price_per_kg') is-invalid @enderror"
-                                    value="{{ old('price_per_kg') }}" required>
-                                @error('price_per_kg')
-                                    <div class="invalid-feedback" style="font-size: 0.8rem;">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label for="total" class="form-label" style="font-size: 0.9rem;">සමස්ත</label>
-                                <input type="number" name="total" id="total"
-                                    class="form-control form-control-sm bg-light @error('total') is-invalid @enderror"
-                                    value="{{ old('total') }}" readonly>
-                                @error('total')
-                                    <div class="invalid-feedback" style="font-size: 0.8rem;">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label for="packs" class="form-label">ඇසුරුම්</label>
-                                <input type="number" name="packs" id="packs"
-                                    class="form-control form-control-sm @error('packs') is-invalid @enderror"
-                                    value="{{ old('packs') }}" required>
-                                @error('packs')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-                        </div>
+  {{-- Packs --}}
+<div class="col-md-3 mb-0">
+    <input type="number" name="packs" id="packs"
+        class="form-control form-control-sm @error('packs') is-invalid @enderror"
+        value="{{ old('packs') }}"
+        placeholder="ඇසුරුම් (Packs)"
+        style="color: black;" {{-- Changed to black for typed text --}}
+        required>
+    @error('packs')
+        <div class="invalid-feedback">
+            {{ $message }}
+        </div>
+    @enderror
+</div>
+</div>
 
                         {{-- Action Buttons --}}
                         <div class="d-grid gap-2 d-md-flex justify-content-center mt-4">
                             <input type="hidden" name="sale_id" id="sale_id">
-                            <button type="submit" class="btn btn-primary btn-sm shadow-sm" id="addSalesEntryBtn">
-                                <i class="material-icons me-2">add_circle_outline</i>Add Sales Entry
-                            </button>
+                          <button type="submit" class="btn btn-primary btn-sm shadow-sm d-none" id="addSalesEntryBtn">
+    <i class="material-icons me-2">add_circle_outline</i>Add Sales Entry
+</button>
                             <button type="button" class="btn btn-success btn-sm shadow-sm" id="updateSalesEntryBtn" style="display:none;">
                                 <i class="material-icons me-2">edit</i>Update Sales Entry
                             </button>
@@ -505,10 +525,7 @@
 
                     {{-- Main Sales Table - ALWAYS RENDERED --}}
                     <div class="mt-2">
-                        <h5 class="text-end mb-3" style="font-size: 0.85rem;">
-                            <strong>Total Sales Value:</strong> Rs. <span
-                                id="mainTotalSalesValue">{{ number_format($totalSum, 2) }}</span>
-                        </h5>
+                        
 
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
@@ -532,6 +549,10 @@
                                     {{-- But the JS already handles the "No sales records found" so it's not strictly necessary. --}}
                                 </tbody>
                             </table>
+                             <h5 class="text-end mb-3" style="font-size: 0.85rem;">
+                            <strong>Total Sales Value:</strong> Rs. <span
+                                id="mainTotalSalesValue">{{ number_format($totalSum, 2) }}</span>
+                        </h5>
                         </div>
                     </div>
                 </div>
@@ -540,8 +561,7 @@
             {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
             <div class="col-md-3">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
-                    <h3 class="mb-4 text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා</h3>
-
+                  <h6 class="mb-1 text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා</h6>
                     @if ($salesNotPrinted->count())
                         <div class="unprinted-sales-list">
                             <ul>
