@@ -24,27 +24,30 @@ class SalesEntryController extends Controller
         $entries = GrnEntry::latest()->take(10)->get();
 
         // Fetch ALL sales records to display
-         $sales = Sale::where('Processed', 'N')->get();
+        $sales = Sale::where('Processed', 'N')->get();
         $customers = Customer::all();
         $totalSum = $sales->sum('total'); // Sum will now be for all displayed sales
         $unprocessedSales = Sale::where('Processed', 'N')->get();
         $salesPrinted = Sale::where('bill_printed', 'Y')
-                    ->orderBy('customer_name')
-                    ->orderBy('bill_no') // Or ->orderBy('created_at') for chronological order
-                    ->get();
-         $totalUnprocessedSum = $unprocessedSales->sum('total');
-          $salesNotPrinted = Sale::where('bill_printed', 'N')
-                            ->orderBy('customer_code')
-                            ->get();
-                          
+            ->orderBy('customer_name')
+            ->orderBy('bill_no') // Or ->orderBy('created_at') for chronological order
+            ->get()
+            ->groupBy('customer_code');
+        $totalUnprocessedSum = $unprocessedSales->sum('total');
+        $salesNotPrinted = Sale::where('bill_printed', 'N')
+            ->orderBy('customer_code')
+            ->get()
+            ->groupBy('customer_code');
+           
+
 
         // Calculate total for unprocessed sales
         $totalUnprintedSum = Sale::where('bill_printed', 'N')->sum('total');
 
-        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum','unprocessedSales','salesPrinted','totalUnprocessedSum','salesNotPrinted','totalUnprintedSum'));
+        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum'));
     }
 
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -87,39 +90,39 @@ class SalesEntryController extends Controller
         }
     }
 
-    
-    
+
+
     // In your SalesController.php
 
-   public function markAllAsProcessed(Request $request)
-{
-    try {
-        DB::beginTransaction();
+    public function markAllAsProcessed(Request $request)
+    {
+        try {
+            DB::beginTransaction();
 
-        Sale::where('Processed', 'N')->update([
-            'Processed' => 'Y',
-            'bill_printed' => DB::raw("IFNULL(bill_printed, 'N')") // Set to 'N' only if currently NULL
-        ]);
+            Sale::where('Processed', 'N')->update([
+                'Processed' => 'Y',
+                'bill_printed' => DB::raw("IFNULL(bill_printed, 'N')") // Set to 'N' only if currently NULL
+            ]);
 
-        DB::commit();
+            DB::commit();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'All sales with Processed = N are now marked as processed, and NULL bill_printed values set to N.'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'All sales with Processed = N are now marked as processed, and NULL bill_printed values set to N.'
+            ]);
 
-    } catch (\Exception $e) {
-        DB::rollBack();
+        } catch (\Exception $e) {
+            DB::rollBack();
 
-        \Log::error('Error marking all sales as processed: ' . $e->getMessage());
+            \Log::error('Error marking all sales as processed: ' . $e->getMessage());
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to mark sales as processed: ' . $e->getMessage()
-        ], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark sales as processed: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
-public function markAsPrinted(Request $request)
+    public function markAsPrinted(Request $request)
     {
         // Debugging step: Log the incoming request data
         \Log::info('markAsPrinted Request Data:', $request->all());
