@@ -356,46 +356,78 @@
 
                         <hr style="margin: 0.3rem 0; height: 1px;">
 
-                        <div class="row g-3 form-row">
-                            <div class="col-md-6">
-                                <label for="supplier_code" class="form-label" style="font-size: 0.9rem;">සැපයුම්කරු</label>
-                                <select name="supplier_code" id="supplier_code"
-                                    class="form-select form-select-sm @error('supplier_code') is-invalid @enderror" required>
-                                    <option value="">Select a Supplier</option>
-                                    @foreach ($suppliers as $supplier)
-                                        <option value="{{ $supplier->code }}"
-                                            {{ old('supplier_code') == $supplier->code ? 'selected' : '' }}>
-                                            {{ $supplier->name }} ({{ $supplier->code }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('supplier_code')
-                                    <div class="invalid-feedback" style="font-size: 0.8rem;">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
+                   <div class="row g-3 form-row">
+    <div class="col-md-6">
+        <label for="supplier_code" class="form-label" style="font-size: 0.9rem;">සැපයුම්කරු</label>
+        <select name="supplier_code_display" id="supplier_code_display"
+            class="form-select form-select-sm @error('supplier_code') is-invalid @enderror" disabled
+            style="
+                -webkit-appearance: none; /* For Chrome, Safari, Opera */
+                -moz-appearance: none;    /* For Firefox */
+                appearance: none;         /* Standard property */
+                background-image: none;   /* Remove any default arrow image */
+                padding-right: 12px;      /* Adjust padding if text goes too far right */
+            ">
+            <option value="">Select a Supplier</option>
+            @php
+                $currentSupplierCode = old('supplier_code', $sale->supplier_code ?? '');
+            @endphp
+            @foreach ($suppliers as $supplier)
+                <option value="{{ $supplier->code }}"
+                    {{ $currentSupplierCode == $supplier->code ? 'selected' : '' }}>
+                    {{ $supplier->name }} ({{ $supplier->code }})
+                </option>
+            @endforeach
+        </select>
+        
+        <input type="hidden" name="supplier_code" id="supplier_code" value="{{ $currentSupplierCode }}">
 
-                            <div class="col-md-6">
-                                <label for="item_select" class="form-label" style="font-size: 0.9rem;">අයිතමය තෝරන්න</label>
-                                <select id="item_select"
-                                    class="form-select form-select-sm @error('item_code') is-invalid @enderror">
-                                    <option value="">Select an Item</option>
-                                    @foreach ($items as $item)
-                                        <option value="{{ $item->item_code }}" data-code="{{ $item->code }}"
-                                            data-item-code="{{ $item->item_code }}"
-                                            data-item-name="{{ $item->item_name }}"
-                                            {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
-                                            {{ $item->item_name }} ({{ $item->item_code }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('item_code')
-                                    <div class="invalid-feedback" style="font-size: 0.8rem;">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
+        @error('supplier_code')
+            <div class="invalid-feedback" style="font-size: 0.8rem;">
+                {{ $message }}
+            </div>
+        @enderror
+    </div>
+
+
+
+                           <div class="col-md-6">
+    <label for="item_select" class="form-label" style="font-size: 0.9rem;">අයිතමය තෝරන්න</label>
+
+    <!-- Hidden input to retain the selected value for form submission -->
+    <input type="hidden" name="item_code" value="{{ old('item_code') }}">
+
+    <select id="item_select"
+        class="form-select form-select-sm @error('item_code') is-invalid @enderror"
+        disabled
+        style="
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            pointer-events: none;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: none;
+        ">
+        <option value="">Select an Item</option>
+        @foreach ($items as $item)
+            <option value="{{ $item->item_code }}"
+                data-code="{{ $item->code }}"
+                data-item-code="{{ $item->item_code }}"
+                data-item-name="{{ $item->item_name }}"
+                {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
+                {{ $item->item_name }} ({{ $item->item_code }})
+            </option>
+        @endforeach
+    </select>
+
+    @error('item_code')
+        <div class="invalid-feedback" style="font-size: 0.8rem;">
+            {{ $message }}
+        </div>
+    @enderror
+</div>
+
 
                             <input type="hidden" name="code" id="code" value="{{ old('code') }}">
                             <input type="hidden" name="item_code" id="item_code" value="{{ old('item_code') }}">

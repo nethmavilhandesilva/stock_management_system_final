@@ -164,7 +164,7 @@ class SalesEntryController extends Controller
     {
         $validatedData = $request->validate([
             'customer_code' => 'required|string|max:255',
-            'customer_name' => 'required|string|max:255',
+          'customer_name' => 'nullable|string|max:255',
             'code' => 'required|string|max:255', // This is the GRN Code
             'supplier_code' => 'required|string|max:255',
             'item_code' => 'required|string|max:255',
