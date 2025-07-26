@@ -284,7 +284,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('grn.store') }}">
+                    <form method="POST" action="{{ route('grn.store') }}" id="salesEntryForm">
                         @csrf
 
                         {{-- NEW TOP ROW: Select Customer Dropdown --}}
@@ -451,9 +451,20 @@
                             </div>
                         </div>
 
+                        {{-- Action Buttons --}}
                         <div class="d-grid gap-2 d-md-flex justify-content-center mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg shadow-sm d-none">
+                            <input type="hidden" name="sale_id" id="sale_id">
+                            <button type="submit" class="btn btn-primary btn-sm shadow-sm" id="addSalesEntryBtn">
                                 <i class="material-icons me-2">add_circle_outline</i>Add Sales Entry
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm shadow-sm" id="updateSalesEntryBtn" style="display:none;">
+                                <i class="material-icons me-2">edit</i>Update Sales Entry
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm shadow-sm" id="deleteSalesEntryBtn" style="display:none;">
+                                <i class="material-icons me-2">delete</i>Delete Sales Entry
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm shadow-sm" id="cancelEntryBtn" style="display:none;">
+                                <i class="material-icons me-2">cancel</i>Cancel / New Entry
                             </button>
                         </div>
                     </form>
@@ -565,6 +576,14 @@
         const newCustomerCodeField = document.getElementById('new_customer_code');
         const customerNameField = document.getElementById('customer_name_hidden');
         newCustomerCodeField.focus();
+
+        const salesEntryForm = document.getElementById('salesEntryForm');
+        const saleIdField = document.getElementById('sale_id');
+        const addSalesEntryBtn = document.getElementById('addSalesEntryBtn');
+        const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
+        const deleteSalesEntryBtn = document.getElementById('deleteSalesEntryBtn');
+        const cancelEntryBtn = document.getElementById('cancelEntryBtn');
+
 
         function calculateTotal() {
             const weight = parseFloat(weightField.value) || 0;
@@ -982,7 +1001,12 @@
             // Store the PHP data in JavaScript variables for easier access
             const printedSalesData = @json($salesPrinted->toArray());
             const unprintedSalesData = @json($salesNotPrinted->toArray());
+            // allSalesData is the initial data loaded for the main table
             const allSalesData = @json($sales->toArray());
+
+            // NEW: Variable to hold the currently displayed sales data in the main table
+            let currentDisplayedSalesData = [];
+
 
             console.log("Initial printedSalesData:", printedSalesData);
             console.log("Initial unprintedSalesData:", unprintedSalesData);
@@ -992,7 +1016,10 @@
             // Function to populate the main sales table
             function populateMainSalesTable(salesArray) {
                 console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
-                // Get the native DOM element directly inside the function
+                // Update the currentDisplayedSalesData
+                currentDisplayedSalesData = salesArray;
+                console.log("currentDisplayedSalesData updated to:", currentDisplayedSalesData);
+
                 const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
 
                 if (!mainSalesTableBodyElement) {
@@ -1011,7 +1038,7 @@
                     salesArray.forEach(sale => {
                         // Construct the row HTML string
                         rowsHtml += `
-                            <tr>
+                            <tr data-sale-id="${sale.id}">
                                 <td>${sale.code || 'N/A'}</td>
                                 <td>${sale.item_code || 'N/A'}</td>
                                 <td>${sale.item_name || 'N/A'}</td>
@@ -1040,9 +1067,216 @@
             }
 
             // Initial population of the main sales table with all sales data
-            // This will now correctly log the error if the tbody isn't found on initial load.
             populateMainSalesTable(allSalesData);
 
+            // Function to populate the form fields for editing
+            function populateFormForEdit(sale) {
+                console.log("Populating form for sale:", sale);
+                saleIdField.value = sale.id;
+                newCustomerCodeField.value = sale.customer_code || '';
+                customerNameField.value = sale.customer_name || '';
+                newCustomerCodeField.readOnly = true;
+
+                // Set selected customer in Select2, if applicable
+                if (sale.customer_code) {
+                    $('#customer_code_select').val(sale.customer_code).trigger('change.select2');
+                    console.log("Setting customer_code_select to:", sale.customer_code);
+                } else {
+                    $('#customer_code_select').val(null).trigger('change.select2');
+                    console.log("Clearing customer_code_select.");
+                }
+
+                // Populate GRN related fields
+                $('#grn_display').val(sale.code || ''); // Assuming 'code' is the GRN code
+                // Try to select the GRN in the hidden select2, then trigger change
+                const grnOption = $('#grn_select option').filter(function() {
+                    return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code && $(this).data('itemCode') === sale.item_code;
+                });
+                if (grnOption.length) {
+                    $('#grn_select').val(grnOption.val()).trigger('change.select2'); // Use change.select2 to trigger Select2's internal change handler
+                    console.log("Setting grn_select to:", grnOption.val());
+                } else {
+                    $('#grn_select').val(null).trigger('change.select2');
+                    console.log("Clearing grn_select.");
+                }
+
+                supplierSelect.value = sale.supplier_code || '';
+                itemSelect.value = sale.item_code || '';
+                itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item fields
+                console.log("Setting supplier_code to:", sale.supplier_code, "and item_select to:", sale.item_code);
+
+
+                weightField.value = parseFloat(sale.weight || 0).toFixed(2);
+                pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+                packsField.value = parseInt(sale.packs || 0);
+                calculateTotal(); // Recalculate total based on loaded weight/price
+                console.log("Weight:", weightField.value, "Price:", pricePerKgField.value, "Packs:", packsField.value);
+
+
+                // Change form action to update
+                salesEntryForm.action = `/sales/update/${sale.id}`;
+                console.log("Form action set to:", salesEntryForm.action);
+
+                // Show/hide buttons
+                addSalesEntryBtn.style.display = 'none';
+                updateSalesEntryBtn.style.display = 'inline-block';
+                deleteSalesEntryBtn.style.display = 'inline-block';
+                cancelEntryBtn.style.display = 'inline-block';
+                console.log("Buttons updated for edit mode.");
+            }
+
+            // Function to reset the form to "Add New Entry" mode
+            function resetForm() {
+                console.log("Resetting form...");
+                salesEntryForm.reset(); // Resets all form fields
+                saleIdField.value = ''; // Clear hidden ID
+                newCustomerCodeField.readOnly = false; // Make customer code editable again
+                $('#customer_code_select').val(null).trigger('change.select2'); // Clear customer select2
+                $('#grn_select').val(null).trigger('change.select2'); // Clear GRN select2
+                $('#grn_display').val(''); // Clear GRN display field
+                supplierSelect.value = '';
+                itemSelect.value = '';
+                itemSelect.dispatchEvent(new Event('change'));
+                calculateTotal(); // Recalculate total for empty fields
+
+                salesEntryForm.action = "{{ route('grn.store') }}"; // Revert form action to store
+
+                // Show/hide buttons
+                addSalesEntryBtn.style.display = 'inline-block';
+                updateSalesEntryBtn.style.display = 'none';
+                deleteSalesEntryBtn.style.display = 'none';
+                cancelEntryBtn.style.display = 'none';
+
+                newCustomerCodeField.focus(); // Focus on the first input
+                console.log("Form reset complete.");
+            }
+
+            // Event listener for clicking on table rows to populate form
+            document.getElementById('mainSalesTableBody').addEventListener('click', function(event) {
+                const clickedRow = event.target.closest('tr[data-sale-id]');
+                if (clickedRow) {
+                    const saleId = clickedRow.dataset.saleId;
+                    console.log("Row clicked, sale ID:", saleId);
+                    // IMPORTANT CHANGE: Search within currentDisplayedSalesData
+                    const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
+                    if (saleToEdit) {
+                        console.log("Sale found in currentDisplayedSalesData for ID:", saleId, saleToEdit);
+                        populateFormForEdit(saleToEdit);
+                    } else {
+                        console.warn("Sale NOT found in currentDisplayedSalesData for ID:", saleId);
+                        alert("Could not find this record for editing. It might not be in the currently displayed sales list. Please try reloading the page if this persists.");
+                    }
+                }
+            });
+
+            // Event listener for Update button
+            updateSalesEntryBtn.addEventListener('click', function() {
+                const saleId = saleIdField.value;
+                if (!saleId) {
+                    alert('No record selected for update.');
+                    return;
+                }
+
+                const formData = new FormData(salesEntryForm);
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+                data['_method'] = 'PUT'; // Laravel expects PUT/PATCH for updates
+                data['_token'] = '{{ csrf_token() }}';
+
+                fetch(`/sales/update/${saleId}`, {
+                        method: 'POST', // Use POST for Laravel PUT/PATCH spoofing
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errorData => Promise.reject(errorData));
+                        }
+                        return response.json();
+                    })
+                    .then(result => {
+                        if (result.success) {
+                            alert(result.message);
+                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                            window.location.reload();
+                        } else {
+                            alert('Update failed: ' + result.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating sales entry:', error);
+                        let errorMessage = 'An error occurred during update.';
+                        if (error && error.message) {
+                            errorMessage += '\n' + error.message;
+                        }
+                        if (error && error.errors) {
+                            for (const key in error.errors) {
+                                errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
+                            }
+                        }
+                        alert(errorMessage);
+                    });
+            });
+
+            // Event listener for Delete button
+            deleteSalesEntryBtn.addEventListener('click', function() {
+                const saleId = saleIdField.value;
+                if (!saleId) {
+                    alert('No record selected for deletion.');
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to delete this sales record?')) {
+                    return;
+                }
+
+                fetch(`/sales/delete/${saleId}`, {
+                        method: 'POST', // Use POST for Laravel DELETE spoofing
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            _method: 'DELETE', // Laravel expects DELETE
+                            _token: '{{ csrf_token() }}'
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errorData => Promise.reject(errorData));
+                        }
+                        return response.json();
+                    })
+                    .then(result => {
+                        if (result.success) {
+                            alert(result.message);
+                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                            window.location.reload();
+                        } else {
+                            alert('Delete failed: ' + result.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting sales entry:', error);
+                        let errorMessage = 'An error occurred during deletion.';
+                        if (error && error.message) {
+                            errorMessage += '\n' + error.message;
+                        }
+                        alert(errorMessage);
+                    });
+            });
+
+
+            // Event listener for Cancel button
+            cancelEntryBtn.addEventListener('click', resetForm);
+
+            // Initial form state (hide update/delete, show add)
+            resetForm();
 
             // Handle click on customer headers in Printed and Unprinted sections
             $('.customer-header').on('click', function() {
@@ -1083,7 +1317,7 @@
                 }
 
                 console.log("Sales to Display after filter:", salesToDisplay);
-                populateMainSalesTable(salesToDisplay);
+                populateMainSalesTable(salesToDisplay); // This will also update currentDisplayedSalesData
             });
 
 

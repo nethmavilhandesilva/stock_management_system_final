@@ -160,6 +160,48 @@ class SalesEntryController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Failed to update sales records.'], 500);
         }
     }
+    public function update(Request $request, Sale $sale)
+    {
+        $validatedData = $request->validate([
+            'customer_code' => 'required|string|max:255',
+            'customer_name' => 'required|string|max:255',
+            'code' => 'required|string|max:255', // This is the GRN Code
+            'supplier_code' => 'required|string|max:255',
+            'item_code' => 'required|string|max:255',
+            'item_name' => 'required|string|max:255',
+            'weight' => 'required|numeric|min:0',
+            'price_per_kg' => 'required|numeric|min:0',
+            'total' => 'required|numeric|min:0',
+            'packs' => 'required|integer|min:0',
+            // Add any other fields that can be updated
+        ]);
+
+        try {
+            $sale->update($validatedData);
+
+            return response()->json(['success' => true, 'message' => 'Sales record updated successfully!']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to update sales record: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Remove the specified sales record from storage.
+     *
+     * @param  \App\Models\Sale  $sale // Using Route Model Binding
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Sale $sale)
+    {
+        try {
+            $sale->delete();
+            return response()->json(['success' => true, 'message' => 'Sales record deleted successfully!']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to delete sales record: ' . $e->getMessage()], 500);
+        }
+    }
+
+    
 
 
 
