@@ -768,209 +768,189 @@
             });
 
             // --- JavaScript for F1 and F5 Key Presses ---
-            document.addEventListener('keydown', function(e) {
-                console.log('Key pressed:', e.key);
+          document.addEventListener('keydown', function(e) {
+        console.log('Key pressed:', e.key);
 
-                if (e.key === "F1") {
-                    e.preventDefault();
-                    console.log('F1 key pressed - attempting to print and mark sales...');
+        if (e.key === "F1") {
+            e.preventDefault();
+            console.log('F1 key pressed - attempting to print and mark sales...');
 
-                    const salesDataForReceipt = @json($unprocessedSales);
+            const salesDataForReceipt = @json($unprocessedSales);
 
-                    if (salesDataForReceipt.length === 0) {
-                        alert('No unprocessed sales records to print!');
-                        return;
-                    }
+            if (salesDataForReceipt.length === 0) {
+                alert('No unprocessed sales records to print!');
+                return;
+            }
 
-                    const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
+            // ADDED: Confirmation dialog before printing
+            if (!confirm('Do you want to print the current unprocessed sales?')) {
+                console.log('Print action cancelled by user.');
+                return; // Stop execution if the user cancels
+            }
 
-                    const now = new Date();
-                    const date = now.toLocaleDateString();
-                    const time = now.toLocaleTimeString();
-                    const customerCode = document.getElementById('new_customer_code').value || 'N/A';
-                    const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
-                    const mobile = '0702758908'; // Hardcoded phone number
+            const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
 
-                    const random4Digit = Math.floor(1000 + Math.random() * 9000);
-                    const billNo = `BILL-${random4Digit}`;
+            const now = new Date();
+            const date = now.toLocaleDateString();
+            const time = now.toLocaleTimeString();
+            const customerCode = document.getElementById('new_customer_code').value || 'N/A';
+            const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
+            const mobile = '0702758908'; // Hardcoded phone number
 
-                    let itemsHtml = '';
-                    let totalItemsCount = 0;
-                    let totalAmountSum = 0;
-                    salesDataForReceipt.forEach(sale => {
-                        itemsHtml += `
-                            <tr>
-                                <td>${sale.item_name} (${sale.item_code})</td>
-                                <td class="align-right">${sale.weight.toFixed(2)} kg x ${sale.packs} packs</td>
-                                <td class="align-right">${sale.price_per_kg.toFixed(2)}</td>
-                                <td class="align-right">${sale.total.toFixed(2)}</td>
-                            </tr>
-                        `;
-                        totalItemsCount++;
-                        totalAmountSum += parseFloat(sale.total);
-                    });
+            const random4Digit = Math.floor(1000 + Math.random() * 9000);
+            const billNo = `BILL-${random4Digit}`;
 
-                    const salesContent = `
-                        <div class="receipt-container">
-                                    <div class="header-section">
-                                        <h2>ග්‍රාමී</h2>
-                                        <p>දිනය: ${date}</p>
-                                        <p>වෙලාව: ${time}</p>
-                                        <p>බිල් අංකය: ${billNo}</p>
-                                    </div>
+            let itemsHtml = '';
+            let totalItemsCount = 0;
+            let totalAmountSum = 0;
+            salesDataForReceipt.forEach(sale => {
+                itemsHtml += `
+                    <tr>
+                        <td>${sale.item_name} (${sale.item_code})</td>
+                        <td class="align-right">${sale.weight.toFixed(2)} kg x ${sale.packs} packs</td>
+                        <td class="align-right">${sale.price_per_kg.toFixed(2)}</td>
+                        <td class="align-right">${sale.total.toFixed(2)}</td>
+                    </tr>
+                `;
+                totalItemsCount++;
+                totalAmountSum += parseFloat(sale.total);
+            });
 
-                                    <div class="divider"></div>
+            const salesContent = `
+                <div class="receipt-container">
+                    <div class="header-section">
+                        <h2>ග්‍රාමී</h2>
+                        <p>දිනය: ${date}</p>
+                        <p>වෙලාව: ${time}</p>
+                        <p>බිල් අංකය: ${billNo}</p>
+                    </div>
 
-                                    <div class="customer-info">
-                                        <p>පාරිභෝගික කේතය: ${customerCode}</p>
-                                        <p>නම: ${customerName}</p>
-                                        <p>දුරකථන: ${mobile}</p>
-                                    </div>
+                    <div class="divider"></div>
 
-                                    <div class="divider"></div>
+                    <div class="customer-info">
+                        <p>පාරිභෝගික කේතය: ${customerCode}</p>
+                        <p>නම: ${customerName}</p>
+                        <p>දුරකථන: ${mobile}</p>
+                    </div>
 
-                                    <div class="items-section">
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th class="item-name-col">අයිතමය</th>
-                                                    <th class="qty-col">ප්‍රමාණය</th>
-                                                    <th class="price-col">ඒකක මිල</th>
-                                                    <th class="total-col">මුළු මුදල</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${itemsHtml}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                    <div class="divider"></div>
 
-                                    <div class="divider"></div>
+                    <div class="items-section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="item-name-col">අයිතමය</th>
+                                    <th class="qty-col">ප්‍රමාණය</th>
+                                    <th class="price-col">ඒකක මිල</th>
+                                    <th class="total-col">මුළු මුදල</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
 
-                                    <div class="totals-section">
-                                        <p>මුළු අයිතම ගණන: ${totalItemsCount}</p>
-                                        <p>මුළු මුදල: Rs. ${totalAmountSum.toFixed(2)}</p>
-                                        <p class="grand-total">ගෙවිය යුතු මුළු මුදල: <strong>Rs. ${(totalAmountSum).toFixed(2)}</strong></p>
-                                    </div>
+                    <div class="divider"></div>
 
-                                    <div class="footer-section">
-                                        <p>ගෙවීමට ස්තුතියි!</p>
-                                        <p>නැවත පැමිණෙන්න!</p>
-                                    </div>
-                                </div>
-                    `;
+                    <div class="totals-section">
+                        <p>මුළු අයිතම ගණන: ${totalItemsCount}</p>
+                        <p>මුළු මුදල: Rs. ${totalAmountSum.toFixed(2)}</p>
+                        <p class="grand-total">ගෙවිය යුතු මුළු මුදල: <strong>Rs. ${(totalAmountSum).toFixed(2)}</strong></p>
+                    </div>
 
-                    const printWindow = window.open('', '_blank', 'width=400,height=600');
-                    printWindow.document.write(`
-                        <html>
-                                    <head>
-                                        <title>විකුණුම් කුපිත්තුව</title>
-                                        <style>
-                                            @font-face {
-                                                font-family: 'NotoSansSinhala';
-                                                src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-                                            }
-                                            body {
-                                                font-family: 'Noto Sans Sinhala', sans-serif;
-                                                margin: 0;
-                                                padding: 20px;
-                                                font-size: 12px;
-                                            }
-                                            .receipt-container {
-                                                width: 100%;
-                                                max-width: 380px;
-                                                margin: auto;
-                                                border: 1px dashed #000;
-                                                padding: 15px;
-                                            }
-                                            .header-section, .footer-section, .customer-info {
-                                                text-align: center;
-                                                margin-bottom: 10px;
-                                            }
-                                            .divider {
-                                                border-top: 1px dashed #000;
-                                                margin: 10px 0;
-                                            }
-                                            .items-section table {
-                                                width: 100%;
-                                                border-collapse: collapse;
-                                            }
-                                            .items-section th, .items-section td {
-                                                padding: 3px;
-                                                text-align: right;
-                                            }
-                                            .item-name-col {
-                                                text-align: left;
-                                                width: 40%;
-                                            }
-                                            .qty-col {
-                                                width: 15%;
-                                            }
-                                            .price-col {
-                                                width: 20%;
-                                            }
-                                            .total-col {
-                                                width: 25%;
-                                            }
-                                            .totals-section {
-                                                text-align: right;
-                                            }
-                                            .grand-total {
-                                                font-weight: bold;
-                                                font-size: 1.1em;
-                                            }
-                                        </style>
-                                    </head>
-                                    <body>${salesContent}</body>
-                                </html>
-                    `);
-                    printWindow.document.close();
+                    <div class="footer-section">
+                        <p>ගෙවීමට ස්තුතියි!</p>
+                        <p>නැවත පැමිණෙන්න!</p>
+                    </div>
+                </div>
+            `;
 
-                    const checkClosed = setInterval(function() {
-                        if (printWindow.closed) {
-                            clearInterval(checkClosed);
-                            console.log('F1: Print window closed. Sending request to mark sales as printed and processed.');
+            const printWindow = window.open('', '_blank', 'width=400,height=600');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>විකුණුම් කුපිත්තුව</title>
+                        <style>
+                            @font-face {
+                                font-family: 'NotoSansSinhala';
+                                src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+                            }
+                            body {
+                                font-family: 'Noto Sans Sinhala', sans-serif;
+                                margin: 0;
+                                padding: 20px;
+                                font-size: 12px;
+                            }
+                            .receipt-container {
+                                width: 100%;
+                                max-width: 380px;
+                                margin: auto;
+                                border: 1px dashed #000;
+                                padding: 15px;
+                            }
+                            .header-section, .footer-section, .customer-info {
+                                text-align: center;
+                                margin-bottom: 10px;
+                            }
+                            .divider {
+                                border-top: 1px dashed #000;
+                                margin: 10px 0;
+                            }
+                            .items-section table {
+                                width: 100%;
+                                border-collapse: collapse;
+                            }
+                            .items-section th, .items-section td {
+                                padding: 3px;
+                                text-align: right;
+                            }
+                            .item-name-col {
+                                text-align: left;
+                                width: 40%;
+                            }
+                            .qty-col {
+                                width: 15%;
+                            }
+                            .price-col {
+                                width: 20%;
+                            }
+                            .total-col {
+                                width: 25%;
+                            }
+                            .totals-section {
+                                text-align: right;
+                            }
+                            .grand-total {
+                                font-weight: bold;
+                                font-size: 1.1em;
+                            }
+                        </style>
+                    </head>
+                    <body>${salesContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            // ADDED: Explicitly call print()
+            printWindow.focus(); // Try to bring the new window to focus
+            printWindow.print(); // This explicitly opens the print dialog
 
-                            fetch("{{ route('sales.markAsPrinted') }}", {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify({
-                                        sales_ids: salesIdsToMarkPrintedAndProcessed,
-                                        bill_no: billNo
-                                    })
-                                })
-                                .then(response => {
-                                    if (!response.ok) {
-                                        return response.text().then(text => {
-                                            throw new Error(`HTTP error! status: ${response.status}, message: ${text}`)
-                                        });
-                                    }
-                                    return response.json();
-                                })
-                                .then(data => {
-                                    console.log('F1: Sales marked as printed and processed response:', data);
-                                    sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                    window.location.reload();
-                                })
-                                .catch(error => {
-                                    console.error('F1: Error marking sales as printed and processed:', error);
-                                    alert('Failed to mark sales as printed. Please check console for details.');
-                                });
-                        }
-                    }, 500);
-                } else if (e.key === "F5") {
-                    e.preventDefault();
-                    console.log('F5 key pressed - attempting to mark all displayed sales as processed...');
+            const checkClosed = setInterval(function() {
+                // This checks if the print window is closed, meaning the user either printed or cancelled.
+                if (printWindow.closed) {
+                    clearInterval(checkClosed);
+                    console.log('F1: Print window closed. Sending request to mark sales as printed and processed.');
 
-                    fetch("{{ route('sales.markAllAsProcessed') }}", {
+                    fetch("{{ route('sales.markAsPrinted') }}", {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            }
+                            },
+                            body: JSON.stringify({
+                                sales_ids: salesIdsToMarkPrintedAndProcessed,
+                                bill_no: billNo
+                            })
                         })
                         .then(response => {
                             if (!response.ok) {
@@ -981,22 +961,52 @@
                             return response.json();
                         })
                         .then(data => {
-                            console.log('Response from sales.markAllAsProcessed (F5):', data);
-                            if (data.success) {
-                                console.log(data.message);
-                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                window.location.reload();
-                            } else {
-                                console.error('Server reported an error:', data.message);
-                                alert('Operation failed: ' + data.message);
-                            }
+                            console.log('F1: Sales marked as printed and processed response:', data);
+                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                            window.location.reload();
                         })
                         .catch(error => {
-                            console.error('Error marking sales as processed by F5:', error);
-                            alert('Failed to process sales on F5. Check console for details.');
+                            console.error('F1: Error marking sales as printed and processed:', error);
+                            alert('Failed to mark sales as printed. Please check console for details.');
                         });
                 }
-            });
+            }, 500);
+        } else if (e.key === "F5") {
+            e.preventDefault();
+            console.log('F5 key pressed - attempting to mark all displayed sales as processed...');
+
+            fetch("{{ route('sales.markAllAsProcessed') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP error! status: ${response.status}, message: ${text}`)
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response from sales.markAllAsProcessed (F5):', data);
+                    if (data.success) {
+                        console.log(data.message);
+                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                        window.location.reload();
+                    } else {
+                        console.error('Server reported an error:', data.message);
+                        alert('Operation failed: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking sales as processed by F5:', error);
+                    alert('Failed to process sales on F5. Check console for details.');
+                });
+        }
+    });
 
             // Store the PHP data in JavaScript variables for easier access
             const printedSalesData = @json($salesPrinted->toArray());
@@ -1355,7 +1365,7 @@
                 $(document).on('select2:open', function() {
                     document.querySelector('.select2-search__field').focus();
                 });
-                $('#customer_code_select').select2('open');
+                $('#new_customer_code').select2('open');
                 sessionStorage.removeItem('focusOnCustomerSelect');
             }
         });
