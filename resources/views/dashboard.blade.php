@@ -768,7 +768,7 @@
             });
 
             // --- JavaScript for F1 and F5 Key Presses ---
-          document.addEventListener('keydown', function(e) {
+         document.addEventListener('keydown', function(e) {
         console.log('Key pressed:', e.key);
 
         if (e.key === "F1") {
@@ -782,7 +782,7 @@
                 return;
             }
 
-            // ADDED: Confirmation dialog before printing
+            // Confirmation dialog before printing
             if (!confirm('Do you want to print the current unprocessed sales?')) {
                 console.log('Print action cancelled by user.');
                 return; // Stop execution if the user cancels
@@ -795,10 +795,10 @@
             const time = now.toLocaleTimeString();
             const customerCode = document.getElementById('new_customer_code').value || 'N/A';
             const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
-            const mobile = '0702758908'; // Hardcoded phone number
+            const mobile = '0702758908'; // Hardcoded phone number from PDF
 
             const random4Digit = Math.floor(1000 + Math.random() * 9000);
-            const billNo = `BILL-${random4Digit}`;
+            const billNo = `BILL-${random4Digit}`; // Generate a random bill number
 
             let itemsHtml = '';
             let totalItemsCount = 0;
@@ -806,31 +806,33 @@
             salesDataForReceipt.forEach(sale => {
                 itemsHtml += `
                     <tr>
-                        <td>${sale.item_name} (${sale.item_code})</td>
-                        <td class="align-right">${sale.weight.toFixed(2)} kg x ${sale.packs} packs</td>
-                        <td class="align-right">${sale.price_per_kg.toFixed(2)}</td>
-                        <td class="align-right">${sale.total.toFixed(2)}</td>
+                        <td class="col-item">${sale.item_name} (${sale.item_code})</td>
+                        <td class="col-qty">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                        <td class="col-rate">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                        <td class="col-value">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
                     </tr>
                 `;
                 totalItemsCount++;
                 totalAmountSum += parseFloat(sale.total);
             });
 
+            // UPDATED: salesContent to match PDF structure and data
             const salesContent = `
                 <div class="receipt-container">
-                    <div class="header-section">
-                        <h2>ග්‍රාමී</h2>
-                        <p>දිනය: ${date}</p>
-                        <p>වෙලාව: ${time}</p>
-                        <p>බිල් අංකය: ${billNo}</p>
+                    <div class="company-info">
+                        <h3>C11 TGK ට්‍රේඩර්ස්</h3>
+                        <p>අල, ඹී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
+                        <p>වි.ආ.ම. වේයන්ගොඩ</p>
                     </div>
 
                     <div class="divider"></div>
 
-                    <div class="customer-info">
-                        <p>පාරිභෝගික කේතය: ${customerCode}</p>
-                        <p>නම: ${customerName}</p>
-                        <p>දුරකථන: ${mobile}</p>
+                    <div class="bill-details">
+                        <p><span>දිනය :</span> <span>${date}</span></p>
+                        <p><span>දුරකථන :</span> <span>${mobile}</span></p>
+                        <p><span>වෙලාව :</span> <span>${time}</span></p>
+                        <p><span>බිල් අංකය :</span> <span>${billNo}</span></p>
+                        <p class="customer-name-on-bill">${customerName} (${customerCode})</p>
                     </div>
 
                     <div class="divider"></div>
@@ -839,10 +841,10 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th class="item-name-col">අයිතමය</th>
-                                    <th class="qty-col">ප්‍රමාණය</th>
-                                    <th class="price-col">ඒකක මිල</th>
-                                    <th class="total-col">මුළු මුදල</th>
+                                    <th class="col-item">වර්ගය</th>
+                                    <th class="col-qty">කිලො</th>
+                                    <th class="col-rate">මිල</th>
+                                    <th class="col-value">අගය</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -853,15 +855,19 @@
 
                     <div class="divider"></div>
 
-                    <div class="totals-section">
-                        <p>මුළු අයිතම ගණන: ${totalItemsCount}</p>
-                        <p>මුළු මුදල: Rs. ${totalAmountSum.toFixed(2)}</p>
-                        <p class="grand-total">ගෙවිය යුතු මුළු මුදල: <strong>Rs. ${(totalAmountSum).toFixed(2)}</strong></p>
+                    <div class="summary-section">
+                        <p><span>මුළු අයිතම ගණන:</span> <span class="align-right">${totalItemsCount}</span></p>
+                        <p><span>මුළු මුදල:</span> <span class="align-right">Rs. ${totalAmountSum.toFixed(2)}</span></p>
+                        <p><span>ප්‍රවාහන ගාස්තු:</span> <span class="align-right">00.00</span></p>
+                        <p><span>කුලිය:</span> <span class="align-right">00.00</span></p>
+                        <p class="grand-total"><span>අගය:</span> <span class="align-right">Rs. ${(totalAmountSum).toFixed(2)}</span></p>
                     </div>
 
+                    <div class="divider"></div>
+
                     <div class="footer-section">
-                        <p>ගෙවීමට ස්තුතියි!</p>
-                        <p>නැවත පැමිණෙන්න!</p>
+                        <p>භාණ්ඩ පරීක්ෂා කර බලා රැගෙන යන්න</p>
+                        <p>නැවත භාර ගනු නොලැබේ</p>
                     </div>
                 </div>
             `;
@@ -872,58 +878,108 @@
                     <head>
                         <title>විකුණුම් කුපිත්තුව</title>
                         <style>
-                            @font-face {
-                                font-family: 'NotoSansSinhala';
-                                src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-                            }
+                            /* Import Sinhala font */
+                            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+
                             body {
                                 font-family: 'Noto Sans Sinhala', sans-serif;
                                 margin: 0;
-                                padding: 20px;
-                                font-size: 12px;
+                                padding: 5mm; /* Smaller padding to mimic thermal receipt */
+                                font-size: 10px; /* Smaller base font size for receipt */
+                                line-height: 1.2; /* Tighter line spacing */
                             }
                             .receipt-container {
                                 width: 100%;
-                                max-width: 380px;
-                                margin: auto;
-                                border: 1px dashed #000;
-                                padding: 15px;
+                                max-width: 70mm; /* Typical thermal receipt width (approx 2.75 inches) */
+                                /* Changed: Align to left */
+                                margin-left: 0;
+                                margin-right: auto; /* Pushes it to the left */
+                                border: none; /* No outer border, content itself has dividers */
+                                padding: 0; /* No padding on container itself */
                             }
-                            .header-section, .footer-section, .customer-info {
+                            .company-info {
                                 text-align: center;
-                                margin-bottom: 10px;
+                                margin-bottom: 5px;
                             }
+                            .company-info h3 {
+                                font-size: 1.2em; /* Slightly larger for company name */
+                                margin-bottom: 2px;
+                                font-weight: bold;
+                            }
+                            .company-info p {
+                                margin: 0;
+                                line-height: 1.2;
+                            }
+                            .bill-details, .summary-section, .footer-section {
+                                text-align: left;
+                                margin-bottom: 5px;
+                            }
+                            .bill-details p, .summary-section p {
+                                margin: 0;
+                                line-height: 1.2;
+                                display: flex; /* Use flex to align key-value pairs */
+                                justify-content: space-between; /* Space out key and value */
+                            }
+                            .bill-details p span:first-child, .summary-section p span:first-child {
+                                text-align: left;
+                                font-weight: normal; /* Labels not necessarily bold */
+                            }
+                            .bill-details p span:last-child, .summary-section p span:last-child {
+                                text-align: right;
+                                font-weight: bold; /* Values can be bold */
+                            }
+                            .customer-name-on-bill {
+                                text-align: center; /* Customer name centered as in PDF */
+                                font-weight: bold;
+                                margin-top: 5px;
+                            }
+
                             .divider {
                                 border-top: 1px dashed #000;
-                                margin: 10px 0;
+                                margin: 8px 0; /* Adjust margin for dividers */
                             }
                             .items-section table {
                                 width: 100%;
                                 border-collapse: collapse;
+                                font-size: 10px; /* Table font size */
                             }
                             .items-section th, .items-section td {
-                                padding: 3px;
+                                padding: 2px 0; /* Smaller padding for table cells */
                                 text-align: right;
+                                border-bottom: none; /* No internal borders in PDF example */
                             }
-                            .item-name-col {
+                            .items-section th {
+                                font-weight: bold;
+                                text-align: center; /* Headers might be centered or left, PDF is unclear, let's try center for now */
+                                border-bottom: 1px dashed #000; /* Divider below header */
+                            }
+                            .col-item {
                                 text-align: left;
-                                width: 40%;
+                                width: 40%; /* Adjust widths to match PDF visual */
                             }
-                            .qty-col {
-                                width: 15%;
-                            }
-                            .price-col {
+                            .col-qty {
                                 width: 20%;
                             }
-                            .total-col {
-                                width: 25%;
+                            .col-rate {
+                                width: 20%;
                             }
-                            .totals-section {
-                                text-align: right;
+                            .col-value {
+                                width: 20%;
                             }
                             .grand-total {
+                                font-size: 1.1em; /* Grand total slightly larger */
                                 font-weight: bold;
-                                font-size: 1.1em;
+                                border-top: 1px dashed #000; /* Divider above grand total */
+                                padding-top: 5px;
+                                margin-top: 5px;
+                            }
+                            .footer-section {
+                                text-align: center;
+                                margin-top: 10px;
+                            }
+                            .footer-section p {
+                                margin: 0;
+                                line-height: 1.2;
                             }
                         </style>
                     </head>
@@ -931,7 +987,6 @@
                 </html>
             `);
             printWindow.document.close();
-            // ADDED: Explicitly call print()
             printWindow.focus(); // Try to bring the new window to focus
             printWindow.print(); // This explicitly opens the print dialog
 
@@ -1007,6 +1062,7 @@
                 });
         }
     });
+
 
             // Store the PHP data in JavaScript variables for easier access
             const printedSalesData = @json($salesPrinted->toArray());
