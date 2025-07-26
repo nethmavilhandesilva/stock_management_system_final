@@ -274,10 +274,6 @@
         {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
         <div class="col-md-6">
             <div class="card shadow-sm border-0 rounded-3 p-4">
-                <h6 style="font-weight: bold; color: black; font-size: 0.85rem; text-align: center; margin-bottom: 1rem;">
-    අලුතින් බිල් අතුලත් කිරීම
-</h6>
-
 
                 @if ($errors->any())
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -307,52 +303,51 @@
 
                 <form method="POST" action="{{ route('grn.store') }}">
                     @csrf
-                    <div class="row g-3 form-row">
-                        {{-- Select Customer Dropdown --}}
-                        <div>
-                            <label for="customer_code_select" class="form-label small">පාරිභෝගිකයා තෝරන්න</label>
-                            <select name="customer_code_select" id="customer_code_select"
-                                class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror w-100">
-                                <option value="">-- Select Customer --</option>
-                                @foreach ($customers as $customer)
-                                    <option value="{{ $customer->short_name }}"
-                                        data-customer-code="{{ $customer->short_name }}"
-                                        data-customer-name="{{ $customer->name }}"
-                                        {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
-                                        {{ $customer->name }} ({{ $customer->short_name }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('customer_code')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
-                        </div>
 
-                        {{-- New/Selected Customer Code Input --}}
-                        <div>
+{{-- NEW TOP ROW: Select Customer Dropdown --}}
+<div class="row justify-content-end" style="margin-top: -10px;">
+    <div class="col-md-4"> {{-- Reduced width from 6 to 4 for compact size --}}
+        <select name="customer_code_select" id="customer_code_select"
+            class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror"
+            style="height: 26px; font-size: 12px; padding-top: 2px; padding-bottom: 2px;">
+            <option value="" disabled selected style="color: #999;">-- Select Customer --</option>
+            @foreach ($customers as $customer)
+                <option value="{{ $customer->short_name }}"
+                    data-customer-code="{{ $customer->short_name }}"
+                    data-customer-name="{{ $customer->name }}"
+                    {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
+                    {{ $customer->name }} ({{ $customer->short_name }})
+                </option>
+            @endforeach
+        </select>
+        @error('customer_code')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+
+
+                    {{-- Second Row: Customer Code Input and GRN Entry --}}
+                    <div class="row g-3 form-row align-items-start mt-2"> {{-- Added mt-2 for spacing from the select above --}}
+                        {{-- Customer Code Input (col-md-6, adjusted width) --}}
+                        <div class="col-md-6" style="margin-bottom: 4px;">
                             <label for="new_customer_code" class="form-label small">පාරිභෝගික කේතය</label>
                             <input type="text" name="customer_code" id="new_customer_code"
                                 class="form-control form-control-sm @error('customer_code') is-invalid @enderror"
-                                value="{{ old('customer_code') }}" placeholder="Enter or select customer code" required>
+                                value="{{ old('customer_code') }}" placeholder="Enter or select customer code"
+                                style="height: 28px; font-size: 12px;" required>
                             @error('customer_code')
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
                             @enderror
                         </div>
-                    </div>
 
-                    <input type="hidden" name="customer_name" id="customer_name_hidden"
-                        value="{{ old('customer_name') }}">
-
-                    <hr style="margin: 0.3rem 0; height: 1px;">
-
-                    <div class="row g-3 form-row">
-                        <div>
-                          
-                            <input type="text" id="grn_display" class="form-control form-control-sm mb-2" placeholder="Select GRN Entry..." readonly>
+                        {{-- GRN Entry Field (col-md-6, adjusted width) --}}
+                        <div class="col-md-6" style="margin-bottom: 4px;">
+                            <label for="grn_display" class="form-label small">GRN Entry</label>
+                            <input type="text" id="grn_display" class="form-control form-control-sm" placeholder="Select GRN Entry..." readonly
+                                style="height: 28px; font-size: 12px;">
                             <select id="grn_select" class="form-select form-select-sm select2 d-none">
                                 <option value="">-- Select GRN Entry --</option>
                                 @foreach ($entries as $entry)
@@ -369,12 +364,16 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        {{-- Hidden Customer Name (kept for form submission) --}}
+                        <input type="hidden" name="customer_name" id="customer_name_hidden"
+                            value="{{ old('customer_name') }}">
                     </div>
 
-                    <hr class="my-2">
+                    <hr style="margin: 0.3rem 0; height: 1px;">
 
                     <div class="row g-3 form-row">
-                        <div>
+                        <div class="col-md-6">
                             <label for="supplier_code" class="form-label" style="font-size: 0.9rem;">සැපයුම්කරු</label>
                             <select name="supplier_code" id="supplier_code"
                                 class="form-select form-select-sm @error('supplier_code') is-invalid @enderror" required>
@@ -392,7 +391,7 @@
                             @enderror
                         </div>
 
-                        <div>
+                        <div class="col-md-6">
                             <label for="item_select" class="form-label" style="font-size: 0.9rem;">අයිතමය තෝරන්න</label>
                             <select id="item_select" class="form-select form-select-sm @error('item_code') is-invalid @enderror">
                                 <option value="">Select an Item</option>
@@ -415,7 +414,7 @@
                         <input type="hidden" name="item_code" id="item_code" value="{{ old('item_code') }}">
                         <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
 
-                        <div>
+                        <div class="col-md-3">
                             <label for="weight" class="form-label" style="font-size: 0.9rem;">බර (kg)</label>
                             <input type="number" name="weight" id="weight" step="0.01"
                                 class="form-control form-control-sm @error('weight') is-invalid @enderror"
@@ -427,7 +426,7 @@
                             @enderror
                         </div>
 
-                        <div>
+                        <div class="col-md-3">
                             <label for="price_per_kg" class="form-label" style="font-size: 0.9rem;">කිලෝග්‍රෑමයකට මිල</label>
                             <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
                                 class="form-control form-control-sm @error('price_per_kg') is-invalid @enderror"
@@ -439,7 +438,7 @@
                             @enderror
                         </div>
 
-                        <div>
+                        <div class="col-md-3">
                             <label for="total" class="form-label" style="font-size: 0.9rem;">සමස්ත</label>
                             <input type="number" name="total" id="total"
                                 class="form-control form-control-sm bg-light @error('total') is-invalid @enderror"
@@ -451,7 +450,7 @@
                             @enderror
                         </div>
 
-                        <div style="flex: 1 1 100px;">
+                        <div class="col-md-3">
                             <label for="packs" class="form-label">ඇසුරුම්</label>
                             <input type="number" name="packs" id="packs"
                                 class="form-control form-control-sm @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
@@ -471,15 +470,13 @@
                     </div>
                 </form>
 
-              <hr class="my-3" style="margin-top: 0.5rem; margin-bottom: 0.5rem; height: 1px;">
+                <hr class="my-3" style="margin-top: 0.5rem; margin-bottom: 0.5rem; height: 1px;">
 
                 @if ($sales->count())
                     <div class="mt-2">
-                       
-                      <h5 class="text-end mb-3" style="font-size: 0.85rem;">
-  <strong>Total Sales Value:</strong> Rs. {{ number_format($totalSum, 2) }}
-</h5>
-
+                        <h5 class="text-end mb-3" style="font-size: 0.85rem;">
+                            <strong>Total Sales Value:</strong> Rs. {{ number_format($totalSum, 2) }}
+                        </h5>
 
                         <div class="table-responsive">
                            <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden" style="font-size: 0.85rem;">
@@ -610,7 +607,6 @@
         </div>
     </div>
 </div>
-
 
 
     {{-- JavaScript Includes (jQuery and Select2 should always be loaded before your custom script that uses them) --}}
