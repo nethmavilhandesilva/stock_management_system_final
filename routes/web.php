@@ -12,7 +12,10 @@ use App\Http\Controllers\BillController;
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
-
+// New default route to redirect to login
+Route::get('/', function () {
+    return redirect('/login');
+});
 
 
 

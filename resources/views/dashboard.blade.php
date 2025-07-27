@@ -38,7 +38,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('grn.index') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> GRN-4
+                            <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> GRN
                         </a>
                     </li>
 
@@ -139,7 +139,7 @@
         /* Page background green */
         body,
         html {
-            background-color: #e6ffe6;
+            background-color: #99ff99;
             /* Light green background */
         }
 
@@ -289,18 +289,11 @@
 
                         {{-- NEW TOP ROW: Select Customer Dropdown --}}
                       
-<div class="row justify-content-end" style="margin-top: -15px;"> {{-- Reduced margin-top for compactness --}}
-    <div class="col-md-3"> {{-- Further reduced width for smaller size --}}
+<div class="row justify-content-end" style="margin-top: -15px;">
+    <div class="col-md-3">
         <select name="customer_code_select" id="customer_code_select"
             class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror"
-            style="
-                height: 24px;
-                font-size: 11px;
-                padding-top: 1px;
-                padding-bottom: 1px;
-                padding-left: 6px;
-                line-height: 1.2;
-            ">
+            style="height: 24px; font-size: 11px; padding-top: 1px; padding-bottom: 1px; padding-left: 6px; line-height: 1.2;">
             <option value="" disabled selected style="color: #999;">-- පාරිභෝගිකයා තෝරන්න --</option>
             @foreach ($customers as $customer)
                 <option value="{{ $customer->short_name }}"
@@ -317,191 +310,143 @@
     </div>
 </div>
 
-{{-- Second Row: Customer Code Input and GRN Entry --}}
-<div class="row g-3 form-row align-items-start mt-1"> {{-- Changed mt-2 to mt-1 for less space --}}
-    {{-- Customer Code Input (col-md-6, adjusted width) --}}
-    <div class="col-md-6" style="margin-bottom: 2px;"> {{-- Reduced margin-bottom --}}
+<div class="row g-1 form-row align-items-start mt-1">
+    <div class="col-md-3" style="margin-bottom: 2px;">
         <label for="new_customer_code" class="form-label small">පාරිභෝගික කේතය</label>
         <input type="text" name="customer_code" id="new_customer_code"
-            class="form-control form-control-sm @error('customer_code') is-invalid @enderror"
+            class="form-control form-control-sm text-uppercase @error('customer_code') is-invalid @enderror"
             value="{{ old('customer_code') }}" placeholder="Enter or select customer code"
-            style="height: 28px; font-size: 12px;" required>
+            style="height: 24px; font-size: 11px; padding: 2px 6px;" required>
         @error('customer_code')
-            <div class="invalid-feedback">
-                {{ $message }}
-            </div>
+            <div class="invalid-feedback">{{ $message }}</div>
         @enderror
     </div>
 
-    {{-- GRN Entry Field (col-md-6, adjusted width) --}}
-    <div class="col-md-6" style="margin-bottom: 2px;"> {{-- Reduced margin-bottom --}}
+    <div class="col-md-3" style="margin-bottom: 2px;">
         <label for="grn_display" class="form-label small">GRN Entry</label>
-        <input type="text" id="grn_display" class="form-control form-control-sm"
-            placeholder="Select GRN Entry..." readonly style="height: 28px; font-size: 12px;">
+        <input type="text" id="grn_display" class="form-control form-control-sm" placeholder="Select GRN Entry..."
+            readonly style="height: 24px; font-size: 11px; padding: 2px 6px;">
         <select id="grn_select" class="form-select form-select-sm select2 d-none">
             <option value="">-- Select GRN Entry --</option>
             @foreach ($entries as $entry)
-                <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
-                    data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
-                    data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
-                    data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
-                    data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
+                <option value="{{ $entry->code }}"
+                    data-supplier-code="{{ $entry->supplier_code }}"
+                    data-code="{{ $entry->code }}"
+                    data-item-code="{{ $entry->item_code }}"
+                    data-item-name="{{ $entry->item_name }}"
+                    data-weight="{{ $entry->weight }}"
+                    data-price="{{ $entry->price_per_kg }}"
+                    data-total="{{ $entry->total }}"
+                    data-packs="{{ $entry->packs }}"
+                    data-grn-no="{{ $entry->grn_no }}"
                     data-txn-date="{{ $entry->txn_date }}">
-                    {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
-                    {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
-                    {{ $entry->txn_date }}
+                    {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} | {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} | {{ $entry->txn_date }}
                 </option>
             @endforeach
         </select>
     </div>
 
-    {{-- Hidden Customer Name (kept for form submission) --}}
-    <input type="hidden" name="customer_name" id="customer_name_hidden"
-        value="{{ old('customer_name') }}">
+    <input type="hidden" name="customer_name" id="customer_name_hidden" value="{{ old('customer_name') }}">
 </div>
 
-<hr style="margin: 0.1rem 0; height: 1px;"> {{-- Reduced margin for the horizontal rule --}}
+<hr style="margin: 0.1rem 0; height: 1px;">
 
-
-
-
-
-
-    
-<div class="row g-3 form-row">
-    {{-- Supplier Code --}}
-    <div class="col-md-6 mb-0">
+<div class="row g-1 form-row">
+    <div class="col-md-3 mb-1">
         <select name="supplier_code_display" id="supplier_code_display"
             class="form-select form-select-sm @error('supplier_code') is-invalid @enderror" disabled
-            style="
-                -webkit-appearance: none; /* For Chrome, Safari, Opera */
-                -moz-appearance: none;    /* For Firefox */
-                appearance: none;         /* Standard property */
-                background-image: none;   /* Remove any default arrow image */
-                padding-right: 12px;      /* Adjust padding if text goes too far right */
-                color: #888; /* Light color for placeholder-like text */
-            ">
-            <option value="" disabled selected>සැපයුම්කරු (Supplier)</option> {{-- Placeholder as option --}}
-            @php
-                $currentSupplierCode = old('supplier_code', $sale->supplier_code ?? '');
-            @endphp
+            style="height: 24px; font-size: 11px; color: #888; padding: 2px 6px;">
+            <option value="" disabled selected>සැපයුම්කරු (Supplier)</option>
+            @php $currentSupplierCode = old('supplier_code', $sale->supplier_code ?? ''); @endphp
             @foreach ($suppliers as $supplier)
-                <option value="{{ $supplier->code }}"
-                    {{ $currentSupplierCode == $supplier->code ? 'selected' : '' }}>
+                <option value="{{ $supplier->code }}" {{ $currentSupplierCode == $supplier->code ? 'selected' : '' }}>
                     {{ $supplier->name }} ({{ $supplier->code }})
                 </option>
             @endforeach
         </select>
-        
         <input type="hidden" name="supplier_code" id="supplier_code" value="{{ $currentSupplierCode }}">
-
         @error('supplier_code')
-            <div class="invalid-feedback" style="font-size: 0.8rem;">
-                {{ $message }}
-            </div>
+            <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
         @enderror
     </div>
 
-    {{-- Item Select --}}
-    <div class="col-md-6 mb-0">
+    <div class="col-md-3 mb-1">
         <input type="hidden" name="item_code" value="{{ old('item_code') }}">
-
         <select id="item_select"
-            class="form-select form-select-sm @error('item_code') is-invalid @enderror"
-            disabled
-            style="
-                background-color: #e9ecef;
-                cursor: not-allowed;
-                pointer-events: none;
-                appearance: none;
-                -webkit-appearance: none;
-                -moz-appearance: none;
-                background-image: none;
-                color: #888; /* Light color for placeholder-like text */
-            ">
-            <option value="" disabled selected>අයිතමය තෝරන්න (Select Item)</option> {{-- Placeholder as option --}}
+            class="form-select form-select-sm @error('item_code') is-invalid @enderror" disabled
+            style="height: 24px; font-size: 11px; color: #888; padding: 2px 6px;">
+            <option value="" disabled selected>අයිතමය තෝරන්න (Select Item)</option>
             @foreach ($items as $item)
                 <option value="{{ $item->item_code }}"
                     data-code="{{ $item->code }}"
                     data-item-code="{{ $item->item_code }}"
                     data-item-name="{{ $item->item_name }}"
                     {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
-                    {{ $item->item_name }} ({{ $item->item_code }})
+                    ({{ $item->item_code }})
                 </option>
             @endforeach
         </select>
-
         @error('item_code')
-            <div class="invalid-feedback" style="font-size: 0.8rem;">
-                {{ $message }}
-            </div>
+            <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
         @enderror
     </div>
 
-    {{-- Hidden inputs --}}
+    <div class="col-md-3 mb-1">
+        <label for="item_name_display_from_grn" class="form-label visually-hidden">Item Name</label>
+        <input type="text" id="item_name_display_from_grn" class="form-control form-control-sm" readonly
+            placeholder="අයිතමයේ නම (Item Name)"
+            style="height: 24px; font-size: 11px; background-color: #e9ecef; color: #888; padding: 2px 6px;">
+    </div>
+
     <input type="hidden" name="code" id="code" value="{{ old('code') }}">
-    <input type="hidden" name="item_code" id="item_code" value="{{ old('item_code') }}">
     <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
 
-    {{-- Weight --}}
-    <div class="col-md-3 mb-0">
+    <div class="col-md-2 mb-1">
         <input type="number" name="weight" id="weight" step="0.01"
             class="form-control form-control-sm @error('weight') is-invalid @enderror"
-            value="{{ old('weight') }}" placeholder="බර (kg)" {{-- Placeholder added --}}
-            style="color: #888;" {{-- Light color for placeholder --}}
-            required>
+            value="{{ old('weight') }}" placeholder="බර (kg)"
+            style="height: 24px; font-size: 11px; padding: 2px 6px; color: #888;" required>
         @error('weight')
-            <div class="invalid-feedback" style="font-size: 0.8rem;">
-                {{ $message }}
-            </div>
+            <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
         @enderror
     </div>
 
-   {{-- Price per KG --}}
-<div class="col-md-3 mb-0">
-    <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-        class="form-control form-control-sm @error('price_per_kg') is-invalid @enderror"
-        value="{{ old('price_per_kg') }}"
-        placeholder="කිලෝග්‍රෑමයකට මිල (Price/kg)"
-        style="color: black;" {{-- Changed to black for typed text --}}
-        required>
-    @error('price_per_per_kg')
-        <div class="invalid-feedback" style="font-size: 0.8rem;">
-            {{ $message }}
-        </div>
-    @enderror
-</div>
+    <div class="col-md-2 mb-1">
+        <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+            class="form-control form-control-sm @error('price_per_kg') is-invalid @enderror"
+            value="{{ old('price_per_kg') }}"
+            placeholder="මිල (Price/kg)"
+            style="height: 24px; font-size: 11px; padding: 2px 6px; color: black;" required>
+        @error('price_per_per_kg')
+            <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
+        @enderror
+    </div>
 
-   {{-- Total --}}
-<div class="col-md-3 mb-0">
-    <input type="number" name="total" id="total"
-        class="form-control form-control-sm bg-light @error('total') is-invalid @enderror"
-        value="{{ old('total') }}"
-        placeholder="සමස්ත (Total)"
-        style="color: black;" {{-- Changed to black for the displayed total --}}
-        readonly>
-    @error('total')
-        <div class="invalid-feedback" style="font-size: 0.8rem;">
-            {{ $message }}
-        </div>
-    @enderror
-</div>
+    <div class="col-md-2 mb-1">
+        <input type="number" name="total" id="total"
+            class="form-control form-control-sm bg-light @error('total') is-invalid @enderror"
+            value="{{ old('total') }}"
+            placeholder="සමස්ත (Total)"
+            readonly
+            style="height: 24px; font-size: 11px; padding: 2px 6px; color: black;">
+        @error('total')
+            <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
+        @enderror
+    </div>
 
-  {{-- Packs --}}
-<div class="col-md-3 mb-0">
+  <div class="col-md-2 mb-1" style="max-width: 110px;">
     <input type="number" name="packs" id="packs"
         class="form-control form-control-sm @error('packs') is-invalid @enderror"
         value="{{ old('packs') }}"
         placeholder="ඇසුරුම් (Packs)"
-        style="color: black;" {{-- Changed to black for typed text --}}
-        required>
+        style="height: 24px; font-size: 11px; padding: 2px 6px; color: black;" required>
     @error('packs')
-        <div class="invalid-feedback">
-            {{ $message }}
-        </div>
+        <div class="invalid-feedback">{{ $message }}</div>
     @enderror
 </div>
-</div>
+
+    </div>
+
 
                         {{-- Action Buttons --}}
                         <div class="d-grid gap-2 d-md-flex justify-content-center mt-4">
@@ -539,7 +484,7 @@
                                         <th scope="col">මිල/කිලෝග්‍රෑමය</th>
                                         <th scope="col">සමස්ත</th>
                                         <th scope="col">ඇසුරුම්</th>
-                                        <th scope="col">Bill Status</th>
+                                      
                                     </tr>
                                 </thead>
                                 <tbody id="mainSalesTableBody">
@@ -586,10 +531,7 @@
                                             <i class="material-icons arrow-icon">keyboard_arrow_right</i>
                                         </div>
                                         <div class="mt-2 text-center">
-                                            <button class="btn btn-sm btn-outline-primary print-bill-btn"
-                                                data-customer-code="{{ $customerCode }}">
-                                                Print Bill
-                                            </button>
+                                            
                                         </div>
                                     </li>
                                 @endforeach
@@ -613,869 +555,898 @@
     {{-- ALL Custom JavaScript Consolidated Here --}}
     <script>
         // --- Form Calculations & Select2 Interactions ---
-        const itemSelect = document.getElementById('item_select');
-        const codeField = document.getElementById('code');
-        const itemCodeField = document.getElementById('item_code');
-        const itemNameField = document.getElementById('item_name');
-        const supplierSelect = document.getElementById('supplier_code');
-        const weightField = document.getElementById('weight');
-        const pricePerKgField = document.getElementById('price_per_kg');
-        const totalField = document.getElementById('total');
-        const packsField = document.getElementById('packs');
-        const grnDisplay = document.getElementById('grn_display');
+    const itemSelect = document.getElementById('item_select');
+    const codeField = document.getElementById('code');
+    // const itemCodeField = document.getElementById('item_code'); // This is no longer strictly needed if the hidden input inside item_select div is used.
+    const itemNameField = document.getElementById('item_name'); // This is the hidden field
+    const supplierSelect = document.getElementById('supplier_code');
+    const weightField = document.getElementById('weight');
+    const pricePerKgField = document.getElementById('price_per_kg');
+    const totalField = document.getElementById('total');
+    const packsField = document.getElementById('packs');
+    const grnDisplay = document.getElementById('grn_display');
 
-        const customerSelect = document.getElementById('customer_code_select');
-        const newCustomerCodeField = document.getElementById('new_customer_code');
-        const customerNameField = document.getElementById('customer_name_hidden');
-        newCustomerCodeField.focus();
+    const customerSelect = document.getElementById('customer_code_select');
+    const newCustomerCodeField = document.getElementById('new_customer_code');
+    const customerNameField = document.getElementById('customer_name_hidden');
+    newCustomerCodeField.focus();
 
-        const salesEntryForm = document.getElementById('salesEntryForm');
-        const saleIdField = document.getElementById('sale_id');
-        const addSalesEntryBtn = document.getElementById('addSalesEntryBtn');
-        const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
-        const deleteSalesEntryBtn = document.getElementById('deleteSalesEntryBtn');
-        const cancelEntryBtn = document.getElementById('cancelEntryBtn');
+    const salesEntryForm = document.getElementById('salesEntryForm');
+    const saleIdField = document.getElementById('sale_id');
+    const addSalesEntryBtn = document.getElementById('addSalesEntryBtn');
+    const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
+    const deleteSalesEntryBtn = document.getElementById('deleteSalesEntryBtn');
+    const cancelEntryBtn = document.getElementById('cancelEntryBtn');
 
-
-        function calculateTotal() {
-            const weight = parseFloat(weightField.value) || 0;
-            const price = parseFloat(pricePerKgField.value) || 0;
-            totalField.value = (weight * price).toFixed(2);
-        }
-
-        itemSelect.addEventListener('change', function() {
-            const selected = this.options[this.selectedIndex];
-            if (selected && selected.dataset) {
-                codeField.value = selected.dataset.code || '';
-                itemCodeField.value = selected.dataset.itemCode || '';
-                itemNameField.value = selected.dataset.itemName || '';
-            } else {
-                codeField.value = '';
-                itemCodeField.value = '';
-                itemNameField.value = '';
-            }
-        });
-
-        weightField.addEventListener('input', calculateTotal);
-        pricePerKgField.addEventListener('input', calculateTotal);
-        calculateTotal(); // Initial calculation on page load
-
-        $(document).ready(function() {
-            // Initialize Select2 for GRN and Customer select fields
-            $('#grn_select').select2({
-                dropdownParent: $('#grn_select').parent(),
-                placeholder: "-- Select GRN Entry --",
-                width: '100%',
-                allowClear: true,
-                templateResult: function(data) {
-                    if (data.loading || !data.id) return data.text;
-                    return $(data.element).text();
-                },
-                templateSelection: function(data) {
-                    return data.text;
-                }
-            });
-
-            $('#customer_code_select').select2({
-                dropdownParent: $('#customer_code_select').parent(),
-                placeholder: "-- Select Customer --",
-                width: '100%',
-                allowClear: true,
-                templateResult: function(data) {
-                    if (data.loading) return data.text;
-                    if (!data.id) return data.text;
-                    return $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`);
-                },
-                templateSelection: function(data) {
-                    if (!data.id) return data.id ? $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`) : data.text;
-                }
-            });
+    // NEW: Get reference to the new item name display field
+    const itemNameDisplayFromGrn = document.getElementById('item_name_display_from_grn');
 
 
-            $('#grn_display').on('click', function() {
-                $('#grn_select').select2('open');
-            });
+    function calculateTotal() {
+        const weight = parseFloat(weightField.value) || 0;
+        const price = parseFloat(pricePerKgField.value) || 0;
+        totalField.value = (weight * price).toFixed(2);
+    }
 
-            $('#grn_select').on('select2:select', function(e) {
-                const selectedOption = $(e.currentTarget).find('option:selected');
-                const data = selectedOption.data();
-                $('#grn_display').val(data.code || '');
-                supplierSelect.value = data.supplierCode || '';
-                itemSelect.value = data.itemCode || '';
-                itemSelect.dispatchEvent(new Event('change'));
-                weightField.value = '';
-                pricePerKgField.value = '';
-                packsField.value = '';
-                calculateTotal();
-                weightField.focus();
-            });
-
-            $('#customer_code_select').on('select2:select', function(e) {
-                const selectedOption = $(e.currentTarget).find('option:selected');
-                const selectedCustomerCode = selectedOption.val();
-                const selectedCustomerName = selectedOption.data('customer-name');
-
-                newCustomerCodeField.value = selectedCustomerCode || '';
-                newCustomerCodeField.readOnly = true;
-                customerNameField.value = selectedCustomerName || '';
-
-                $('#grn_select').select2('open');
-            });
-
-            newCustomerCodeField.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    $('#grn_select').select2('open');
-                }
-            });
-
-            $('#grn_select').on('select2:clear', function() {
-                $('#grn_display').val('');
-                supplierSelect.value = '';
-                itemSelect.value = '';
-                itemSelect.dispatchEvent(new Event('change'));
-                weightField.value = '';
-                pricePerKgField.value = '';
-                packsField.value = '';
-                calculateTotal();
-            });
-
-            $('#customer_code_select').on('select2:clear', function() {
-                newCustomerCodeField.value = '';
-                newCustomerCodeField.readOnly = false;
-                customerNameField.value = '';
-            });
-
-            $('#new_customer_code').on('input', function() {
-                if ($(this).val() !== '') {
-                    $('#customer_code_select').val(null).trigger('change');
-                    customerNameField.value = '';
-                }
-            });
-
-            // Handle old input values on page load
-            $(document).ready(function() {
-                $('#grn_select').select2({
-                    placeholder: "-- Select GRN Entry --",
-                    allowClear: true
-                });
-
-                $(document).on('select2:open', function() {
-                    document.querySelector('.select2-search__field').focus();
-                });
-
-                @if (old('customer_code_select') || old('customer_code'))
-                    const oldGrnCode = "{{ old('code') }}";
-                    const oldSupplierCode = "{{ old('supplier_code') }}";
-                    const oldItemCode = "{{ old('item_code') }}";
-                    const oldWeight = "{{ old('weight') }}";
-                    const oldPricePerKg = "{{ old('price_per_kg') }}";
-                    const oldPacks = "{{ old('packs') }}";
-                    const oldGrnOption = $('#grn_select option').filter(function() {
-                        return $(this).val() === oldGrnCode && $(this).data('supplierCode') ===
-                            oldSupplierCode && $(this).data('itemCode') === oldItemCode;
-                    });
-
-                    if (oldGrnOption.length) {
-                        $('#grn_select').val(oldGrnOption.val()).trigger('change');
-                        $('#grn_display').val(oldGrnOption.data('code'));
-                        $('#weight').val(oldWeight);
-                        $('#price_per_kg').val(oldPricePerKg);
-                        $('#packs').val(oldPacks);
-                        calculateTotal();
-                    }
-
-                    const newCustomerCodeField = document.getElementById('new_customer_code');
-                    const customerNameField = document.getElementById('customer_name_hidden');
-
-                    const oldSelectedCustomerCode = "{{ old('customer_code_select') }}";
-                    const oldEnteredCustomerCode = "{{ old('customer_code') }}";
-                    const oldCustomerNameValue = "{{ old('customer_name') }}";
-
-                    if (oldSelectedCustomerCode) {
-                        $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
-                        if (newCustomerCodeField) {
-                            newCustomerCodeField.value = oldSelectedCustomerCode;
-                            newCustomerCodeField.readOnly = true;
-                        }
-                        if (customerNameField) {
-                            customerNameField.value = oldCustomerNameValue;
-                        }
-                    } else if (oldEnteredCustomerCode) {
-                        if (newCustomerCodeField) {
-                            newCustomerCodeField.value = oldEnteredCustomerCode;
-                            newCustomerCodeField.readOnly = false;
-                        }
-                        if (customerNameField) {
-                            customerNameField.value = oldCustomerNameValue;
-                        }
-                    }
-
-                    $('#grn_select').select2('open');
-                @endif
-            });
-
-            $('#grn_select').on('select2:open', function() {
-                $('.select2-container--open .select2-search__field').focus();
-            });
-
-            // --- JavaScript for F1 and F5 Key Presses ---
-         document.addEventListener('keydown', function(e) {
-        console.log('Key pressed:', e.key);
-
-        if (e.key === "F1") {
-            e.preventDefault();
-            console.log('F1 key pressed - attempting to print and mark sales...');
-
-            const salesDataForReceipt = @json($unprocessedSales);
-
-            if (salesDataForReceipt.length === 0) {
-                alert('No unprocessed sales records to print!');
-                return;
-            }
-
-            // Confirmation dialog before printing
-            if (!confirm('Do you want to print the current unprocessed sales?')) {
-                console.log('Print action cancelled by user.');
-                return; // Stop execution if the user cancels
-            }
-
-            const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
-
-            const now = new Date();
-            const date = now.toLocaleDateString();
-            const time = now.toLocaleTimeString();
-            const customerCode = document.getElementById('new_customer_code').value || 'N/A';
-            const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
-            const mobile = '0702758908'; // Hardcoded phone number from PDF
-
-            const random4Digit = Math.floor(1000 + Math.random() * 9000);
-            const billNo = `BILL-${random4Digit}`; // Generate a random bill number
-
-            let itemsHtml = '';
-            let totalItemsCount = 0;
-            let totalAmountSum = 0;
-            salesDataForReceipt.forEach(sale => {
-                itemsHtml += `
-                    <tr>
-                        <td class="col-item">${sale.item_name} (${sale.item_code})</td>
-                        <td class="col-qty">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                        <td class="col-rate">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                        <td class="col-value">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                    </tr>
-                `;
-                totalItemsCount++;
-                totalAmountSum += parseFloat(sale.total);
-            });
-
-            // UPDATED: salesContent to match PDF structure and data
-            const salesContent = `
-                <div class="receipt-container">
-                    <div class="company-info">
-                        <h3>C11 TGK ට්‍රේඩර්ස්</h3>
-                        <p>අල, ඹී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
-                        <p>වි.ආ.ම. වේයන්ගොඩ</p>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="bill-details">
-                        <p><span>දිනය :</span> <span>${date}</span></p>
-                        <p><span>දුරකථන :</span> <span>${mobile}</span></p>
-                        <p><span>වෙලාව :</span> <span>${time}</span></p>
-                        <p><span>බිල් අංකය :</span> <span>${billNo}</span></p>
-                        <p class="customer-name-on-bill">${customerName} (${customerCode})</p>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="items-section">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th class="col-item">වර්ගය</th>
-                                    <th class="col-qty">කිලො</th>
-                                    <th class="col-rate">මිල</th>
-                                    <th class="col-value">අගය</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${itemsHtml}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="summary-section">
-                        <p><span>මුළු අයිතම ගණන:</span> <span class="align-right">${totalItemsCount}</span></p>
-                        <p><span>මුළු මුදල:</span> <span class="align-right">Rs. ${totalAmountSum.toFixed(2)}</span></p>
-                        <p><span>ප්‍රවාහන ගාස්තු:</span> <span class="align-right">00.00</span></p>
-                        <p><span>කුලිය:</span> <span class="align-right">00.00</span></p>
-                        <p class="grand-total"><span>අගය:</span> <span class="align-right">Rs. ${(totalAmountSum).toFixed(2)}</span></p>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="footer-section">
-                        <p>භාණ්ඩ පරීක්ෂා කර බලා රැගෙන යන්න</p>
-                        <p>නැවත භාර ගනු නොලැබේ</p>
-                    </div>
-                </div>
-            `;
-
-            const printWindow = window.open('', '_blank', 'width=400,height=600');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>විකුණුම් කුපිත්තුව</title>
-                        <style>
-                            /* Import Sinhala font */
-                            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-
-                            body {
-                                font-family: 'Noto Sans Sinhala', sans-serif;
-                                margin: 0;
-                                padding: 5mm; /* Smaller padding to mimic thermal receipt */
-                                font-size: 10px; /* Smaller base font size for receipt */
-                                line-height: 1.2; /* Tighter line spacing */
-                            }
-                            .receipt-container {
-                                width: 100%;
-                                max-width: 70mm; /* Typical thermal receipt width (approx 2.75 inches) */
-                                /* Changed: Align to left */
-                                margin-left: 0;
-                                margin-right: auto; /* Pushes it to the left */
-                                border: none; /* No outer border, content itself has dividers */
-                                padding: 0; /* No padding on container itself */
-                            }
-                            .company-info {
-                                text-align: center;
-                                margin-bottom: 5px;
-                            }
-                            .company-info h3 {
-                                font-size: 1.2em; /* Slightly larger for company name */
-                                margin-bottom: 2px;
-                                font-weight: bold;
-                            }
-                            .company-info p {
-                                margin: 0;
-                                line-height: 1.2;
-                            }
-                            .bill-details, .summary-section, .footer-section {
-                                text-align: left;
-                                margin-bottom: 5px;
-                            }
-                            .bill-details p, .summary-section p {
-                                margin: 0;
-                                line-height: 1.2;
-                                display: flex; /* Use flex to align key-value pairs */
-                                justify-content: space-between; /* Space out key and value */
-                            }
-                            .bill-details p span:first-child, .summary-section p span:first-child {
-                                text-align: left;
-                                font-weight: normal; /* Labels not necessarily bold */
-                            }
-                            .bill-details p span:last-child, .summary-section p span:last-child {
-                                text-align: right;
-                                font-weight: bold; /* Values can be bold */
-                            }
-                            .customer-name-on-bill {
-                                text-align: center; /* Customer name centered as in PDF */
-                                font-weight: bold;
-                                margin-top: 5px;
-                            }
-
-                            .divider {
-                                border-top: 1px dashed #000;
-                                margin: 8px 0; /* Adjust margin for dividers */
-                            }
-                            .items-section table {
-                                width: 100%;
-                                border-collapse: collapse;
-                                font-size: 10px; /* Table font size */
-                            }
-                            .items-section th, .items-section td {
-                                padding: 2px 0; /* Smaller padding for table cells */
-                                text-align: right;
-                                border-bottom: none; /* No internal borders in PDF example */
-                            }
-                            .items-section th {
-                                font-weight: bold;
-                                text-align: center; /* Headers might be centered or left, PDF is unclear, let's try center for now */
-                                border-bottom: 1px dashed #000; /* Divider below header */
-                            }
-                            .col-item {
-                                text-align: left;
-                                width: 40%; /* Adjust widths to match PDF visual */
-                            }
-                            .col-qty {
-                                width: 20%;
-                            }
-                            .col-rate {
-                                width: 20%;
-                            }
-                            .col-value {
-                                width: 20%;
-                            }
-                            .grand-total {
-                                font-size: 1.1em; /* Grand total slightly larger */
-                                font-weight: bold;
-                                border-top: 1px dashed #000; /* Divider above grand total */
-                                padding-top: 5px;
-                                margin-top: 5px;
-                            }
-                            .footer-section {
-                                text-align: center;
-                                margin-top: 10px;
-                            }
-                            .footer-section p {
-                                margin: 0;
-                                line-height: 1.2;
-                            }
-                        </style>
-                    </head>
-                    <body>${salesContent}</body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus(); // Try to bring the new window to focus
-            printWindow.print(); // This explicitly opens the print dialog
-
-            const checkClosed = setInterval(function() {
-                // This checks if the print window is closed, meaning the user either printed or cancelled.
-                if (printWindow.closed) {
-                    clearInterval(checkClosed);
-                    console.log('F1: Print window closed. Sending request to mark sales as printed and processed.');
-
-                    fetch("{{ route('sales.markAsPrinted') }}", {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                sales_ids: salesIdsToMarkPrintedAndProcessed,
-                                bill_no: billNo
-                            })
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                return response.text().then(text => {
-                                    throw new Error(`HTTP error! status: ${response.status}, message: ${text}`)
-                                });
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('F1: Sales marked as printed and processed response:', data);
-                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                            window.location.reload();
-                        })
-                        .catch(error => {
-                            console.error('F1: Error marking sales as printed and processed:', error);
-                            alert('Failed to mark sales as printed. Please check console for details.');
-                        });
-                }
-            }, 500);
-        } else if (e.key === "F5") {
-            e.preventDefault();
-            console.log('F5 key pressed - attempting to mark all displayed sales as processed...');
-
-            fetch("{{ route('sales.markAllAsProcessed') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            throw new Error(`HTTP error! status: ${response.status}, message: ${text}`)
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Response from sales.markAllAsProcessed (F5):', data);
-                    if (data.success) {
-                        console.log(data.message);
-                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                        window.location.reload();
-                    } else {
-                        console.error('Server reported an error:', data.message);
-                        alert('Operation failed: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error marking sales as processed by F5:', error);
-                    alert('Failed to process sales on F5. Check console for details.');
-                });
+    // This listener is mostly for internal consistency if itemSelect.value is set programmatically.
+    // The main item_name population will now come from grn_select.
+    itemSelect.addEventListener('change', function() {
+        const selected = this.options[this.selectedIndex];
+        if (selected && selected.dataset) {
+            codeField.value = selected.dataset.code || '';
+            // itemNameField.value = selected.dataset.itemName || ''; // We will now get item_name from GRN select
+            // Ensure the hidden item_code is updated when item_select value changes programmatically
+            document.querySelector('input[name="item_code"]').value = selected.dataset.itemCode || '';
+        } else {
+            codeField.value = '';
+            // itemNameField.value = ''; // We will now get item_name from GRN select
+            document.querySelector('input[name="item_code"]').value = '';
         }
     });
 
 
-            // Store the PHP data in JavaScript variables for easier access
-            const printedSalesData = @json($salesPrinted->toArray());
-            const unprintedSalesData = @json($salesNotPrinted->toArray());
-            // allSalesData is the initial data loaded for the main table
-            const allSalesData = @json($sales->toArray());
+    weightField.addEventListener('input', calculateTotal);
+    pricePerKgField.addEventListener('input', calculateTotal);
+    calculateTotal(); // Initial calculation on page load
 
-            // NEW: Variable to hold the currently displayed sales data in the main table
-            let currentDisplayedSalesData = [];
-
-
-            console.log("Initial printedSalesData:", printedSalesData);
-            console.log("Initial unprintedSalesData:", unprintedSalesData);
-            console.log("Initial allSalesData (for default table view):", allSalesData);
-
-
-            // Function to populate the main sales table
-            function populateMainSalesTable(salesArray) {
-                console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
-                // Update the currentDisplayedSalesData
-                currentDisplayedSalesData = salesArray;
-                console.log("currentDisplayedSalesData updated to:", currentDisplayedSalesData);
-
-                const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
-
-                if (!mainSalesTableBodyElement) {
-                    console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
-                    return; // Exit if element is not found
-                }
-
-                let rowsHtml = '';
-                let totalSalesValue = 0;
-
-                if (salesArray.length === 0) {
-                    console.log("Sales array is empty. Displaying 'No sales records found.'");
-                    rowsHtml = '<tr><td colspan="8" class="text-center">No sales records found for this selection.</td></tr>';
-                    totalSalesValue = 0;
-                } else {
-                    salesArray.forEach(sale => {
-                        // Construct the row HTML string
-                        rowsHtml += `
-                            <tr data-sale-id="${sale.id}">
-                                <td>${sale.code || 'N/A'}</td>
-                                <td>${sale.item_code || 'N/A'}</td>
-                                <td>${sale.item_name || 'N/A'}</td>
-                                <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                                <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                                <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                                <td>${(parseFloat(sale.packs) || 0).toFixed(0)}</td>
-                                <td>${sale.bill_printed === 'Y' ? 'Printed' : 'Unprinted'}</td>
-                            </tr>
-                        `;
-                        totalSalesValue += parseFloat(sale.total || 0);
-                    });
-                }
-
-                // Log the HTML string *before* setting it
-                console.log("Attempting to set tbody HTML with:", rowsHtml);
-
-                // Set the innerHTML of the tbody using native JavaScript
-                mainSalesTableBodyElement.innerHTML = rowsHtml;
-
-                // Update total sales value display
-                $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
-                console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2));
-                // Log the actual HTML that is *now* inside the tbody
-                console.log("Current tbody HTML after setting:", mainSalesTableBodyElement.innerHTML);
+    $(document).ready(function() {
+        // Initialize Select2 for GRN and Customer select fields
+        $('#grn_select').select2({
+            dropdownParent: $('#grn_select').parent(),
+            placeholder: "-- Select GRN Entry --",
+            width: '100%',
+            allowClear: true,
+            templateResult: function(data) {
+                if (data.loading || !data.id) return data.text;
+                // Display the full GRN details in the dropdown
+                return $(data.element).text();
+            },
+            templateSelection: function(data) {
+                // Display only the GRN code in the selection box
+                return data.id ? $(data.element).data('code') : data.text;
             }
+        });
 
-            // Initial population of the main sales table with all sales data
-            populateMainSalesTable(allSalesData);
+        $('#customer_code_select').select2({
+            dropdownParent: $('#customer_code_select').parent(),
+            placeholder: "-- Select Customer --",
+            width: '100%',
+            allowClear: true,
+            templateResult: function(data) {
+                if (data.loading) return data.text;
+                if (!data.id) return data.text;
+                return $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`);
+            },
+            templateSelection: function(data) {
+                if (!data.id) return data.id ? $(`<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`) : data.text;
+            }
+        });
 
-            // Function to populate the form fields for editing
-            function populateFormForEdit(sale) {
-                console.log("Populating form for sale:", sale);
-                saleIdField.value = sale.id;
-                newCustomerCodeField.value = sale.customer_code || '';
-                customerNameField.value = sale.customer_name || '';
-                newCustomerCodeField.readOnly = true;
 
-                // Set selected customer in Select2, if applicable
-                if (sale.customer_code) {
-                    $('#customer_code_select').val(sale.customer_code).trigger('change.select2');
-                    console.log("Setting customer_code_select to:", sale.customer_code);
-                } else {
-                    $('#customer_code_select').val(null).trigger('change.select2');
-                    console.log("Clearing customer_code_select.");
-                }
+        $('#grn_display').on('click', function() {
+            $('#grn_select').select2('open');
+        });
 
-                // Populate GRN related fields
-                $('#grn_display').val(sale.code || ''); // Assuming 'code' is the GRN code
-                // Try to select the GRN in the hidden select2, then trigger change
-                const grnOption = $('#grn_select option').filter(function() {
-                    return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code && $(this).data('itemCode') === sale.item_code;
+        $('#grn_select').on('select2:select', function(e) {
+            const selectedOption = $(e.currentTarget).find('option:selected');
+            const data = selectedOption.data();
+
+            $('#grn_display').val(data.code || ''); // GRN code in display field
+            supplierSelect.value = data.supplierCode || ''; // Set supplier
+
+            itemSelect.value = data.itemCode || ''; // Set item code in disabled select
+            itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item_code
+
+            // NEW: Populate the dedicated item name display field
+            itemNameDisplayFromGrn.value = data.itemName || '';
+            itemNameField.value = data.itemName || ''; // Also set the hidden item_name field
+
+            weightField.value = '';
+            pricePerKgField.value = '';
+            packsField.value = '';
+            calculateTotal();
+            weightField.focus();
+        });
+
+        $('#customer_code_select').on('select2:select', function(e) {
+            const selectedOption = $(e.currentTarget).find('option:selected');
+            const selectedCustomerCode = selectedOption.val();
+            const selectedCustomerName = selectedOption.data('customer-name');
+
+            newCustomerCodeField.value = selectedCustomerCode || '';
+            newCustomerCodeField.readOnly = true;
+            customerNameField.value = selectedCustomerName || '';
+
+            $('#grn_select').select2('open');
+        });
+
+        newCustomerCodeField.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                $('#grn_select').select2('open');
+            }
+        });
+
+        $('#grn_select').on('select2:clear', function() {
+            $('#grn_display').val('');
+            supplierSelect.value = '';
+            itemSelect.value = '';
+            itemSelect.dispatchEvent(new Event('change')); // Clear item related hidden fields
+            itemNameDisplayFromGrn.value = ''; // NEW: Clear the item name display field
+            itemNameField.value = ''; // NEW: Clear hidden item_name field
+            weightField.value = '';
+            pricePerKgField.value = '';
+            packsField.value = '';
+            calculateTotal();
+        });
+
+        $('#customer_code_select').on('select2:clear', function() {
+            newCustomerCodeField.value = '';
+            newCustomerCodeField.readOnly = false;
+            customerNameField.value = '';
+        });
+
+        $('#new_customer_code').on('input', function() {
+            if ($(this).val() !== '') {
+                $('#customer_code_select').val(null).trigger('change');
+                customerNameField.value = '';
+            }
+        });
+
+        // Handle old input values on page load
+        $(document).ready(function() {
+            $('#grn_select').select2({
+                placeholder: "-- Select GRN Entry --",
+                allowClear: true
+            });
+
+            $(document).on('select2:open', function() {
+                document.querySelector('.select2-search__field').focus();
+            });
+
+            @if (old('customer_code_select') || old('customer_code'))
+                const oldGrnCode = "{{ old('code') }}";
+                const oldSupplierCode = "{{ old('supplier_code') }}";
+                const oldItemCode = "{{ old('item_code') }}";
+                const oldItemName = "{{ old('item_name') }}"; // Get old item name
+                const oldWeight = "{{ old('weight') }}";
+                const oldPricePerKg = "{{ old('price_per_kg') }}";
+                const oldPacks = "{{ old('packs') }}";
+                const oldGrnOption = $('#grn_select option').filter(function() {
+                    return $(this).val() === oldGrnCode &&
+                           $(this).data('supplierCode') === oldSupplierCode &&
+                           $(this).data('itemCode') === oldItemCode;
                 });
-                if (grnOption.length) {
-                    $('#grn_select').val(grnOption.val()).trigger('change.select2'); // Use change.select2 to trigger Select2's internal change handler
-                    console.log("Setting grn_select to:", grnOption.val());
-                } else {
-                    $('#grn_select').val(null).trigger('change.select2');
-                    console.log("Clearing grn_select.");
+
+                if (oldGrnOption.length) {
+                    $('#grn_select').val(oldGrnOption.val()).trigger('change');
+                    $('#grn_display').val(oldGrnOption.data('code'));
+                    itemNameDisplayFromGrn.value = oldGrnOption.data('itemName') || ''; // NEW: Populate display field
+                    itemNameField.value = oldGrnOption.data('itemName') || ''; // Ensure hidden is set
+                    $('#weight').val(oldWeight);
+                    $('#price_per_kg').val(oldPricePerKg);
+                    $('#packs').val(oldPacks);
+                    calculateTotal();
                 }
 
-                supplierSelect.value = sale.supplier_code || '';
-                itemSelect.value = sale.item_code || '';
-                itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item fields
-                console.log("Setting supplier_code to:", sale.supplier_code, "and item_select to:", sale.item_code);
+                const newCustomerCodeField = document.getElementById('new_customer_code');
+                const customerNameField = document.getElementById('customer_name_hidden');
 
+                const oldSelectedCustomerCode = "{{ old('customer_code_select') }}";
+                const oldEnteredCustomerCode = "{{ old('customer_code') }}";
+                const oldCustomerNameValue = "{{ old('customer_name') }}";
 
-                weightField.value = parseFloat(sale.weight || 0).toFixed(2);
-                pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-                packsField.value = parseInt(sale.packs || 0);
-                calculateTotal(); // Recalculate total based on loaded weight/price
-                console.log("Weight:", weightField.value, "Price:", pricePerKgField.value, "Packs:", packsField.value);
-
-
-                // Change form action to update
-                salesEntryForm.action = `/sales/update/${sale.id}`;
-                console.log("Form action set to:", salesEntryForm.action);
-
-                // Show/hide buttons
-                addSalesEntryBtn.style.display = 'none';
-                updateSalesEntryBtn.style.display = 'inline-block';
-                deleteSalesEntryBtn.style.display = 'inline-block';
-                cancelEntryBtn.style.display = 'inline-block';
-                console.log("Buttons updated for edit mode.");
-            }
-
-            // Function to reset the form to "Add New Entry" mode
-            function resetForm() {
-                console.log("Resetting form...");
-                salesEntryForm.reset(); // Resets all form fields
-                saleIdField.value = ''; // Clear hidden ID
-                newCustomerCodeField.readOnly = false; // Make customer code editable again
-                $('#customer_code_select').val(null).trigger('change.select2'); // Clear customer select2
-                $('#grn_select').val(null).trigger('change.select2'); // Clear GRN select2
-                $('#grn_display').val(''); // Clear GRN display field
-                supplierSelect.value = '';
-                itemSelect.value = '';
-                itemSelect.dispatchEvent(new Event('change'));
-                calculateTotal(); // Recalculate total for empty fields
-
-                salesEntryForm.action = "{{ route('grn.store') }}"; // Revert form action to store
-
-                // Show/hide buttons
-                addSalesEntryBtn.style.display = 'inline-block';
-                updateSalesEntryBtn.style.display = 'none';
-                deleteSalesEntryBtn.style.display = 'none';
-                cancelEntryBtn.style.display = 'none';
-
-                newCustomerCodeField.focus(); // Focus on the first input
-                console.log("Form reset complete.");
-            }
-
-            // Event listener for clicking on table rows to populate form
-            document.getElementById('mainSalesTableBody').addEventListener('click', function(event) {
-                const clickedRow = event.target.closest('tr[data-sale-id]');
-                if (clickedRow) {
-                    const saleId = clickedRow.dataset.saleId;
-                    console.log("Row clicked, sale ID:", saleId);
-                    // IMPORTANT CHANGE: Search within currentDisplayedSalesData
-                    const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
-                    if (saleToEdit) {
-                        console.log("Sale found in currentDisplayedSalesData for ID:", saleId, saleToEdit);
-                        populateFormForEdit(saleToEdit);
-                    } else {
-                        console.warn("Sale NOT found in currentDisplayedSalesData for ID:", saleId);
-                        alert("Could not find this record for editing. It might not be in the currently displayed sales list. Please try reloading the page if this persists.");
+                if (oldSelectedCustomerCode) {
+                    $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
+                    if (newCustomerCodeField) {
+                        newCustomerCodeField.value = oldSelectedCustomerCode;
+                        newCustomerCodeField.readOnly = true;
+                    }
+                    if (customerNameField) {
+                        customerNameField.value = oldCustomerNameValue;
+                    }
+                } else if (oldEnteredCustomerCode) {
+                    if (newCustomerCodeField) {
+                        newCustomerCodeField.value = oldEnteredCustomerCode;
+                        newCustomerCodeField.readOnly = false;
+                    }
+                    if (customerNameField) {
+                        customerNameField.value = oldCustomerNameValue;
                     }
                 }
-            });
 
-            // Event listener for Update button
-            updateSalesEntryBtn.addEventListener('click', function() {
-                const saleId = saleIdField.value;
-                if (!saleId) {
-                    alert('No record selected for update.');
-                    return;
-                }
+                $('#grn_select').select2('open');
+            @endif
+        });
 
-                const formData = new FormData(salesEntryForm);
-                const data = {};
-                formData.forEach((value, key) => {
-                    data[key] = value;
-                });
-                data['_method'] = 'PUT'; // Laravel expects PUT/PATCH for updates
-                data['_token'] = '{{ csrf_token() }}';
+        $('#grn_select').on('select2:open', function() {
+            $('.select2-container--open .select2-search__field').focus();
+        });
 
-                fetch(`/sales/update/${saleId}`, {
-                        method: 'POST', // Use POST for Laravel PUT/PATCH spoofing
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify(data)
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(errorData => Promise.reject(errorData));
+        // --- JavaScript for F1 and F5 Key Presses ---
+     document.addEventListener('keydown', function(e) {
+    console.log('Key pressed:', e.key);
+
+    if (e.key === "F1") {
+        e.preventDefault();
+        console.log('F1 key pressed - attempting to print and mark sales...');
+
+        const salesDataForReceipt = @json($unprocessedSales);
+
+        if (salesDataForReceipt.length === 0) {
+            alert('No unprocessed sales records to print!');
+            return;
+        }
+
+        // Confirmation dialog before printing
+        if (!confirm('Do you want to print the current unprocessed sales?')) {
+            console.log('Print action cancelled by user.');
+            return; // Stop execution if the user cancels
+        }
+
+        const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
+
+        const now = new Date();
+        const date = now.toLocaleDateString();
+        const time = now.toLocaleTimeString();
+        const customerCode = document.getElementById('new_customer_code').value || 'N/A';
+        const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
+        const mobile = '0702758908'; // Hardcoded phone number from PDF
+
+        const random4Digit = Math.floor(1000 + Math.random() * 9000);
+        const billNo = `BILL-${random4Digit}`; // Generate a random bill number
+
+        let itemsHtml = '';
+        let totalItemsCount = 0;
+        let totalAmountSum = 0;
+        salesDataForReceipt.forEach(sale => {
+            itemsHtml += `
+                <tr>
+                    <td class="col-item">${sale.item_name} (${sale.item_code})</td>
+                    <td class="col-qty">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                    <td class="col-rate">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                    <td class="col-value">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                </tr>
+            `;
+            totalItemsCount++;
+            totalAmountSum += parseFloat(sale.total);
+        });
+
+        // UPDATED: salesContent to match PDF structure and data
+        const salesContent = `
+            <div class="receipt-container">
+                <div class="company-info">
+                    <h3>C11 TGK ට්‍රේඩර්ස්</h3>
+                    <p>අල, ඹී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
+                    <p>වි.ආ.ම. වේයන්ගොඩ</p>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="bill-details">
+                    <p><span>දිනය :</span> <span>${date}</span></p>
+                    <p><span>දුරකථන :</span> <span>${mobile}</span></p>
+                    <p><span>වෙලාව :</span> <span>${time}</span></p>
+                    <p><span>බිල් අංකය :</span> <span>${billNo}</span></p>
+                    <p class="customer-name-on-bill">${customerName} (${customerCode})</p>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="items-section">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="col-item">වර්ගය</th>
+                                <th class="col-qty">කිලො</th>
+                                <th class="col-rate">මිල</th>
+                                <th class="col-value">අගය</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="summary-section">
+                    <p><span>මුළු අයිතම ගණන:</span> <span class="align-right">${totalItemsCount}</span></p>
+                    <p><span>මුළු මුදල:</span> <span class="align-right">Rs. ${totalAmountSum.toFixed(2)}</span></p>
+                    <p><span>ප්‍රවාහන ගාස්තු:</span> <span class="align-right">00.00</span></p>
+                    <p><span>කුලිය:</span> <span class="align-right">00.00</span></p>
+                    <p class="grand-total"><span>අගය:</span> <span class="align-right">Rs. ${(totalAmountSum).toFixed(2)}</span></p>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="footer-section">
+                    <p>භාණ්ඩ පරීක්ෂා කර බලා රැගෙන යන්න</p>
+                    <p>නැවත භාර ගනු නොලැබේ</p>
+                </div>
+            </div>
+        `;
+
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>විකුණුම් කුපිත්තුව</title>
+                    <style>
+                        /* Import Sinhala font */
+                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+
+                        body {
+                            font-family: 'Noto Sans Sinhala', sans-serif;
+                            margin: 0;
+                            padding: 5mm; /* Smaller padding to mimic thermal receipt */
+                            font-size: 10px; /* Smaller base font size for receipt */
+                            line-height: 1.2; /* Tighter line spacing */
                         }
-                        return response.json();
-                    })
-                    .then(result => {
-                        if (result.success) {
-                            alert(result.message);
-                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                            window.location.reload();
-                        } else {
-                            alert('Update failed: ' + result.message);
+                        .receipt-container {
+                            width: 100%;
+                            max-width: 70mm; /* Typical thermal receipt width (approx 2.75 inches) */
+                            /* Changed: Align to left */
+                            margin-left: 0;
+                            margin-right: auto; /* Pushes it to the left */
+                            border: none; /* No outer border, content itself has dividers */
+                            padding: 0; /* No padding on container itself */
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error updating sales entry:', error);
-                        let errorMessage = 'An error occurred during update.';
-                        if (error && error.message) {
-                            errorMessage += '\n' + error.message;
+                        .company-info {
+                            text-align: center;
+                            margin-bottom: 5px;
                         }
-                        if (error && error.errors) {
-                            for (const key in error.errors) {
-                                errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
-                            }
+                        .company-info h3 {
+                            font-size: 1.2em; /* Slightly larger for company name */
+                            margin-bottom: 2px;
+                            font-weight: bold;
                         }
-                        alert(errorMessage);
-                    });
-            });
+                        .company-info p {
+                            margin: 0;
+                            line-height: 1.2;
+                        }
+                        .bill-details, .summary-section, .footer-section {
+                            text-align: left;
+                            margin-bottom: 5px;
+                        }
+                        .bill-details p, .summary-section p {
+                            margin: 0;
+                            line-height: 1.2;
+                            display: flex; /* Use flex to align key-value pairs */
+                            justify-content: space-between; /* Space out key and value */
+                        }
+                        .bill-details p span:first-child, .summary-section p span:first-child {
+                            text-align: left;
+                            font-weight: normal; /* Labels not necessarily bold */
+                        }
+                        .bill-details p span:last-child, .summary-section p span:last-child {
+                            text-align: right;
+                            font-weight: bold; /* Values can be bold */
+                        }
+                        .customer-name-on-bill {
+                            text-align: center; /* Customer name centered as in PDF */
+                            font-weight: bold;
+                            margin-top: 5px;
+                        }
 
-            // Event listener for Delete button
-            deleteSalesEntryBtn.addEventListener('click', function() {
-                const saleId = saleIdField.value;
-                if (!saleId) {
-                    alert('No record selected for deletion.');
-                    return;
-                }
+                        .divider {
+                            border-top: 1px dashed #000;
+                            margin: 8px 0; /* Adjust margin for dividers */
+                        }
+                        .items-section table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 10px; /* Table font size */
+                        }
+                        .items-section th, .items-section td {
+                            padding: 2px 0; /* Smaller padding for table cells */
+                            text-align: right;
+                            border-bottom: none; /* No internal borders in PDF example */
+                        }
+                        .items-section th {
+                            font-weight: bold;
+                            text-align: center; /* Headers might be centered or left, PDF is unclear, let's try center for now */
+                            border-bottom: 1px dashed #000; /* Divider below header */
+                        }
+                        .col-item {
+                            text-align: left;
+                            width: 40%; /* Adjust widths to match PDF visual */
+                        }
+                        .col-qty {
+                            width: 20%;
+                        }
+                        .col-rate {
+                            width: 20%;
+                        }
+                        .col-value {
+                            width: 20%;
+                        }
+                        .grand-total {
+                            font-size: 1.1em; /* Grand total slightly larger */
+                            font-weight: bold;
+                            border-top: 1px dashed #000; /* Divider above grand total */
+                            padding-top: 5px;
+                            margin-top: 5px;
+                        }
+                        .footer-section {
+                            text-align: center;
+                            margin-top: 10px;
+                        }
+                        .footer-section p {
+                            margin: 0;
+                            line-height: 1.2;
+                        }
+                    </style>
+                </head>
+                <body>${salesContent}</body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus(); // Try to bring the new window to focus
+        printWindow.print(); // This explicitly opens the print dialog
 
-                if (!confirm('Are you sure you want to delete this sales record?')) {
-                    return;
-                }
+        const checkClosed = setInterval(function() {
+            // This checks if the print window is closed, meaning the user either printed or cancelled.
+            if (printWindow.closed) {
+                clearInterval(checkClosed);
+                console.log('F1: Print window closed. Sending request to mark sales as printed and processed.');
 
-                fetch(`/sales/delete/${saleId}`, {
-                        method: 'POST', // Use POST for Laravel DELETE spoofing
+                fetch("{{ route('sales.markAsPrinted') }}", {
+                        method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({
-                            _method: 'DELETE', // Laravel expects DELETE
-                            _token: '{{ csrf_token() }}'
+                            sales_ids: salesIdsToMarkPrintedAndProcessed,
+                            bill_no: billNo
                         })
                     })
                     .then(response => {
                         if (!response.ok) {
-                            return response.json().then(errorData => Promise.reject(errorData));
+                            return response.text().then(text => {
+                                throw new Error(`HTTP error! status: ${response.status}, message: ${text}`)
+                            });
                         }
                         return response.json();
                     })
-                    .then(result => {
-                        if (result.success) {
-                            alert(result.message);
-                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                            window.location.reload();
-                        } else {
-                            alert('Delete failed: ' + result.message);
-                        }
+                    .then(data => {
+                        console.log('F1: Sales marked as printed and processed response:', data);
+                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                        window.location.reload();
                     })
                     .catch(error => {
-                        console.error('Error deleting sales entry:', error);
-                        let errorMessage = 'An error occurred during deletion.';
-                        if (error && error.message) {
-                            errorMessage += '\n' + error.message;
-                        }
-                        alert(errorMessage);
+                        console.error('F1: Error marking sales as printed and processed:', error);
+                        alert('Failed to mark sales as printed. Please check console for details.');
                     });
-            });
+            }
+        }, 500);
+    } else if (e.key === "F5") {
+        e.preventDefault();
+        console.log('F5 key pressed - attempting to mark all displayed sales as processed...');
 
-
-            // Event listener for Cancel button
-            cancelEntryBtn.addEventListener('click', resetForm);
-
-            // Initial form state (hide update/delete, show add)
-            resetForm();
-
-            // Handle click on customer headers in Printed and Unprinted sections
-            $('.customer-header').on('click', function() {
-                console.log("Customer header clicked!");
-
-                const customerCode = $(this).data('customer-code');
-                const billType = $(this).data('bill-type');
-                const billNo = $(this).data('bill-no');
-
-                console.log("Clicked Customer Code:", customerCode);
-                console.log("Clicked Bill Type:", billType);
-                console.log("Clicked Bill No:", billNo);
-
-                let salesToDisplay = [];
-
-                if (billType === 'printed') {
-                    console.log("Attempting to filter PRINTED sales...");
-                    // Ensure printedSalesData[customerCode] exists and is an array before filtering
-                    if (printedSalesData[customerCode] && Array.isArray(printedSalesData[customerCode])) {
-                        salesToDisplay = printedSalesData[customerCode].filter(sale => {
-                            return String(sale.bill_no) === String(billNo);
-                        });
-                        console.log("Printed sales data for customerCode:", printedSalesData[customerCode]);
-                    } else {
-                        console.log("No printed sales data found or not an array for customerCode:", customerCode);
-                    }
-                } else if (billType === 'unprinted') {
-                    console.log("Attempting to filter UNPRINTED sales...");
-                    // Ensure unprintedSalesData[customerCode] exists and is an array
-                    if (unprintedSalesData[customerCode] && Array.isArray(unprintedSalesData[customerCode])) {
-                        salesToDisplay = unprintedSalesData[customerCode];
-                        console.log("Unprinted sales data for customerCode:", unprintedSalesData[customerCode]);
-                    } else {
-                        console.log("No unprinted sales data found or not an array for customerCode:", customerCode);
-                    }
+        fetch("{{ route('sales.markAllAsProcessed') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP error! status: ${response.status}, message: ${text}`)
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response from sales.markAllAsProcessed (F5):', data);
+                if (data.success) {
+                    console.log(data.message);
+                    sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                    window.location.reload();
                 } else {
-                    console.log("Unknown billType:", billType);
+                    console.error('Server reported an error:', data.message);
+                    alert('Operation failed: ' + data.message);
                 }
-
-                console.log("Sales to Display after filter:", salesToDisplay);
-                populateMainSalesTable(salesToDisplay); // This will also update currentDisplayedSalesData
+            })
+            .catch(error => {
+                console.error('Error marking sales as processed by F5:', error);
+                alert('Failed to process sales on F5. Check console for details.');
             });
+    }
+});
 
 
-            // Handle Print Bill button click for unprinted bills (from list)
-            $(document).on('click', '.print-bill-btn', function() {
-                var customerCode = $(this).data('customer-code');
-                if (confirm('Are you sure you want to print the bill for ' + customerCode +
-                        '? This will mark all *unprinted* sales for this customer as printed and processed.')) {
-                    $.ajax({
-                        url: '/sales/print-bill/' + customerCode,
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            customer_code: customerCode
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                alert(response.message);
-                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                location.reload();
-                            } else {
-                                alert('Error: ' + response.message);
-                            }
-                        },
-                        error: function(xhr) {
-                            console.error("AJAX error:", xhr.responseText);
-                            alert('An error occurred while trying to print the bill.');
-                        }
-                    });
-                }
-            });
+        // Store the PHP data in JavaScript variables for easier access
+        const printedSalesData = @json($salesPrinted->toArray());
+        const unprintedSalesData = @json($salesNotPrinted->toArray());
+        // allSalesData is the initial data loaded for the main table
+        const allSalesData = @json($sales->toArray());
 
-            // Check sessionStorage on page load for F1/F5 focus
-            if (sessionStorage.getItem('focusOnCustomerSelect') === 'true') {
-                $(document).on('select2:open', function() {
-                    document.querySelector('.select2-search__field').focus();
+        // NEW: Variable to hold the currently displayed sales data in the main table
+        let currentDisplayedSalesData = [];
+
+
+        console.log("Initial printedSalesData:", printedSalesData);
+        console.log("Initial unprintedSalesData:", unprintedSalesData);
+        console.log("Initial allSalesData (for default table view):", allSalesData);
+
+
+        // Function to populate the main sales table
+        function populateMainSalesTable(salesArray) {
+            console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
+            // Update the currentDisplayedSalesData
+            currentDisplayedSalesData = salesArray;
+            console.log("currentDisplayedSalesData updated to:", currentDisplayedSalesData);
+
+            const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+
+            if (!mainSalesTableBodyElement) {
+                console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
+                return; // Exit if element is not found
+            }
+
+            let rowsHtml = '';
+            let totalSalesValue = 0;
+
+            if (salesArray.length === 0) {
+                console.log("Sales array is empty. Displaying 'No sales records found.'");
+                rowsHtml = '<tr><td colspan="8" class="text-center">No sales records found for this selection.</td></tr>';
+                totalSalesValue = 0;
+            } else {
+                salesArray.forEach(sale => {
+                    // Construct the row HTML string
+                    rowsHtml += `
+                        <tr data-sale-id="${sale.id}">
+                            <td>${sale.code || 'N/A'}</td>
+                            <td>${sale.item_code || 'N/A'}</td>
+                            <td>${sale.item_name || 'N/A'}</td>
+                            <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                            <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                            <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                            <td>${(parseFloat(sale.packs) || 0).toFixed(0)}</td>
+                            <td>${sale.bill_printed === 'Y' ? 'Printed' : 'Unprinted'}</td>
+                        </tr>
+                    `;
+                    totalSalesValue += parseFloat(sale.total || 0);
                 });
-                $('#new_customer_code').select2('open');
-                sessionStorage.removeItem('focusOnCustomerSelect');
+            }
+
+            // Log the HTML string *before* setting it
+            console.log("Attempting to set tbody HTML with:", rowsHtml);
+
+            // Set the innerHTML of the tbody using native JavaScript
+            mainSalesTableBodyElement.innerHTML = rowsHtml;
+
+            // Update total sales value display
+            $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
+            console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2));
+            // Log the actual HTML that is *now* inside the tbody
+            console.log("Current tbody HTML after setting:", mainSalesTableBodyElement.innerHTML);
+        }
+
+        // Initial population of the main sales table with all sales data
+        populateMainSalesTable(allSalesData);
+
+        // Function to populate the form fields for editing
+        function populateFormForEdit(sale) {
+            console.log("Populating form for sale:", sale);
+            saleIdField.value = sale.id;
+            newCustomerCodeField.value = sale.customer_code || '';
+            customerNameField.value = sale.customer_name || '';
+            newCustomerCodeField.readOnly = true;
+
+            // Set selected customer in Select2, if applicable
+            if (sale.customer_code) {
+                $('#customer_code_select').val(sale.customer_code).trigger('change.select2');
+                console.log("Setting customer_code_select to:", sale.customer_code);
+            } else {
+                $('#customer_code_select').val(null).trigger('change.select2');
+                console.log("Clearing customer_code_select.");
+            }
+
+            // Populate GRN related fields
+            $('#grn_display').val(sale.code || ''); // Assuming 'code' is the GRN code
+            // Try to select the GRN in the hidden select2, then trigger change
+            const grnOption = $('#grn_select option').filter(function() {
+                return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code && $(this).data('itemCode') === sale.item_code;
+            });
+            if (grnOption.length) {
+                $('#grn_select').val(grnOption.val()).trigger('change.select2'); // Use change.select2 to trigger Select2's internal change handler
+                console.log("Setting grn_select to:", grnOption.val());
+            } else {
+                $('#grn_select').val(null).trigger('change.select2');
+                console.log("Clearing grn_select.");
+            }
+
+            supplierSelect.value = sale.supplier_code || '';
+            itemSelect.value = sale.item_code || '';
+            itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item fields
+            console.log("Setting supplier_code to:", sale.supplier_code, "and item_select to:", sale.item_code);
+
+            // NEW: Populate the dedicated item name display field
+            itemNameDisplayFromGrn.value = sale.item_name || '';
+            itemNameField.value = sale.item_name || ''; // Also ensure hidden field is set
+            console.log("Setting item name display to:", itemNameDisplayFromGrn.value);
+
+
+            weightField.value = parseFloat(sale.weight || 0).toFixed(2);
+            pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+            packsField.value = parseInt(sale.packs || 0);
+            calculateTotal(); // Recalculate total based on loaded weight/price
+            console.log("Weight:", weightField.value, "Price:", pricePerKgField.value, "Packs:", packsField.value);
+
+
+            // Change form action to update
+            salesEntryForm.action = `/AA/sms/sales/update/${sale.id}`; // Corrected URL
+            console.log("Form action set to:", salesEntryForm.action);
+
+            // Show/hide buttons
+            addSalesEntryBtn.style.display = 'none';
+            updateSalesEntryBtn.style.display = 'inline-block';
+            deleteSalesEntryBtn.style.display = 'inline-block';
+            cancelEntryBtn.style.display = 'inline-block';
+            console.log("Buttons updated for edit mode.");
+        }
+
+        // Function to reset the form to "Add New Entry" mode
+        function resetForm() {
+            console.log("Resetting form...");
+            salesEntryForm.reset(); // Resets all form fields
+            saleIdField.value = ''; // Clear hidden ID
+            newCustomerCodeField.readOnly = false; // Make customer code editable again
+            $('#customer_code_select').val(null).trigger('change.select2'); // Clear customer select2
+            $('#grn_select').val(null).trigger('change.select2'); // Clear GRN select2
+            $('#grn_display').val(''); // Clear GRN display field
+            supplierSelect.value = '';
+            itemSelect.value = '';
+            itemSelect.dispatchEvent(new Event('change'));
+            itemNameDisplayFromGrn.value = ''; // NEW: Clear the item name display field
+            itemNameField.value = ''; // NEW: Clear hidden item_name field
+            calculateTotal(); // Recalculate total for empty fields
+
+            salesEntryForm.action = "{{ route('grn.store') }}"; // Revert form action to store
+
+            // Show/hide buttons
+            addSalesEntryBtn.style.display = 'inline-block';
+            updateSalesEntryBtn.style.display = 'none';
+            deleteSalesEntryBtn.style.display = 'none';
+            cancelEntryBtn.style.display = 'none';
+
+            newCustomerCodeField.focus(); // Focus on the first input
+            console.log("Form reset complete.");
+        }
+
+        // Event listener for clicking on table rows to populate form
+        document.getElementById('mainSalesTableBody').addEventListener('click', function(event) {
+            const clickedRow = event.target.closest('tr[data-sale-id]');
+            if (clickedRow) {
+                const saleId = clickedRow.dataset.saleId;
+                console.log("Row clicked, sale ID:", saleId);
+                // IMPORTANT CHANGE: Search within currentDisplayedSalesData
+                const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
+                if (saleToEdit) {
+                    console.log("Sale found in currentDisplayedSalesData for ID:", saleId, saleToEdit);
+                    populateFormForEdit(saleToEdit);
+                } else {
+                    console.warn("Sale NOT found in currentDisplayedSalesData for ID:", saleId);
+                    alert("Could not find this record for editing. It might not be in the currently displayed sales list. Please try reloading the page if this persists.");
+                }
             }
         });
+
+        // Event listener for Update button
+        updateSalesEntryBtn.addEventListener('click', function() {
+            const saleId = saleIdField.value;
+            if (!saleId) {
+                alert('No record selected for update.');
+                return;
+            }
+
+            const formData = new FormData(salesEntryForm);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            data['_method'] = 'PUT'; // Laravel expects PUT/PATCH for updates
+            data['_token'] = '{{ csrf_token() }}';
+
+            fetch(`/AA/sms/sales/update/${saleId}`, { // Corrected URL
+                    method: 'POST', // Use POST for Laravel PUT/PATCH spoofing
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => Promise.reject(errorData));
+                    }
+                    return response.json();
+                })
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                        window.location.reload();
+                    } else {
+                        alert('Update failed: ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating sales entry:', error);
+                    let errorMessage = 'An error occurred during update.';
+                    if (error && error.message) {
+                        errorMessage += '\n' + error.message;
+                    }
+                    if (error && error.errors) {
+                        for (const key in error.errors) {
+                            errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
+                        }
+                    }
+                    alert(errorMessage);
+                });
+        });
+
+        // Event listener for Delete button
+        deleteSalesEntryBtn.addEventListener('click', function() {
+            const saleId = saleIdField.value;
+            if (!saleId) {
+                alert('No record selected for deletion.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this sales record?')) {
+                return;
+            }
+
+            fetch(`/AA/sms/sales/delete/${saleId}`, { // Corrected URL
+                    method: 'POST', // Use POST for Laravel DELETE spoofing
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        _method: 'DELETE', // Laravel expects DELETE
+                        _token: '{{ csrf_token() }}'
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => Promise.reject(errorData));
+                    }
+                    return response.json();
+                })
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                        window.location.reload();
+                    } else {
+                        alert('Delete failed: ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting sales entry:', error);
+                    let errorMessage = 'An error occurred during deletion.';
+                    if (error && error.message) {
+                        errorMessage += '\n' + error.message;
+                    }
+                    alert(errorMessage);
+                });
+        });
+
+
+        // Event listener for Cancel button
+        cancelEntryBtn.addEventListener('click', resetForm);
+
+        // Initial form state (hide update/delete, show add)
+        resetForm();
+
+        // Handle click on customer headers in Printed and Unprinted sections
+        $('.customer-header').on('click', function() {
+            console.log("Customer header clicked!");
+
+            const customerCode = $(this).data('customer-code');
+            const billType = $(this).data('bill-type');
+            const billNo = $(this).data('bill-no');
+
+            console.log("Clicked Customer Code:", customerCode);
+            console.log("Clicked Bill Type:", billType);
+            console.log("Clicked Bill No:", billNo);
+
+            let salesToDisplay = [];
+
+            if (billType === 'printed') {
+                console.log("Attempting to filter PRINTED sales...");
+                // Ensure printedSalesData[customerCode] exists and is an array before filtering
+                if (printedSalesData[customerCode] && Array.isArray(printedSalesData[customerCode])) {
+                    salesToDisplay = printedSalesData[customerCode].filter(sale => {
+                        return String(sale.bill_no) === String(billNo);
+                    });
+                    console.log("Printed sales data for customerCode:", printedSalesData[customerCode]);
+                } else {
+                    console.log("No printed sales data found or not an array for customerCode:", customerCode);
+                }
+            } else if (billType === 'unprinted') {
+                console.log("Attempting to filter UNPRINTED sales...");
+                // Ensure unprintedSalesData[customerCode] exists and is an array
+                if (unprintedSalesData[customerCode] && Array.isArray(unprintedSalesData[customerCode])) {
+                    salesToDisplay = unprintedSalesData[customerCode];
+                    console.log("Unprinted sales data for customerCode:", unprintedSalesData[customerCode]);
+                } else {
+                    console.log("No unprinted sales data found or not an array for customerCode:", customerCode);
+                }
+            } else {
+                console.log("Unknown billType:", billType);
+            }
+
+            console.log("Sales to Display after filter:", salesToDisplay);
+            populateMainSalesTable(salesToDisplay); // This will also update currentDisplayedSalesData
+        });
+
+
+        // Handle Print Bill button click for unprinted bills (from list)
+        $(document).on('click', '.print-bill-btn', function() {
+            var customerCode = $(this).data('customer-code');
+            if (confirm('Are you sure you want to print the bill for ' + customerCode +
+                    '? This will mark all *unprinted* sales for this customer as printed and processed.')) {
+                $.ajax({
+                    url: '/sales/print-bill/' + customerCode,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        customer_code: customerCode
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error("AJAX error:", xhr.responseText);
+                        alert('An error occurred while trying to print the bill.');
+                    }
+                });
+            }
+        });
+
+        // Check sessionStorage on page load for F1/F5 focus
+        if (sessionStorage.getItem('focusOnCustomerSelect') === 'true') {
+            $(document).on('select2:open', function() {
+                document.querySelector('.select2-search__field').focus();
+            });
+            $('#new_customer_code').select2('open');
+            sessionStorage.removeItem('focusOnCustomerSelect');
+        }
+    });
     </script>
 @endsection
