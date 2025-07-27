@@ -890,7 +890,7 @@
                 const grnNoForDisplay = data.grnNo || '';
                 const txnDateForDisplay = data.txnDate || '';
                 grnDisplay.value =
-                    `${grnCodeForDisplay} | ${supplierCodeForDisplay} | ${itemCodeForDisplay} | ${itemNameForDisplay} | ${packsForDisplay} | ${grnNoForDisplay} | ${txnDateForDisplay}`;
+                    `${grnCodeForDisplay}`;
 
                 // Populate other form fields using the data attributes
                 supplierSelect.value = data.supplierCode || ''; // Hidden input for supplier_code
