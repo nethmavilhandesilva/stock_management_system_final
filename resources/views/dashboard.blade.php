@@ -389,7 +389,7 @@
                                                     <div class="customer-header bill-clickable"
                                                         data-customer-code="{{ $customerCode }}"
                                                         data-customer-name="{{ $customerName }}"
-                                                        data-bill-no="{{ $billNo }}" {{-- Pass the bill number --}}
+                                                        data-bill-no="{{ $billNo ?? '' }}" {{-- Added ?? '' to ensure it's never literally null or missing --}}
                                                         data-bill-type="printed">
                                                         <span>
                                                             Bill No: {{ $billNo ?? 'N/A' }} - Rs.
@@ -1069,7 +1069,7 @@
         const date = now.toLocaleDateString();
         const time = now.toLocaleTimeString();
         const random4Digit = Math.floor(1000 + Math.random() * 9000);
-        const billNo = `BILL-${random4Digit}`;
+        const billNo = `BILL-${random4Digit}`; // <--- This billNo needs to be sent to backend
 
         let itemsHtml = '';
         let totalItemsCount = 0;
@@ -1275,6 +1275,7 @@
                             },
                             body: JSON.stringify({
                                 sales_ids: allSalesIdsToMarkPrintedAndProcessed,
+                                bill_no: billNo // <--- IMPORTANT: Sending the generated billNo to backend
                             })
                         })
                         .then(response => {
@@ -1620,7 +1621,7 @@
 
                 const customerCode = $(this).data('customer-code');
                 const billType = $(this).data('bill-type');
-                const billNo = $(this).data('bill-no');
+                const billNo = $(this).data('bill-no'); // This will now correctly have a value or ''
 
                 console.log("Clicked Customer Code:", customerCode);
                 console.log("Clicked Bill Type:", billType);
@@ -1632,6 +1633,7 @@
                     console.log("Attempting to filter PRINTED sales...");
                     if (printedSalesData[customerCode] && Array.isArray(printedSalesData[customerCode])) {
                         salesToDisplay = printedSalesData[customerCode].filter(sale => {
+                            // Ensure both are treated as strings for comparison
                             return String(sale.bill_no) === String(billNo);
                         });
                         console.log("Printed sales data for customerCode:", printedSalesData[customerCode]);
@@ -1690,7 +1692,13 @@
                 $(document).on('select2:open', function() {
                     document.querySelector('.select2-search__field').focus();
                 });
-                $('#new_customer_code').select2('open'); // This will open select2 for customer select, but new_customer_code is a text input
+                // Check if the element actually exists and is a select2 element
+                if ($('#new_customer_code').data('select2')) {
+                    $('#new_customer_code').select2('open');
+                } else {
+                    // Fallback to focus the customer code text input if select2 not applied or is hidden
+                    newCustomerCodeField.focus();
+                }
                 sessionStorage.removeItem('focusOnCustomerSelect');
             }
         });
