@@ -309,21 +309,24 @@
         @enderror
     </div>
 </div>
-
 <div class="row g-1 form-row align-items-start mt-1">
-    <div class="col-md-3" style="margin-bottom: 2px;">
-        <label for="new_customer_code" class="form-label small">පාරිභෝගික කේතය</label>
+    <div class="col-md-3" style="margin-bottom: 2px; max-width: 135px;"> {{-- Adjusted for ~8 characters --}}
         <input type="text" name="customer_code" id="new_customer_code"
             class="form-control form-control-sm text-uppercase @error('customer_code') is-invalid @enderror"
-            value="{{ old('customer_code') }}" placeholder="Enter or select customer code"
+            value="{{ old('customer_code') }}"
+            placeholder="පාරිභෝගික කේතය"
             style="height: 24px; font-size: 11px; padding: 2px 6px;" required>
         @error('customer_code')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
     </div>
 
+
+
+
+
     <div class="col-md-3" style="margin-bottom: 2px;">
-        <label for="grn_display" class="form-label small">GRN Entry</label>
+       
         <input type="text" id="grn_display" class="form-control form-control-sm" placeholder="Select GRN Entry..."
             readonly style="height: 24px; font-size: 11px; padding: 2px 6px;">
         <select id="grn_select" class="form-select form-select-sm select2 d-none">
