@@ -564,47 +564,48 @@
                             <input type="hidden" name="code" id="code" value="{{ old('code') }}">
                             <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
 
-                            <div class="col-md-2 mb-1">
-                                <input type="number" name="weight" id="weight" step="0.01"
-                                    class="form-control form-control-sm @error('weight') is-invalid @enderror"
-                                    value="{{ old('weight') }}" placeholder="බර (kg)"
-                                    style="height: 24px; font-size: 11px; padding: 2px 6px; color: #888;" required>
-                                @error('weight')
-                                    <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
-                                @enderror
-                            </div>
+                          <div class="row g-1 align-items-center mb-2">
+    <div class="col-auto" style="max-width: 110px;">
+        <input type="number" name="weight" id="weight" step="0.01"
+            class="form-control form-control-sm @error('weight') is-invalid @enderror"
+            value="{{ old('weight') }}" placeholder="බර (kg)"
+            style="height: 24px; font-size: 11px; padding: 2px 6px; color: #888;" required>
+        @error('weight')
+            <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
+        @enderror
+    </div>
 
-                            <div class="col-md-2 mb-1">
-                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-                                    class="form-control form-control-sm @error('price_per_kg') is-invalid @enderror"
-                                    value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)"
-                                    style="height: 24px; font-size: 11px; padding: 2px 6px; color: black;" required>
-                                @error('price_per_per_kg')
-                                    <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
-                                @enderror
-                            </div>
+    <div class="col-auto" style="max-width: 115px;">
+        <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+            class="form-control form-control-sm @error('price_per_kg') is-invalid @enderror"
+            value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)"
+            style="height: 24px; font-size: 11px; padding: 2px 6px; color: black;" required>
+        @error('price_per_per_kg')
+            <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
+        @enderror
+    </div>
 
-                            <div class="col-md-2 mb-1">
-                                <input type="number" name="total" id="total"
-                                    class="form-control form-control-sm bg-light @error('total') is-invalid @enderror"
-                                    value="{{ old('total') }}" placeholder="සමස්ත (Total)" readonly
-                                    style="height: 24px; font-size: 11px; padding: 2px 6px; color: black;">
-                                @error('total')
-                                    <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
-                                @enderror
-                            </div>
+    <div class="col-auto" style="max-width: 115px;">
+        <input type="number" name="total" id="total"
+            class="form-control form-control-sm bg-light @error('total') is-invalid @enderror"
+            value="{{ old('total') }}" placeholder="සමස්ත (Total)" readonly
+            style="height: 24px; font-size: 11px; padding: 2px 6px; color: black;">
+        @error('total')
+            <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
+        @enderror
+    </div>
 
-                            <div class="col-md-2 mb-1" style="max-width: 110px;">
-                                <input type="number" name="packs" id="packs"
-                                    class="form-control form-control-sm @error('packs') is-invalid @enderror"
-                                    value="{{ old('packs') }}" placeholder="ඇසුරුම් (Packs)"
-                                    style="height: 24px; font-size: 11px; padding: 2px 6px; color: black;" required>
-                                @error('packs')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                        </div>
+    <div class="col-auto" style="max-width: 95px;">
+        <input type="number" name="packs" id="packs"
+            class="form-control form-control-sm @error('packs') is-invalid @enderror"
+            value="{{ old('packs') }}" placeholder="ඇසුරුම් (Packs)"
+            style="height: 24px; font-size: 11px; padding: 2px 6px; color: black;" required>
+        @error('packs')
+            <div class="invalid-feedback" style="font-size: 0.8rem;">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+</div>
 
 
                         {{-- Action Buttons --}}
@@ -998,7 +999,7 @@
                     const oldCustomerNameValue = "{{ old('customer_name') }}";
 
                     if (oldSelectedCustomerCode) {
-                        $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change.select2');
+                        $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
                         if (newCustomerCodeField) {
                             newCustomerCodeField.value = oldSelectedCustomerCode;
                             newCustomerCodeField.readOnly = true;
@@ -1015,8 +1016,11 @@
                             customerNameField.value = oldCustomerNameValue;
                         }
                     }
+
+                    $('#grn_select').select2('open');
                 @endif
             });
+
 
             // --- JavaScript for F1 and F5 Key Presses ---
             document.addEventListener('keydown', function(e) {
