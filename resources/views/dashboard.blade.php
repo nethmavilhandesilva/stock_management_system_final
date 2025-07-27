@@ -1023,42 +1023,60 @@
 
 
             // --- JavaScript for F1 and F5 Key Presses ---
-            document.addEventListener('keydown', function(e) {
-                console.log('Key pressed:', e.key);
+        document.addEventListener('keydown', function(e) {
+    console.log('Key pressed:', e.key);
 
-                if (e.key === "F1") {
-                    e.preventDefault();
-                    console.log('F1 key pressed - attempting to print and mark sales...');
+    if (e.key === "F1") {
+        e.preventDefault();
+        console.log('F1 key pressed - attempting to print and mark sales by customer...');
 
-                    const salesDataForReceipt = @json($unprocessedSales);
+        const salesDataForReceipt = @json($unprocessedSales);
 
-                    if (salesDataForReceipt.length === 0) {
-                        alert('No unprocessed sales records to print!');
-                        return;
-                    }
+        if (salesDataForReceipt.length === 0) {
+            alert('No unprocessed sales records to print!');
+            return;
+        }
 
-                    if (!confirm('Do you want to print the current unprocessed sales?')) {
-                        console.log('Print action cancelled by user.');
-                        return;
-                    }
+        if (!confirm('Do you want to print the current unprocessed sales (only one customer group)?')) {
+            console.log('Print action cancelled by user.');
+            return;
+        }
 
-                    const salesIdsToMarkPrintedAndProcessed = salesDataForReceipt.map(sale => sale.id);
+        // Group sales by customer_code
+        const salesByCustomer = salesDataForReceipt.reduce((acc, sale) => {
+            const customerCode = sale.customer_code;
+            if (!acc[customerCode]) {
+                acc[customerCode] = [];
+            }
+            acc[customerCode].push(sale);
+            return acc;
+        }, {});
 
-                    const now = new Date();
-                    const date = now.toLocaleDateString();
-                    const time = now.toLocaleTimeString();
-                    const customerCode = document.getElementById('new_customer_code').value || 'N/A';
-                    const customerName = document.getElementById('customer_name_hidden').value || 'N/A';
-                    const mobile = '0702758908'; // Hardcoded phone number from PDF
+        // Get the first customer group only
+        const firstCustomerCode = Object.keys(salesByCustomer)[0];
 
-                    const random4Digit = Math.floor(1000 + Math.random() * 9000);
-                    const billNo = `BILL-${random4Digit}`;
+        if (!firstCustomerCode) {
+            alert("No customer group found.");
+            return;
+        }
 
-                    let itemsHtml = '';
-                    let totalItemsCount = 0;
-                    let totalAmountSum = 0;
-                    salesDataForReceipt.forEach(sale => {
-                        itemsHtml += `
+        const customerSales = salesByCustomer[firstCustomerCode];
+        const customerName = customerSales[0].customer_name || 'N/A';
+        const mobile = '0702758908'; // or pull from your data
+
+        const now = new Date();
+        const date = now.toLocaleDateString();
+        const time = now.toLocaleTimeString();
+        const random4Digit = Math.floor(1000 + Math.random() * 9000);
+        const billNo = `BILL-${random4Digit}`;
+
+        let itemsHtml = '';
+        let totalItemsCount = 0;
+        let totalAmountSum = 0;
+        const allSalesIdsToMarkPrintedAndProcessed = [];
+
+        customerSales.forEach(sale => {
+            itemsHtml += `
                 <tr>
                     <td class="col-item">${sale.item_name} (${sale.item_code})</td>
                     <td class="col-qty">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
@@ -1066,11 +1084,12 @@
                     <td class="col-value">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
                 </tr>
             `;
-                        totalItemsCount++;
-                        totalAmountSum += parseFloat(sale.total);
-                    });
+            totalItemsCount++;
+            totalAmountSum += parseFloat(sale.total);
+            allSalesIdsToMarkPrintedAndProcessed.push(sale.id);
+        });
 
-                    const salesContent = `
+        const salesContent = `
             <div class="receipt-container">
                 <div class="company-info">
                     <h3>C11 TGK ට්‍රේඩර්ස්</h3>
@@ -1085,7 +1104,7 @@
                     <p><span>දුරකථන :</span> <span>${mobile}</span></p>
                     <p><span>වෙලාව :</span> <span>${time}</span></p>
                     <p><span>බිල් අංකය :</span> <span>${billNo}</span></p>
-                    <p class="customer-name-on-bill">${customerName} (${customerCode})</p>
+                    <p class="customer-name-on-bill">${customerName} (${firstCustomerCode})</p>
                 </div>
 
                 <div class="divider"></div>
@@ -1125,15 +1144,13 @@
             </div>
         `;
 
-                    const printWindow = window.open('', '_blank', 'width=400,height=600');
-                    printWindow.document.write(`
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        printWindow.document.write(`
             <html>
                 <head>
-                    <title>විකුණුම් කුපිත්තුව</title>
+                    <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
                     <style>
-                        /* Import Sinhala font */
                         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-
                         body {
                             font-family: 'Noto Sans Sinhala', sans-serif;
                             margin: 0;
@@ -1185,7 +1202,6 @@
                             font-weight: bold;
                             margin-top: 5px;
                         }
-
                         .divider {
                             border-top: 1px dashed #000;
                             margin: 8px 0;
@@ -1238,49 +1254,48 @@
                 <body>${salesContent}</body>
             </html>
         `);
-                    printWindow.document.close();
-                    printWindow.focus();
-                    printWindow.print();
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
 
-                    const checkClosed = setInterval(function() {
-                        if (printWindow.closed) {
-                            clearInterval(checkClosed);
-                            console.log('F1: Print window closed. Sending request to mark sales as printed and processed.');
+        const checkClosed = setInterval(function() {
+            if (printWindow.closed) {
+                clearInterval(checkClosed);
+                console.log(`Print window closed. Sending request to mark sales as printed and processed.`);
 
-                            fetch("{{ route('sales.markAsPrinted') }}", {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify({
-                                        sales_ids: salesIdsToMarkPrintedAndProcessed,
-                                        bill_no: billNo
-                                    })
-                                })
-                                .then(response => {
-                                    if (!response.ok) {
-                                        return response.text().then(text => {
-                                            throw new Error(
-                                                `HTTP error! status: ${response.status}, message: ${text}`
-                                            )
-                                        });
-                                    }
-                                    return response.json();
-                                })
-                                .then(data => {
-                                    console.log('F1: Sales marked as printed and processed response:', data);
-                                    sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                    window.location.reload();
-                                })
-                                .catch(error => {
-                                    console.error('F1: Error marking sales as printed and processed:',
-                                        error);
-                                    alert('Failed to mark sales as printed. Please check console for details.');
-                                });
+                fetch("{{ route('sales.markAsPrinted') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            sales_ids: allSalesIdsToMarkPrintedAndProcessed,
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+                            });
                         }
-                    }, 500);
-                } else if (e.key === "F5") {
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Sales marked as printed and processed:', data);
+                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                        window.location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error marking sales as printed and processed:', error);
+                        alert('Failed to mark sales as printed. Please check console for details.');
+                    });
+            }
+        }, 500);
+    }
+
+
+ else if (e.key === "F5") {
                     e.preventDefault();
                     console.log('F5 key pressed - attempting to mark all displayed sales as processed...');
 
