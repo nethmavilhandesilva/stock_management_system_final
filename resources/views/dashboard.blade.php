@@ -1030,6 +1030,7 @@
         e.preventDefault();
         console.log('F1 key pressed - attempting to print and mark sales by customer...');
 
+        // Use the unprocessed sales data passed from the backend
         const salesDataForReceipt = @json($unprocessedSales);
 
         if (salesDataForReceipt.length === 0) {
@@ -1052,7 +1053,7 @@
             return acc;
         }, {});
 
-        // Get the first customer group only
+        // Get the first customer group only (assuming F1 prints the first group of unprinted sales)
         const firstCustomerCode = Object.keys(salesByCustomer)[0];
 
         if (!firstCustomerCode) {
@@ -1062,7 +1063,7 @@
 
         const customerSales = salesByCustomer[firstCustomerCode];
         const customerName = customerSales[0].customer_name || 'N/A';
-        const mobile = '0702758908'; // or pull from your data
+        const mobile = '0702758908'; // This should ideally be dynamic or from config
 
         const now = new Date();
         const date = now.toLocaleDateString();
@@ -1086,6 +1087,7 @@
             `;
             totalItemsCount++;
             totalAmountSum += parseFloat(sale.total);
+            // Collect the sale IDs for marking as processed
             allSalesIdsToMarkPrintedAndProcessed.push(sale.id);
         });
 
@@ -1263,33 +1265,40 @@
                 clearInterval(checkClosed);
                 console.log(`Print window closed. Sending request to mark sales as printed and processed.`);
 
-                fetch("{{ route('sales.markAsPrinted') }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            sales_ids: allSalesIdsToMarkPrintedAndProcessed,
+                // Only send the fetch request if there are IDs to process
+                if (allSalesIdsToMarkPrintedAndProcessed.length > 0) {
+                    fetch("{{ route('sales.markAsPrinted') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                sales_ids: allSalesIdsToMarkPrintedAndProcessed,
+                            })
                         })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.text().then(text => {
-                                throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Sales marked as printed and processed:', data);
-                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                        window.location.reload();
-                    })
-                    .catch(error => {
-                        console.error('Error marking sales as printed and processed:', error);
-                        alert('Failed to mark sales as printed. Please check console for details.');
-                    });
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.text().then(text => {
+                                    throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Sales marked as printed and processed:', data);
+                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                            window.location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error marking sales as printed and processed:', error);
+                            alert('Failed to mark sales as printed. Please check console for details.');
+                        });
+                } else {
+                    console.log("No sales IDs were collected for marking as processed (likely no unprocessed sales for the customer). Reloading page.");
+                    sessionStorage.setItem('focusOnCustomerSelect', 'true'); // Still reload to ensure fresh state
+                    window.location.reload();
+                }
             }
         }, 500);
     }
@@ -1372,9 +1381,9 @@
                     totalSalesValue = 0;
                 } else {
                     salesArray.forEach(sale => {
-                        // Construct the row HTML string
+                        // Construct the row HTML string, ensuring data-id, data-customer-code, data-customer-name are present
                         rowsHtml += `
-                        <tr data-sale-id="${sale.id}">
+                        <tr data-sale-id="${sale.id}" data-id="${sale.id}" data-customer-code="${sale.customer_code}" data-customer-name="${sale.customer_name}">
                             <td>${sale.code || 'N/A'}</td>
                             <td>${sale.item_code || 'N/A'}</td>
                             <td>${sale.item_name || 'N/A'}</td>
@@ -1681,7 +1690,7 @@
                 $(document).on('select2:open', function() {
                     document.querySelector('.select2-search__field').focus();
                 });
-                $('#new_customer_code').select2('open');
+                $('#new_customer_code').select2('open'); // This will open select2 for customer select, but new_customer_code is a text input
                 sessionStorage.removeItem('focusOnCustomerSelect');
             }
         });

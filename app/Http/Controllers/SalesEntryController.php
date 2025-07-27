@@ -205,6 +205,7 @@ class SalesEntryController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to delete sales record: ' . $e->getMessage()], 500);
         }
     }
+    
 
     
 
