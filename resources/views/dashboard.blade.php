@@ -584,7 +584,7 @@
                             <input type="hidden" name="code" id="code" value="{{ old('code') }}">
                             <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
 
-                            <div class="row g-1 align-items-center mb-2">
+                           <div class="d-flex justify-content-between align-items-center" style="gap: 10px;"> 
                                 <div class="col-auto" style="max-width: 110px;">
                                     <input type="number" name="weight" id="weight" step="0.01"
                                         class="form-control form-control-sm @error('weight') is-invalid @enderror"
