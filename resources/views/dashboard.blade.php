@@ -16,29 +16,29 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-primary">dashboard</span> Dashboard
+                           <span class="material-icons me-2 text-primary">dashboard</span> <span class="text-white">Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('items.index') }}"
                             class="nav-link d-flex align-items-center {{ Request::routeIs('items.index') ? 'active' : '' }}"
                             aria-current="{{ Request::routeIs('items.index') ? 'page' : '' }}">
-                            <span class="material-icons me-2 text-success">inventory_2</span> භාණ්ඩ (Items)
+                           <span class="material-icons me-2 text-success">inventory_2</span> <span class="text-white">භාණ්ඩ</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('customers.index') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-primary">people</span> Customers
+                            <span class="material-icons me-2 text-primary">people</span> <span class="text-white">ගනුදෙනුකරුවන්</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('suppliers.index') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-blue-600">local_shipping</span> සැපයුම්කරුවන් (Suppliers)
+                           <span class="material-icons me-2 text-blue-600">local_shipping</span> <span class="text-white">සැපයුම්කරුවන්</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('grn.index') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> GRN
+                         <span class="material-icons me-2 text-blue-600">assignment_turned_in</span> <span class="text-white">GRN</span>
                         </a>
                     </li>
 
@@ -508,9 +508,9 @@
 
                             <div class="col-md-3" style="margin-bottom: 2px;">
 
-                                <input type="text" id="grn_display" class="form-control form-control-sm"
-                                    placeholder="Select GRN Entry..." readonly
-                                    style="height: 24px; font-size: 11px; padding: 2px 6px;">
+                              <input type="text" id="grn_display" class="form-control form-control-sm"
+    placeholder="Select GRN Entry..." readonly
+    style="height: 24px; font-size: 11px; padding: 2px 6px; display: none;">
                                 <select id="grn_select" class="form-select form-select-sm select2">
                                     <option value="">-- Select GRN Entry --</option>
                                     @foreach ($entries as $entry)
@@ -584,7 +584,7 @@
                             <input type="hidden" name="code" id="code" value="{{ old('code') }}">
                             <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
 
-                           <div class="d-flex justify-content-between align-items-center" style="gap: 10px;"> 
+                            <div class="d-flex justify-content-between align-items-center" style="gap: 10px; margin-top: -10px;">
                                 <div class="col-auto" style="max-width: 110px;">
                                     <input type="number" name="weight" id="weight" step="0.01"
                                         class="form-control form-control-sm @error('weight') is-invalid @enderror"
@@ -649,15 +649,16 @@
                         </div>
                     </form>
 
-                    <hr class="my-3" style="margin-top: 0.5rem; margin-bottom: 0.5rem; height: 1px;">
+                    
 
                     {{-- Main Sales Table - ALWAYS RENDERED --}}
-                    <div class="mt-2">
+                    <div class="mt-0">
 
 
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
-                                style="font-size: 0.85rem;">
+                           <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
+       style="font-size: 0.85rem; margin-top: -10px;">
+                               
                                 <thead class="table-light">
                                     <tr>
                                         <th scope="col">කේතය</th>
@@ -883,7 +884,7 @@
                             const grnNo = option.data('grnNo');
                             const txnDate = option.data('txnDate');
                             // Format the selected value as a single line
-                            return `${code || ''} | ${supplierCode || ''}  | ${packs || 0} | ${grnNo || ''} | ${txnDate || ''}`;
+                            return `${code || ''} | ${supplierCode || ''}  | ${packs || 0} | ${grnNo || ''}`;
                         }
                     });
 
@@ -969,7 +970,7 @@
                         const grnNoForDisplay = data.grnNo || '';
                         const txnDateForDisplay = data.txnDate || '';
                         grnDisplay.value =
-                            `${grnCodeForDisplay}`;
+                            `${grnCodeForDisplay}| ${supplierCodeForDisplay}  | ${packsForDisplay} | ${grnNoForDisplay}`;
 
                         // Populate other form fields using the data attributes
                         supplierSelect.value = data.supplierCode || ''; // Hidden input for supplier_code
