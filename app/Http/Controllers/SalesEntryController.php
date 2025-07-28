@@ -28,11 +28,8 @@ class SalesEntryController extends Controller
         $customers = Customer::all();
         $totalSum = $sales->sum('total'); // Sum will now be for all displayed sales
         $unprocessedSales = Sale::whereIn('Processed', ['Y', 'N']) // Include both processed and unprocessed
-    ->where(function ($query) {
-        $query->where('bill_printed', 'N')
-              ->orWhereNull('bill_printed');
-    })
-    ->get();
+            ->get();
+            
 
         $salesPrinted = Sale::where('bill_printed', 'Y')
             ->orderBy('customer_name')
@@ -44,7 +41,7 @@ class SalesEntryController extends Controller
             ->orderBy('customer_code')
             ->get()
             ->groupBy('customer_code');
-           
+
 
 
         // Calculate total for unprocessed sales
@@ -82,7 +79,8 @@ class SalesEntryController extends Controller
                 'total' => $validated['total'],
                 'packs' => $validated['packs'],
                 // Newly added sales are never printed initially
-                'Processed' => 'N',    // Newly added sales are unprocessed initially
+                'Processed' => 'N',
+
             ]);
 
             return redirect()->back()
@@ -169,7 +167,7 @@ class SalesEntryController extends Controller
     {
         $validatedData = $request->validate([
             'customer_code' => 'required|string|max:255',
-          'customer_name' => 'nullable|string|max:255',
+            'customer_name' => 'nullable|string|max:255',
             'code' => 'required|string|max:255', // This is the GRN Code
             'supplier_code' => 'required|string|max:255',
             'item_code' => 'required|string|max:255',
@@ -182,6 +180,9 @@ class SalesEntryController extends Controller
         ]);
 
         try {
+            // Add the 'updated' column to the data before updating
+            $validatedData['updated'] = 'Y'; // Assuming 'updated' is the column name
+
             $sale->update($validatedData);
 
             return response()->json(['success' => true, 'message' => 'Sales record updated successfully!']);
@@ -205,9 +206,9 @@ class SalesEntryController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to delete sales record: ' . $e->getMessage()], 500);
         }
     }
-    
 
-    
+
+
 
 
 

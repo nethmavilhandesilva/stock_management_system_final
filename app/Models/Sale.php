@@ -24,7 +24,8 @@ class Sale extends Model
         'packs',
         'bill_printed', // <-- ADD THIS
         'Processed', 
-        'bill_no',    // <-- ADD THIS
+        'bill_no',
+        'updated'   , // <-- ADD THIS
 
     ];
 

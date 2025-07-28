@@ -636,27 +636,25 @@
 
 
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
-                                style="font-size: 0.85rem;">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th scope="col">කේතය</th>
-                                        <th scope="col">අයිතම කේතය</th>
-                                        <th scope="col">අයිතමය</th>
-                                        <th scope="col">බර (kg)</th>
-                                        <th scope="col">මිල/කිලෝග්‍රෑමය</th>
-                                        <th scope="col">සමස්ත</th>
-                                        <th scope="col">ඇසුරුම්</th>
-
-                                    </tr>
-                                </thead>
-                                <tbody id="mainSalesTableBody">
-                                    {{-- This tbody will be dynamically populated by JavaScript. --}}
-                                    {{-- An initial message can be added here if needed, like: --}}
-                                    {{-- <tr><td colspan="8" class="text-center text-muted">Loading sales data...</td></tr> --}}
-                                    {{-- But the JS already handles the "No sales records found" so it's not strictly necessary. --}}
-                                </tbody>
-                            </table>
+                           <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
+       style="font-size: 0.85rem;">
+    <thead class="table-light">
+        <tr>
+            <th scope="col">කේතය</th>
+            <th scope="col">අයිතම කේතය</th>
+            <th scope="col">අයිතමය</th>
+            <th scope="col">බර (kg)</th>
+            <th scope="col">මිල/කිලෝග්‍රෑමය</th>
+            <th scope="col">සමස්ත</th>
+            <th scope="col">ඇසුරුම්</th>
+        </tr>
+    </thead>
+    <tbody id="mainSalesTableBody">
+        {{-- This tbody will be dynamically populated by JavaScript. --}}
+        {{-- IMPORTANT: Ensure your JavaScript populating this table adds 'data-sale-id', 'data-customer-code', and 'data-customer-name' attributes to each <tr> --}}
+        {{-- Example: <tr data-sale-id="123" data-customer-code="CUST001" data-customer-name="John Doe">...</tr> --}}
+    </tbody>
+</table>
                             <h5 class="text-end mb-3" style="font-size: 0.85rem;">
                                 <strong>Total Sales Value:</strong> Rs. <span
                                     id="mainTotalSalesValue">{{ number_format($totalSum, 2) }}</span>
@@ -1020,289 +1018,358 @@
                     $('#grn_select').select2('open');
                 @endif
             });
+ function populateSalesTable(salesArray) {
+        const tableBody = document.getElementById('mainSalesTableBody');
+        tableBody.innerHTML = ''; // Clear existing rows
+
+        if (!salesArray || salesArray.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No sales records found.</td></tr>';
+            return;
+        }
+
+        salesArray.forEach(sale => {
+            const row = document.createElement('tr');
+            // --- CRITICAL: Add data- attributes to the row for easy retrieval by F1 function ---
+            row.setAttribute('data-sale-id', sale.id);
+            row.setAttribute('data-customer-code', sale.customer_code);
+            row.setAttribute('data-customer-name', sale.customer_name || 'N/A'); // Ensure customer_name exists
+
+            row.innerHTML = `
+                <td>${sale.code}</td>
+                <td>${sale.item_code}</td>
+                <td>${sale.item_name}</td>
+                <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                <td>${sale.packs}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
 
 
             // --- JavaScript for F1 and F5 Key Presses ---
         document.addEventListener('keydown', function(e) {
-    console.log('Key pressed:', e.key);
+        console.log('Key pressed:', e.key);
 
-    if (e.key === "F1") {
-        e.preventDefault();
-        console.log('F1 key pressed - attempting to print and mark sales by customer...');
+        if (e.key === "F1") {
+            e.preventDefault();
+            console.log('F1 key pressed - attempting to print and mark sales by customer...');
 
-        // Use the unprocessed sales data passed from the backend
-        const salesDataForReceipt = @json($unprocessedSales);
+            // --- START OF MODIFIED SECTION: Read data directly from the table ---
+            const salesDataForReceipt = [];
+            const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
 
-        if (salesDataForReceipt.length === 0) {
-            alert('No unprocessed sales records to print!');
-            return;
-        }
-
-        if (!confirm('Do you want to print the current unprocessed sales (only one customer group)?')) {
-            console.log('Print action cancelled by user.');
-            return;
-        }
-
-        // Group sales by customer_code
-        const salesByCustomer = salesDataForReceipt.reduce((acc, sale) => {
-            const customerCode = sale.customer_code;
-            if (!acc[customerCode]) {
-                acc[customerCode] = [];
+            // Check if the table is empty or only contains the "No sales records found" message
+            if (tableRows.length === 0 || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+                alert('No sales records in the table to print!');
+                return;
             }
-            acc[customerCode].push(sale);
-            return acc;
-        }, {});
 
-        // Get the first customer group only (assuming F1 prints the first group of unprinted sales)
-        const firstCustomerCode = Object.keys(salesByCustomer)[0];
+            tableRows.forEach(row => {
+                // Ensure it's a data row, not a placeholder message row
+                if (row.hasAttribute('data-sale-id')) {
+                    const customerCode = row.getAttribute('data-customer-code');
+                    const customerName = row.getAttribute('data-customer-name');
+                    const saleId = row.getAttribute('data-sale-id');
 
-        if (!firstCustomerCode) {
-            alert("No customer group found.");
-            return;
-        }
+                    // Extract data from cells - adjust indices if your column order changes
+                    const cells = row.querySelectorAll('td');
+                    const code = cells[0] ? cells[0].textContent : ''; // GRN Code
+                    const itemCode = cells[1] ? cells[1].textContent : '';
+                    const itemName = cells[2] ? cells[2].textContent : '';
+                    const weight = cells[3] ? parseFloat(cells[3].textContent) : 0;
+                    const pricePerKg = cells[4] ? parseFloat(cells[4].textContent) : 0;
+                    const total = cells[5] ? parseFloat(cells[5].textContent) : 0;
+                    const packs = cells[6] ? parseInt(cells[6].textContent, 10) : 0;
 
-        const customerSales = salesByCustomer[firstCustomerCode];
-        const customerName = customerSales[0].customer_name || 'N/A';
-        const mobile = '0702758908'; // This should ideally be dynamic or from config
-
-        const now = new Date();
-        const date = now.toLocaleDateString();
-        const time = now.toLocaleTimeString();
-        const random4Digit = Math.floor(1000 + Math.random() * 9000);
-        const billNo = `BILL-${random4Digit}`; // <--- This billNo needs to be sent to backend
-
-        let itemsHtml = '';
-        let totalItemsCount = 0;
-        let totalAmountSum = 0;
-        const allSalesIdsToMarkPrintedAndProcessed = [];
-
-        customerSales.forEach(sale => {
-            itemsHtml += `
-                <tr>
-                    <td class="col-item">${sale.item_name} (${sale.item_code})</td>
-                    <td class="col-qty">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                    <td class="col-rate">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                    <td class="col-value">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                </tr>
-            `;
-            totalItemsCount++;
-            totalAmountSum += parseFloat(sale.total);
-            // Collect the sale IDs for marking as processed
-            allSalesIdsToMarkPrintedAndProcessed.push(sale.id);
-        });
-
-        const salesContent = `
-            <div class="receipt-container">
-                <div class="company-info">
-                    <h3>C11 TGK ට්‍රේඩර්ස්</h3>
-                    <p>අල, ඹී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
-                    <p>වි.ආ.ම. වේයන්ගොඩ</p>
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="bill-details">
-                    <p><span>දිනය :</span> <span>${date}</span></p>
-                    <p><span>දුරකථන :</span> <span>${mobile}</span></p>
-                    <p><span>වෙලාව :</span> <span>${time}</span></p>
-                    <p><span>බිල් අංකය :</span> <span>${billNo}</span></p>
-                    <p class="customer-name-on-bill">${customerName} (${firstCustomerCode})</p>
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="items-section">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th class="col-item">වර්ගය</th>
-                                <th class="col-qty">කිලො</th>
-                                <th class="col-rate">මිල</th>
-                                <th class="col-value">අගය</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${itemsHtml}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="summary-section">
-                    <p><span>මුළු අයිතම ගණන:</span> <span class="align-right">${totalItemsCount}</span></p>
-                    <p><span>මුළු මුදල:</span> <span class="align-right">Rs. ${totalAmountSum.toFixed(2)}</span></p>
-                    <p><span>ප්‍රවාහන ගාස්තු:</span> <span class="align-right">00.00</span></p>
-                    <p><span>කුලිය:</span> <span class="align-right">00.00</span></p>
-                    <p class="grand-total"><span>අගය:</span> <span class="align-right">Rs. ${(totalAmountSum).toFixed(2)}</span></p>
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="footer-section">
-                    <p>භාණ්ඩ පරීක්ෂා කර බලා රැගෙන යන්න</p>
-                    <p>නැවත භාර ගනු නොලැබේ</p>
-                </div>
-            </div>
-        `;
-
-        const printWindow = window.open('', '_blank', 'width=400,height=600');
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
-                    <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-                        body {
-                            font-family: 'Noto Sans Sinhala', sans-serif;
-                            margin: 0;
-                            padding: 5mm;
-                            font-size: 10px;
-                            line-height: 1.2;
-                        }
-                        .receipt-container {
-                            width: 100%;
-                            max-width: 70mm;
-                            margin-left: 0;
-                            margin-right: auto;
-                            border: none;
-                            padding: 0;
-                        }
-                        .company-info {
-                            text-align: center;
-                            margin-bottom: 5px;
-                        }
-                        .company-info h3 {
-                            font-size: 1.2em;
-                            margin-bottom: 2px;
-                            font-weight: bold;
-                        }
-                        .company-info p {
-                            margin: 0;
-                            line-height: 1.2;
-                        }
-                        .bill-details, .summary-section, .footer-section {
-                            text-align: left;
-                            margin-bottom: 5px;
-                        }
-                        .bill-details p, .summary-section p {
-                            margin: 0;
-                            line-height: 1.2;
-                            display: flex;
-                            justify-content: space-between;
-                        }
-                        .bill-details p span:first-child, .summary-section p span:first-child {
-                            text-align: left;
-                            font-weight: normal;
-                        }
-                        .bill-details p span:last-child, .summary-section p span:last-child {
-                            text-align: right;
-                            font-weight: bold;
-                        }
-                        .customer-name-on-bill {
-                            text-align: center;
-                            font-weight: bold;
-                            margin-top: 5px;
-                        }
-                        .divider {
-                            border-top: 1px dashed #000;
-                            margin: 8px 0;
-                        }
-                        .items-section table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            font-size: 10px;
-                        }
-                        .items-section th, .items-section td {
-                            padding: 2px 0;
-                            text-align: right;
-                            border-bottom: none;
-                        }
-                        .items-section th {
-                            font-weight: bold;
-                            text-align: center;
-                            border-bottom: 1px dashed #000;
-                        }
-                        .col-item {
-                            text-align: left;
-                            width: 40%;
-                        }
-                        .col-qty {
-                            width: 20%;
-                        }
-                        .col-rate {
-                            width: 20%;
-                        }
-                        .col-value {
-                            width: 20%;
-                        }
-                        .grand-total {
-                            font-size: 1.1em;
-                            font-weight: bold;
-                            border-top: 1px dashed #000;
-                            padding-top: 5px;
-                            margin-top: 5px;
-                        }
-                        .footer-section {
-                            text-align: center;
-                            margin-top: 10px;
-                        }
-                        .footer-section p {
-                            margin: 0;
-                            line-height: 1.2;
-                        }
-                    </style>
-                </head>
-                <body>${salesContent}</body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-
-        const checkClosed = setInterval(function() {
-            if (printWindow.closed) {
-                clearInterval(checkClosed);
-                console.log(`Print window closed. Sending request to mark sales as printed and processed.`);
-
-                // Only send the fetch request if there are IDs to process
-                if (allSalesIdsToMarkPrintedAndProcessed.length > 0) {
-                    fetch("{{ route('sales.markAsPrinted') }}", {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                sales_ids: allSalesIdsToMarkPrintedAndProcessed,
-                                bill_no: billNo // <--- IMPORTANT: Sending the generated billNo to backend
-                            })
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                return response.text().then(text => {
-                                    throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
-                                });
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('Sales marked as printed and processed:', data);
-                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                            window.location.reload();
-                        })
-                        .catch(error => {
-                            console.error('Error marking sales as printed and processed:', error);
-                            alert('Failed to mark sales as printed. Please check console for details.');
-                        });
-                } else {
-                    console.log("No sales IDs were collected for marking as processed (likely no unprocessed sales for the customer). Reloading page.");
-                    sessionStorage.setItem('focusOnCustomerSelect', 'true'); // Still reload to ensure fresh state
-                    window.location.reload();
+                    salesDataForReceipt.push({
+                        id: saleId,
+                        customer_code: customerCode,
+                        customer_name: customerName,
+                        code: code,
+                        item_code: itemCode,
+                        item_name: itemName,
+                        weight: weight,
+                        price_per_kg: pricePerKg,
+                        total: total,
+                        packs: packs
+                    });
                 }
+            });
+            // --- END OF MODIFIED SECTION ---
+
+            if (salesDataForReceipt.length === 0) {
+                alert('No printable sales records found in the table!');
+                return;
             }
-        }, 500);
-    }
+
+            if (!confirm('Do you want to print the current sales (only one customer group from table)?')) {
+                console.log('Print action cancelled by user.');
+                return;
+            }
+
+            // Group sales by customer_code (This part remains unchanged)
+            const salesByCustomer = salesDataForReceipt.reduce((acc, sale) => {
+                const customerCode = sale.customer_code;
+                if (!acc[customerCode]) {
+                    acc[customerCode] = [];
+                }
+                acc[customerCode].push(sale);
+                return acc;
+            }, {});
+
+            // Get the first customer group only (assuming F1 prints the first group of unprinted sales)
+            const firstCustomerCode = Object.keys(salesByCustomer)[0];
+
+            if (!firstCustomerCode) {
+                alert("No customer group found in the table data.");
+                return;
+            }
+
+            const customerSales = salesByCustomer[firstCustomerCode];
+            const customerName = customerSales[0].customer_name || 'N/A';
+            const mobile = '0702758908'; // This should ideally be dynamic or from config
+
+            const now = new Date();
+            const date = now.toLocaleDateString();
+            const time = now.toLocaleTimeString();
+            const random4Digit = Math.floor(1000 + Math.random() * 9000);
+            const billNo = `BILL-${random4Digit}`; // <--- This billNo needs to be sent to backend
+
+            let itemsHtml = '';
+            let totalItemsCount = 0;
+            let totalAmountSum = 0;
+            const allSalesIdsToMarkPrintedAndProcessed = [];
+
+            customerSales.forEach(sale => {
+                itemsHtml += `
+                    <tr>
+                        <td class="col-item">${sale.item_name} (${sale.item_code})</td>
+                        <td class="col-qty">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                        <td class="col-rate">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                        <td class="col-value">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                    </tr>
+                `;
+                totalItemsCount++;
+                totalAmountSum += parseFloat(sale.total);
+                // Collect the sale IDs for marking as processed
+                allSalesIdsToMarkPrintedAndProcessed.push(sale.id);
+            });
+
+            const salesContent = `
+                <div class="receipt-container">
+                    <div class="company-info">
+                        <h3>C11 TGK ට්‍රේඩර්ස්</h3>
+                        <p>අල, ඹී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
+                        <p>වි.ආ.ම. වේයන්ගොඩ</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="bill-details">
+                        <p><span>දිනය :</span> <span>${date}</span></p>
+                        <p><span>දුරකථන :</span> <span>${mobile}</span></p>
+                        <p><span>වෙලාව :</span> <span>${time}</span></p>
+                        <p><span>බිල් අංකය :</span> <span>${billNo}</span></p>
+                        <p class="customer-name-on-bill">${customerName} (${firstCustomerCode})</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="items-section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-item">වර්ගය</th>
+                                    <th class="col-qty">කිලො</th>
+                                    <th class="col-rate">මිල</th>
+                                    <th class="col-value">අගය</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="summary-section">
+                        <p><span>මුළු අයිතම ගණන:</span> <span class="align-right">${totalItemsCount}</span></p>
+                        <p><span>මුළු මුදල:</span> <span class="align-right">Rs. ${totalAmountSum.toFixed(2)}</span></p>
+                        <p><span>ප්‍රවාහන ගාස්තු:</span> <span class="align-right">00.00</span></p>
+                        <p><span>කුලිය:</span> <span class="align-right">00.00</span></p>
+                        <p class="grand-total"><span>අගය:</span> <span class="align-right">Rs. ${(totalAmountSum).toFixed(2)}</span></p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="footer-section">
+                        <p>භාණ්ඩ පරීක්ෂා කර බලා රැගෙන යන්න</p>
+                        <p>නැවත භාර ගනු නොලැබේ</p>
+                    </div>
+                </div>
+            `;
+
+            const printWindow = window.open('', '_blank', 'width=400,height=600');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+                            body {
+                                font-family: 'Noto Sans Sinhala', sans-serif;
+                                margin: 0;
+                                padding: 5mm;
+                                font-size: 10px;
+                                line-height: 1.2;
+                            }
+                            .receipt-container {
+                                width: 100%;
+                                max-width: 70mm;
+                                margin-left: 0;
+                                margin-right: auto;
+                                border: none;
+                                padding: 0;
+                            }
+                            .company-info {
+                                text-align: center;
+                                margin-bottom: 5px;
+                            }
+                            .company-info h3 {
+                                font-size: 1.2em;
+                                margin-bottom: 2px;
+                                font-weight: bold;
+                            }
+                            .company-info p {
+                                margin: 0;
+                                line-height: 1.2;
+                            }
+                            .bill-details, .summary-section, .footer-section {
+                                text-align: left;
+                                margin-bottom: 5px;
+                            }
+                            .bill-details p, .summary-section p {
+                                margin: 0;
+                                line-height: 1.2;
+                                display: flex;
+                                justify-content: space-between;
+                            }
+                            .bill-details p span:first-child, .summary-section p span:first-child {
+                                text-align: left;
+                                font-weight: normal;
+                            }
+                            .bill-details p span:last-child, .summary-section p span:last-child {
+                                text-align: right;
+                                font-weight: bold;
+                            }
+                            .customer-name-on-bill {
+                                text-align: center;
+                                font-weight: bold;
+                                margin-top: 5px;
+                            }
+                            .divider {
+                                border-top: 1px dashed #000;
+                                margin: 8px 0;
+                            }
+                            .items-section table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                font-size: 10px;
+                            }
+                            .items-section th, .items-section td {
+                                padding: 2px 0;
+                                text-align: right;
+                                border-bottom: none;
+                            }
+                            .items-section th {
+                                font-weight: bold;
+                                text-align: center;
+                                border-bottom: 1px dashed #000;
+                            }
+                            .col-item {
+                                text-align: left;
+                                width: 40%;
+                            }
+                            .col-qty {
+                                width: 20%;
+                            }
+                            .col-rate {
+                                width: 20%;
+                            }
+                            .col-value {
+                                width: 20%;
+                            }
+                            .grand-total {
+                                font-size: 1.1em;
+                                font-weight: bold;
+                                border-top: 1px dashed #000;
+                                padding-top: 5px;
+                                margin-top: 5px;
+                            }
+                            .footer-section {
+                                text-align: center;
+                                margin-top: 10px;
+                            }
+                            .footer-section p {
+                                margin: 0;
+                                line-height: 1.2;
+                            }
+                        </style>
+                    </head>
+                    <body>${salesContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+
+            const checkClosed = setInterval(function() {
+                if (printWindow.closed) {
+                    clearInterval(checkClosed);
+                    console.log(`Print window closed. Sending request to mark sales as printed and processed.`);
+
+                    // Only send the fetch request if there are IDs to process
+                    if (allSalesIdsToMarkPrintedAndProcessed.length > 0) {
+                        fetch("{{ route('sales.markAsPrinted') }}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    sales_ids: allSalesIdsToMarkPrintedAndProcessed,
+                                    bill_no: billNo // <--- IMPORTANT: Sending the generated billNo to backend
+                                })
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.text().then(text => {
+                                        throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Sales marked as printed and processed:', data);
+                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                                window.location.reload();
+                            })
+                            .catch(error => {
+                                console.error('Error marking sales as printed and processed:', error);
+                                alert('Failed to mark sales as printed. Please check console for details.');
+                            });
+                    } else {
+                        console.log("No sales IDs were collected for marking as processed (likely no unprocessed sales for the customer). Reloading page.");
+                        sessionStorage.setItem('focusOnCustomerSelect', 'true'); // Still reload to ensure fresh state
+                        window.location.reload();
+                    }
+                }
+            }, 500);
+        }
+    
 
 
  else if (e.key === "F5") {
@@ -1526,7 +1593,7 @@
                 data['_method'] = 'PUT';
                 data['_token'] = '{{ csrf_token() }}';
 
-                fetch(`/AA/sms/sales/update/${saleId}`, {
+                fetch(`sales/update/${saleId}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1575,7 +1642,7 @@
                     return;
                 }
 
-                fetch(`/AA/sms/sales/delete/${saleId}`, {
+                fetch(`sales/delete/${saleId}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
