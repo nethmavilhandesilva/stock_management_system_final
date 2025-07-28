@@ -920,7 +920,7 @@
 
                             // Add a class to the results options UL to give it padding at the top,
                             // so options don't hide behind the sticky header.
-                            $resultsContainer.addClass('has-custom-header');
+                          
 
                         } else {
                             console.log("Header already exists, not re-adding."); // Debugging log
@@ -1208,14 +1208,14 @@
                             }
 
                             const customerSales = salesByCustomer[firstCustomerCode];
-                            const customerName = customerSales[0].customer_name || 'N/A';
+                            const customerName = customerSales[0].customer_code || 'N/A';
                             const mobile = '0702758908'; // This should ideally be dynamic or from config
 
                             const now = new Date();
                             const date = now.toLocaleDateString();
                             const time = now.toLocaleTimeString();
                             const random4Digit = Math.floor(1000 + Math.random() * 9000);
-                            const billNo = `BILL-${random4Digit}`; // <--- This billNo needs to be sent to backend
+                            const billNo = `${random4Digit}`; // <--- This billNo needs to be sent to backend
 
                             let itemsHtml = '';
                             let totalItemsCount = 0;
@@ -1269,7 +1269,7 @@
                                                                         </tr>
                                                                         <tr>
                                                                             <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
-                                                                            <td colspan="2" style="text-align: right; padding: 0;"><span style="font-weight: bold;">GAMI</span></td>
+                                                                            <td colspan="2" style="text-align: right; padding: 0;"><span style="font-weight: bold;">${customerName}</span></td>
                                                                         </tr>
                                                                     </table>
                                                                 </div>
