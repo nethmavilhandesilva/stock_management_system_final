@@ -1693,6 +1693,7 @@
                 console.log("Clicked Customer Code:", customerCode);
                 console.log("Clicked Bill Type:", billType);
                 console.log("Clicked Bill No:", billNo);
+                newCustomerCodeField.value = customerCode;
 
                 let salesToDisplay = [];
 
