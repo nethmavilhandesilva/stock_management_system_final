@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GrnEntry;
+use App\Models\GrnEntry; // Make sure this is correctly pointing to your GrnEntry model
 use App\Models\Supplier;
 use App\Models\Sale;
 use App\Models\Customer;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;   // Still good to keep if you use transactions elsewhere
-use Illuminate\Support\Facades\Log;  // Still good to keep for logging errors
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SalesEntryController extends Controller
 {
@@ -29,7 +29,6 @@ class SalesEntryController extends Controller
         $totalSum = $sales->sum('total'); // Sum will now be for all displayed sales
         $unprocessedSales = Sale::whereIn('Processed', ['Y', 'N']) // Include both processed and unprocessed
             ->get();
-            
 
         $salesPrinted = Sale::where('bill_printed', 'Y')
             ->orderBy('customer_name')
@@ -42,8 +41,6 @@ class SalesEntryController extends Controller
             ->get()
             ->groupBy('customer_code');
 
-
-
         // Calculate total for unprocessed sales
         $totalUnprintedSum = Sale::where('bill_printed', 'N')->sum('total');
 
@@ -53,49 +50,78 @@ class SalesEntryController extends Controller
 
     public function store(Request $request)
     {
+        // Add grn_entry_code to validation
         $validated = $request->validate([
             'supplier_code' => 'required',
             'customer_code' => 'required|string|max:255',
             'customer_name' => 'nullable',
-            'code' => 'required',
+            'code' => 'required', // This is the GRN Code (e.g., ALA-SANJ-701)
             'item_code' => 'required',
             'item_name' => 'required',
-            'weight' => 'required|numeric',
+            'weight' => 'required|numeric|min:0.01', // Ensure weight is positive for sale
             'price_per_kg' => 'required|numeric',
             'total' => 'required|numeric',
             'packs' => 'required|integer',
+            'grn_entry_code' => 'required|string|exists:grn_entries,code', // Validate it exists in grn_entries table
         ]);
 
         try {
+            DB::beginTransaction(); // Start a database transaction
+
+            // 1. Find the original GRN record using the grn_entry_code
+            $grnEntry = GrnEntry::where('code', $validated['grn_entry_code'])->first();
+
+            if (!$grnEntry) {
+                // This should ideally be caught by 'exists' validation, but good for a fallback
+                throw new \Exception('Selected GRN entry not found for update.');
+            }
+
+            // 2. Calculate the new weight for the GRN entry
+            $weightToDeduct = $validated['weight'];
+
+            // Basic check to prevent selling more than available
+            if ($weightToDeduct > $grnEntry->weight) {
+                DB::rollBack(); // Rollback if validation fails here
+                return redirect()->back()
+                    ->withErrors(['weight' => 'Cannot sell more weight than available in GRN entry. Available: ' . $grnEntry->weight . ' kg'])
+                    ->withInput($request->all()); // Keep all input for user convenience
+            }
+
+            $newGrnWeight = $grnEntry->weight - $weightToDeduct;
+
+            // 3. Update the GRN record in the database
+            $grnEntry->weight = $newGrnWeight;
+            $grnEntry->save();
+
+            // 4. Create the Sale record
             Sale::create([
                 'supplier_code' => $validated['supplier_code'],
                 'customer_code' => $validated['customer_code'],
                 'customer_name' => $validated['customer_name'],
-                'code' => $validated['code'],
+                'code' => $validated['code'], // This is the GRN Code associated with the sale
                 'item_code' => $validated['item_code'],
                 'item_name' => $validated['item_name'],
                 'weight' => $validated['weight'],
                 'price_per_kg' => $validated['price_per_kg'],
                 'total' => $validated['total'],
                 'packs' => $validated['packs'],
-                // Newly added sales are never printed initially
                 'Processed' => 'N',
-
             ]);
+
+            DB::commit(); // Commit the transaction if both operations succeed
 
             return redirect()->back()
                 ->withInput($request->only(['customer_code', 'customer_name']));
         } catch (\Exception | \Illuminate\Database\QueryException $e) {
-            Log::error('Failed to add sales entry: ' . $e->getMessage());
+            DB::rollBack(); // Rollback on any exception
+            Log::error('Failed to add sales entry and update GRN: ' . $e->getMessage());
             return redirect()->back()
                 ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
-                ->withInput($request->only(['customer_code', 'customer_name']));
+                ->withInput($request->all()); // Keep all input for user convenience
         }
     }
 
-
-
-    // In your SalesController.php
+    // ... (rest of your controller methods: markAllAsProcessed, markAsPrinted, update, destroy) ...
 
     public function markAllAsProcessed(Request $request)
     {
@@ -191,12 +217,7 @@ class SalesEntryController extends Controller
         }
     }
 
-    /**
-     * Remove the specified sales record from storage.
-     *
-     * @param  \App\Models\Sale  $sale // Using Route Model Binding
-     * @return \Illuminate\Http\Response
-     */
+   
     public function destroy(Sale $sale)
     {
         try {
@@ -206,15 +227,4 @@ class SalesEntryController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to delete sales record: ' . $e->getMessage()], 500);
         }
     }
-
-
-
-
-
-
-
-
-
-
-
 }
