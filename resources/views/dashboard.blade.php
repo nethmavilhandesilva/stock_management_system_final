@@ -433,9 +433,10 @@
 
     <div class="container-fluid mt-4">
         <div class="row justify-content-center">
-            {{-- NEW SECTION: Printed Sales Records (bill_printed = 'Y') - Left Column --}}
-            <div class="col-md-3"> {{-- You can reduce this to col-md-2 or add custom width for smaller size --}}
-                <div class="card shadow-sm border-0 rounded-3 p-3"> {{-- Reduced padding from p-4 to p-3 --}}
+            {{-- Container for the two stacked Printed Sales Records columns --}}
+            <div class="col-md-3">
+                {{-- ORIGINAL SECTION: Printed Sales Records (bill_printed = 'Y') - Top Left Column --}}
+                <div class="card shadow-sm border-0 rounded-3 p-3 mb-4"> {{-- Added mb-4 for spacing --}}
                     <h6 class="mb-2 text-center">මුද්‍රිත විකුණුම් වාර්තා</h6>
 
                     {{-- 🔍 Search Bar --}}
@@ -471,9 +472,60 @@
                                                             {{ number_format($totalBillAmount, 2) }}
                                                         </span>
 
+                                                        <i class="material-icons arrow-icon"
+                                                            style="font-size: 14px;">keyboard_arrow_right</i>
+                                                    </div>
 
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @else
+                        <div class="alert alert-info text-center">No printed sales records found.</div>
+                    @endif
+                </div>
 
+                {{-- DUPLICATE SECTION: Printed Sales Records (bill_printed = 'Y') - Bottom Left Column --}}
+                {{-- This section is a duplicate and is placed directly below the original in the same col-md-3 container --}}
+                <div class="card shadow-sm border-0 rounded-3 p-3">
+                    <h6 class="mb-2 text-center">මුද්‍රිත විකුණුම් වාර්තා (අනුපිටපත)</h6> {{-- Changed heading to distinguish --}}
 
+                    {{-- 🔍 Search Bar --}}
+                    <input type="text" id="searchCustomerCodeDuplicate" class="form-control form-control-sm mb-2"
+                        placeholder="Search by Bill No...">
+
+                    @if ($salesPrinted->count())
+                        <div class="printed-sales-list">
+                            <ul id="printedSalesListDuplicate">
+                                {{-- Outer loop: CUSTOMER GROUP --}}
+                                @foreach ($salesPrinted as $customerCode => $salesForCustomer)
+                                    @php
+                                        $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
+                                    @endphp
+                                    <li data-customer-code="{{ $customerCode }}">
+                                        <div class="customer-group-header">
+
+                                        </div>
+
+                                        <ul>
+                                            {{-- Inner loop: BILL GROUP --}}
+                                            @foreach ($salesForCustomer->groupBy('bill_no') as $billNo => $salesForBill)
+                                                @php
+                                                    $totalBillAmount = $salesForBill->sum('total');
+                                                @endphp
+                                                <li>
+                                                    <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
+                                                        data-customer-name="{{ $customerName }}" data-bill-no="{{ $billNo ?? '' }}"
+                                                        data-bill-type="printed"
+                                                        style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
+                                                        <span style="flex: 1;">
+                                                           ({{ $customerCode ?? 'N/A' }} - Bill No: {{ $billNo ?? 'N/A' }} - Rs.)
+                                                            {{ number_format($totalBillAmount, 2) }}
+                                                        </span>
+                                                        
 
                                                         <i class="material-icons arrow-icon"
                                                             style="font-size: 14px;">keyboard_arrow_right</i>
@@ -490,8 +542,7 @@
                         <div class="alert alert-info text-center">No printed sales records found.</div>
                     @endif
                 </div>
-            </div>
-
+            </div> {{-- End of col-md-3 for stacked Printed Sales --}}
             {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
