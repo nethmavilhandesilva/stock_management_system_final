@@ -3,11 +3,11 @@
 @section('content')
 <style>
     body {
-        background-color: #f0f4f8;
+        background-color: #99ff99;
     }
 
     .custom-card {
-        background-color: #ffffff;
+        background-color:#006400 !important;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         padding: 24px;

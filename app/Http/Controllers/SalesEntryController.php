@@ -48,81 +48,96 @@ class SalesEntryController extends Controller
     }
 
 
-    public function store(Request $request)
-    {
-        // Add grn_entry_code to validation
-        $validated = $request->validate([
-            'supplier_code' => 'required',
-            'customer_code' => 'required|string|max:255',
-            'customer_name' => 'nullable',
-            'code' => 'required', // This is the GRN Code (e.g., ALA-SANJ-701)
-            'item_code' => 'required',
-            'item_name' => 'required',
-            'weight' => 'required|numeric|min:0.01', // Ensure weight is positive for sale
-            'price_per_kg' => 'required|numeric',
-            'total' => 'required|numeric',
-            'packs' => 'required|integer',
-            'grn_entry_code' => 'required|string|exists:grn_entries,code', // Validate it exists in grn_entries table
-        ]);
+   public function store(Request $request)
+{
+    // Add grn_entry_code to validation
+    $validated = $request->validate([
+        'supplier_code' => 'required',
+        'customer_code' => 'required|string|max:255',
+        'customer_name' => 'nullable',
+        'code' => 'required', // This is the GRN Code (e.g., ALA-SANJ-701)
+        'item_code' => 'required',
+        'item_name' => 'required',
+        'weight' => 'required|numeric|min:0.01', // Ensure weight is positive for sale
+        'price_per_kg' => 'required|numeric',
+        'total' => 'required|numeric',
+        'packs' => 'required|integer|min:1', // Changed min:0 to min:1 if selling at least one pack
+        'grn_entry_code' => 'required|string|exists:grn_entries,code', // Validate it exists in grn_entries table
+    ]);
 
-        try {
-            DB::beginTransaction(); // Start a database transaction
+    try {
+        DB::beginTransaction(); // Start a database transaction
 
-            // 1. Find the original GRN record using the grn_entry_code
-            $grnEntry = GrnEntry::where('code', $validated['grn_entry_code'])->first();
+        // 1. Find the original GRN record using the grn_entry_code
+        $grnEntry = GrnEntry::where('code', $validated['grn_entry_code'])->first();
 
-            if (!$grnEntry) {
-                // This should ideally be caught by 'exists' validation, but good for a fallback
-                throw new \Exception('Selected GRN entry not found for update.');
-            }
+        if (!$grnEntry) {
+            // This should ideally be caught by 'exists' validation, but good for a fallback
+            throw new \Exception('Selected GRN entry not found for update.');
+        }
 
-            // 2. Calculate the new weight for the GRN entry
-            $weightToDeduct = $validated['weight'];
+        // 2. Calculate the new weight for the GRN entry
+        $weightToDeduct = $validated['weight'];
 
-            // Basic check to prevent selling more than available
-            if ($weightToDeduct > $grnEntry->weight) {
-                DB::rollBack(); // Rollback if validation fails here
-                return redirect()->back()
-                    ->withErrors(['weight' => 'Cannot sell more weight than available in GRN entry. Available: ' . $grnEntry->weight . ' kg'])
-                    ->withInput($request->all()); // Keep all input for user convenience
-            }
-
-            $newGrnWeight = $grnEntry->weight - $weightToDeduct;
-
-            // 3. Update the GRN record in the database
-            $grnEntry->weight = $newGrnWeight;
-            $grnEntry->save();
-
-            // 4. Create the Sale record
-            Sale::create([
-                'supplier_code' => $validated['supplier_code'],
-                'customer_code' => $validated['customer_code'],
-                'customer_name' => $validated['customer_name'],
-                'code' => $validated['code'], // This is the GRN Code associated with the sale
-                'item_code' => $validated['item_code'],
-                'item_name' => $validated['item_name'],
-                'weight' => $validated['weight'],
-                'price_per_kg' => $validated['price_per_kg'],
-                'total' => $validated['total'],
-                'packs' => $validated['packs'],
-                'Processed' => 'N',
-            ]);
-
-            DB::commit(); // Commit the transaction if both operations succeed
-
+        // Basic check to prevent selling more than available for weight
+        if ($weightToDeduct > $grnEntry->weight) {
+            DB::rollBack(); // Rollback if validation fails here
             return redirect()->back()
-                ->withInput($request->only(['customer_code', 'customer_name']));
-        } catch (\Exception | \Illuminate\Database\QueryException $e) {
-            DB::rollBack(); // Rollback on any exception
-            Log::error('Failed to add sales entry and update GRN: ' . $e->getMessage());
-            return redirect()->back()
-                ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
+                ->withErrors(['weight' => 'Cannot sell more weight than available in GRN entry. Available: ' . $grnEntry->weight . ' kg'])
                 ->withInput($request->all()); // Keep all input for user convenience
         }
+
+        // Calculate the new packs for the GRN entry (NEW)
+        $packsToDeduct = $validated['packs'];
+
+        // Basic check to prevent selling more than available for packs (NEW)
+        if ($packsToDeduct > $grnEntry->packs) {
+            DB::rollBack(); // Rollback if validation fails here
+            return redirect()->back()
+                ->withErrors(['packs' => 'Cannot sell more packs than available in GRN entry. Available: ' . $grnEntry->packs . ' packs'])
+                ->withInput($request->all()); // Keep all input for user convenience
+        }
+
+
+        // Deduct from GRN entry
+        $grnEntry->weight = $grnEntry->weight - $weightToDeduct;
+        $grnEntry->packs = $grnEntry->packs - $packsToDeduct; // DEDUCT PACKS HERE (NEW)
+
+        // Ensure weights/packs don't go negative if there's a tiny floating point issue or previous bad data
+        $grnEntry->weight = max(0, $grnEntry->weight);
+        $grnEntry->packs = max(0, $grnEntry->packs); // Ensure packs don't go negative (NEW)
+
+        // 3. Update the GRN record in the database
+        $grnEntry->save();
+
+        // 4. Create the Sale record
+        Sale::create([
+            'supplier_code' => $validated['supplier_code'],
+            'customer_code' => $validated['customer_code'],
+            'customer_name' => $validated['customer_name'],
+            'code' => $validated['code'], // This is the GRN Code associated with the sale
+            'item_code' => $validated['item_code'],
+            'item_name' => $validated['item_name'],
+            'weight' => $validated['weight'],
+            'price_per_kg' => $validated['price_per_kg'],
+            'total' => $validated['total'],
+            'packs' => $validated['packs'],
+            'Processed' => 'N',
+        ]);
+
+        DB::commit(); // Commit the transaction if both operations succeed
+
+        return redirect()->back()
+            ->withInput($request->only(['customer_code', 'customer_name']));
+          
+    } catch (\Exception | \Illuminate\Database\QueryException $e) {
+        DB::rollBack(); // Rollback on any exception
+        Log::error('Failed to add sales entry and update GRN: ' . $e->getMessage());
+        return redirect()->back()
+            ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
+            ->withInput($request->all()); // Keep all input for user convenience
     }
-
-    // ... (rest of your controller methods: markAllAsProcessed, markAsPrinted, update, destroy) ...
-
+}
     public function markAllAsProcessed(Request $request)
     {
         try {

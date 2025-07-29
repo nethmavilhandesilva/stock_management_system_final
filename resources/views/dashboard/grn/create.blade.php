@@ -1,30 +1,63 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- This link is typically in layouts.app, but added here for self-containment if needed --}}
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-<div class="container-fluid mt-4">
-    <div class="row justify-content-center"> {{-- Added justify-content-center for horizontal centering --}}
-        <div class="col-md-8"> {{-- Adjusted column size for better form width --}}
-            <div class="card shadow-sm border-0 rounded-3 p-4">
-                <h2 class="mb-4">Register New GRN Entry</h2> {{-- Simplified header to match target style --}}
-                {{-- The descriptive paragraph is removed to match the simpler header style of the target --}}
+<style>
+    body {
+        background-color: #99ff99;
+    }
+    
+
+    .custom-card {
+        background-color: #006400 !important;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #003366;
+    }
+
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    input[readonly] {
+        background-color: #e9ecef;
+    }
+</style>
+
+<div class="container-fluid mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="custom-card">
+                <h2 class="text-primary mb-4">📝 නව GRN ඇතුළත් කිරීම</h2>
 
                 <form method="POST" action="{{ route('grn.store2') }}">
                     @csrf
 
                     {{-- Item Selection --}}
                     <div class="mb-3">
-                        <label for="item_code" class="form-label">අයිතම <span class="text-danger">*</span></label> {{-- Used text-danger for required indicator --}}
+                        <label for="item_code" class="form-label">අයිතම <span class="text-danger">*</span></label>
                         <select id="item_code" name="item_code" class="form-control @error('item_code') is-invalid @enderror" required>
                             <option value="" disabled selected>-- Select an Item --</option>
                             @foreach($items as $item)
-                                <option value="{{ $item->no }}" {{ old('item_code') == $item->no ? 'selected' : '' }}>{{ $item->no }} - {{ $item->type }}</option>
+                                <option value="{{ $item->no }}" data-type="{{ $item->type }}" {{ old('item_code') == $item->no ? 'selected' : '' }}>
+                                    {{ $item->no }} - {{ $item->type }}
+                                </option>
                             @endforeach
                         </select>
                         @error('item_code')
-                            <div class="invalid-feedback">{{ $message }}</div> {{-- Bootstrap's invalid-feedback for errors --}}
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -34,7 +67,9 @@
                         <select id="supplier_code" name="supplier_code" class="form-control @error('supplier_code') is-invalid @enderror" required>
                             <option value="" disabled selected>-- Select a Supplier --</option>
                             @foreach($suppliers as $supplier)
-                                <option value="{{ $supplier->code }}" {{ old('supplier_code') == $supplier->code ? 'selected' : '' }}>{{ $supplier->name }}</option>
+                                <option value="{{ $supplier->code }}" data-name="{{ $supplier->name }}" {{ old('supplier_code') == $supplier->code ? 'selected' : '' }}>
+                                    {{ $supplier->name }}
+                                </option>
                             @endforeach
                         </select>
                         @error('supplier_code')
@@ -42,11 +77,13 @@
                         @enderror
                     </div>
 
-                    {{-- Vehicle No (GRN No) --}}
+                    {{-- GRN No (Auto-generated) --}}
                     <div class="mb-3">
                         <label for="grn_no" class="form-label">GRN අංකය <span class="text-danger">*</span></label>
-                        <input type="text" id="grn_no" name="grn_no" placeholder="e.g., ABC-1234 or GRN-2023-001" value="{{ old('grn_no') }}"
-                               class="form-control @error('grn_no') is-invalid @enderror" required>
+                        <input type="text" id="grn_no" name="grn_no" readonly
+                               value="{{ old('grn_no') }}"
+                               class="form-control @error('grn_no') is-invalid @enderror"
+                               placeholder="Will be auto-generated">
                         @error('grn_no')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -55,7 +92,8 @@
                     {{-- Warehouse No --}}
                     <div class="mb-3">
                         <label for="warehouse_no" class="form-label">ගබඩා අංකය <span class="text-danger">*</span></label>
-                        <input type="text" id="warehouse_no" name="warehouse_no" placeholder="e.g., WH-01 or Aisle-C" value="{{ old('warehouse_no') }}"
+                        <input type="text" id="warehouse_no" name="warehouse_no" placeholder="e.g., WH-01 or Aisle-C"
+                               value="{{ old('warehouse_no') }}"
                                class="form-control @error('warehouse_no') is-invalid @enderror" required>
                         @error('warehouse_no')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -92,13 +130,44 @@
                         @enderror
                     </div>
 
-                    <div class="d-flex justify-content-center mt-4"> {{-- Using Bootstrap flex for button alignment --}}
-                        <button type="submit" class="btn btn-success me-2">GRN ඇතුළත් කිරීම ඉදිරිපත් කරන්න</button>
-                        <a href="{{ route('grn.index') }}" class="btn btn-secondary">අවලංගු කරන්න</a>
+                    <div class="d-flex justify-content-center mt-4">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="material-icons align-middle me-1">check_circle</i>GRN ඇතුළත් කරන්න
+                        </button>
+                        <a href="{{ route('grn.index') }}" class="btn btn-secondary">
+                            <i class="material-icons align-middle me-1">cancel</i>අවලංගු කරන්න
+                        </a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const itemSelect = document.getElementById('item_code');
+        const supplierSelect = document.getElementById('supplier_code');
+        const grnInput = document.getElementById('grn_no');
+
+        function generateGRN() {
+            const itemOption = itemSelect.options[itemSelect.selectedIndex];
+            const supplierOption = supplierSelect.options[supplierSelect.selectedIndex];
+
+            const itemType = itemOption?.getAttribute('data-type') || '';
+            const supplierName = supplierOption?.getAttribute('data-name') || '';
+
+            if (itemType && supplierName) {
+                const itemPart = itemType.trim().substring(0, 3).toUpperCase();
+                const supplierPart = supplierName.trim().substring(0, 3).toUpperCase();
+                const timestamp = Date.now().toString().slice(-4);
+                const generatedGRN = `${itemPart}${supplierPart}-${timestamp}`;
+                grnInput.value = generatedGRN;
+            }
+        }
+
+        itemSelect.addEventListener('change', generateGRN);
+        supplierSelect.addEventListener('change', generateGRN);
+    });
+</script>
 @endsection
