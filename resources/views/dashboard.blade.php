@@ -490,18 +490,21 @@
 
                 {{-- DUPLICATE SECTION: Printed Sales Records (bill_printed = 'Y') - Bottom Left Column --}}
                 {{-- This section is a duplicate and is placed directly below the original in the same col-md-3 container --}}
-                <div class="card shadow-sm border-0 rounded-3 p-3">
+                {{-- DUPLICATE SECTION: Printed Sales Records (bill_printed = 'Y') - Bottom Left Column --}}
+                {{-- This section is a duplicate and is placed directly below the original in the same col-md-3 container --}}
+                <div class="card shadow-sm border-0 rounded-3 p-3 mb-4">
                     <h6 class="mb-2 text-center">මුද්‍රිත විකුණුම් වාර්තා (අනුපිටපත)</h6> {{-- Changed heading to distinguish --}}
 
                     {{-- 🔍 Search Bar --}}
                     <input type="text" id="searchCustomerCodeDuplicate" class="form-control form-control-sm mb-2"
-                        placeholder="Search by Bill No...">
+                        placeholder="Search by Bill No or Customer Code...">
 
                     @if ($salesPrinted->count())
                         <div class="printed-sales-list">
                             <ul id="printedSalesListDuplicate">
-                                {{-- Outer loop: CUSTOMER GROUP --}}
-                                @foreach ($salesPrinted as $customerCode => $salesForCustomer)
+                                {{-- Outer loop: CUSTOMER GROUP - Sorted Alphabetically by customerCode --}}
+                                {{-- CORRECTED LINE: Sorts the existing grouped collection by its keys (customerCode) --}}
+                                @foreach ($salesPrinted->sortBy(fn($sales, $customerCode) => $customerCode) as $customerCode => $salesForCustomer)
                                     @php
                                         $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
                                     @endphp
@@ -522,10 +525,9 @@
                                                         data-bill-type="printed"
                                                         style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
                                                         <span style="flex: 1;">
-                                                           ({{ $customerCode ?? 'N/A' }} - Bill No: {{ $billNo ?? 'N/A' }} - Rs.)
+                                                            ({{ $customerCode ?? 'N/A' }} - Bill No: {{ $billNo ?? 'N/A' }} - Rs.)
                                                             {{ number_format($totalBillAmount, 2) }}
                                                         </span>
-                                                        
 
                                                         <i class="material-icons arrow-icon"
                                                             style="font-size: 14px;">keyboard_arrow_right</i>
@@ -542,7 +544,7 @@
                         <div class="alert alert-info text-center">No printed sales records found.</div>
                     @endif
                 </div>
-            </div> {{-- End of col-md-3 for stacked Printed Sales --}}
+                </div> {{-- End of col-md-3 for stacked Printed Sales --}}
             {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 rounded-3 p-4">
@@ -798,46 +800,82 @@
             </div>
 
             {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
-            <div class="col-md-3"> {{-- You can change to col-md-2 if needed for smaller width --}}
-                <div class="card shadow-sm border-0 rounded-3 p-3"> {{-- Reduced padding from p-4 to p-3 --}}
-                    <h6 class="mb-2 text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා</h6>
+<div class="col-md-3"> {{-- You can change to col-md-2 if needed for smaller width --}}
+    <div class="card shadow-sm border-0 rounded-3 p-3"> {{-- Reduced padding from p-4 to p-3 --}}
+        <h6 class="mb-2 text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා</h6>
 
-                    {{-- 🔍 Search Bar --}}
-                    <input type="text" id="searchUnprintedCustomerCode" class="form-control form-control-sm mb-2"
-                        placeholder="Search by customer code...">
+        {{-- 🔍 Search Bar --}}
+        <input type="text" id="searchUnprintedCustomerCode" class="form-control form-control-sm mb-2"
+            placeholder="Search by customer code...">
 
-                    @if ($salesNotPrinted->count())
-                        <div class="unprinted-sales-list">
-                            <ul id="unprintedSalesList">
-                                {{-- Loop over each CUSTOMER GROUP for unprinted sales --}}
-                                @foreach ($salesNotPrinted as $customerCode => $salesForCustomer)
-                                    @php
-                                        $firstSaleForCustomer = $salesForCustomer->first();
-                                        $customerName = $firstSaleForCustomer->customer_name;
-                                        $totalCustomerSalesAmount = $salesForCustomer->sum('total');
-                                    @endphp
-                                    <li data-customer-code="{{ $customerCode }}">
-                                        <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
-                                            data-customer-name="{{ $customerName }}" data-bill-no="" data-bill-type="unprinted"
-                                            style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
-
-                                            <span style="flex: 1;">
-                                                ({{ strtoupper($customerCode) }}) -
-                                                Rs.{{ number_format($totalCustomerSalesAmount, 2) }}
-                                            </span>
-
-                                            <i class="material-icons arrow-icon" style="font-size: 14px;">keyboard_arrow_right</i>
-                                        </div>
-
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @else
-                        <div class="alert alert-info text-center">No unprinted sales records found.</div>
-                    @endif
-                </div>
+        @if ($salesNotPrinted->count())
+            <div class="unprinted-sales-list">
+                <ul id="unprintedSalesList">
+                    {{-- Loop over each CUSTOMER GROUP for unprinted sales --}}
+                    @foreach ($salesNotPrinted as $customerCode => $salesForCustomer)
+                        @php
+                            $firstSaleForCustomer = $salesForCustomer->first();
+                            $customerName = $firstSaleForCustomer->customer_name;
+                            $totalCustomerSalesAmount = $salesForCustomer->sum('total');
+                        @endphp
+                        <li data-customer-code="{{ $customerCode }}">
+                            <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
+                                data-customer-name="{{ $customerName }}" data-bill-no="" data-bill-type="unprinted"
+                                style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
+                                <span style="flex: 1;">
+                                    ({{ strtoupper($customerCode) }}) -
+                                    Rs.{{ number_format($totalCustomerSalesAmount, 2) }}
+                                </span>
+                                <i class="material-icons arrow-icon" style="font-size: 14px;">keyboard_arrow_right</i>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
             </div>
+        @else
+            <div class="alert alert-info text-center">No unprinted sales records found.</div>
+        @endif
+    </div>
+
+    {{-- DUPLICATE SECTION: Unprinted Sales Records --}}
+   <div class="card shadow-sm border-0 rounded-3 p-3 mt-3"> {{-- Added margin-top (mt-3) to create space --}}
+    <h6 class="mb-2 text-center">මුද්‍රණය නොකළ විකුණුම් වාර්තා (අනුපිටපත)</h6> {{-- Changed heading to distinguish --}}
+
+    {{-- 🔍 Search Bar --}}
+    <input type="text" id="searchUnprintedCustomerCodeDuplicate" class="form-control form-control-sm mb-2"
+        placeholder="Search by customer code...">
+
+    @if ($salesNotPrinted->count())
+       @php $sortedSalesNotPrinted = $salesNotPrinted->sortKeys(); @endphp
+
+        <div class="unprinted-sales-list">
+            <ul id="unprintedSalesListDuplicate">
+                {{-- Loop over each CUSTOMER GROUP for unprinted sales --}}
+                @foreach ($salesNotPrinted as $customerCode => $salesForCustomer)
+                    @php
+                        $firstSaleForCustomer = $salesForCustomer->first();
+                        $customerName = $firstSaleForCustomer->customer_name;
+                        $totalCustomerSalesAmount = $salesForCustomer->sum('total');
+                    @endphp
+                    <li data-customer-code="{{ $customerCode }}">
+                        <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
+                            data-customer-name="{{ $customerName }}" data-bill-no="" data-bill-type="unprinted"
+                            style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
+                            <span style="flex: 1;">
+                                ({{ strtoupper($customerCode) }}) -
+                                Rs.{{ number_format($totalCustomerSalesAmount, 2) }}
+                            </span>
+                            <i class="material-icons arrow-icon" style="font-size: 14px;">keyboard_arrow_right</i>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @else
+        <div class="alert alert-info text-center">No unprinted sales records found.</div>
+    @endif
+</div>
+
 
 
             {{-- JavaScript Includes (jQuery and Select2 should always be loaded before your custom script that uses them)
@@ -904,6 +942,73 @@
                         li.style.display = code.includes(searchValue) ? '' : 'none';
                     });
                 });
+            </script>
+            <script>
+                // NEW: Search functionality for DUPLICATE Printed Sales Records
+        document.getElementById('searchCustomerCodeDuplicate').addEventListener('keyup', function () {
+            const searchTerm = this.value.toLowerCase();
+            const printedSalesListDuplicate = document.getElementById('printedSalesListDuplicate');
+            const customerGroups = printedSalesListDuplicate.querySelectorAll('li[data-customer-code]');
+
+            customerGroups.forEach(customerGroup => {
+                let customerGroupHasVisibleBills = false;
+                const billItems = customerGroup.querySelectorAll('li > .customer-header.bill-clickable');
+
+                billItems.forEach(billItem => {
+                    const billNoElement = billItem.querySelector('span');
+                    // This includes both customer code and bill number in its text,
+                    // allowing search across both.
+                    const billNoText = billNoElement ? billNoElement.textContent.toLowerCase() : '';
+
+                    if (billNoText.includes(searchTerm)) {
+                        billItem.style.display = 'flex';
+                        customerGroupHasVisibleBills = true;
+                    } else {
+                        billItem.style.display = 'none';
+                    }
+                });
+
+                if (customerGroupHasVisibleBills) {
+                    customerGroup.style.display = 'block';
+                } else {
+                    customerGroup.style.display = 'none';
+                }
+            });
+        });
+
+        // For DUPLICATE Printed Sales (this is new, specifically for input event to filter customer groups)
+        // This second listener allows filtering the top-level customer groups directly
+        // if the search term matches the customer code itself.
+        document.getElementById('searchCustomerCodeDuplicate').addEventListener('input', function () {
+            const searchValue = this.value.toLowerCase();
+            document.querySelectorAll('#printedSalesListDuplicate > li').forEach(li => {
+                const customerCode = li.getAttribute('data-customer-code').toLowerCase();
+                // Check if the customer code matches
+                if (customerCode.includes(searchValue)) {
+                    li.style.display = ''; // Show the customer group
+                    // Also ensure all bills within this group are shown if the customer code matches the search
+                    li.querySelectorAll('li > .customer-header.bill-clickable').forEach(billItem => {
+                        billItem.style.display = 'flex';
+                    });
+                } else {
+                    // If customer code doesn't match, check if any of its bills match
+                    let anyBillMatches = false;
+                    li.querySelectorAll('li > .customer-header.bill-clickable').forEach(billItem => {
+                        const billNoElement = billItem.querySelector('span');
+                        const billNoText = billNoElement ? billNoElement.textContent.toLowerCase() : '';
+                        if (billNoText.includes(searchValue)) {
+                            anyBillMatches = true;
+                        }
+                    });
+
+                    if (anyBillMatches) {
+                        li.style.display = ''; // Show the customer group if any bill matches
+                    } else {
+                        li.style.display = 'none'; // Hide if neither customer code nor any bill matches
+                    }
+                }
+            });
+        });
             </script>
 
 
