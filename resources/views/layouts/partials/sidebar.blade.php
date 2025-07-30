@@ -41,6 +41,20 @@
             <span class="material-icons text-blue-600 me-2">assessment</span>
             <span class="text-white">📊 අයිතම වාර්තාව</span>
         </a>
+        <a href="#" data-bs-toggle="modal" data-bs-target="#supplierGrnReportModal"
+            class="list-group-item list-group-item-action d-flex align-items-center"
+            style="background-color: transparent !important; color: white !important;">
+            <span class="material-icons text-blue-600 me-2">list_alt</span> {{-- You can choose a different icon here if
+            you like, 'list_alt' is just an example for reports/lists --}}
+            <span class="text-white">📄 සැපයුම්කරු GRN වාර්තාව</span>
+        </a>
+        <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
+            class="list-group-item list-group-item-action d-flex align-items-center"
+            style="background-color: transparent !important; color: white !important;">
+            <span class="material-icons text-blue-600 me-2">receipt_long</span> {{-- Example icon for sales/receipts
+            --}}
+            <span class="text-white">📄 GRN කේතය අනුව විකුණුම් වාර්තාව</span>
+        </a>
 
     </div>
 </aside>

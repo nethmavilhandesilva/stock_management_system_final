@@ -51,6 +51,6 @@ Route::post('/sales/mark-printed', [SalesEntryController::class, 'markAsPrinted'
 Route::get('/report', [ReportController::class, 'index'])->name('report.index');
 Route::post('/report/fetch', [ReportController::class, 'fetch'])->name('report.fetch');
 Route::post('/report/item', [App\Http\Controllers\ReportController::class, 'fetchItemReport'])->name('report.item.fetch');
-
-
+Route::post('/report/weight', [ReportController::class, 'getweight'])->name('report.supplier_grn.fetch');
+Route::post('/report/sale-code', [ReportController::class, 'getGrnSalecodereport'])->name('report.grn_sale.fetch');
 require __DIR__.'/auth.php';

@@ -1,30 +1,15 @@
-<!-- Item-wise Sales Report Modal -->
-<div class="modal fade" id="itemReportModal" tabindex="-1" aria-labelledby="itemReportModalLabel" aria-hidden="true">
+<div class="modal fade" id="grnSaleReportModal" tabindex="-1" aria-labelledby="grnSaleReportModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <form action="{{ route('report.item.fetch') }}" method="POST" target="_blank">
+        {{-- IMPORTANT: Change the form action to a new route for this report --}}
+        <form action="{{ route('report.grn_sale.fetch') }}" method="POST" target="_blank">
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">📦 අයිතමය අනුව වාර්තාව</h5>
+                    <h5 class="modal-title">📄 GRN කේතය අනුව විකුණුම් වාර්තාව</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
                 <div class="modal-body">
-
-                    <div class="mb-3">
-                        <label for="item_code" class="form-label">අයිතමය</label>
-                        <select name="item_code" id="item_code" class="form-select" required>
-                            <option value="">-- අයිතමයක් තෝරන්න --</option>
-                            @php
-                                $items = \App\Models\Item::all();
-                            @endphp
-                            @foreach($items as $item)
-                                <option value="{{ $item->no }}">{{ $item->no }}</option>
-                            @endforeach
-
-                        </select>
-                    </div>
-
                     <div class="mb-3">
                         <label for="grn_select" class="form-label">GRN තොරතුරු තෝරන්න</label>
                         <input type="hidden" name="supplier_code" id="supplier_code"> <!-- This will be filled by JS -->
@@ -48,15 +33,14 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="start_date" class="form-label">ආරම්භ දිනය</label>
-                        <input type="date" name="start_date" id="start_date" class="form-control">
+                        <label for="sales_start_date" class="form-label">ආරම්භ දිනය</label>
+                        <input type="date" name="start_date" id="sales_start_date" class="form-control">
                     </div>
 
                     <div class="mb-3">
-                        <label for="end_date" class="form-label">අවසන් දිනය</label>
-                        <input type="date" name="end_date" id="end_date" class="form-control">
+                        <label for="sales_end_date" class="form-label">අවසන් දිනය</label>
+                        <input type="date" name="end_date" id="sales_end_date" class="form-control">
                     </div>
-
                 </div>
 
                 <div class="modal-footer">
@@ -66,16 +50,18 @@
         </form>
     </div>
 </div>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const grnSelect = document.getElementById('grn_select');
-        const supplierCodeInput = document.getElementById('supplier_code');
+        const supplierCodeInput = document.getElementById('code');
 
         grnSelect.addEventListener('change', function () {
             const selectedOption = grnSelect.options[grnSelect.selectedIndex];
-            const supplierCode = selectedOption.getAttribute('data-supplier-code');
+            const supplierCode = selectedOption.getAttribute('data-code');
 
             supplierCodeInput.value = supplierCode || '';
         });
     });
 </script>
+ ="{{ $entry->code }}
