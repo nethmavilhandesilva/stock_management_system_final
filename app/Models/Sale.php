@@ -38,8 +38,9 @@ class Sale extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    
     public function item()
-    {
-        return $this->belongsTo(Item::class);
-    }
+{
+    return $this->belongsTo(Item::class, 'item_code', 'id');
+}
 }

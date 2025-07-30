@@ -29,6 +29,13 @@
         </div>
     </div>
 @endif
+<!-- Report Filter Modal Trigger (Button anywhere) -->
+<button class="btn btn-secondary position-fixed bottom-0 end-0 m-4 rounded-circle" data-bs-toggle="modal" data-bs-target="#reportFilterModal" title="Open Report Filter">
+    <i class="material-icons">assessment</i>
+</button>
+<!-- Bootstrap 5 JS Bundle (with Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 
 <div class="main-wrapper container-fluid">
     <div class="row">
@@ -49,6 +56,8 @@
     </div>
 
     @include('layouts.partials.footer')
+    @include('layouts.partials.report-modal')
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>

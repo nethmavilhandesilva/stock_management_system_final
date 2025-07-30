@@ -7,7 +7,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\GrnEntryController;
 use App\Http\Controllers\SalesEntryController;
-use App\Http\Controllers\BillController;
+use App\Http\Controllers\ReportController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -46,4 +46,9 @@ Route::delete('/sales/delete/{sale}', [SalesEntryController::class, 'destroy'])-
 Route::post('/sales/mark-all-processed', [SalesEntryController::class, 'markAllAsProcessed'])->name('sales.markAllAsProcessed');
 //Bill printing
 Route::post('/sales/mark-printed', [SalesEntryController::class, 'markAsPrinted'])->name('sales.markAsPrinted');
+//Reports
+// routes/web.php
+Route::get('/report', [ReportController::class, 'index'])->name('report.index');
+Route::post('/report/fetch', [ReportController::class, 'fetch'])->name('report.fetch');
+
 require __DIR__.'/auth.php';
