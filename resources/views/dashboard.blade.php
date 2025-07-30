@@ -85,14 +85,14 @@
         /* If you want to reduce the size of the toggler icon on mobile */
         /* This is less common but can be done */
         /*
-                                                    .navbar.navbar-compact .navbar-toggler {
-                                                        padding: 0.25rem 0.5rem !important;
-                                                    }
-                                                    .navbar.navbar-compact .navbar-toggler-icon {
-                                                        width: 1.2em !important;
-                                                        height: 1.2em !important;
-                                                    }
-                                                    */
+                                                            .navbar.navbar-compact .navbar-toggler {
+                                                                padding: 0.25rem 0.5rem !important;
+                                                            }
+                                                            .navbar.navbar-compact .navbar-toggler-icon {
+                                                                width: 1.2em !important;
+                                                                height: 1.2em !important;
+                                                            }
+                                                            */
     </style>
 @endsection
 
@@ -188,277 +188,263 @@
         }
     </style>
 
-    <style>
-        /* Page background green */
-        body,
-        html {
-            background-color: #99ff99;
-            /* Light green background */
-        }
+    ```html
+<style>
+    /* Page background green */
+    body,
+    html {
+        background-color: #99ff99;
+        /* Light green background */
+    }
 
-        /* Bold black labels */
-        label.form-label {
-            font-weight: 700;
-            color: #000000;
-        }
+    /* Bold black labels */
+    label.form-label {
+        font-weight: 700;
+        color: #000000;
+    }
 
-        /* Smaller input fields and selects, with borders */
-        input.form-control-sm,
-        select.form-select-sm {
-            border: 1.5px solid #000000 !important;
-            /* stronger black border */
-            font-weight: 600;
-            font-size: 0.875rem;
-            /* smaller font */
-        }
+    /* Smaller input fields and selects, with borders */
+    input.form-control-sm,
+    select.form-select-sm {
+        border: 1.5px solid #000000 !important;
+        /* stronger black border */
+        font-weight: 600;
+        font-size: 0.875rem;
+        /* smaller font */
+    }
 
-        /* Align certain form groups horizontally with smaller width */
-        .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: flex-end;
-        }
+    /* Align certain form groups horizontally with smaller width */
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
 
-        .form-row>div {
-            flex: 1 1 150px;
-            /* allow shrink/grow, min width 150px */
-        }
+    .form-row>div {
+        flex: 1 1 150px;
+        /* allow shrink/grow, min width 150px */
+    }
 
-        /* Adjust card background to white for contrast */
-        .card {
-            background-color: #87b387ff !important;
-        }
+    /* Adjust card background to white for contrast */
+    .card {
+        background-color: #87b387ff !important;
+    }
 
-        /* Select2 specific styling adjustments for smaller size */
-        .select2-container--bootstrap-5 .select2-selection--single {
-            min-height: calc(1.5em + 1rem + 2px);
-            /* Increased from 0.5rem to 1rem */
-            /* Matches form-control-sm height */
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            /* Matches form-control-sm font-size */
-            border: 1.5px solid #000000 !important;
-            /* Apply border to select2 */
-        }
+    /* Select2 specific styling adjustments for smaller size */
+    .select2-container--bootstrap-5 .select2-selection--single {
+        min-height: calc(1.5em + 1rem + 2px);
+        /* Increased from 0.5rem to 1rem */
+        /* Matches form-control-sm height */
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        /* Matches form-control-sm font-size */
+        border: 1.5px solid #000000 !important;
+        /* Apply border to select2 */
+    }
 
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            line-height: calc(1.5em + 0.5rem + 2px);
-            padding-left: 0;
-            /* Remove default padding as it's set on the selection */
-        }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: calc(1.5em + 0.5rem + 2px);
+        padding-left: 0;
+        /* Remove default padding as it's set on the selection */
+    }
 
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-            height: calc(1.5em + 0.5rem + 2px);
-            top: 50%;
-            transform: translateY(-50%);
-        }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + 0.5rem + 2px);
+        top: 50%;
+        transform: translateY(-50%);
+    }
 
-        /* Custom CSS for the tabular Select2 dropdown */
+    /* Custom CSS for the tabular Select2 dropdown */
 
-        /* Remove default padding from Select2 options to control inner spacing */
-        .select2-container--default .select2-results__option {
-            padding: 0 !important;
-        }
+    /* Remove default padding from Select2 options to control inner spacing */
+    .select2-container--default .select2-results__option {
+        padding: 0 !important;
+    }
 
-        /* Flexbox for the row layout inside the dropdown */
-        .grn-option-row {
-            display: flex;
-            justify-content: space-between;
-            /* Distribute space between columns */
-            align-items: center;
-            /* Vertically center content */
-            padding: 5px 8px;
-            /* Padding for the entire row */
-            border-bottom: 1px solid #eee;
-            /* Separator between rows */
-            font-family: Arial, sans-serif;
-            /* Adjust font as needed */
-            font-size: 15px;
-            /* Adjust font size as needed */
-            line-height: 1.2;
-            /* Adjust line height for multi-line content */
-            color: #333;
-            /* Default text color */
-        }
+    /* Flexbox for the row layout inside the dropdown */
+    .grn-option-row {
+        display: flex;
+        justify-content: space-between;
+        /* Distribute space between columns */
+        align-items: center;
+        /* Vertically center content */
+        padding: 5px 8px;
+        /* Padding for the entire row */
+        border-bottom: 1px solid #eee;
+        /* Separator between rows */
+        font-family: Arial, sans-serif;
+        /* Adjust font as needed */
+        font-size: 10px;
+        /* Adjust font size as needed */
+        line-height: 1.2;
+        /* Adjust line height for multi-line content */
+        color: #333;
+        /* Default text color */
+    }
 
-        /* Style for the single header row within the dropdown */
-        /* REMOVED: .grn-header-row position sticky moved to .grn-header-row-wrapper */
-        .grn-header-row {
-            font-weight: bold;
-            background-color: #f0f0f0;
-            /* Light grey background for header */
-            border-bottom: 1px solid #ccc;
-            /* Stronger border below header */
-            padding-top: 2px;
-            padding-bottom: 2px;
-            /* Ensure the header row is not affected by select2's default option styling */
-            margin-top: -1px;
-            /* Adjust to sit flush with the top of the dropdown */
-        }
+    /* Style for the single header row within the dropdown */
+    .grn-header-row {
+        font-weight: bold;
+        background-color: #f0f0f0;
+        /* Light grey background for header */
+        border-bottom: 1px solid #ccc;
+        /* Stronger border below header */
+        padding-top: 2px;
+        padding-bottom: 2px;
+        /* Ensure the header row is not affected by select2's default option styling */
+        margin-top: -1px;
+        /* Adjust to sit flush with the top of the dropdown */
+    }
 
-        /* NEW: Styles for the GRN Header Wrapper */
-        .grn-header-row-wrapper {
-            position: sticky;
-            /* Make the wrapper sticky */
-            top: 0;
-            z-index: 10;
-            background-color: #fff;
-            /* Ensure background is white to hide content underneath when sticky */
-            border-bottom: 1px solid #ccc;
-            /* Optional: a border below the header */
-        }
+    /* NEW: Styles for the GRN Header Wrapper */
+    .grn-header-row-wrapper {
+        position: sticky;
+        /* Make the wrapper sticky */
+        top: 0;
+        z-index: 10;
+        background-color: #fff;
+        /* Ensure background is white to hide content underneath when sticky */
+        border-bottom: 1px solid #ccc;
+        /* Optional: a border below the header */
+    }
 
-        /* NEW: Add padding to the results list to prevent options from being hidden by the sticky header */
-        .select2-results__options.has-custom-header {
-            padding-top: 30px;
-            /* Adjust this value based on the actual height of your header row */
-        }
+    /* NEW: Add padding to the results list to prevent options from being hidden by the sticky header */
+    .select2-results__options.has-custom-header {
+        padding-top: 30px;
+        /* Adjust this value based on the actual height of your header row */
+    }
 
+    .grn-option-row:last-child {
+        border-bottom: none;
+        /* No border for the last row */
+    }
 
-        .grn-option-row:last-child {
-            border-bottom: none;
-            /* No border for the last row */
-        }
+    /* Individual column styling and width distribution */
+    .grn-column {
+        flex: 1; /* Changed from flex: 4; as flex-basis below will dictate initial size */
+        padding: 5px; /* Adjusted padding for better fit, corrected typo '25 px' to '25px' previously, but now making it more balanced */
+        white-space: nowrap;
+        /* Prevent text wrapping unless necessary */
+        overflow: hidden;
+        text-align: center !important; /* IMPORTANT: Center text within each column */
+        /* Hide overflow */
+        text-overflow: ellipsis;
+        /* Add ellipsis for overflow */
+        box-sizing: border-box;
+        /* Include padding in element's total width */
+    }
 
-        /* Individual column styling and width distribution */
-        .grn-column {
-            flex: 4;
-            /* Distribute space evenly initially */
-            padding: 25 px;
-            /* Padding within columns */
-            white-space: nowrap;
-            /* Prevent text wrapping unless necessary */
-            overflow: hidden;
-            /* Hide overflow */
-            text-overflow: ellipsis;
-            /* Add ellipsis for overflow */
-            box-sizing: border-box;
-            /* Include padding in element's total width */
-        }
+    /* Specific column widths - adjust these values as needed for your data */
+    .grn-code {
+        flex-basis: 15%; /* Using flex-basis for explicit width distribution */
+        max-width: 15%;
+    }
 
-        /* Specific column widths - adjust these values as needed for your data */
-        .grn-code {
-            flex: 2;
-            max-width: 120px;
-        }
+    .grn-supplier-code {
+        flex-basis: 25%;
+        max-width: 25%;
+    }
 
-        /* Example: Wider for codes */
-        .grn-supplier-code {
-            flex: 1;
-            max-width: 70px;
-        }
+    .grn-item-code {
+        flex-basis: 15%;
+        max-width: 15%;
+    }
 
-        .grn-item-code {
-            flex: 1.5;
-            max-width: 90px;
-        }
+    .grn-item-name {
+        flex-basis: 25%;
+        max-width: 25%;
+    }
 
-        .grn-item-name {
-            flex: 2;
-            max-width: 130px;
-        }
+    /* Wider for names */
+    .grn-packs {
+        flex-basis: 10%;
+        max-width: 10%;
+        text-align: right !important; /* Keep right alignment for packs if desired */
+    }
 
-        /* Wider for names */
-        .grn-packs {
-            flex: 0.8;
-            max-width: 50px;
-            text-align: right;
-        }
+    .grn-grn-no {
+        flex-basis: 15%;
+        max-width: 15%;
+    }
 
-        .grn-grn-no {
-            flex: 1.2;
-            max-width: 80px;
-        }
+    .grn-txn-date {
+        flex-basis: 15%;
+        max-width: 15%;
+    }
 
-        .grn-txn-date {
-            flex: 1.5;
-            max-width: 100px;
-        }
+    /* Highlighted (hovered) option in Select2 dropdown */
+    .select2-container--default .select2-results__option--highlighted {
+        background-color: #007bff !important;
+        /* Blue highlight */
+        color: white !important;
+    }
 
-        /* Highlighted (hovered) option in Select2 dropdown */
-        .select2-container--default .select2-results__option--highlighted {
-            background-color: #007bff !important;
-            /* Blue highlight */
-            color: white !important;
-        }
+    /* Text color for selected option displayed in the Select2 input */
+    .select2-selection__rendered {
+        color: #333; /* Default text color, overridden by .select2-black-text if present */
+    }
 
-        /* Text color for selected option displayed in the Select2 input */
-        .select2-selection__rendered {
-            color: #333;
-        }
+    .select2-black-text {
+        color: black !important;
+        text-align: center !important;
+        font-weight: bold !important;
+        /* REMOVED: position: relative; and transform: translateY(-8px); for vertical centering */
+    }
 
-        .select2-black-text {
-            color: black !important;
-            /* Ensures the color is black */
-            font-weight: bold !important;
-        }
+    /* Style for the main Select2 input field to match grn_display */
+    .select2-container--default .select2-selection--single {
+        height: 34px !important; /* Keep the height from previous request */
+        /* Removed duplicate text-align, padding, font-size, border, border-radius as they are defined elsewhere or not needed here */
+    }
 
-        /* Style for the main Select2 input field to match grn_display */
-        .select2-container--default .select2-selection--single {
-            height: 24px;
-            /* Match height of grn_display */
-            padding: 2px 6px;
-            /* Match padding of grn_display */
-            font-size: 11px;
-            /* Match font size of grn_display */
-            border: 1px solid #ced4da;
-            /* Default Bootstrap form control border */
-            border-radius: 0.25rem;
-            /* Default Bootstrap border radius */
-        }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 32px;
+        /* Adjusted to be slightly less than container height for better alignment */
+        top: 50%;
+        transform: translateY(-50%);
+        /* Center vertically */
+        right: 4px;
+        /* Adjust if needed */
+    }
 
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 22px;
-            /* Adjust arrow height */
-            top: 0px;
-            /* Position arrow correctly */
-        }
+    /* Ensure search input inside dropdown (if visible) matches size */
+    .select2-search__field {
+        height: 24px !important;
+        font-size: 11px !important;
+        padding: 2px 6px !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+    }
 
-        /* Ensure search input inside dropdown (if visible) matches size */
-        .select2-search__field {
-            height: 24px !important;
-            font-size: 11px !important;
-            padding: 2px 6px !important;
-            border: 1px solid #ced4da !important;
-            border-radius: 0.25rem !important;
-        }
+    /* Style the placeholder option in the dropdown */
+    .select2-results__option[role=option][aria-disabled=true] {
+        color: #999;
+        text-align: center;
+        /* Grey out the placeholder option */
+    }
 
-        /* Style the placeholder option in the dropdown */
-        .select2-results__option[role=option][aria-disabled=true] {
-            color: #999;
-            /* Grey out the placeholder option */
-        }
+    /* This targets the actual text display area inside the Select2 box. */
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 34px !important;
+        /* Match line-height to the height for vertical centering */
+        font-size: 16px !important;
+        /* Made text "some what big" (increased from 14px to 16px) */
+        padding: 0 12px !important; /* CRITICAL CHANGE: Set top/bottom padding to 0 for vertical centering */
+        text-align: center !important;
+        /* Center the text horizontally */
+        font-weight: bold !important;
+        /* Make the text bold */
+    }
 
-        /* This targets the main Select2 container that wraps your select box */
-        .select2-container--default .select2-selection--single {
-            height: 34px !important;
-            /* Keep the height from previous request */
-        }
-
-        /* This targets the actual text display area inside the Select2 box. */
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 34px !important;
-            /* Match line-height to the height for vertical centering */
-            font-size: 16px !important;
-            /* Made text "some what big" (increased from 14px to 16px) */
-            padding: 6px 12px !important;
-            /* Keep the padding from previous request */
-            text-align: center !important;
-            /* Center the text horizontally */
-            font-weight: bold !important;
-            /* Make the text bold */
-        }
-
-        /* Optional: If you also want the options in the dropdown list to have the same font styling */
-        .select2-results__option {
-            font-size: 16px !important;
-            font-weight: bold !important;
-            text-align: center !important;
-            /* This might look odd for options, test it */
-        }
-    </style>
-
+    /* Optional: If you also want the options in the dropdown list to have the same font styling */
+    .select2-results__option {
+        font-size: 16px !important;
+        font-weight: bold !important;
+        /* text-align: center !important; -- This is now handled by .grn-column where appropriate for individual cells */
+    }
+</style>
+```
 
     <div class="container-fluid mt-4">
         <div class="row justify-content-center">
@@ -656,7 +642,7 @@
                                 <div class="col-md-9 mb-1" style="margin-bottom: 2px;">
                                     <input type="text" id="grn_display" class="form-control form-control-sm"
                                         placeholder="Select GRN Entry..." readonly
-                                        style="height: 34px; font-size: 14px; padding: 6px 12px; display: none;">
+                                        style="height: 34px; font-size: 14px; padding: 6px 12px; display: none; text-align: center !important;">
                                     <select id="grn_select" class="form-select form-select-sm select2"
                                         style="height: 34px; font-size: 14px; padding: 6px 12px;">
                                         <option value="">-- Select GRN Entry --</option>
@@ -1332,15 +1318,15 @@
 
                                 // Construct the HTML for the tabular display for each row (data row only)
                                 const $result = $(`
-                                                                                                                                    <div class="grn-option-row">
-                                                                                                                                        <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-                                                                                                                                        <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
+                                                                                                                                            <div class="grn-option-row">
+                                                                                                                                                <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+                                                                                                                                                <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
 
-                                                                                                                                        <div class="grn-column grn-packs">${packs || 0}</div>
-                                                                                                                                        <div class="grn-column grn-grn-no">${weight || ''}</div>
-                                                                                                                                        <div class="grn-column grn-txn-date">${txnDate || ''}</div>
-                                                                                                                                    </div>
-                                                                                                                                `);
+                                                                                                                                                <div class="grn-column grn-packs">${packs || 0}</div>
+                                                                                                                                                <div class="grn-column grn-grn-no">${weight || ''}</div>
+                                                                                                                                                <div class="grn-column grn-txn-date">${txnDate || ''}</div>
+                                                                                                                                            </div>
+                                                                                                                                        `);
                                 return $result;
                             },
                             templateSelection: function (data) {
@@ -1359,7 +1345,9 @@
 
                                 var $selection = $('<span></span>'); // Create a new jQuery span element
                                 // Add a class here, e.g., 'select2-black-text'
-                                $selection.addClass('select2-black-text'); // <--- ADD THIS LINE
+                                $selection.addClass('select2-black-text');
+                                $selection.css('text-align', 'center'); // Add inline style
+
 
                                 $selection.html(`${code || ''}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(කිලෝ,: ${weight || 0} /මලු: ${packs || ''} /දිනය: ${txnDate || ''})`);
 
@@ -1382,17 +1370,16 @@
                                 console.log("Header not found, creating and prepending."); // Debugging log
 
                                 const $headerWrapper = $(`
-                                                                                                                                    <div class="grn-header-row-wrapper">
-                                                                                                                                        <div class="grn-option-row grn-header-row">
-                                                                                                                                            <div class="grn-column grn-code">Code</div>
-                                                                                                                                            <div class="grn-column grn-supplier-code">Sup...</div>
-
-                                                                                                                                            <div class="grn-column grn-packs">Packs</div>
-                                                                                                                                            <div class="grn-column grn-grn-no">Weight</div>
-                                                                                                                                            <div class="grn-column grn-txn-date">Date</div>
-                                                                                                                                        </div>
-                                                                                                                                    </div>
-                                                                                                                                `);
+                                                                                                                                            <div class="grn-header-row-wrapper">
+                                                                                                                                                <div class="grn-option-row grn-header-row">
+                                                                                                                                                    <div class="grn-column grn-code">Code</div>
+                                                                                                                                                    <div class="grn-column grn-supplier-code">Sup...</div>
+                                                                                                                                                    <div class="grn-column grn-packs">Packs</div>
+                                                                                                                                                    <div class="grn-column grn-grn-no">Weight</div>
+                                                                                                                                                    <div class="grn-column grn-txn-date">Date</div>
+                                                                                                                                                </div>
+                                                                                                                                            </div>
+                                                                                                                                        `);
 
                                 // Prepend the header wrapper to the .select2-results element
                                 // This puts it before the <ul> which contains the actual options
@@ -1577,7 +1564,7 @@
 
                                 $('#grn_select').select2('open');
                             @endif
-                                                                                                                        });
+                                                                                                                                });
                         function populateSalesTable(salesArray) {
                             const tableBody = document.getElementById('mainSalesTableBody');
                             tableBody.innerHTML = ''; // Clear existing rows
@@ -1595,14 +1582,14 @@
                                 row.setAttribute('data-customer-name', sale.customer_name || 'N/A'); // Ensure customer_name exists
 
                                 row.innerHTML = `
-                                                                                                                            <td>${sale.code}</td>
-                                                                                                                            <td>${sale.item_code}</td>
-                                                                                                                            <td>${sale.item_name}</td>
-                                                                                                                            <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                                                                                                                            <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                                                                                                                            <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                                                                                                                            <td>${sale.packs}</td>
-                                                                                                                        `;
+                                                                                                                                    <td>${sale.code}</td>
+                                                                                                                                    <td>${sale.item_code}</td>
+                                                                                                                                    <td>${sale.item_name}</td>
+                                                                                                                                    <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                                                                                                                                    <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                                                                                                                                    <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                                                                                                                                    <td>${sale.packs}</td>
+                                                                                                                                `;
                                 tableBody.appendChild(row);
                             });
                         }
@@ -1709,17 +1696,17 @@
 
                                 customerSales.forEach(sale => {
                                     itemsHtml += `
-                                                                                                                                <tr>
-                                                                                                                                    <td style="text-align: left;">
-                                                                                                                                      ${sale.item_name} <br>  ${sale.packs}
-                                                                                                                                      </td>
+                                                                                                                                        <tr>
+                                                                                                                                            <td style="text-align: left;">
+                                                                                                                                              ${sale.item_name} <br>  ${sale.packs}
+                                                                                                                                              </td>
 
-                                                                                                                                    <td style="text-align: right;">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                                                                                                                                            <td style="text-align: right;">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
 
-                                                                                                                                    <td style="text-align: right;">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                                                                                                                                    <td style="text-align: right;">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                                                                                                                                </tr>
-                                                                                                                            `;
+                                                                                                                                            <td style="text-align: right;">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                                                                                                                                            <td style="text-align: right;">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                                                                                                                                        </tr>
+                                                                                                                                    `;
                                     totalItemsCount++;
                                     totalAmountSum += parseFloat(sale.total);
                                     // Collect the sale IDs for marking as processed
@@ -1727,208 +1714,208 @@
                                 });
 
                                 const salesContent = `
-                                                                                                                            <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
-                                                                                                                                <div class="company-info" style="text-align: center; margin-bottom: 5px;">
-                                                                                                                                    <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;"><span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්</h3>
-                                                                                                                                    <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
-                                                                                                                                    <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
-                                                                                                                                </div>
+                                                                                                                                    <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
+                                                                                                                                        <div class="company-info" style="text-align: center; margin-bottom: 5px;">
+                                                                                                                                            <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;"><span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්</h3>
+                                                                                                                                            <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
+                                                                                                                                            <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
+                                                                                                                                        </div>
 
 
 
 
 
-                                                                                                                                <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
-                                                                                                                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                                                                                        <tr>
-                                                                                                                                            <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
-                                                                                                                                            <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
-                                                                                                                                        </tr>
-                                                                                                                                        <tr>
-                                                                                                                                            <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
-                                                                                                                                        </tr>
-                                                                                                                                        <tr>
-                                                                                                                                            <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
-                                                                                                                                            <td colspan="2" style="text-align: right; padding: 0;">
-                                            <span style="font-weight: bold; font-size: 1.1rem;">${customerName}</span>
-                                        </td>
+                                                                                                                                        <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
+                                                                                                                                            <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                                                                                                                                                <tr>
+                                                                                                                                                    <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
+                                                                                                                                                    <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
+                                                                                                                                                </tr>
+                                                                                                                                                <tr>
+                                                                                                                                                    <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
+                                                                                                                                                </tr>
+                                                                                                                                                <tr>
+                                                                                                                                                    <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
+                                                                                                                                                    <td colspan="2" style="text-align: right; padding: 0;">
+                                                    <span style="font-weight: bold; font-size: 1.1rem;">${customerName}</span>
+                                                </td>
 
-                                                                                                                                        </tr>
-                                                                                                                                    </table>
-                                                                                                                                </div>
+                                                                                                                                                </tr>
+                                                                                                                                            </table>
+                                                                                                                                        </div>
 
-                                                                                                                              <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
-
-
-                                                                                                                                <div class="items-section">
-                                                                                                                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                                                                                        <thead>
-                                                                                                                                            <tr>
-                                                                                                                                                <th style="text-align: left; padding: 2px 0;">
-                                                                                                                                                 වර්ගය<br>මලු
-                                                                                                                                                      </th>
-                                                                                                                                                       <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
+                                                                                                                                      <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
 
 
-                                                                                                                                                <th style="text-align: right; padding: 2px 0;">මිල</th>
-                                                                                                                                                <th style="text-align: right; padding: 2px 0;">අගය</th>
-                                                                                                                                            </tr>
-                                                                                                                                        </thead>
-
-                                                                                                                                         <tbody>
-                                                                                    <!-- Simulated <hr> using a full-width table row -->
-                                                                                     <tr>
-                                                                            <td colspan="4">
-                                                                                <div style="height: 4px; background-color: black; margin: 5px 0; width: 100%;"></div>
-                                                                            </td>
-                                                                        </tr>
-
-                                                                                    ${itemsHtml}
-                                                                                </tbody>
-                                                                                                                                    </table>
-                                                                                                                                </div>
-
-                                                                                                                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+                                                                                                                                        <div class="items-section">
+                                                                                                                                            <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                                                                                                                                                <thead>
+                                                                                                                                                    <tr>
+                                                                                                                                                        <th style="text-align: left; padding: 2px 0;">
+                                                                                                                                                         වර්ගය<br>මලු
+                                                                                                                                                              </th>
+                                                                                                                                                               <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
 
 
-                                                                                                                                <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
-                                                                                                                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                                                                                                                                                        <th style="text-align: right; padding: 2px 0;">මිල</th>
+                                                                                                                                                        <th style="text-align: right; padding: 2px 0;">අගය</th>
+                                                                                                                                                    </tr>
+                                                                                                                                                </thead>
 
-                                                                                                                                        <tr>
-                                                        <td colspan="3" style="text-align: left; padding: 0;">අගය :</td>
-                                                        <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
-                                                            ${totalAmountSum.toFixed(2)}
-                                                        </td>
-                                                    </tr>
-                                                                                                                                    </table>
-                                                                                                                                </div>
+                                                                                                                                                 <tbody>
+                                                                                            <!-- Simulated <hr> using a full-width table row -->
+                                                                                             <tr>
+                                                                                    <td colspan="4">
+                                                                                        <div style="height: 4px; background-color: black; margin: 5px 0; width: 100%;"></div>
+                                                                                    </td>
+                                                                                </tr>
 
-                                                                                                                               <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+                                                                                            ${itemsHtml}
+                                                                                        </tbody>
+                                                                                                                                            </table>
+                                                                                                                                        </div>
+
+                                                                                                                                        <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
 
 
-                                                                                                                                <div class="footer-section" style="text-align: center; margin-top: 10px;">
+                                                                                                                                        <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
+                                                                                                                                            <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
 
-                                                                                                                                    <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                                                                                                                                    <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
-                                                                                                                                </div>
-                                                                                                                            </div>
-                                                                                                                        `;
+                                                                                                                                                <tr>
+                                                                <td colspan="3" style="text-align: left; padding: 0;">අගය :</td>
+                                                                <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
+                                                                    ${totalAmountSum.toFixed(2)}
+                                                                </td>
+                                                            </tr>
+                                                                                                                                            </table>
+                                                                                                                                        </div>
+
+                                                                                                                                       <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+
+
+                                                                                                                                        <div class="footer-section" style="text-align: center; margin-top: 10px;">
+
+                                                                                                                                            <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                                                                                                                                            <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
+                                                                                                                                        </div>
+                                                                                                                                    </div>
+                                                                                                                                `;
 
                                 const printWindow = window.open('', '_blank', 'width=400,height=600');
                                 printWindow.document.write(`
-                                                                                                                          <html>
-                                                                                                            <head>
-                                                                                                                <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
-                                                                                                                <style>
-                                                                                                                    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-                                                                                                                    body {
-                                                                                                                        font-family: 'Noto Sans Sinhala', sans-serif;
-                                                                                                                        margin: 0;
-                                                                                                                        padding: 5mm;
-                                                                                                                        font-size: 10px;
-                                                                                                                        line-height: 1.2;
-                                                                                                                        overflow: hidden; /* Prevent scrollbars in print preview */
-                                                                                                                    }
-                                                                                                                    .receipt-container {
-                                                                                                                        width: 100%;
-                                                                                                                        max-width: 70mm;
-                                                                                                                        margin-left: 0;
-                                                                                                                        margin-right: auto;
-                                                                                                                        border: none;
-                                                                                                                        padding: 0;
-                                                                                                                        text-align: left; /* Changed from default to left */
-                                                                                                                    }
-                                                                                                                    .company-info {
-                                                                                                                        text-align: left; /* Changed from center to left */
-                                                                                                                        margin-bottom: 5px;
-                                                                                                                    }
-                                                                                                                    .company-info h3 {
-                                                                                                                        font-size: 1.2em;
-                                                                                                                        margin-bottom: 2px;
-                                                                                                                        font-weight: bold;
-                                                                                                                    }
-                                                                                                                    .company-info p {
-                                                                                                                        margin: 0;
-                                                                                                                        line-height: 1.2;
-                                                                                                                    }
-                                                                                                                    .bill-details, .summary-section, .footer-section {
-                                                                                                                        text-align: left;
-                                                                                                                        margin-bottom: 5px;
-                                                                                                                    }
-                                                                                                                    .bill-details p, .summary-section p {
-                                                                                                                        margin: 0;
-                                                                                                                        line-height: 1.2;
-                                                                                                                        display: flex;
-                                                                                                                        justify-content: space-between;
-                                                                                                                    }
-                                                                                                                    .bill-details p span:first-child, .summary-section p span:first-child {
-                                                                                                                        text-align: left;
-                                                                                                                        font-weight: normal;
-                                                                                                                    }
-                                                                                                                    .bill-details p span:last-child, .summary-section p span:last-child {
-                                                                                                                        text-align: right;
-                                                                                                                        font-weight: bold;
-                                                                                                                    }
-                                                                                                                    .customer-name-on-bill {
-                                                                                                                        text-align: left; /* Changed from center to left */
-                                                                                                                        font-weight: bold;
-                                                                                                                        margin-top: 5px;
-                                                                                                                    }
-                                                                                                                    .divider {
-                                                                                                                        border-top: 1px dashed #000;
-                                                                                                                        margin: 8px 0;
-                                                                                                                    }
-                                                                                                                    .items-section table {
-                                                                                                                        width: 100%;
-                                                                                                                         border-bottom: none;
-                                                                                                                        font-size: 10px;
-                                                                                                                    }
-                                                                                                                    .items-section th, .items-section td {
-                                                                                                                        padding: 2px 0;
-                                                                                                                        text-align: right;
-                                                                                                                        border-bottom: none;
-                                                                                                                    }
-                                                                                                                    .items-section th {
-                                                                                                                        font-weight: bold;
-                                                                                                                        text-align: center;
+                                                                                                                                  <html>
+                                                                                                                    <head>
+                                                                                                                        <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
+                                                                                                                        <style>
+                                                                                                                            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+                                                                                                                            body {
+                                                                                                                                font-family: 'Noto Sans Sinhala', sans-serif;
+                                                                                                                                margin: 0;
+                                                                                                                                padding: 5mm;
+                                                                                                                                font-size: 10px;
+                                                                                                                                line-height: 1.2;
+                                                                                                                                overflow: hidden; /* Prevent scrollbars in print preview */
+                                                                                                                            }
+                                                                                                                            .receipt-container {
+                                                                                                                                width: 100%;
+                                                                                                                                max-width: 70mm;
+                                                                                                                                margin-left: 0;
+                                                                                                                                margin-right: auto;
+                                                                                                                                border: none;
+                                                                                                                                padding: 0;
+                                                                                                                                text-align: left; /* Changed from default to left */
+                                                                                                                            }
+                                                                                                                            .company-info {
+                                                                                                                                text-align: left; /* Changed from center to left */
+                                                                                                                                margin-bottom: 5px;
+                                                                                                                            }
+                                                                                                                            .company-info h3 {
+                                                                                                                                font-size: 1.2em;
+                                                                                                                                margin-bottom: 2px;
+                                                                                                                                font-weight: bold;
+                                                                                                                            }
+                                                                                                                            .company-info p {
+                                                                                                                                margin: 0;
+                                                                                                                                line-height: 1.2;
+                                                                                                                            }
+                                                                                                                            .bill-details, .summary-section, .footer-section {
+                                                                                                                                text-align: left;
+                                                                                                                                margin-bottom: 5px;
+                                                                                                                            }
+                                                                                                                            .bill-details p, .summary-section p {
+                                                                                                                                margin: 0;
+                                                                                                                                line-height: 1.2;
+                                                                                                                                display: flex;
+                                                                                                                                justify-content: space-between;
+                                                                                                                            }
+                                                                                                                            .bill-details p span:first-child, .summary-section p span:first-child {
+                                                                                                                                text-align: left;
+                                                                                                                                font-weight: normal;
+                                                                                                                            }
+                                                                                                                            .bill-details p span:last-child, .summary-section p span:last-child {
+                                                                                                                                text-align: right;
+                                                                                                                                font-weight: bold;
+                                                                                                                            }
+                                                                                                                            .customer-name-on-bill {
+                                                                                                                                text-align: left; /* Changed from center to left */
+                                                                                                                                font-weight: bold;
+                                                                                                                                margin-top: 5px;
+                                                                                                                            }
+                                                                                                                            .divider {
+                                                                                                                                border-top: 1px dashed #000;
+                                                                                                                                margin: 8px 0;
+                                                                                                                            }
+                                                                                                                            .items-section table {
+                                                                                                                                width: 100%;
+                                                                                                                                 border-bottom: none;
+                                                                                                                                font-size: 10px;
+                                                                                                                            }
+                                                                                                                            .items-section th, .items-section td {
+                                                                                                                                padding: 2px 0;
+                                                                                                                                text-align: right;
+                                                                                                                                border-bottom: none;
+                                                                                                                            }
+                                                                                                                            .items-section th {
+                                                                                                                                font-weight: bold;
+                                                                                                                                text-align: center;
 
-                                                                                                                    }
-                                                                                                                    .col-item {
-                                                                                                                        text-align: left;
-                                                                                                                        width: 40%;
-                                                                                                                    }
-                                                                                                                    .col-qty {
-                                                                                                                        width: 20%;
-                                                                                                                    }
-                                                                                                                    .col-rate {
-                                                                                                                        width: 20%;
-                                                                                                                    }
-                                                                                                                    .col-value {
-                                                                                                                        width: 20%;
-                                                                                                                    }
-                                                                                                                    .grand-total {
-                                                                                                                        font-size: 1.1em;
-                                                                                                                        font-weight: bold;
+                                                                                                                            }
+                                                                                                                            .col-item {
+                                                                                                                                text-align: left;
+                                                                                                                                width: 40%;
+                                                                                                                            }
+                                                                                                                            .col-qty {
+                                                                                                                                width: 20%;
+                                                                                                                            }
+                                                                                                                            .col-rate {
+                                                                                                                                width: 20%;
+                                                                                                                            }
+                                                                                                                            .col-value {
+                                                                                                                                width: 20%;
+                                                                                                                            }
+                                                                                                                            .grand-total {
+                                                                                                                                font-size: 1.1em;
+                                                                                                                                font-weight: bold;
 
-                                                                                                                    }
-                                                                                                                    .footer-section {
-                                                                                                                        text-align: left; /* Changed from center to left */
-                                                                                                                        margin-top: 10px;
-                                                                                                                    }
-                                                                                                                    .footer-section p {
-                                                                                                                        margin: 0;
-                                                                                                                        line-height: 1.2;
-                                                                                                                    }
-                                                                                                                </style>
-                                                                                                            </head>
-                                                                                                            <body>
-                                                                                                                <div class="receipt-container">
-                                                                                                                    ${salesContent}
-                                                                                                                </div>
-                                                                                                            </body>
-                                                                                                            </html>
+                                                                                                                            }
+                                                                                                                            .footer-section {
+                                                                                                                                text-align: left; /* Changed from center to left */
+                                                                                                                                margin-top: 10px;
+                                                                                                                            }
+                                                                                                                            .footer-section p {
+                                                                                                                                margin: 0;
+                                                                                                                                line-height: 1.2;
+                                                                                                                            }
+                                                                                                                        </style>
+                                                                                                                    </head>
+                                                                                                                    <body>
+                                                                                                                        <div class="receipt-container">
+                                                                                                                            ${salesContent}
+                                                                                                                        </div>
+                                                                                                                    </body>
+                                                                                                                    </html>
 
-                                                                                                                        `);
+                                                                                                                                `);
                                 printWindow.document.close();
                                 printWindow.focus();
                                 printWindow.print();
@@ -2058,17 +2045,17 @@
                                 salesArray.forEach(sale => {
                                     // Construct the row HTML string, ensuring data-id, data-customer-code, data-customer-name are present
                                     rowsHtml += `
-                                                                                                                                    <tr data-sale-id="${sale.id}" data-id="${sale.id}" data-customer-code="${sale.customer_code}" data-customer-name="${sale.customer_name}">
-                                                                                                                                        <td>${sale.code || 'N/A'}</td>
-                                                                                                                                        <td>${sale.item_code || 'N/A'}</td>
-                                                                                                                                        <td>${sale.item_name || 'N/A'}</td>
-                                                                                                                                        <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                                                                                                                                        <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                                                                                                                                        <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                                                                                                                                        <td>${(parseFloat(sale.packs) || 0).toFixed(0)}</td>
+                                                                                                                                            <tr data-sale-id="${sale.id}" data-id="${sale.id}" data-customer-code="${sale.customer_code}" data-customer-name="${sale.customer_name}">
+                                                                                                                                                <td>${sale.code || 'N/A'}</td>
+                                                                                                                                                <td>${sale.item_code || 'N/A'}</td>
+                                                                                                                                                <td>${sale.item_name || 'N/A'}</td>
+                                                                                                                                                <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                                                                                                                                                <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                                                                                                                                                <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                                                                                                                                                <td>${(parseFloat(sale.packs) || 0).toFixed(0)}</td>
 
-                                                                                                                                    </tr>
-                                                                                                                                `;
+                                                                                                                                            </tr>
+                                                                                                                                        `;
                                     totalSalesValue += parseFloat(sale.total || 0);
                                 });
                             }
