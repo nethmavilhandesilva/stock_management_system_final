@@ -30,7 +30,8 @@ class GrnEntryController extends Controller
             'weight' => 'required|numeric',
             'txn_date' => 'required|date',
             'grn_no' => 'required',
-            'warehouse_no' => 'required'
+            'warehouse_no' => 'required',
+          
         ]);
 
         // 🔍 Fetch item name (type) using item_code (which is item.no)
@@ -58,6 +59,8 @@ class GrnEntryController extends Controller
             'txn_date' => $request->txn_date,
             'grn_no' => $request->grn_no,
             'warehouse_no' => $request->warehouse_no,
+            'original_packs' => $request->packs,
+            'original_weight'=>$request->weight,
         ]);
 
         return redirect()->route('grn.index')->with('success', 'GRN Entry added successfully.');

@@ -22,7 +22,8 @@ class SalesEntryController extends Controller
         $suppliers = Supplier::all();
         $items = GrnEntry::select('item_name', 'item_code', 'code')->distinct()->get();
         $entries = GrnEntry::latest()->take(10)->get();
-
+        
+         
         // Fetch ALL sales records to display
         $sales = Sale::where('Processed', 'N')->get();
         $customers = Customer::all();
@@ -62,7 +63,9 @@ class SalesEntryController extends Controller
         'price_per_kg' => 'required|numeric',
         'total' => 'required|numeric',
         'packs' => 'required|integer|min:1', // Changed min:0 to min:1 if selling at least one pack
-        'grn_entry_code' => 'required|string|exists:grn_entries,code', // Validate it exists in grn_entries table
+        'grn_entry_code' => 'required|string|exists:grn_entries,code',
+         'original_weight' => 'required|numeric', // <-- ADD THIS LINE
+        'original_packs' => 'required|integer',  // <-- ADD THIS LINE // Validate it exists in grn_entries table
     ]);
 
     try {
@@ -122,6 +125,8 @@ class SalesEntryController extends Controller
             'price_per_kg' => $validated['price_per_kg'],
             'total' => $validated['total'],
             'packs' => $validated['packs'],
+            'original_weight'=>$validated['original_weight'],
+            'original_packs'=>$validated['original_packs'],
             'Processed' => 'N',
         ]);
 
