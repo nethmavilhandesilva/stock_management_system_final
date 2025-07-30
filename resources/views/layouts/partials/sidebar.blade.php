@@ -35,5 +35,12 @@
             <span class="material-icons text-blue-600 mr-3">assessment</span>
             <span class="text-white">Generate Report</span>
         </a>
+        <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
+            class="list-group-item list-group-item-action d-flex align-items-center"
+            style="background-color: transparent !important; color: white !important;">
+            <span class="material-icons text-blue-600 me-2">assessment</span>
+            <span class="text-white">📊 අයිතම වාර්තාව</span>
+        </a>
+
     </div>
 </aside>

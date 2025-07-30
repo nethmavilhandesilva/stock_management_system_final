@@ -50,5 +50,7 @@ Route::post('/sales/mark-printed', [SalesEntryController::class, 'markAsPrinted'
 // routes/web.php
 Route::get('/report', [ReportController::class, 'index'])->name('report.index');
 Route::post('/report/fetch', [ReportController::class, 'fetch'])->name('report.fetch');
+Route::post('/report/item', [App\Http\Controllers\ReportController::class, 'fetchItemReport'])->name('report.item.fetch');
+
 
 require __DIR__.'/auth.php';

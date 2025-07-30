@@ -57,6 +57,7 @@
 
     @include('layouts.partials.footer')
     @include('layouts.partials.report-modal')
+    @include('layouts.partials.item-wisemodal')
 
 </div>
 

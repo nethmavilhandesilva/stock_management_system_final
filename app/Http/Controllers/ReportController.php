@@ -48,4 +48,32 @@ class ReportController extends Controller
             'shop_no' => 'C11'
         ]);
     }
+    public function fetchItemReport(Request $request)
+{
+    $validated = $request->validate([
+        'item_code' => 'required',
+        'supplier_code' => 'nullable|string',
+        'start_date' => 'nullable|date',
+        'end_date' => 'nullable|date',
+    ]);
+
+    $query = \App\Models\Sale::where('item_code', $validated['item_code']);
+
+    if ($request->supplier_code && $request->supplier_code !== 'all') {
+        $query->where('supplier_code', $request->supplier_code);
+    }
+
+    if ($request->start_date) {
+        $query->whereDate('created_at', '>=', $request->start_date);
+    }
+
+    if ($request->end_date) {
+        $query->whereDate('created_at', '<=', $request->end_date);
+    }
+
+    $sales = $query->get(['item_code', 'packs', 'weight', 'price_per_kg', 'total', 'customer_code', 'supplier_code', 'bill_no']);
+
+    return view('dashboard.reports.item-wise-report', compact('sales'));
+}
+
 }
