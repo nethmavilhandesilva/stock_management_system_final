@@ -86,7 +86,7 @@ textarea.form-control:focus {
 
         <div class="mb-3">
             <label for="code_field" class="form-label">කේතය (Code)</label>
-            <input type="text" id="code_field" name="code" class="form-control" required>
+            <input type="text" id="code_field" name="code" class="form-control" required style="text-transform: uppercase;">
         </div>
 
         <div class="mb-3">

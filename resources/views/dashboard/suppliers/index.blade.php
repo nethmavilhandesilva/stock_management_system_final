@@ -86,7 +86,7 @@
                 <tbody>
                     @forelse($suppliers as $supplier)
                         <tr>
-                            <td>{{ $supplier->code }}</td>
+                           <td style="text-transform: uppercase;">{{ $supplier->code }}</td>
                             <td>{{ $supplier->name }}</td>
                             <td>{{ $supplier->address }}</td>
                             <td>

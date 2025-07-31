@@ -66,7 +66,7 @@
                 <tbody>
                     @foreach ($items as $item)
                     <tr>
-                        <td>{{ $item->no }}</td>
+                       <td style="text-transform: uppercase;">{{ $item->no }}</td>
                         <td>{{ $item->type }}</td>
                         <td>{{ number_format($item->pack_cost, 2) }}</td>
                         <td>{{ number_format($item->pack_due, 2) }}</td>

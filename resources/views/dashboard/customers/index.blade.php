@@ -90,7 +90,7 @@
                 <tbody>
                     @forelse($customers as $customer)
                         <tr>
-                            <td>{{ $customer->short_name }}</td>
+                            <td><span style="text-transform: uppercase;">{{ $customer->short_name }}</span></td>
                             <td>{{ $customer->name }}</td>
                             <td>{{ $customer->address }}</td>
                             <td>{{ $customer->telephone_no }}</td>

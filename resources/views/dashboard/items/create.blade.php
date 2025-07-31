@@ -41,7 +41,7 @@
                     @csrf
                     <div class="mb-3">
                         <label for="no" class="form-label">අංකය</label>
-                        <input type="text" id="no" name="no" class="form-control" required>
+                        <input type="text" id="no" name="no" class="form-control" required style="text-transform: uppercase;">
                     </div>
                     <div class="mb-3">
                         <label for="type" class="form-label">වර්ගය</label>
