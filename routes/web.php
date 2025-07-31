@@ -53,4 +53,5 @@ Route::post('/report/fetch', [ReportController::class, 'fetch'])->name('report.f
 Route::post('/report/item', [App\Http\Controllers\ReportController::class, 'fetchItemReport'])->name('report.item.fetch');
 Route::post('/report/weight', [ReportController::class, 'getweight'])->name('report.supplier_grn.fetch');
 Route::post('/report/sale-code', [ReportController::class, 'getGrnSalecodereport'])->name('report.grn_sale.fetch');
+Route::get('/reports/sales/filter', [ReportController::class, 'getSalesFilterReport'])->name('report.sales.filter');
 require __DIR__.'/auth.php';

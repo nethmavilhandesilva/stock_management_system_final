@@ -169,6 +169,78 @@ class ReportController extends Controller
             'endDate' => $endDate,
         ]);
     }
+      public function getSalesFilterReport(Request $request)
+    {
+        // Start with all sales data
+        $query = Sale::query();
+
+        // Apply filters if present
+        if ($request->filled('supplier_code')) {
+            $query->where('supplier_code', $request->input('supplier_code'));
+        }
+
+        if ($request->filled('customer_code')) {
+            $query->where('customer_code', $request->input('customer_code'));
+        }
+
+        if ($request->filled('item_code')) {
+            // Assuming item_code in Sale model refers to the 'no' attribute in Item model
+            $query->where('item_code', $request->input('item_code'));
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->input('start_date'));
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->input('end_date'));
+        }
+
+        // Apply ordering
+        switch ($request->input('order_by', 'id_desc')) { // Default to id_desc
+            case 'id_asc':
+                $query->orderBy('id', 'asc');
+                break;
+            case 'customer_code_asc':
+                $query->orderBy('customer_code', 'asc');
+                break;
+            case 'customer_code_desc':
+                $query->orderBy('customer_code', 'desc');
+                break;
+            case 'item_name_asc':
+                $query->orderBy('item_name', 'asc');
+                break;
+            case 'item_name_desc':
+                $query->orderBy('item_name', 'desc');
+                break;
+            case 'total_desc':
+                $query->orderBy('total', 'desc');
+                break;
+            case 'total_asc':
+                $query->orderBy('total', 'asc');
+                break;
+            case 'weight_desc':
+                $query->orderBy('weight', 'desc');
+                break;
+            case 'weight_asc':
+                $query->orderBy('weight', 'asc');
+                break;
+            case 'id_desc':
+            default:
+                $query->orderBy('id', 'desc');
+                break;
+        }
+
+        $sales = $query->get([
+            'code', 'packs', 'item_name', 'weight', 'price_per_kg', 'total', 'bill_no', 'customer_code', 'created_at'
+        ]);
+
+        // Calculate grand total
+        $grandTotal = $sales->sum('total');
+
+        // Pass data to the report view
+        return view('dashboard.reports.sales_filter_report', compact('sales', 'grandTotal', 'request'));
+    }
 }
 
 

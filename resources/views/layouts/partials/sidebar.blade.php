@@ -32,20 +32,23 @@
 
         <!-- Reports Dropdown -->
         <div class="dropdown">
-            <a class="list-group-item list-group-item-action d-flex align-items-center dropdown-toggle"
-                href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+            <a class="list-group-item list-group-item-action d-flex align-items-center dropdown-toggle" href="#"
+                id="reportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"
                 style="background-color: transparent !important; color: white !important;">
                 <span class="material-icons text-white me-2">assessment</span>
                 <span class="text-white">වාර්තා (Reports)</span>
             </a>
-            <ul class="dropdown-menu dropdown-menu-dark bg-success border-0 rounded-3 mt-1" aria-labelledby="reportsDropdown">
+            <ul class="dropdown-menu dropdown-menu-dark bg-success border-0 rounded-3 mt-1"
+                aria-labelledby="reportsDropdown">
                 <li>
-                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal">
+                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal"
+                        data-bs-target="#reportFilterModal">
                         සැපයුම්කරු
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal">
+                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal"
+                        data-bs-target="#itemReportModal">
                         එළවළු
                     </a>
                 </li>
@@ -55,7 +58,14 @@
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal">
+                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal"
+                        data-bs-target="#grnSaleReportModal">
+                        මිල එක්කතුව
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal"
+                        data-bs-target="#reportFilterModal1">
                         මිල එක්කතුව
                     </a>
                 </li>

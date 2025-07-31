@@ -60,11 +60,13 @@
     @include('layouts.partials.item-wisemodal')
     @include('layouts.partials.weight-modal')
     @include('layouts.partials.salecode-modal')
+     @include('layouts.partials.sales-modal')
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 @stack('scripts')
 
 </body>
