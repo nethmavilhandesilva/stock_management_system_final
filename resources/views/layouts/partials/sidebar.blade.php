@@ -75,7 +75,16 @@
                         route, opens in new tab --}}
                         <span class="material-icons me-2" style="font-size: 18px;">storage</span> {{-- Or an icon that
                         fits --}}
-                        GRN සහ විකුණුම් දළ විශ්ලේෂණය
+                        ඉතිරි වාර්තාව 1
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item text-white d-flex align-items-center"
+                        href="{{ route('report.grn.sales.overview2') }}" target="_blank"> {{-- Direct link to the report
+                        route, opens in new tab --}}
+                        <span class="material-icons me-2" style="font-size: 18px;">storage</span> {{-- Or an icon that
+                        fits --}}
+                        ඉතිරි වාර්තාව 2
                     </a>
                 </li>
             </ul>

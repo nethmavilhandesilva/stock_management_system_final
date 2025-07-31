@@ -54,57 +54,85 @@
     </nav>
     {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav">
-        <div class="container-fluid">
-            <span class="navbar-text text-white me-3 d-none d-lg-block">වාර්තා:</span> {{-- Reports: --}}
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
-                aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    <div class="container-fluid">
+        <span class="navbar-text text-white me-3 d-none d-lg-block">වාර්තා:</span> {{-- Reports: --}}
 
-            <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
-                <ul class="navbar-nav mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal"
-                            class="nav-link d-flex align-items-center mx-2">
-                            <span class="material-icons me-2 text-info">person</span> {{-- Icon for Supplier --}}
-                            <span class="text-white">සැපයුම්කරු</span> {{-- Supplier --}}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
-                            class="nav-link d-flex align-items-center mx-2">
-                            <span class="material-icons me-2 text-warning">category</span> {{-- Icon for Item/Vegetable --}}
-                            <span class="text-white">එළවළු</span> {{-- Vegetables / Item-wise --}}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
-                            class="nav-link d-flex align-items-center mx-2">
-                            <span class="material-icons me-2 text-danger">scale</span> {{-- Icon for Weight --}}
-                            <span class="text-white">බර මත</span> {{-- By Weight --}}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
-                            class="nav-link d-flex align-items-center mx-2">
-                            <span class="material-icons me-2 text-success">receipt_long</span> {{-- Icon for Sales/Receipts
-                            --}}
-                            <span class="text-white">මිල එක්කතුව </span> {{-- Price Collection / GRN Sales --}}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="dropdown-item text-white d-flex align-items-center" href="#" data-bs-toggle="modal"
-                            data-bs-target="#reportFilterModal1">
-                            <span class="material-icons me-2" style="font-size: 18px;">shopping_cart</span>
-                            විකුණුම්
-                        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
+            aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-                    </li>
-                    </style>
-                </ul>
-            </div>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
+            <ul class="navbar-nav mb-2 mb-lg-0">
+
+                {{-- Supplier --}}
+                <li class="nav-item mx-2">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal"
+                        class="nav-link d-flex align-items-center">
+                        <span class="material-icons me-2 text-info">person</span>
+                        <span class="text-white">සැපයුම්කරු</span>
+                    </a>
+                </li>
+
+                {{-- Vegetables / Item-wise --}}
+                <li class="nav-item mx-2">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
+                        class="nav-link d-flex align-items-center">
+                        <span class="material-icons me-2 text-warning">category</span>
+                        <span class="text-white">එළවළු</span>
+                    </a>
+                </li>
+
+                {{-- By Weight --}}
+                <li class="nav-item mx-2">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
+                        class="nav-link d-flex align-items-center">
+                        <span class="material-icons me-2 text-danger">scale</span>
+                        <span class="text-white">බර මත</span>
+                    </a>
+                </li>
+
+                {{-- Price Collection / GRN Sales --}}
+                <li class="nav-item mx-2">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
+                        class="nav-link d-flex align-items-center">
+                        <span class="material-icons me-2 text-success">receipt_long</span>
+                        <span class="text-white">මිල එක්කතුව</span>
+                    </a>
+                </li>
+
+                {{-- Sales --}}
+                <li class="nav-item mx-2">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal1"
+                        class="nav-link d-flex align-items-center">
+                        <span class="material-icons me-2" style="font-size: 18px;">shopping_cart</span>
+                        <span class="text-white">විකුණුම්</span>
+                    </a>
+                </li>
+
+                {{-- Remaining Report 1 --}}
+                <li class="nav-item mx-2">
+                    <a href="{{ route('report.grn.sales.overview') }}" target="_blank"
+                        class="nav-link d-flex align-items-center text-white">
+                        <span class="material-icons me-2" style="font-size: 18px;">storage</span>
+                        ඉතිරි වාර්තාව 1
+                    </a>
+                </li>
+
+                {{-- Remaining Report 2 --}}
+                <li class="nav-item mx-2">
+                    <a href="{{ route('report.grn.sales.overview2') }}" target="_blank"
+                        class="nav-link d-flex align-items-center text-white">
+                        <span class="material-icons me-2" style="font-size: 18px;">storage</span>
+                        ඉතිරි වාර්තාව 2
+                    </a>
+                </li>
+
+            </ul>
         </div>
-    </nav>
+    </div>
+</nav>
+
 
     <style>
         /* Custom CSS to push content up if fixed-bottom nav bar covers it */

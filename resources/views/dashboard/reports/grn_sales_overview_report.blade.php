@@ -9,7 +9,7 @@
         <div class="card-header text-center" style="background-color: #004d00 !important;">
             <div class="report-title-bar">
                 <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
-                <h4 class="fw-bold text-white">📦 GRN සහ විකුණුම් දළ විශ්ලේෂණ වාර්තාව</h4>
+                <h4 class="fw-bold text-white">📦විකුණුම්/බර මත්තෙහි ඉතිරි වාර්තාව</h4>
                 <span class="right-info">{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
                 <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
             </div>
