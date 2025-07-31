@@ -41,7 +41,7 @@
             <span class="material-icons text-blue-600 me-2">assessment</span>
             <span class="text-white">📊 අයිතම වාර්තාව</span>
         </a>
-        <a href="#" data-bs-toggle="modal" data-bs-target="#supplierGrnReportModal"
+        <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
             class="list-group-item list-group-item-action d-flex align-items-center"
             style="background-color: transparent !important; color: white !important;">
             <span class="material-icons text-blue-600 me-2">list_alt</span> {{-- You can choose a different icon here if

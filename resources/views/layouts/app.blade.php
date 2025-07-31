@@ -58,8 +58,8 @@
     @include('layouts.partials.footer')
     @include('layouts.partials.report-modal')
     @include('layouts.partials.item-wisemodal')
-     @include('layouts.partials.weight-modal')
-     @include('layouts.partials.salecode-modal')
+    @include('layouts.partials.weight-modal')
+    @include('layouts.partials.salecode-modal')
 
 </div>
 

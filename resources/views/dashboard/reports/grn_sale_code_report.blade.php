@@ -40,10 +40,7 @@
         {{-- Display selected GRN Code and Date Range --}}
         <div class="mb-3 text-white">
             <strong>තෝරාගත් GRN කේතය:</strong> {{ $selectedGrnCode }}
-            @if($selectedGrnEntry)
-                <span class="ms-3"><strong>සැපයුම්කරු:</strong> {{ $selectedGrnEntry->supplier_code }}</span>
-                <span class="ms-3"><strong>අයිතමය:</strong> {{ $selectedGrnEntry->item_name }} ({{ $selectedGrnEntry->item_code }})</span>
-            @endif
+            
 
             @if($startDate && $endDate)
                 <span class="ms-3"><strong>දිනයන්:</strong> {{ $startDate }} සිට {{ $endDate }} දක්වා</span>
@@ -53,64 +50,56 @@
                 <span class="ms-3"><strong>අවසන් දිනය:</strong> {{ $endDate }}</span>
             @endif
         </div>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>අයිතම කේතය</th>
+            <th>අයිතමයේ නම</th>
+            <th>පැක්</th>
+            <th>බර (කිලෝග්‍රෑම්)</th>
+            <th>මුළු මුදල</th>
+        </tr>
+    </thead>
+    <tbody>
+        @php
+            $total_packs = 0;
+            $total_weight = 0;
+            $total_amount = 0;
+        @endphp
 
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>පාරිභෝගික කේතය</th>
-                    <th>අයිතම කේතය</th>
-                    <th>අයිතමයේ නම</th>
-                    <th>පැක්</th>
-                    <th>බර (කිලෝග්‍රෑම්)</th>
-                    <th>කිලෝ ග්‍රෑම් එකක මිල</th>
-                    <th>මුළු මුදල</th>
-                    <th>ගනුදෙනු දිනය</th>
-                    <th>බිල් අංකය</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php
-                    $total_packs = 0;
-                    $total_weight = 0;
-                    $total_amount = 0;
-                @endphp
+        @forelse($sales as $sale)
+            <tr>
+                <td>{{ $sale->item_code }}</td>
+                <td>{{ $sale->item_name }}</td>
+                <td>{{ $sale->packs }}</td>
+                <td>{{ number_format($sale->weight, 2) }}</td>
+                <td>{{ number_format($sale->total, 2) }}</td>
+            </tr>
 
-                @forelse($sales as $sale)
-                    <tr>
-                        <td>{{ $sale->customer_code }}</td>
-                        <td>{{ $sale->item_code }}</td>
-                        <td>{{ $sale->item_name }}</td>
-                        <td>{{ $sale->packs }}</td>
-                        <td>{{ number_format($sale->weight, 2) }}</td>
-                        <td>{{ number_format($sale->price_per_kg, 2) }}</td>
-                        <td>{{ number_format($sale->total, 2) }}</td>
-                        <td>{{ \Carbon\Carbon::parse($sale->created_at)->format('Y-m-d H:i') }}</td>
-                        <td>{{ $sale->bill_no }}</td>
-                    </tr>
+            @php
+                $total_packs += $sale->packs;
+                $total_weight += $sale->weight;
+                $total_amount += $sale->total;
+            @endphp
+        @empty
+            <tr>
+                {{-- Colspan should match the number of columns in the <thead> --}}
+                <td colspan="5" class="text-center text-white bg-secondary">වාර්තා නැත</td>
+            </tr>
+        @endforelse
+    </tbody>
 
-                    @php
-                        $total_packs += $sale->packs;
-                        $total_weight += $sale->weight;
-                        $total_amount += $sale->total;
-                    @endphp
-                @empty
-                    <tr>
-                        <td colspan="9" class="text-center text-white">වාර්තා නැත</td>
-                    </tr>
-                @endforelse
-            </tbody>
-
-            <tfoot>
-                <tr class="table-secondary fw-bold">
-                    <td class="text-end" colspan="3">මුළු එකතුව:</td> {{-- Spans Customer Code, Item Code, Item Name --}}
-                    <td>{{ $total_packs }}</td>
-                    <td>{{ number_format($total_weight, 2) }}</td>
-                    <td></td> {{-- No sum for price_per_kg --}}
-                    <td>{{ number_format($total_amount, 2) }}</td>
-                    <td colspan="2"></td> {{-- No sum for transaction date and Bill No --}}
-                </tr>
-            </tfoot>
-        </table>
+    <tfoot>
+        <tr class="table-secondary fw-bold">
+            {{-- Colspan for "මුළු එකතුව:" --}}
+            <td class="text-end" colspan="2">මුළු එකතුව:</td>
+            {{-- Totals for Packs, Weight, Total Amount --}}
+            <td>{{ $total_packs }}</td>
+            <td>{{ number_format($total_weight, 2) }}</td>
+            <td>{{ number_format($total_amount, 2) }}</td>
+        </tr>
+    </tfoot>
+</table>
     </div>
 </div>
 @endsection
