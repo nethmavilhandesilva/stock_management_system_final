@@ -241,6 +241,46 @@ class ReportController extends Controller
         // Pass data to the report view
         return view('dashboard.reports.sales_filter_report', compact('sales', 'grandTotal', 'request'));
     }
+        public function getGrnSalesOverviewReport()
+    {
+        // Fetch all GRN entries
+        $grnEntries = GrnEntry::all();
+
+        $reportData = [];
+
+        foreach ($grnEntries as $grnEntry) {
+            // Fetch sales related to this GRN entry's code
+            // IMPORTANT: Confirm 'code' in GrnEntry matches the foreign key in Sale.
+            // If Sale has a 'grn_entry_code' column that stores GrnEntry->code,
+            // then use: $relatedSales = Sale::where('grn_entry_code', $grnEntry->code)->get();
+            $relatedSales = Sale::where('code', $grnEntry->code)->get();
+
+            $totalSoldPacks = $relatedSales->sum('packs');
+            $totalSoldWeight = $relatedSales->sum('weight');
+            $totalSalesValueForGrn = $relatedSales->sum('total'); // NEW: Sum of total for related sales
+
+            $remainingPacks = $grnEntry->original_packs - $totalSoldPacks;
+            $remainingWeight = $grnEntry->original_weight - $totalSoldWeight;
+
+            $reportData[] = [
+                'date'             => Carbon::parse($grnEntry->created_at)->timezone('Asia/Colombo')->format('Y-m-d H:i:s'),
+                'grn_code'         => $grnEntry->code,
+                'item_name'        => $grnEntry->item_name,
+                'original_packs'   => $grnEntry->original_packs,
+                'original_weight'  => $grnEntry->original_weight,
+                'sold_packs'       => $totalSoldPacks,
+                'sold_weight'      => $totalSoldWeight,
+                'total_sales_value' => $totalSalesValueForGrn, // NEW: Add to report data
+                'remaining_packs'  => $remainingPacks,
+                'remaining_weight' => number_format($remainingWeight, 2),
+            ];
+        }
+
+        // Pass the processed data to the view
+        return view('dashboard.reports.grn_sales_overview_report', [
+            'reportData' => collect($reportData)
+        ]);
+    }
 }
 
 

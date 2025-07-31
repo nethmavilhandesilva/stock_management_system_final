@@ -69,6 +69,15 @@
                         විකුණුම්
                     </a>
                 </li>
+                <li>
+                    <a class="dropdown-item text-white d-flex align-items-center"
+                        href="{{ route('report.grn.sales.overview') }}" target="_blank"> {{-- Direct link to the report
+                        route, opens in new tab --}}
+                        <span class="material-icons me-2" style="font-size: 18px;">storage</span> {{-- Or an icon that
+                        fits --}}
+                        GRN සහ විකුණුම් දළ විශ්ලේෂණය
+                    </a>
+                </li>
             </ul>
         </div>
 

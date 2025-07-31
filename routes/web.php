@@ -54,4 +54,5 @@ Route::post('/report/item', [App\Http\Controllers\ReportController::class, 'fetc
 Route::post('/report/weight', [ReportController::class, 'getweight'])->name('report.supplier_grn.fetch');
 Route::post('/report/sale-code', [ReportController::class, 'getGrnSalecodereport'])->name('report.grn_sale.fetch');
 Route::get('/reports/sales/filter', [ReportController::class, 'getSalesFilterReport'])->name('report.sales.filter');
+Route::get('/reports/grn-sales-overview', [ReportController::class, 'getGrnSalesOverviewReport'])->name('report.grn.sales.overview');
 require __DIR__.'/auth.php';

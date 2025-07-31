@@ -95,21 +95,21 @@
         // Only initialize if the element exists to avoid errors on pages without the modal
         if ($('#filter_supplier_code').length) {
             $('#filter_supplier_code').select2({
-                dropdownParent: $('#reportFilterModal'),
+                dropdownParent: $('#reportFilterModal1'), // Corrected ID here
                 placeholder: "-- සියලුම සැපයුම්කරුවන් --",
                 allowClear: true
             });
         }
         if ($('#filter_customer_code').length) {
             $('#filter_customer_code').select2({
-                dropdownParent: $('#reportFilterModal'),
+                dropdownParent: $('#reportFilterModal1'), // Corrected ID here
                 placeholder: "-- සියලුම පාරිභෝගිකයන් --",
                 allowClear: true
             });
         }
         if ($('#filter_item_code').length) {
             $('#filter_item_code').select2({
-                dropdownParent: $('#reportFilterModal'),
+                dropdownParent: $('#reportFilterModal1'), // Corrected ID here
                 placeholder: "-- සියලුම අයිතම --",
                 allowClear: true
             });
