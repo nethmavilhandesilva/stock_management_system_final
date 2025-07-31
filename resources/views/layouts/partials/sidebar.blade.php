@@ -66,7 +66,7 @@
                 <li>
                     <a class="dropdown-item text-white" href="#" data-bs-toggle="modal"
                         data-bs-target="#reportFilterModal1">
-                        මිල එක්කතුව
+                        විකුණුම්
                     </a>
                 </li>
             </ul>
