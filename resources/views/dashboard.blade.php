@@ -52,6 +52,80 @@
             </div>
         </div>
     </nav>
+    {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav">
+    <div class="container-fluid">
+        <span class="navbar-text text-white me-3 d-none d-lg-block">වාර්තා:</span> {{-- Reports: --}}
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
+            aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
+            <ul class="navbar-nav mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal"
+                        class="nav-link d-flex align-items-center mx-2">
+                        <span class="material-icons me-2 text-info">person</span> {{-- Icon for Supplier --}}
+                        <span class="text-white">සැපයුම්කරු</span> {{-- Supplier --}}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
+                        class="nav-link d-flex align-items-center mx-2">
+                        <span class="material-icons me-2 text-warning">category</span> {{-- Icon for Item/Vegetable --}}
+                        <span class="text-white">එළවළු</span> {{-- Vegetables / Item-wise --}}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
+                        class="nav-link d-flex align-items-center mx-2">
+                        <span class="material-icons me-2 text-danger">scale</span> {{-- Icon for Weight --}}
+                        <span class="text-white">බර මත</span> {{-- By Weight --}}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
+                        class="nav-link d-flex align-items-center mx-2">
+                        <span class="material-icons me-2 text-success">receipt_long</span> {{-- Icon for Sales/Receipts --}}
+                        <span class="text-white">මිල එක්කතුව </span> {{-- Price Collection / GRN Sales --}}
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+    /* Custom CSS to push content up if fixed-bottom nav bar covers it */
+    body {
+        padding-bottom: 70px; /* Adjust this value based on the actual height of your fixed-bottom navbar */
+    }
+    .custom-bottom-nav {
+        background-color: #004d00 !important; /* A slightly darker green for the bottom nav */
+    }
+    /* Adjustments for the bottom nav links */
+    .custom-bottom-nav .nav-link {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        font-size: 0.95rem !important; /* Slightly larger than the top compact nav */
+    }
+    .custom-bottom-nav .nav-link .material-icons {
+        font-size: 20px !important; /* Slightly larger icons */
+    }
+    /* Center the nav items when collapsed (mobile) and on larger screens */
+    .custom-bottom-nav .navbar-collapse {
+        justify-content: center; /* Centers the ul inside the collapsed div */
+    }
+    .custom-bottom-nav .navbar-nav {
+        width: 100%; /* Make ul take full width inside collapse for justify-content to work */
+        justify-content: space-around; /* Distribute items evenly */
+    }
+    /* Add horizontal margin between nav items for better spacing on larger screens */
+    .custom-bottom-nav .navbar-nav .nav-item {
+        margin: 0 5px; /* Adjust as needed */
+    }
+</style>
     <style>
         /* Adjustments for a more compact navbar */
         .navbar.navbar-compact {
@@ -514,70 +588,9 @@
                         <div class="alert alert-info text-center">No printed sales records found.</div>
                     @endif
                 </div>
-
-                {{-- DUPLICATE SECTION: Printed Sales Records (bill_printed = 'Y') - Bottom Left Column --}}
-                {{-- This section is a duplicate and is placed directly below the original in the same col-md-3 container
-                --}}
-                {{-- DUPLICATE SECTION: Printed Sales Records (bill_printed = 'Y') - Bottom Left Column --}}
-                {{-- This section is a duplicate and is placed directly below the original in the same col-md-3 container
-                --}}
-                <div class="card shadow-sm border-0 rounded-3 p-3 mb-4">
-                    <h6 class="mb-2 text-center" style="color: white;">මුද්‍රිත විකුණුම් වාර්තා</h6>
-                    {{-- Changed heading to
-                    distinguish --}}
-
-                    {{-- 🔍 Search Bar --}}
-                    <input type="text" id="searchCustomerCodeDuplicate" class="form-control form-control-sm mb-2"
-                        placeholder="Search by Bill No or Customer Code...">
-
-                    @if ($salesPrinted->count())
-                        <div class="printed-sales-list">
-                            <ul id="printedSalesListDuplicate">
-                                {{-- Outer loop: CUSTOMER GROUP - Sorted Alphabetically by customerCode --}}
-                                {{-- CORRECTED LINE: Sorts the existing grouped collection by its keys (customerCode) --}}
-                                @foreach ($salesPrinted->sortBy(fn($sales, $customerCode) => $customerCode) as $customerCode => $salesForCustomer)
-                                    @php
-                                        $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
-                                    @endphp
-                                    <li data-customer-code="{{ $customerCode }}">
-                                        <div class="customer-group-header">
-
-                                        </div>
-
-                                        <ul>
-                                            {{-- Inner loop: BILL GROUP --}}
-                                            @foreach ($salesForCustomer->groupBy('bill_no') as $billNo => $salesForBill)
-                                                @php
-                                                    $totalBillAmount = $salesForBill->sum('total');
-                                                @endphp
-                                                <li>
-                                                    <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
-                                                        data-customer-name="{{ $customerName }}" data-bill-no="{{ $billNo ?? '' }}"
-                                                        data-bill-type="printed"
-                                                        style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
-                                                        <span style="flex: 1;">
-                                                            {{ strtoupper($customerCode ?? 'N/A') }}
-                                                            - Rs.
-                                                            {{ number_format($totalBillAmount, 2) }}
-                                                        </span>
-
-
-                                                        <i class="material-icons arrow-icon"
-                                                            style="font-size: 14px;">keyboard_arrow_right</i>
-                                                    </div>
-
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @else
-                        <div class="alert alert-info text-center">No printed sales records found.</div>
-                    @endif
-                </div>
-            </div> {{-- End of col-md-3 for stacked Printed Sales --}}
+    </div>
+              
+               
             {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
             <div class="col-md-8">
                 <div class="card shadow-sm border-0 rounded-3 p-4">

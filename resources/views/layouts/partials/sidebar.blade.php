@@ -29,32 +29,40 @@
             <span class="material-icons text-blue-600 mr-3">assignment_turned_in</span> <span
                 class="text-white">GRN</span>
         </a>
-        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal"
-            class="list-group-item list-group-item-action d-flex align-items-center"
-            style="background-color: transparent !important; color: white !important;">
-            <span class="material-icons text-blue-600 mr-3">assessment</span>
-            <span class="text-white">Generate Report</span>
-        </a>
-        <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
-            class="list-group-item list-group-item-action d-flex align-items-center"
-            style="background-color: transparent !important; color: white !important;">
-            <span class="material-icons text-blue-600 me-2">assessment</span>
-            <span class="text-white">📊 අයිතම වාර්තාව</span>
-        </a>
-        <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
-            class="list-group-item list-group-item-action d-flex align-items-center"
-            style="background-color: transparent !important; color: white !important;">
-            <span class="material-icons text-blue-600 me-2">list_alt</span> {{-- You can choose a different icon here if
-            you like, 'list_alt' is just an example for reports/lists --}}
-            <span class="text-white">📄 සැපයුම්කරු GRN වාර්තාව</span>
-        </a>
-        <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
-            class="list-group-item list-group-item-action d-flex align-items-center"
-            style="background-color: transparent !important; color: white !important;">
-            <span class="material-icons text-blue-600 me-2">receipt_long</span> {{-- Example icon for sales/receipts
-            --}}
-            <span class="text-white">📄 GRN කේතය අනුව විකුණුම් වාර්තාව</span>
-        </a>
+
+        <!-- Reports Dropdown -->
+        <div class="dropdown">
+            <a class="list-group-item list-group-item-action d-flex align-items-center dropdown-toggle"
+                href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                style="background-color: transparent !important; color: white !important;">
+                <span class="material-icons text-white me-2">assessment</span>
+                <span class="text-white">වාර්තා (Reports)</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark bg-success border-0 rounded-3 mt-1" aria-labelledby="reportsDropdown">
+                <li>
+                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal">
+                        සැපයුම්කරු
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal">
+                        එළවළු
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal" data-bs-target="#weight_modal">
+                        බර මත
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item text-white" href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal">
+                        මිල එක්කතුව
+                    </a>
+                </li>
+            </ul>
+        </div>
 
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </aside>
