@@ -586,61 +586,58 @@
             {{-- Container for the two stacked Printed Sales Records columns --}}
             <div class="col-md-2">
                 {{-- ORIGINAL SECTION: Printed Sales Records (bill_printed = 'Y') - Top Left Column --}}
-                <div class="card shadow-sm border-0 rounded-3 p-3 mb-4"> {{-- Added mb-4 for spacing --}}
-                    <h6 class="mb-2 text-center" style="color: white;">මුද්‍රිත විකුණුම් වාර්තා</h6>
+                <div class="card shadow-sm border-0 rounded-3 p-3 mb-4">
+    <h6 class="mb-2 text-center" style="color: white;">මුද්‍රිත විකුණුම් වාර්තා</h6>
 
+    {{-- 🔍 Search Bar --}}
+    <input type="text" id="searchCustomerCode" class="form-control form-control-sm mb-2"
+        placeholder="Search by Bill No...">
 
-                    {{-- 🔍 Search Bar --}}
-                    <input type="text" id="searchCustomerCode" class="form-control form-control-sm mb-2"
-                        placeholder="Search by Bill No...">
-
-                    @if ($salesPrinted->count())
-                        <div class="printed-sales-list">
-                            <ul id="printedSalesList">
-                                {{-- Outer loop: CUSTOMER GROUP --}}
-                                @foreach ($salesPrinted as $customerCode => $salesForCustomer)
-                                    @php
-                                        $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
-                                    @endphp
-                                    <li data-customer-code="{{ $customerCode }}">
-                                        <div class="customer-group-header">
-
-                                        </div>
-
-                                        <ul>
-                                            {{-- Inner loop: BILL GROUP --}}
-                                            @foreach ($salesForCustomer->groupBy('bill_no') as $billNo => $salesForBill)
-                                                @php
-                                                    $totalBillAmount = $salesForBill->sum('total');
-                                                @endphp
-                                                <li>
-                                                    <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
-                                                        data-customer-name="{{ $customerName }}" data-bill-no="{{ $billNo ?? '' }}"
-                                                        data-bill-type="printed"
-                                                        style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
-                                                        <span style="flex: 1;">
-                                                            {{ strtoupper($customerCode ?? 'N/A') }}
-                                                            - Rs.
-                                                            {{ number_format($totalBillAmount, 2) }}
-                                                        </span>
-
-
-                                                        <i class="material-icons arrow-icon"
-                                                            style="font-size: 14px;">keyboard_arrow_right</i>
-                                                    </div>
-
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </li>
-                                @endforeach
-                            </ul>
+    @if ($salesPrinted->count())
+        <div class="printed-sales-list">
+            <ul id="printedSalesList">
+                {{-- Outer loop: CUSTOMER GROUP --}}
+                {{-- First, sort the customer groups by the 'created_at' of their latest sale --}}
+                @foreach ($salesPrinted->sortByDesc(fn($sales) => $sales->first()->created_at) as $customerCode => $salesForCustomer)
+                    @php
+                        $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
+                    @endphp
+                    <li data-customer-code="{{ $customerCode }}">
+                        <div class="customer-group-header">
+                            {{-- Customer header content here (optional) --}}
                         </div>
-                    @else
-                        <div class="alert alert-info text-center">No printed sales records found.</div>
-                    @endif
-                </div>
-            </div>
+                        <ul>
+                            {{-- Inner loop: BILL GROUP --}}
+                            {{-- Sort the bills within each customer group by the 'created_at' of the latest sale in that bill --}}
+                            @foreach ($salesForCustomer->groupBy('bill_no')->sortByDesc(fn($sales) => $sales->first()->created_at) as $billNo => $salesForBill)
+                                @php
+                                    $totalBillAmount = $salesForBill->sum('total');
+                                @endphp
+                                <li>
+                                    <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
+                                        data-customer-name="{{ $customerName }}" data-bill-no="{{ $billNo ?? '' }}"
+                                        data-bill-type="printed"
+                                        style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
+                                        <span style="flex: 1;">
+                                            {{ strtoupper($customerCode ?? 'N/A') }}
+                                            - Rs.
+                                            {{ number_format($totalBillAmount, 2) }}
+                                        </span>
+                                        <i class="material-icons arrow-icon"
+                                            style="font-size: 14px;">keyboard_arrow_right</i>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @else
+        <div class="alert alert-info text-center">No printed sales records found.</div>
+    @endif
+</div>
+</div>
 
 
             {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}

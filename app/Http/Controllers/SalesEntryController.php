@@ -32,7 +32,7 @@ class SalesEntryController extends Controller
             ->get();
 
         $salesPrinted = Sale::where('bill_printed', 'Y')
-            ->orderBy('customer_name')
+             ->orderBy('created_at', 'desc')
             ->orderBy('bill_no') // Or ->orderBy('created_at') for chronological order
             ->get()
             ->groupBy('customer_code');
@@ -83,24 +83,12 @@ class SalesEntryController extends Controller
         $weightToDeduct = $validated['weight'];
 
         // Basic check to prevent selling more than available for weight
-        if ($weightToDeduct > $grnEntry->weight) {
-            DB::rollBack(); // Rollback if validation fails here
-            return redirect()->back()
-                ->withErrors(['weight' => 'Cannot sell more weight than available in GRN entry. Available: ' . $grnEntry->weight . ' kg'])
-                ->withInput($request->all()); // Keep all input for user convenience
-        }
-
+        
         // Calculate the new packs for the GRN entry (NEW)
         $packsToDeduct = $validated['packs'];
 
         // Basic check to prevent selling more than available for packs (NEW)
-        if ($packsToDeduct > $grnEntry->packs) {
-            DB::rollBack(); // Rollback if validation fails here
-            return redirect()->back()
-                ->withErrors(['packs' => 'Cannot sell more packs than available in GRN entry. Available: ' . $grnEntry->packs . ' packs'])
-                ->withInput($request->all()); // Keep all input for user convenience
-        }
-
+       
 
         // Deduct from GRN entry
         $grnEntry->weight = $grnEntry->weight - $weightToDeduct;
