@@ -4,16 +4,18 @@
     <div class="modal-dialog">
         <form action="{{ route('report.fetch') }}" method="POST" target="_blank">
             @csrf
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">📄 Generate Report</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+            <div class="modal-content" style="background-color: #99ff99;">
 
                 <div class="modal-body">
+
                     <div class="mb-3">
-                        <label for="grn_select" class="form-label">සැපයුම්කරු තොරතුරු තෝරන්න</label>
-                        <input type="hidden" name="supplier_code" id="supplier_code"> <!-- This will be filled by JS -->
+                        <label for="password" class="form-label" style="font-weight: bold; color: black;">පස්වර්ඩ් ඇතුල් කරන්න</label>
+                        <input type="password" id="password" class="form-control" placeholder="පස්වර්ඩ්">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="grn_select" class="form-label" style="font-weight: bold; color: black;">සැපයුම්කරු තොරතුරු තෝරන්න</label>
+                        <input type="hidden" name="supplier_code" id="supplier_code">
 
                         <select id="grn_select" class="form-select form-select-sm select2">
                             <option value="">-- සැපයුම්කරු තෝරන්න --</option>
@@ -34,15 +36,17 @@
                         </select>
                     </div>
 
+                    <!-- Date range inputs wrapped in a container to toggle visibility -->
+                    <div id="date-range-container" style="display: none;">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label" style="font-weight: bold; color: black;">ආරම්භ දිනය</label>
+                            <input type="date" name="start_date" id="start_date" class="form-control">
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="start_date" class="form-label">ආරම්භ දිනය</label>
-                        <input type="date" name="start_date" id="start_date" class="form-control">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="end_date" class="form-label">අවසන් දිනය</label>
-                        <input type="date" name="end_date" id="end_date" class="form-control">
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label" style="font-weight: bold; color: black;">අවසන් දිනය</label>
+                            <input type="date" name="end_date" id="end_date" class="form-control">
+                        </div>
                     </div>
                 </div>
 
@@ -53,16 +57,32 @@
         </form>
     </div>
 </div>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const grnSelect = document.getElementById('grn_select');
         const supplierCodeInput = document.getElementById('supplier_code');
 
+        const passwordInput = document.getElementById('password');
+        const dateRangeContainer = document.getElementById('date-range-container');
+
         grnSelect.addEventListener('change', function () {
             const selectedOption = grnSelect.options[grnSelect.selectedIndex];
             const supplierCode = selectedOption.getAttribute('data-supplier-code');
-
             supplierCodeInput.value = supplierCode || '';
+        });
+
+        // Show or hide date range inputs based on password
+        passwordInput.addEventListener('input', function () {
+            const correctPassword = 'nethma123';
+            if (passwordInput.value === correctPassword) {
+                dateRangeContainer.style.display = 'block';
+            } else {
+                dateRangeContainer.style.display = 'none';
+                // Optional: Clear the date inputs when hidden
+                document.getElementById('start_date').value = '';
+                document.getElementById('end_date').value = '';
+            }
         });
     });
 </script>

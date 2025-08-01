@@ -20,21 +20,21 @@
                 <table class="table table-striped table-hover table-bordered">
                     <thead>
                         <tr>
-                            <th rowspan="2">දිනය සහ වේලාව</th>
-                            <th rowspan="2">GRN කේතය</th>
-                            <th rowspan="2">අයිතමයේ නම</th>
+                            <th rowspan="2">දිනය</th>
+                            <th rowspan="2">වර්ගය</th>
+                            <th rowspan="2">වර්ගය</th>
                             <th colspan="2">මිලදී ගැනීම</th> {{-- Main header for Original --}}
                             <th colspan="2">විකුණුම්</th> {{-- Main header for Sold (Current Weight) --}}
-                            <th rowspan="2">මුළු විකුණුම් වටිනාකම</th>
+                            <th rowspan="2">එකතුව</th>
                             <th colspan="2">ඉතිරි</th> {{-- Main header for Remaining --}}
                         </tr>
                         <tr>
-                            <th>ඇසුරුම්</th> {{-- Sub-header for Original Packs --}}
-                            <th>බර (kg)</th> {{-- Sub-header for Original Weight --}}
-                            <th>ඇසුරුම්</th> {{-- Sub-header for Sold Packs --}}
-                            <th>බර (kg)</th> {{-- Sub-header for Sold Weight --}}
-                            <th>ඇසුරුම්</th> {{-- Sub-header for Remaining Packs --}}
-                            <th>බර (kg)</th> {{-- Sub-header for Remaining Weight --}}
+                            <th>මලු</th> {{-- Sub-header for Original Packs --}}
+                            <th>බර</th> {{-- Sub-header for Original Weight --}}
+                            <th>මලු</th> {{-- Sub-header for Sold Packs --}}
+                            <th>බර</th> {{-- Sub-header for Sold Weight --}}
+                            <th>මලු</th> {{-- Sub-header for Remaining Packs --}}
+                            <th>බර</th> {{-- Sub-header for Remaining Weight --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -59,7 +59,7 @@
                                 $grandTotalRemainingWeight += floatval(str_replace(',', '', $data['remaining_weight']));
                             @endphp
                             <tr>
-                                <td>{{ $data['date'] }}</td>
+                             <td>{{ date('Y-m-d', strtotime($data['date'])) }}</td>
                                 <td>{{ $data['grn_code'] }}</td>
                                 <td>{{ $data['item_name'] }}</td>
                                 <td>{{ number_format($data['original_packs']) }}</td>

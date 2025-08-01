@@ -75,57 +75,58 @@
             <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
         </div>
 
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>අයිතම කේතය</th>
-                    <th>පැක්</th>
-                    <th>බර</th>
-                    <th>කිලෝ ග්‍රෑම් එකක මිල</th>
-                    <th>මුළු මුදල</th>
-                    <th>පාරිභෝගික කේතය</th>
-                    <th>සැපයුම්කරු කේතය</th>
-                    <th>බිල් අංකය</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php
-                    $total_packs = 0;
-                    $total_weight = 0;
-                    $total_amount = 0;
-                @endphp
+       <table class="table table-bordered table-striped table-sm" style="font-size: 0.85rem; white-space: nowrap;">
+    <thead>
+        <tr>
+            <th>බිල් අංකය</th>
+            <th>වර්ගය</th>
+            <th>මලු</th>
+            <th>බර</th>
+            <th>මිල</th>
+            <th>එකතුව</th>
+            <th>ගෙණුම්කරු</th>
+            <th>සැපයුම්කරු කේතය</th>
+        </tr>
+    </thead>
+    <tbody>
+        @php
+            $total_packs = 0;
+            $total_weight = 0;
+            $total_amount = 0;
+        @endphp
 
-                @foreach($sales as $sale)
-                    <tr>
-                        <td>{{ $sale->item_code }}</td>
-                        <td>{{ $sale->packs }}</td>
-                        <td>{{ $sale->weight }}</td>
-                        <td>{{ number_format($sale->price_per_kg, 2) }}</td>
-                        <td>{{ number_format($sale->total, 2) }}</td>
-                        <td>{{ $sale->customer_code }}</td>
-                        <td>{{ $sale->supplier_code }}</td>
-                        <td>{{ $sale->bill_no }}</td>
-                    </tr>
+        @foreach($sales as $sale)
+            <tr>
+                <td>{{ $sale->bill_no }}</td>
+                <td>{{ $sale->item_name }}</td>
+                <td class="text-end">{{ $sale->packs }}</td>
+                <td class="text-end">{{ number_format($sale->weight, 2) }}</td>
+                <td class="text-end">{{ number_format($sale->price_per_kg, 2) }}</td>
+                <td class="text-end">{{ number_format($sale->total, 2) }}</td>
+                <td>{{ $sale->customer_code }}</td>
+                <td>{{ $sale->supplier_code }}</td>
+            </tr>
 
-                    @php
-                        $total_packs += $sale->packs;
-                        $total_weight += $sale->weight;
-                        $total_amount += $sale->total;
-                    @endphp
-                @endforeach
-            </tbody>
+            @php
+                $total_packs += $sale->packs;
+                $total_weight += $sale->weight;
+                $total_amount += $sale->total;
+            @endphp
+        @endforeach
+    </tbody>
 
-            <tfoot>
-                <tr class="table-secondary fw-bold">
-                    <td class="text-end" colspan="1">මුළු එකතුව:</td>
-                    <td>{{ $total_packs }}</td>
-                    <td>{{ $total_weight }}</td>
-                    <td></td>
-                    <td>{{ number_format($total_amount, 2) }}</td>
-                    <td colspan="3"></td>
-                </tr>
-            </tfoot>
-        </table>
+    <tfoot>
+        <tr class="table-secondary fw-bold">
+            <td class="text-end" colspan="2">මුළු එකතුව:</td>
+            <td class="text-end">{{ $total_packs }}</td>
+            <td class="text-end">{{ number_format($total_weight, 2) }}</td>
+            <td></td>
+            <td class="text-end">{{ number_format($total_amount, 2) }}</td>
+            <td colspan="2"></td>
+        </tr>
+    </tfoot>
+</table>
+
     </div>
 </div>
 @endsection

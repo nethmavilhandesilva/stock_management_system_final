@@ -347,7 +347,7 @@
                 @endphp
 
                 <div class="bg-light border rounded-3 p-3 my-4 summary-line-display">
-                    <h5>සැපයුම්කරු: <strong>{{ $supplierCode }}</strong></h5>
+                    <h5>සැපයුම්කරු: <strong>{{ $firstRecord->code ?? 'N/A' }}</strong></h5>
                     <p>අයිතම කේතය: <strong>{{ $itemCode ?? 'N/A' }}</strong></p>
                     {{-- Display the ratios based on GRN data --}}
                     <p>ඉතිරිය: <strong>{{ $packs_ratio_display }}</strong></p>
@@ -355,52 +355,56 @@
                 </div>
 
                 <table class="table table-bordered table-striped">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>සැපයුම්කරුවන්ගේ කේතය</th>
-                            <th>කේතය</th>
-                            <th>සැරසිලි</th>
-                            <th>බර (කිලෝග්‍රාම්)</th>
-                            <th>කිලෝ ග්‍රෑම්කට මිල</th>
-                            <th>මුළු</th>
-                            <th>පාරිභෝගික කේතය</th> {{-- Corrected from "සැපයුම්කරුවන්ගේ කේතය" to "පාරිභෝගික කේතය" based on column content --}}
-                            <th>දිනය</th>
-                            <th>සැළසුම් අංකය</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($supplierRecords as $row)
-                            <tr>
-                                <td>{{ $row->supplier_code }}</td>
-                                <td>{{ $row->code }}</td>
-                                <td>{{ $row->packs }}</td>
-                                <td>{{ $row->weight }}</td>
-                                <td>{{ $row->price_per_kg }}</td>
-                                <td>{{ $row->total }}</td>
-                                <td>{{ $row->customer_code }}</td>
-                                <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d H:i') }}</td>
-                                <td>{{ $shop_no ?? 'N/A' }}</td>
-                            </tr>
-                            @php
-                                // Accumulate for current supplier's totals (these are still based on Sale data as they are from $supplierRecords)
-                                $supplierTotalPacks += $row->packs;
-                                $supplierTotalWeight += $row->weight;
-                                $supplierTotalAmount += $row->total;
-                            @endphp
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        {{-- Supplier-wise total row --}}
-                        <tr class="supplier-total-row">
-                            <td colspan="2" class="text-end"><strong>Supplier Totals:</strong></td>
-                            <td><strong>{{ $supplierTotalPacks }}</strong></td>
-                            <td><strong>{{ number_format($supplierTotalWeight, 2) }}</strong></td> {{-- Format to 2 decimal places --}}
-                            <td></td> {{-- Price per Kg - no sum needed --}}
-                            <td><strong>{{ number_format($supplierTotalAmount, 2) }}</strong></td> {{-- Format to 2 decimal places --}}
-                            <td colspan="3"></td> {{-- Customer Code, Date, Shop No - no sum needed, colspan to cover remaining cells --}}
-                        </tr>
-                    </tfoot>
-                </table>
+    <thead class="table-secondary">
+        <tr>
+            <th>අංකය</th>
+            <th>මලු</th>
+            <th>බර</th>
+            <th>මිල</th>
+            <th>එකතුව</th>
+            <th>ගෙණුම්කරු</th> 
+            <th>දිනය</th>
+            <th>වැඩකලා</th>
+        </tr>
+    </thead>
+    <tbody>
+        @php
+            // Initialize totals before loop
+            $supplierTotalPacks = 0;
+            $supplierTotalWeight = 0;
+            $supplierTotalAmount = 0;
+        @endphp
+
+        @foreach($supplierRecords as $row)
+            <tr>
+                <td>{{ $row->bill_no }}</td>
+                <td>{{ $row->packs }}</td>
+                <td>{{ $row->weight }}</td>
+                <td>{{ $row->price_per_kg }}</td>
+                <td>{{ $row->total }}</td>
+                <td>{{ $row->customer_code }}</td>
+                <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d H:i') }}</td>
+                <td>{{ $shop_no ?? 'N/A' }}</td>
+            </tr>
+            @php
+                $supplierTotalPacks += $row->packs;
+                $supplierTotalWeight += $row->weight;
+                $supplierTotalAmount += $row->total;
+            @endphp
+        @endforeach
+    </tbody>
+    <tfoot>
+        <tr class="supplier-total-row">
+            <td colspan="1" class="text-end"><strong>Supplier Totals:</strong></td>
+            <td><strong>{{ $supplierTotalPacks }}</strong></td>
+            <td><strong>{{ number_format($supplierTotalWeight, 2) }}</strong></td>
+            <td></td> {{-- Price per Kg - no total --}}
+            <td><strong>{{ number_format($supplierTotalAmount, 2) }}</strong></td>
+            <td colspan="3"></td> {{-- Remaining columns --}}
+        </tr>
+    </tfoot>
+</table>
+
                 @php
                     // Add supplier totals to grand totals after each supplier's table
                     $grandTotalPacks += $supplierTotalPacks;

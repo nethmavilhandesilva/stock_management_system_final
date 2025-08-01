@@ -27,6 +27,13 @@
         .print-btn { display: none !important; }
     }
 </style>
+<style>
+    .compact-table th,
+    .compact-table td {
+        font-size: 13px;
+        padding: 4px 8px;
+    }
+</style>
 
 <div class="container mt-4">
     <div class="card shadow border-0 rounded-3 p-4 custom-card">
@@ -50,14 +57,14 @@
                 <span class="ms-3"><strong>අවසන් දිනය:</strong> {{ $endDate }}</span>
             @endif
         </div>
-<table class="table table-bordered table-striped">
+<table class="table table-sm table-bordered table-striped compact-table">
     <thead>
         <tr>
             <th>අයිතම කේතය</th>
-            <th>අයිතමයේ නම</th>
-            <th>පැක්</th>
-            <th>බර (කිලෝග්‍රෑම්)</th>
-            <th>මුළු මුදල</th>
+            <th>වර්ගය</th>
+            <th>මලු</th>
+            <th>බර</th>
+            <th>එකතුව</th>
         </tr>
     </thead>
     <tbody>
@@ -83,7 +90,6 @@
             @endphp
         @empty
             <tr>
-                {{-- Colspan should match the number of columns in the <thead> --}}
                 <td colspan="5" class="text-center text-white bg-secondary">වාර්තා නැත</td>
             </tr>
         @endforelse
@@ -91,9 +97,7 @@
 
     <tfoot>
         <tr class="table-secondary fw-bold">
-            {{-- Colspan for "මුළු එකතුව:" --}}
             <td class="text-end" colspan="2">මුළු එකතුව:</td>
-            {{-- Totals for Packs, Weight, Total Amount --}}
             <td>{{ $total_packs }}</td>
             <td>{{ number_format($total_weight, 2) }}</td>
             <td>{{ number_format($total_amount, 2) }}</td>

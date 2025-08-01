@@ -17,18 +17,18 @@
                 <table class="table table-striped table-hover table-bordered">
                     <thead>
                         <tr>
-                            <th rowspan="2">අයිතමයේ නම</th>
+                            <th rowspan="2">වර්ගය</th>
                             <th colspan="2">මිලදී ගැනීම</th>
                             <th colspan="2">විකුණුම්</th>
                             <th colspan="2">ඉතිරි</th>
                         </tr>
                         <tr>
-                            <th>ඇසුරුම්</th>
-                            <th>බර (kg)</th>
-                            <th>ඇසුරුම්</th>
-                            <th>බර (kg)</th>
-                            <th>ඇසුරුම්</th>
-                            <th>බර (kg)</th>
+                            <th>මලු</th>
+                            <th>බර</th>
+                            <th>මලු</th>
+                            <th>බර</th>
+                            <th>මලු</th>
+                            <th>බර</th>
                         </tr>
                     </thead>
                     <tbody>

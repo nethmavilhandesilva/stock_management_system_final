@@ -1,16 +1,13 @@
 <div class="modal fade" id="grnSaleReportModal" tabindex="-1" aria-labelledby="grnSaleReportModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        {{-- Form action points to the POST route for report fetching --}}
         <form action="{{ route('report.grn_sale.fetch') }}" method="POST" target="_blank">
             @csrf
-            <div class="modal-content">
+            <div class="modal-content" style="background-color: #99ff99;">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="grnSaleReportModalLabel">📄 GRN කේතය අනුව විකුණුම් වාර්තාව</h5>
+                    <h5 class="modal-title" id="grnSaleReportModalLabel">📄 GRN12 කේතය අනුව විකුණුම් වාර්තාව</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
                 <div class="modal-body">
-                    {{-- Display validation errors if any, e.g., "Please select a GRN code." --}}
                     @if ($errors->any())
                         <div class="alert alert-danger">
                             <ul>
@@ -20,10 +17,8 @@
                             </ul>
                         </div>
                     @endif
-
                     <div class="mb-3">
-                        <label for="grn_select" class="form-label">GRN තොරතුරු තෝරන්න</label>
-                        {{-- CRITICAL FIX: Added name="grn_code" to send the selected value to the controller --}}
+                        <label for="grn_select" class="form-label" style="font-weight: bold; color: black;">GRN තොරතුරු තෝරන්න</label>
                         <select id="grn_select" class="form-select form-select-sm select2" name="grn_code" required>
                             <option value="">-- GRN තෝරන්න --</option>
                             @foreach ($entries as $entry)
@@ -42,25 +37,23 @@
                             @endforeach
                         </select>
                     </div>
-
-                    {{-- If your controller *does not* use 'supplier_code' from the form submission,
-                         you can safely remove the following hidden input and its corresponding JS.
-                         It's only needed if you want to explicitly send supplier_code separately. --}}
+                    
+                    <input type="hidden" name="supplier_code" id="grn_supplier_code">
                     <div class="mb-3">
-                        <input type="hidden" name="supplier_code" id="supplier_code">
+                        <label for="grn_password_field" class="form-label" style="font-weight: bold; color: black;">මුරපදය ඇතුලත් කරන්න</label>
+                        <input type="password" id="grn_password_field" class="form-control" placeholder="මුරපදය">
                     </div>
-
-                    <div class="mb-3">
-                        <label for="sales_start_date" class="form-label">ආරම්භ දිනය</label>
-                        <input type="date" name="start_date" id="sales_start_date" class="form-control">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="sales_end_date" class="form-label">අවසන් දිනය</label>
-                        <input type="date" name="end_date" id="sales_end_date" class="form-control">
+                    <div id="grn_date_range_fields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="grn_start_date" class="form-label" style="font-weight: bold; color: black;">ආරම්භ දිනය</label>
+                            <input type="date" name="start_date" id="grn_start_date" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="grn_end_date" class="form-label" style="font-weight: bold; color: black;">අවසන් දිනය</label>
+                            <input type="date" name="end_date" id="grn_end_date" class="form-control">
+                        </div>
                     </div>
                 </div>
-
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary w-100">වාර්තාව ලබාගන්න</button>
                 </div>
@@ -69,26 +62,37 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const grnSelect = document.getElementById('grn_select');
-        // Initialize Select2 on your dropdown (requires jQuery to be loaded)
-        // Ensure jQuery and Select2 libraries are loaded before this script.
-        $(grnSelect).select2({
-            dropdownParent: $('#grnSaleReportModal') // Important for Select2 within Bootstrap modals
-        });
+        const supplierCodeInput = document.getElementById('grn_supplier_code');
+        const passwordField = document.getElementById('grn_password_field');
+        const dateRangeFields = document.getElementById('grn_date_range_fields');
+        const correctPassword = 'nethma123';
 
-        // This JS is for filling the hidden 'supplier_code' input.
-        // Remove this entire block if you don't need 'supplier_code' sent to the backend.
-        const supplierCodeInput = document.getElementById('supplier_code'); // Correctly targets the hidden input's ID
+        // Initialize Select2 on the dropdown
+        $(grnSelect).select2({
+            dropdownParent: $('#grnSaleReportModal')
+        });
 
         grnSelect.addEventListener('change', function () {
             const selectedOption = grnSelect.options[grnSelect.selectedIndex];
-            // Get the supplier_code from the data attribute of the selected option
             const supplierCode = selectedOption.getAttribute('data-supplier-code');
-
-            // Assign the retrieved supplierCode to the hidden input's value
             supplierCodeInput.value = supplierCode || '';
         });
+
+        if (passwordField && dateRangeFields) {
+            function checkPassword() {
+                if (passwordField.value === correctPassword) {
+                    dateRangeFields.style.display = 'block';
+                } else {
+                    dateRangeFields.style.display = 'none';
+                }
+            }
+            passwordField.addEventListener('input', checkPassword);
+            checkPassword();
+        }
     });
 </script>

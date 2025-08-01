@@ -1,6 +1,6 @@
 <div class="modal fade" id="reportFilterModal1" tabindex="-1" aria-labelledby="reportFilterModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form action="{{ route('report.sales.filter') }}" method="GET" target="_blank"> {{-- Changed to GET for report filters --}}
+        <form action="{{ route('report.sales.filter') }}" method="GET" target="_blank">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title" id="reportFilterModalLabel">📊 විකුණුම් වාර්තා පෙරහන් කරන්න</h5>
@@ -50,35 +50,42 @@
                         </select>
                     </div>
 
-                    {{-- Date Range Filters --}}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="filter_start_date" class="form-label">ආරම්භක දිනය</label>
-                            <input type="date" name="start_date" id="filter_start_date" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="filter_end_date" class="form-label">අවසන් දිනය</label>
-                            <input type="date" name="end_date" id="filter_end_date" class="form-control form-control-sm">
-                        </div>
-                    </div>
-
-                    {{-- Order By Filter --}}
+                    {{-- Password field to unlock date and order-by filters --}}
                     <div class="mb-3">
-                        <label for="order_by" class="form-label">අනුපිළිවෙල</label>
-                        <select name="order_by" id="order_by" class="form-select form-select-sm">
-                            <option value="id_desc">සාමාන්‍ය (නව සිට පැරණි)</option>
-                            <option value="id_asc">සාමාන්‍ය (පැරණි සිට නව)</option>
-                            <option value="customer_code_asc">පාරිභෝගික කේතය (A-Z)</option>
-                            <option value="customer_code_desc">පාරිභෝගික කේතය (Z-A)</option>
-                            <option value="item_name_asc">අයිතමයේ නම (A-Z)</option>
-                            <option value="item_name_desc">අයිතමයේ නම (Z-A)</option>
-                            <option value="total_desc">මුළු මුදල (වැඩිම සිට අඩුම)</option>
-                            <option value="total_asc">මුළු මුදල (අඩුම සිට වැඩිම)</option>
-                            <option value="weight_desc">බර (වැඩිම සිට අඩුම)</option>
-                            <option value="weight_asc">බර (අඩුම සිට වැඩිම)</option>
-                        </select>
+                        <label for="report_password_field" class="form-label">මුරපදය ඇතුලත් කරන්න</label>
+                        <input type="password" id="report_password_field" class="form-control form-control-sm" placeholder="මුරපදය">
                     </div>
 
+                    {{-- Date Range and Order By Filters (Hidden by default) --}}
+                    <div id="advanced_filters" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="filter_start_date" class="form-label">ආරම්භක දිනය</label>
+                                <input type="date" name="start_date" id="filter_start_date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="filter_end_date" class="form-label">අවසන් දිනය</label>
+                                <input type="date" name="end_date" id="filter_end_date" class="form-control form-control-sm">
+                            </div>
+                        </div>
+
+                        {{-- Order By Filter --}}
+                        <div class="mb-3">
+                            <label for="order_by" class="form-label">අනුපිළිවෙල</label>
+                            <select name="order_by" id="order_by" class="form-select form-select-sm">
+                              
+                                <option value="id_asc">සාමාන්‍ය (පැරණි සිට නව)</option>
+                                <option value="customer_code_asc">පාරිභෝගික කේතය (A-Z)</option>
+                            
+                                <option value="item_name_asc">අයිතමයේ නම (A-Z)</option>
+                               
+                              
+                                <option value="total_asc">මුළු මුදල (අඩුම සිට වැඩිම)</option>
+                               
+                                <option value="weight_asc">බර (අඩුම සිට වැඩිම)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
@@ -90,39 +97,46 @@
 </div>
 
 <script>
-    // Initialize Select2 for the new modal's dropdowns
     document.addEventListener("DOMContentLoaded", function() {
-        // Only initialize if the element exists to avoid errors on pages without the modal
+        // Initialize Select2 for the dropdowns
         if ($('#filter_supplier_code').length) {
             $('#filter_supplier_code').select2({
-                dropdownParent: $('#reportFilterModal1'), // Corrected ID here
+                dropdownParent: $('#reportFilterModal1'),
                 placeholder: "-- සියලුම සැපයුම්කරුවන් --",
                 allowClear: true
             });
         }
         if ($('#filter_customer_code').length) {
             $('#filter_customer_code').select2({
-                dropdownParent: $('#reportFilterModal1'), // Corrected ID here
+                dropdownParent: $('#reportFilterModal1'),
                 placeholder: "-- සියලුම පාරිභෝගිකයන් --",
                 allowClear: true
             });
         }
         if ($('#filter_item_code').length) {
             $('#filter_item_code').select2({
-                dropdownParent: $('#reportFilterModal1'), // Corrected ID here
+                dropdownParent: $('#reportFilterModal1'),
                 placeholder: "-- සියලුම අයිතම --",
                 allowClear: true
             });
         }
 
-        // Set default end date to today
-        const endDateInput = document.getElementById('filter_end_date');
-        if (endDateInput) {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-            const day = String(today.getDate()).padStart(2, '0');
-            endDateInput.value = `${year}-${month}-${day}`;
+        // Add password protection functionality
+        const passwordField = document.getElementById('report_password_field');
+        const advancedFilters = document.getElementById('advanced_filters');
+        const correctPassword = 'nethma123';
+
+        if (passwordField && advancedFilters) {
+            function checkPassword() {
+                if (passwordField.value === correctPassword) {
+                    advancedFilters.style.display = 'block';
+                } else {
+                    advancedFilters.style.display = 'none';
+                }
+            }
+
+            passwordField.addEventListener('input', checkPassword);
+            checkPassword(); // Run on load in case the field is pre-filled
         }
     });
 </script>
