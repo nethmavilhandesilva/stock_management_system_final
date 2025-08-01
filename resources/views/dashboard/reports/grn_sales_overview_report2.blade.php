@@ -88,6 +88,11 @@
             </div>
         </div>
     </div>
+     <div>
+       
+        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" class="btn btn-success me-2">Download Excel</a>
+        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" class="btn btn-danger">Download PDF</a>
+    </div>
 </div>
 
 {{-- Custom Styles --}}

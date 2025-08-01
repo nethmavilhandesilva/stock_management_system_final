@@ -46,6 +46,8 @@ Route::delete('/sales/delete/{sale}', [SalesEntryController::class, 'destroy'])-
 Route::post('/sales/mark-all-processed', [SalesEntryController::class, 'markAllAsProcessed'])->name('sales.markAllAsProcessed');
 //Bill printing
 Route::post('/sales/mark-printed', [SalesEntryController::class, 'markAsPrinted'])->name('sales.markAsPrinted');
+Route::post('/sales/save-as-unprinted', [SalesEntryController::class, 'saveAsUnprinted'])->name('sales.save-as-unprinted');
+Route::get('/get-unprinted-sales/{customerCode}', [SalesEntryController::class,'getUnprintedSales'])->name('get.unprinted.sales');
 //Reports
 // routes/web.php
 Route::get('/report', [ReportController::class, 'index'])->name('report.index');
@@ -56,4 +58,6 @@ Route::post('/report/sale-code', [ReportController::class, 'getGrnSalecodereport
 Route::get('/reports/sales/filter', [ReportController::class, 'getSalesFilterReport'])->name('report.sales.filter');
 Route::get('/reports/grn-sales-overview', [ReportController::class, 'getGrnSalesOverviewReport'])->name('report.grn.sales.overview');
 Route::get('/reports/grn-sales-overview2', [ReportController::class, 'getGrnSalesOverviewReport2'])->name('report.grn.sales.overview2');
+//Reports
+Route::get('/report/download/{reportType}/{format}', [ReportController::class, 'downloadReport'])->name('report.download');
 require __DIR__.'/auth.php';

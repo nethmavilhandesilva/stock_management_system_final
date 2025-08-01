@@ -25,7 +25,8 @@ class Sale extends Model
         'bill_printed', // <-- ADD THIS
         'Processed', 
         'bill_no',
-        'updated'   , // <-- ADD THIS
+        'updated'   ,
+        'is_printed' // <-- ADD THIS
 
     ];
 

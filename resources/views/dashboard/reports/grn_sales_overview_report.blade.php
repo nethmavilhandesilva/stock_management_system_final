@@ -1,3 +1,4 @@
+
 {{-- resources/views/reports/grn_sales_overview_report.blade.php --}}
 
 @extends('layouts.app') {{-- Extend your main application layout --}}
@@ -20,12 +21,10 @@
                 <table class="table table-striped table-hover table-bordered">
                     <thead>
                         <tr>
-                            <th rowspan="2">දිනය</th>
                             <th rowspan="2">වර්ගය</th>
-                            <th rowspan="2">වර්ගය</th>
-                            <th colspan="2">මිලදී ගැනීම</th> {{-- Main header for Original --}}
-                            <th colspan="2">විකුණුම්</th> {{-- Main header for Sold (Current Weight) --}}
-                            <th rowspan="2">එකතුව</th>
+                            <th colspan="2">මිලදී ගැනීම</th> {{-- Main header for Purchase --}}
+                            <th colspan="2">විකුණුම්</th> {{-- Main header for Sold --}}
+                            <th rowspan="2">එකතුව</th> {{-- Main header for Total Sales Value --}}
                             <th colspan="2">ඉතිරි</th> {{-- Main header for Remaining --}}
                         </tr>
                         <tr>
@@ -39,6 +38,7 @@
                     </thead>
                     <tbody>
                         @php
+                            // Initialize arrays for grand totals
                             $grandTotalOriginalPacks = 0;
                             $grandTotalOriginalWeight = 0;
                             $grandTotalSoldPacks = 0;
@@ -46,38 +46,51 @@
                             $grandTotalSalesValue = 0;
                             $grandTotalRemainingPacks = 0;
                             $grandTotalRemainingWeight = 0;
+
+                            // Group data by item_name
+                            $groupedData = collect($reportData)->groupBy('item_name');
                         @endphp
 
-                        @forelse($reportData as $data)
+                        @forelse($groupedData as $itemName => $items)
                             @php
-                                $grandTotalOriginalPacks += $data['original_packs'];
-                                $grandTotalOriginalWeight += $data['original_weight'];
-                                $grandTotalSoldPacks += $data['sold_packs'];
-                                $grandTotalSoldWeight += $data['sold_weight'];
-                                $grandTotalSalesValue += $data['total_sales_value'];
-                                $grandTotalRemainingPacks += $data['remaining_packs'];
-                                $grandTotalRemainingWeight += floatval(str_replace(',', '', $data['remaining_weight']));
+                                // Initialize and calculate sub-totals for each group
+                                $subTotalOriginalPacks = $items->sum('original_packs');
+                                $subTotalOriginalWeight = $items->sum('original_weight');
+                                $subTotalSoldPacks = $items->sum('sold_packs');
+                                $subTotalSoldWeight = $items->sum('sold_weight');
+                                $subTotalSalesValue = $items->sum('total_sales_value');
+                                $subTotalRemainingPacks = $items->sum('remaining_packs');
+                                $subTotalRemainingWeight = $items->sum(function($item) {
+                                    return floatval(str_replace(',', '', $item['remaining_weight']));
+                                });
+
+                                // Add sub-totals to grand totals
+                                $grandTotalOriginalPacks += $subTotalOriginalPacks;
+                                $grandTotalOriginalWeight += $subTotalOriginalWeight;
+                                $grandTotalSoldPacks += $subTotalSoldPacks;
+                                $grandTotalSoldWeight += $subTotalSoldWeight;
+                                $grandTotalSalesValue += $subTotalSalesValue;
+                                $grandTotalRemainingPacks += $subTotalRemainingPacks;
+                                $grandTotalRemainingWeight += $subTotalRemainingWeight;
                             @endphp
-                            <tr>
-                             <td>{{ date('Y-m-d', strtotime($data['date'])) }}</td>
-                                <td>{{ $data['grn_code'] }}</td>
-                                <td>{{ $data['item_name'] }}</td>
-                                <td>{{ number_format($data['original_packs']) }}</td>
-                                <td>{{ number_format($data['original_weight'], 2) }}</td>
-                                <td>{{ number_format($data['sold_packs']) }}</td>
-                                <td>{{ number_format($data['sold_weight'], 2) }}</td>
-                                <td>Rs. {{ number_format($data['total_sales_value'], 2) }}</td>
-                                <td>{{ number_format($data['remaining_packs']) }}</td>
-                                <td>{{ $data['remaining_weight'] }}</td>
+                            <tr class="item-summary-row">
+                                <td><strong>{{ $itemName }}</strong></td>
+                                <td><strong>{{ number_format($subTotalOriginalPacks) }}</strong></td>
+                                <td><strong>{{ number_format($subTotalOriginalWeight, 2) }}</strong></td>
+                                <td><strong>{{ number_format($subTotalSoldPacks) }}</strong></td>
+                                <td><strong>{{ number_format($subTotalSoldWeight, 2) }}</strong></td>
+                                <td><strong>Rs. {{ number_format($subTotalSalesValue, 2) }}</strong></td>
+                                <td><strong>{{ number_format($subTotalRemainingPacks) }}</strong></td>
+                                <td><strong>{{ number_format($subTotalRemainingWeight, 2) }}</strong></td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="text-center text-muted py-4">දත්ත නොමැත.</td>
+                                <td colspan="8" class="text-center text-muted py-4">දත්ත නොමැත.</td>
                             </tr>
                         @endforelse
-                        {{-- Totals Row --}}
+                        {{-- Grand Totals Row --}}
                         <tr class="total-row">
-                            <td colspan="3" class="text-end"><strong>සමස්ත එකතුව:</strong></td>
+                            <td class="text-end"><strong>සමස්ත එකතුව:</strong></td>
                             <td><strong>{{ number_format($grandTotalOriginalPacks) }}</strong></td>
                             <td><strong>{{ number_format($grandTotalOriginalWeight, 2) }}</strong></td>
                             <td><strong>{{ number_format($grandTotalSoldPacks) }}</strong></td>
@@ -89,9 +102,11 @@
                     </tbody>
                 </table>
             </div>
-
-           
         </div>
+    </div>
+    <div>
+        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" class="btn btn-success me-2">Download Excel</a>
+        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" class="btn btn-danger">Download PDF</a>
     </div>
 </div>
 
@@ -166,7 +181,11 @@
     .table-hover tbody tr:hover {
         background-color: #007000 !important; /* Hover effect */
     }
-    .total-row, .total-row-individual { /* Specific styling for total rows */
+    .item-summary-row {
+        background-color: #005a00 !important;
+        font-weight: bold;
+    }
+    .total-row { /* Specific styling for total rows */
         background-color: #008000 !important; /* Even lighter green for total rows */
         color: white !important;
         font-weight: bold;
@@ -184,7 +203,7 @@
         .container-fluid, .card, .card-header, .card-body,
         .report-title-bar, .filter-summary.alert, .table,
         .table thead th, .table tbody tr, .table tbody td,
-        .total-row, .total-row-individual {
+        .total-row, .item-summary-row {
             background-color: white !important;
             color: black !important;
             border-color: #dee2e6 !important; /* Restore standard light borders for print */
@@ -209,9 +228,7 @@
         .print-button, .btn-secondary { /* Hide other buttons when printing */
             display: none !important;
         }
-        .table-striped tbody tr:nth-of-type(odd),
-        .table-striped tbody tr:nth-of-type(even),
-        .total-row, .total-row-individual {
+        .total-row, .item-summary-row {
             background-color: #f8f9fa !important; /* Light stripe for print */
             color: black !important;
         }
