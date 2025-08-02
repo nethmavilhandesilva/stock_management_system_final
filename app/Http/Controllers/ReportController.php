@@ -49,13 +49,8 @@ class ReportController extends Controller
             Carbon::parse($startDate)->startOfDay(),
             Carbon::parse($endDate)->endOfDay()
         ]);
-    } else {
-        // If no date range is provided, default to today's date
-        $query->whereBetween('created_at', [
-            Carbon::today()->startOfDay(),
-            Carbon::today()->endOfDay()
-        ]);
-    }
+    } 
+    
 
     // Log the final built query
     Log::info('Report Fetch Final Query:', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
@@ -101,10 +96,7 @@ class ReportController extends Controller
         if ($request->start_date && $request->end_date) {
             $query->whereDate('created_at', '>=', $request->start_date)
                 ->whereDate('created_at', '<=', $request->end_date);
-        } else {
-            $today = \Carbon\Carbon::today()->toDateString();
-            $query->whereDate('created_at', $today);
-        }
+        } 
 
         $sales = $query->get([
             'item_code',
@@ -121,42 +113,38 @@ class ReportController extends Controller
         return view('dashboard.reports.item-wise-report', compact('sales'));
     }
 
-    public function getweight(Request $request)
-    {
-        $grnCode = $request->input('grn_code');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+   public function getweight(Request $request)
+{
+    $grnCode = $request->input('grn_code');
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
 
-        // If no GRN code is selected, return an error. This is a good practice.
-        if (!$grnCode) {
-            return redirect()->back()->withErrors('Please select a GRN code.');
-        }
-
-        $query = Sale::query();
-        $query->where('code', $grnCode);
-
-        // If no start date is provided, default to today's date
-        if (!$startDate) {
-            $startDate = now()->toDateString();
-            $endDate = now()->toDateString();
-        }
-
-        // Apply the date filter
-        $query->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate);
-
-        $sales = $query->orderBy('created_at', 'asc')->get();
-        $selectedGrnEntry = GrnEntry::where('code', $grnCode)->first();
-
-        return view('dashboard.reports.weight-based-report', [
-            'sales' => $sales,
-            'selectedGrnCode' => $grnCode,
-            'selectedGrnEntry' => $selectedGrnEntry,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-        ]);
+    // If no GRN code is selected, return an error. This is a good practice.
+    if (!$grnCode) {
+        return redirect()->back()->withErrors('Please select a GRN code.');
     }
-   public function getGrnSalecodereport(Request $request)
+
+    $query = Sale::query();
+    $query->where('code', $grnCode);
+
+    // Apply the date filter only if dates are provided
+    if ($startDate && $endDate) {
+        $query->whereDate('created_at', '>=', $startDate)
+              ->whereDate('created_at', '<=', $endDate);
+    }
+    
+    $sales = $query->orderBy('created_at', 'asc')->get();
+    $selectedGrnEntry = GrnEntry::where('code', $grnCode)->first();
+
+    return view('dashboard.reports.weight-based-report', [
+        'sales' => $sales,
+        'selectedGrnCode' => $grnCode,
+        'selectedGrnEntry' => $selectedGrnEntry,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+    ]);
+}
+ public function getGrnSalecodereport(Request $request)
 {
     $grnCode = $request->input('grn_code');
     $startDate = $request->input('start_date');
@@ -169,15 +157,12 @@ class ReportController extends Controller
     $query = Sale::query();
     $query->where('code', $grnCode);
 
-    // If no start date is provided, default to today's date
-    if (!$startDate) {
-        $startDate = now()->toDateString();
-        $endDate = now()->toDateString();
+    // Apply the date filter only if both dates are provided
+    if ($startDate && $endDate) {
+        $query->whereDate('created_at', '>=', $startDate)
+              ->whereDate('created_at', '<=', $endDate);
     }
-
-    $query->whereDate('created_at', '>=', $startDate)
-          ->whereDate('created_at', '<=', $endDate);
-
+    
     $sales = $query->orderBy('created_at', 'asc')->get();
     $selectedGrnEntry = GrnEntry::where('code', $grnCode)->first();
 
@@ -188,8 +173,7 @@ class ReportController extends Controller
         'startDate' => $startDate,
         'endDate' => $endDate,
     ]);
-}
-   public function getSalesFilterReport(Request $request)
+}   public function getSalesFilterReport(Request $request)
 {
     // Start with all sales data
     $query = Sale::query();
@@ -207,24 +191,15 @@ class ReportController extends Controller
         $query->where('item_code', $request->input('item_code'));
     }
 
-    // --- Start of the change ---
-    // Apply a date range filter
-    if ($request->filled('start_date') || $request->filled('end_date')) {
-        // If a start date is provided, filter from that date onwards
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->input('start_date'));
-        }
-
-        // If an end date is provided, filter up to that date
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->input('end_date'));
-        }
-    } else {
-        // If no date range is provided, default to today's data
-        $query->whereDate('created_at', today());
+    // Apply a date range filter only if a start or end date is provided
+    if ($request->filled('start_date')) {
+        $query->whereDate('created_at', '>=', $request->input('start_date'));
     }
-    // --- End of the change ---
 
+    if ($request->filled('end_date')) {
+        $query->whereDate('created_at', '<=', $request->input('end_date'));
+    }
+    
     // Apply ordering
     switch ($request->input('order_by', 'id_desc')) { // Default to id_desc
         case 'id_asc':
