@@ -26,7 +26,10 @@ class Sale extends Model
         'Processed', 
         'bill_no',
         'updated'   ,
-        'is_printed' // <-- ADD THIS
+        'is_printed', // <-- ADD THIS
+        'CustomerBillEnteredOn',
+        'FirstTimeBillPrintedOn',
+        'BillChangedOn',
 
     ];
 
