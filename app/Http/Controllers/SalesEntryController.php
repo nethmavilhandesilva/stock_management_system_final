@@ -48,6 +48,7 @@ class SalesEntryController extends Controller
         return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum'));
     }
 
+    
 
     public function store(Request $request)
 {
@@ -263,4 +264,12 @@ class SalesEntryController extends Controller
 
         return response()->json($sales);
     }
+    public function clearAll(Request $request)
+{
+    Sale::truncate();    // deletes all records from sales table
+    GrnEntry::truncate(); // deletes all records from grn_entries table
+
+    return back()->with('success', 'All data cleared from Sales and GRN Entries.');
+}
+ 
 }

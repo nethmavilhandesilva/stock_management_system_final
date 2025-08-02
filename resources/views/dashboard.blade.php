@@ -228,6 +228,7 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     {{-- REQUIRED: Minimal inline styling for the new section's appearance and collapse functionality --}}
+    
     <style>
         .printed-sales-list ul,
         .unprinted-sales-list ul {
@@ -339,6 +340,7 @@
             flex-wrap: wrap;
             gap: 1rem;
             align-items: flex-end;
+            
         }
 
         .form-row>div {
@@ -633,7 +635,12 @@
                         <div class="alert alert-info text-center">No printed sales records found.</div>
                     @endif
                 </div>
+                <form action="{{ route('clear.data') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete all data?');">
+    @csrf
+    <button type="submit" class="btn btn-danger mt-3">🗑️ Delete All Sales & GRN Entries</button>
+</form>
             </div>
+            
 
 
             {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
@@ -879,29 +886,43 @@
 
 
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
-                                style="font-size: 0.85rem; margin-top: -10px; background-color: black; color: white;">
+        
+    <style>
+        /*
+         * This custom CSS rule is highly specific and uses !important to
+         * ensure it overrides any conflicting Bootstrap or other framework styles.
+         * It targets both the table rows (tr) and the table cells (td) within
+         * the tbody with the ID 'mainSalesTableBody'.
+         */
+        #mainSalesTableBody tr,
+        #mainSalesTableBody td {
+            background-color: black !important;
+            color: white !important;
+        }
+    </style>
+    <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
+        style="font-size: 0.85rem; margin-top: -10px;">
 
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th scope="col">කේතය</th>
-                                        <th scope="col">අයිතම කේතය</th>
-                                        <th scope="col">අයිතමය</th>
-                                        <th scope="col">බර (kg)</th>
-                                        <th scope="col">මිල/කිලෝග්‍රෑමය</th>
-                                        <th scope="col">සමස්ත</th>
-                                        <th scope="col">මලු</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="mainSalesTableBody">
-                                    {{-- This tbody will be dynamically populated by JavaScript. --}}
-                                    {{-- IMPORTANT: Ensure your JavaScript populating this table adds 'data-sale-id',
-                                    'data-customer-code', and 'data-customer-name' attributes to each <tr> --}}
-                                        {{-- Example:
-                                    <tr data-sale-id="123" data-customer-code="CUST001" data-customer-name="John Doe">...
-                                    </tr> --}}
-                                </tbody>
-                            </table>
+        <thead style="background-color: white; color: black;">
+            <tr>
+                <th scope="col">කේතය</th>
+                <th scope="col">අයිතම කේතය</th>
+                <th scope="col">අයිතමය</th>
+                <th scope="col">බර (kg)</th>
+                <th scope="col">මිල/කිලෝග්‍රෑමය</th>
+                <th scope="col">සමස්ත</th>
+                <th scope="col">මලු</th>
+            </tr>
+        </thead>
+        <tbody id="mainSalesTableBody">
+            {{-- This tbody will be dynamically populated by JavaScript. --}}
+            {{-- IMPORTANT: Ensure your JavaScript populating this table adds 'data-sale-id',
+            'data-customer-code', and 'data-customer-name' attributes to each <tr> --}}
+            {{-- Example:
+            <tr data-sale-id="123" data-customer-code="CUST001" data-customer-name="John Doe">...
+            </tr> --}}
+        </tbody>
+    </table>
 
                             <h5 class="text-end mb-3" style="font-size: 1.5rem; color: red;">
                                 <strong>Total Sales Value:</strong> Rs. <span
