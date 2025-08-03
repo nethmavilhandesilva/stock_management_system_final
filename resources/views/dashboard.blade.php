@@ -707,7 +707,7 @@
                             </div>
                         </div>
                         <div class="row g-1 form-row align-items-start mt-1">
-                            <div class="col-md-2" style="margin-top: -4px; margin-bottom: 2px; max-width: 120px;">
+                            <div class="col-md-2" style="margin-top: -4px; margin-bottom: 6px; max-width: 120px;">
                                 <input type="text" name="customer_code" id="new_customer_code"
                                     class="form-control text-uppercase @error('customer_code') is-invalid @enderror"
                                     value="{{ old('customer_code') }}" placeholder="පාරිභෝගික කේතය"
@@ -719,7 +719,7 @@
                             </div>
 
                             <div class="row">
-                                <div class="col-md-9 mb-1" style="margin-bottom: 2px;">
+                                <div class="col-md-12 mb-1" style="margin-bottom: 2px;">
                                     <input type="text" id="grn_display" class="form-control"
                                         placeholder="Select GRN Entry..." readonly
                                         style="height: 45px; font-size: 16px; padding: 8px 16px; display: none; text-align: center !important; border: 1px solid black; color: black;">
@@ -743,18 +743,7 @@
                                     </select>
                                 </div>
 
-                                <div class="col-md-3 mb-1">
-                                    <label for="item_name_display_from_grn" class="form-label visually-hidden">Item
-                                        Name</label>
-                                    <input type="text" id="item_name_display_from_grn" class="form-control" readonly
-                                        placeholder="අයිතමයේ නම (Item Name)"
-                                        style="background-color: #e9ecef; color: black; height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black;">
-                                </div>
-
-                                <input type="hidden" name="code" id="code" value="{{ old('code') }}">
-                                <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
-                                <input type="hidden" name="original_weight" id="original_weight_input">
-                                <input type="hidden" name="original_packs" id="original_packs_input">
+                               
                             </div>
 
                             <input type="hidden" name="customer_name" id="customer_name_hidden"
@@ -800,60 +789,57 @@
                             </div>
                         </div>
 
-                        <div class="row g-2 form-row align-items-start">
-                            {{-- Weight --}}
-                            <div class="col-md-3 mb-1">
-                                <input type="number" name="weight" id="weight" step="0.01"
-                                    class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
-                                    placeholder="බර (kg)" required
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black;">
-                                @error('weight')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <small id="remaining_weight_display" class="form-text"
-                                    style="font-size: 1rem; margin-top: 2px; color: red; font-weight: 600;">
-                                    Remaining: 0.00 kg
-                                </small>
-                            </div>
+                   <div class="d-flex flex-wrap gap-2 align-items-start">
 
-                            {{-- Price per KG --}}
-                            <div class="col-md-3 mb-1">
-                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-                                    class="form-control @error('price_per_kg') is-invalid @enderror"
-                                    value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black;">
-                                @error('price_per_per_kg')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+    <!-- Item Name -->
+    <div style="flex: 1 1 100px;">
+        <input type="text" id="item_name_display_from_grn" class="form-control" readonly
+            placeholder="අයිතමයේ නම (Item Name)"
+            style="background-color: #e9ecef; color: black; height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black;">
+    </div>
 
-                            {{-- Total --}}
-                            <div class="col-md-3 mb-1">
-                                <input type="number" name="total" id="total"
-                                    class="form-control bg-light @error('total') is-invalid @enderror"
-                                    value="{{ old('total') }}" placeholder="සමස්ත (Total)" readonly
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black;">
-                                @error('total')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+    <!-- Weight -->
+    <div style="flex: 1 1 120px;">
+        <input type="number" name="weight" id="weight" step="0.01"
+            class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
+            placeholder="බර (kg)" required
+            style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+        <small id="remaining_weight_display" class="form-text text-danger fw-bold"
+            style="font-size: 0.85rem;">Remaining: 0.00 kg</small>
+    </div>
 
-                            {{-- Packs --}}
-                            <div class="col-md-3 mb-1">
-                                <input type="number" name="packs" id="packs"
-                                    class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
-                                    placeholder="ඇසුරුම් (Packs)" required
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black;">
-                                @error('packs')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <small id="remaining_packs_display" class="form-text"
-                                    style="font-size: 1rem; margin-top: 2px; color: red; font-weight: 600;">
+    <!-- Price per KG -->
+    <div style="flex: 1 1 120px;">
+        <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+            class="form-control @error('price_per_kg') is-invalid @enderror" value="{{ old('price_per_kg') }}"
+            placeholder="මිල (Price/kg)" required
+            style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+    </div>
 
-                                    Remaining Packs: 0
-                                </small>
-                            </div>
-                        </div>
+    <!-- Total -->
+    <div style="flex: 1 1 100px;">
+        <input type="number" name="total" id="total" readonly
+            class="form-control bg-light @error('total') is-invalid @enderror" value="{{ old('total') }}"
+            placeholder="සමස්ත (Total)"
+            style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+    </div>
+
+    <!-- Packs -->
+    <div style="flex: 1 1 120px;">
+        <input type="number" name="packs" id="packs"
+            class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
+            placeholder="ඇසුරුම් (Packs)" required
+            style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+        <small id="remaining_packs_display" class="form-text text-danger fw-bold"
+            style="font-size: 0.85rem;">Remaining Packs: 0</small>
+    </div>
+</div>
+
+<!-- Hidden fields -->
+<input type="hidden" name="code" id="code" value="{{ old('code') }}">
+<input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
+<input type="hidden" name="original_weight" id="original_weight_input">
+<input type="hidden" name="original_packs" id="original_packs_input">
 
 
 
