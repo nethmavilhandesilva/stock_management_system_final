@@ -1422,12 +1422,85 @@
                     });
                 </script>
                 {{-- TYPING THE CUSTOMER_CODE AND FETCHING UNPRINTED SALES --}}
-                 <script>
-    $(document).ready(function() {
+               <!-- First script block: Define globally accessible functions -->
+<script>
+    function populateFormForEdit(sale) {
+        console.log("Populating form for sale:", sale);
+
+        saleIdField.value = sale.id;
+        newCustomerCodeField.value = sale.customer_code || '';
+        customerNameField.value = sale.customer_name || '';
+        
+        if (sale.customer_code) {
+            $('#customer_code_select').val(sale.customer_code).trigger('change.select2');
+            console.log("Setting customer_code_select to:", sale.customer_code);
+        } else {
+            $('#customer_code_select').val(null).trigger('change.select2');
+            console.log("Clearing customer_code_select.");
+        }
+
+        // --- NEW LOGIC TO POPULATE GRN FIELDS ---
+        const grnDisplay = document.getElementById('grn_display');
+        grnDisplay.style.display = 'block';
+        grnDisplay.value = sale.code || '';
+
+        const grnSelect = document.getElementById('grn_select');
+        $(grnSelect).next('.select2-container').hide();
+
+        console.log("Setting grn_display to:", grnDisplay.value);
+
+        const grnOption = $('#grn_select option').filter(function () {
+            return $(this).val() === sale.code &&
+                $(this).data('supplierCode') === sale.supplier_code &&
+                $(this).data('itemCode') === sale.item_code;
+        });
+
+        if (grnOption.length) {
+            $('#grn_select').val(grnOption.val());
+            console.log("Setting grn_select to:", grnOption.val());
+        } else {
+            $('#grn_select').val(null);
+            console.log("Clearing grn_select.");
+        }
+        // --- END OF GRN LOGIC ---
+
+        supplierSelect.value = sale.supplier_code || '';
+        supplierDisplaySelect.value = sale.supplier_code || '';
+        itemSelect.value = sale.item_code || '';
+        itemSelect.dispatchEvent(new Event('change'));
+        console.log("Setting supplier_code to:", sale.supplier_code, "and item_select to:", sale.item_code);
+
+        itemNameDisplayFromGrn.value = sale.item_name || '';
+        itemNameField.value = sale.item_name || '';
+        console.log("Setting item name display to:", itemNameDisplayFromGrn.value);
+
+        weightField.value = parseFloat(sale.weight || 0).toFixed(2);
+        pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+        packsField.value = parseInt(sale.packs || 0);
+        calculateTotal();
+
+        console.log("Weight:", weightField.value, "Price:", pricePerKgField.value, "Packs:", packsField.value);
+
+        salesEntryForm.action = `sales/update/${sale.id}`;
+        console.log("Form action set to:", salesEntryForm.action);
+
+        addSalesEntryBtn.style.display = 'none';
+        updateSalesEntryBtn.style.display = 'inline-block';
+        deleteSalesEntryBtn.style.display = 'inline-block';
+        cancelEntryBtn.style.display = 'inline-block';
+        console.log("Buttons updated for edit mode.");
+    }
+
+   
+</script>
+
+<!-- Second script block: Main logic -->
+<script>
+    $(document).ready(function () {
         // Debounce function to delay execution until the user stops typing
         function debounce(func, delay) {
             let timeout;
-            return function(...args) {
+            return function (...args) {
                 const context = this;
                 clearTimeout(timeout);
                 timeout = setTimeout(() => func.apply(context, args), delay);
@@ -1439,32 +1512,42 @@
             let tableBody = $('#mainSalesTableBody');
             tableBody.empty(); // Clear the table body first
             $('#customer_name').val('');
-           
 
             if (customerCode) {
-                // Fetch unprinted sales data
                 $.ajax({
                     url: '/api/sales/unprinted/' + customerCode,
                     method: 'GET',
-                    success: function(response) {
+                    success: function (response) {
                         if (response.length > 0) {
-                            response.forEach(function(sale) {
-                                let row = `<tr>
-                                            <td>${sale.code}</td>
-                                            <td>${sale.item_code}</td>
-                                            <td>${sale.item_name}</td>
-                                            <td>${sale.weight}</td>
-                                            <td>${sale.price_per_kg}</td>
-                                            <td>${sale.total}</td>
-                                            <td>${sale.packs}</td>
-                                        </tr>`;
+                            response.forEach(function (sale) {
+                                let row = $(`
+                                    <tr>
+                                        <td>${sale.code}</td>
+                                        <td>${sale.item_code}</td>
+                                        <td>${sale.item_name}</td>
+                                        <td>${sale.weight}</td>
+                                        <td>${sale.price_per_kg}</td>
+                                        <td>${sale.total}</td>
+                                        <td>${sale.packs}</td>
+                                    </tr>
+                                `);
+
+                                // Click handler to populate form with selected row
+                                row.on('click', function () {
+                                    populateFormForEdit(sale);
+                                });
+
                                 tableBody.append(row);
                             });
+
+                            // Populate table + auto-fill form with first entry
+                            populateMainSalesTable(response);
+                            populateFormForEdit(response[0]);
                         } else {
                             tableBody.html('<tr><td colspan="7" class="text-center">No unprinted sales records found for this customer.</td></tr>');
                         }
                     },
-                    error: function(xhr) {
+                    error: function (xhr) {
                         console.error("AJAX Error fetching sales records:", xhr.responseText);
                         tableBody.html('<tr><td colspan="7" class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
                     }
@@ -1474,18 +1557,13 @@
             }
         }
 
-        // Event listener for the customer code input field on 'keyup'
         const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
-        $('#new_customer_code').on('keyup', function() {
+        $('#new_customer_code').on('keyup', function () {
             let customerCode = $(this).val().trim();
             debouncedFetchUnprintedSales(customerCode);
         });
     });
 </script>
-
-
-
-
 
                 {{-- ALL Custom JavaScript Consolidated Here --}}
                 <script>
