@@ -211,14 +211,14 @@
         /* If you want to reduce the size of the toggler icon on mobile */
         /* This is less common but can be done */
         /*
-                                                                                                            .navbar.navbar-compact .navbar-toggler {
-                                                                                                                padding: 0.25rem 0.5rem !important;
-                                                                                                            }
-                                                                                                            .navbar.navbar-compact .navbar-toggler-icon {
-                                                                                                                width: 1.2em !important;
-                                                                                                                height: 1.2em !important;
-                                                                                                            }
-                                                                                                            */
+                                                                                                                .navbar.navbar-compact .navbar-toggler {
+                                                                                                                    padding: 0.25rem 0.5rem !important;
+                                                                                                                }
+                                                                                                                .navbar.navbar-compact .navbar-toggler-icon {
+                                                                                                                    width: 1.2em !important;
+                                                                                                                    height: 1.2em !important;
+                                                                                                                }
+                                                                                                                */
     </style>
 @endsection
 
@@ -228,7 +228,7 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     {{-- REQUIRED: Minimal inline styling for the new section's appearance and collapse functionality --}}
-    
+
     <style>
         .printed-sales-list ul,
         .unprinted-sales-list ul {
@@ -340,7 +340,7 @@
             flex-wrap: wrap;
             gap: 1rem;
             align-items: flex-end;
-            
+
         }
 
         .form-row>div {
@@ -635,12 +635,13 @@
                         <div class="alert alert-info text-center">No printed sales records found.</div>
                     @endif
                 </div>
-                <form action="{{ route('clear.data') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete all data?');">
-    @csrf
-    <button type="submit" class="btn btn-danger mt-3">🗑️ Delete All Sales & GRN Entries</button>
-</form>
+                <form action="{{ route('clear.data') }}" method="POST"
+                    onsubmit="return confirm('Are you sure you want to delete all data?');">
+                    @csrf
+                    <button type="submit" class="btn btn-danger mt-3">🗑️ Delete All Sales & GRN Entries</button>
+                </form>
             </div>
-            
+
 
 
             {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
@@ -743,7 +744,7 @@
                                     </select>
                                 </div>
 
-                               
+
                             </div>
 
                             <input type="hidden" name="customer_name" id="customer_name_hidden"
@@ -789,57 +790,58 @@
                             </div>
                         </div>
 
-                   <div class="d-flex flex-wrap gap-2 align-items-start">
+                        <div class="d-flex flex-wrap gap-2 align-items-start">
 
-    <!-- Item Name -->
-    <div style="flex: 1 1 100px;">
-        <input type="text" id="item_name_display_from_grn" class="form-control" readonly
-            placeholder="අයිතමයේ නම (Item Name)"
-            style="background-color: #e9ecef; color: black; height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black;">
-    </div>
+                            <!-- Item Name -->
+                            <div style="flex: 1 1 100px;">
+                                <input type="text" id="item_name_display_from_grn" class="form-control" readonly
+                                    placeholder="අයිතමයේ නම (Item Name)"
+                                    style="background-color: #e9ecef; color: black; height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black;">
+                            </div>
 
-    <!-- Weight -->
-    <div style="flex: 1 1 120px;">
-        <input type="number" name="weight" id="weight" step="0.01"
-            class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
-            placeholder="බර (kg)" required
-            style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
-        <small id="remaining_weight_display" class="form-text text-danger fw-bold"
-            style="font-size: 0.85rem;">Remaining: 0.00 kg</small>
-    </div>
+                            <!-- Weight -->
+                            <div style="flex: 1 1 120px;">
+                                <input type="number" name="weight" id="weight" step="0.01"
+                                    class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
+                                    placeholder="බර (kg)" required
+                                    style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+                                <small id="remaining_weight_display" class="form-text text-danger fw-bold"
+                                    style="font-size: 0.85rem;">Remaining: 0.00 kg</small>
+                            </div>
 
-    <!-- Price per KG -->
-    <div style="flex: 1 1 120px;">
-        <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-            class="form-control @error('price_per_kg') is-invalid @enderror" value="{{ old('price_per_kg') }}"
-            placeholder="මිල (Price/kg)" required
-            style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
-    </div>
+                            <!-- Price per KG -->
+                            <div style="flex: 1 1 120px;">
+                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+                                    class="form-control @error('price_per_kg') is-invalid @enderror"
+                                    value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
+                                    style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+                            </div>
 
-    <!-- Total -->
-    <div style="flex: 1 1 100px;">
-        <input type="number" name="total" id="total" readonly
-            class="form-control bg-light @error('total') is-invalid @enderror" value="{{ old('total') }}"
-            placeholder="සමස්ත (Total)"
-            style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
-    </div>
 
-    <!-- Packs -->
-    <div style="flex: 1 1 120px;">
-        <input type="number" name="packs" id="packs"
-            class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
-            placeholder="ඇසුරුම් (Packs)" required
-            style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
-        <small id="remaining_packs_display" class="form-text text-danger fw-bold"
-            style="font-size: 0.85rem;">Remaining Packs: 0</small>
-    </div>
-</div>
 
-<!-- Hidden fields -->
-<input type="hidden" name="code" id="code" value="{{ old('code') }}">
-<input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
-<input type="hidden" name="original_weight" id="original_weight_input">
-<input type="hidden" name="original_packs" id="original_packs_input">
+                            <!-- Packs -->
+                            <div style="flex: 1 1 120px;">
+                                <input type="number" name="packs" id="packs"
+                                    class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
+                                    placeholder="ඇසුරුම් (Packs)" required
+                                    style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+                                <small id="remaining_packs_display" class="form-text text-danger fw-bold"
+                                    style="font-size: 0.85rem;">Remaining Packs: 0</small>
+                            </div>
+                            <!-- Total -->
+                            <div style="flex: 1 1 100px;">
+                                <input type="number" name="total" id="total" readonly
+                                    class="form-control bg-light @error('total') is-invalid @enderror"
+                                    value="{{ old('total') }}" placeholder="සමස්ත (Total)"
+                                    style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields -->
+                        <input type="hidden" name="code" id="code" value="{{ old('code') }}">
+                        <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
+                        <input type="hidden" name="original_weight" id="original_weight_input">
+                        <input type="hidden" name="original_packs" id="original_packs_input">
 
 
 
@@ -872,43 +874,38 @@
 
 
                         <div class="table-responsive">
-        
-    <style>
-        /*
-         * This custom CSS rule is highly specific and uses !important to
-         * ensure it overrides any conflicting Bootstrap or other framework styles.
-         * It targets both the table rows (tr) and the table cells (td) within
-         * the tbody with the ID 'mainSalesTableBody'.
-         */
-        #mainSalesTableBody tr,
-        #mainSalesTableBody td {
-            background-color: black !important;
-            color: white !important;
-        }
-    </style>
-    <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
-        style="font-size: 0.85rem; margin-top: -10px;">
 
-        <thead style="background-color: white; color: black;">
-            <tr>
-                <th scope="col">කේතය</th>
-                <th scope="col">අයිතම කේතය</th>
-                <th scope="col">අයිතමය</th>
-                <th scope="col">බර (kg)</th>
-                <th scope="col">මිල/කිලෝග්‍රෑමය</th>
-                <th scope="col">සමස්ත</th>
-                <th scope="col">මලු</th>
-            </tr>
-        </thead>
-        <tbody id="mainSalesTableBody">
-            {{-- This tbody will be dynamically populated by JavaScript. --}}
-            {{-- IMPORTANT: Ensure your JavaScript populating this table adds 'data-sale-id',
-            'data-customer-code', and 'data-customer-name' attributes to each <tr> --}}
-            {{-- Example:
-            <tr data-sale-id="123" data-customer-code="CUST001" data-customer-name="John Doe">...
-            </tr> --}}
-        </tbody>
-    </table>
+                            <style>
+                            
+                                #mainSalesTableBody tr,
+                                #mainSalesTableBody td {
+                                    background-color: black !important;
+                                    color: white !important;
+                                }
+                            </style>
+                            <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
+                                style="font-size: 0.85rem; margin-top: -10px;">
+
+                                <thead style="background-color: white; color: black;">
+                                    <tr>
+                                        <th scope="col">කේතය</th>
+                                        <th scope="col">අයිතම කේතය</th>
+                                        <th scope="col">අයිතමය</th>
+                                        <th scope="col">බර (kg)</th>
+                                        <th scope="col">මිල/කිලෝග්‍රෑමය</th>
+                                        <th scope="col">සමස්ත</th>
+                                        <th scope="col">මලු</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mainSalesTableBody">
+                                    {{-- This tbody will be dynamically populated by JavaScript. --}}
+                                    {{-- IMPORTANT: Ensure your JavaScript populating this table adds 'data-sale-id',
+                                    'data-customer-code', and 'data-customer-name' attributes to each <tr> --}}
+                                        {{-- Example:
+                                    <tr data-sale-id="123" data-customer-code="CUST001" data-customer-name="John Doe">...
+                                    </tr> --}}
+                                </tbody>
+                            </table>
 
                             <h5 class="text-end mb-3" style="font-size: 1.5rem; color: red;">
                                 <strong>Total Sales Value:</strong> Rs. <span
@@ -1522,18 +1519,18 @@
 
                                 // Construct the HTML for the tabular display for each row (data row only)
                                 const $result = $(`
-                                                                                                                                                                                            <div class="grn-option-row">
-                                                                                                                                                                                                <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-                                                                                                                                                                                                <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
-                                                                                                                                                                                                 <div class="grn-column grn-supplier-code">${originalWeight || ''}</div>
-                                                                                                                                                                                                  <div class="grn-column grn-supplier-code">${originalPacks || ''}</div>
+                                                                                                                                                                                                <div class="grn-option-row">
+                                                                                                                                                                                                    <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+                                                                                                                                                                                                    <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
+                                                                                                                                                                                                     <div class="grn-column grn-supplier-code">${originalWeight || ''}</div>
+                                                                                                                                                                                                      <div class="grn-column grn-supplier-code">${originalPacks || ''}</div>
 
-                                                                                                                                                                                                <div class="grn-column grn-grn-no">${weight || ''}</div>
-                                                                                                                                                                                                <div class="grn-column grn-packs">${packs || 0}</div>
+                                                                                                                                                                                                    <div class="grn-column grn-grn-no">${weight || ''}</div>
+                                                                                                                                                                                                    <div class="grn-column grn-packs">${packs || 0}</div>
 
-                                                                                                                                                                                                <div class="grn-column grn-txn-date">${txnDate || ''}</div>
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                        `);
+                                                                                                                                                                                                    <div class="grn-column grn-txn-date">${txnDate || ''}</div>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                            `);
                                 return $result;
                             },
                             templateSelection: function (data) {
@@ -1579,19 +1576,19 @@
                                 console.log("Header not found, creating and prepending."); // Debugging log
 
                                 const $headerWrapper = $(`
-                                                                                                                                                                                            <div class="grn-header-row-wrapper">
-                                                                                                                                                                                                <div class="grn-option-row grn-header-row">
-                                                                                                                                                                                                    <div class="grn-column grn-code">Code</div>
-                                                                                                                                                                                                    <div class="grn-column grn-supplier-code">Sup...</div>
-                                                                                                                                                                                                     <div class="grn-column grn-supplier-code">Original Weight</div>
-                                                                                                                                                                                                      <div class="grn-column grn-supplier-code">Original Packs</div>
-                                                                                                                                                                                                     <div class="grn-column grn-grn-no">Remaining Weight</div>
-                                                                                                                                                                                                    <div class="grn-column grn-packs"> Remaining Packs</div>
+                                                                                                                                                                                                <div class="grn-header-row-wrapper">
+                                                                                                                                                                                                    <div class="grn-option-row grn-header-row">
+                                                                                                                                                                                                        <div class="grn-column grn-code">Code</div>
+                                                                                                                                                                                                        <div class="grn-column grn-supplier-code">Sup...</div>
+                                                                                                                                                                                                         <div class="grn-column grn-supplier-code">Original Weight</div>
+                                                                                                                                                                                                          <div class="grn-column grn-supplier-code">Original Packs</div>
+                                                                                                                                                                                                         <div class="grn-column grn-grn-no">Remaining Weight</div>
+                                                                                                                                                                                                        <div class="grn-column grn-packs"> Remaining Packs</div>
 
-                                                                                                                                                                                                    <div class="grn-column grn-txn-date">Date</div>
+                                                                                                                                                                                                        <div class="grn-column grn-txn-date">Date</div>
+                                                                                                                                                                                                    </div>
                                                                                                                                                                                                 </div>
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                        `);
+                                                                                                                                                                                            `);
 
                                 // Prepend the header wrapper to the .select2-results element
                                 // This puts it before the <ul> which contains the actual options
@@ -1781,7 +1778,7 @@
 
                                 $('#grn_select').select2('open');
                             @endif
-                                                                                                                                                                                });
+                                                                                                                                                                                    });
                         function populateSalesTable(salesArray) {
                             const tableBody = document.getElementById('mainSalesTableBody');
                             tableBody.innerHTML = ''; // Clear existing rows
@@ -1799,174 +1796,174 @@
                                 row.setAttribute('data-customer-name', sale.customer_name || 'N/A'); // Ensure customer_name exists
 
                                 row.innerHTML = `
-                                                                                                                                                                                    <td>${sale.code}</td>
-                                                                                                                                                                                    <td>${sale.item_code}</td>
-                                                                                                                                                                                    <td>${sale.item_name}</td>
-                                                                                                                                                                                    <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                                                                                                                                                                                    <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                                                                                                                                                                                    <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                                                                                                                                                                                    <td>${sale.packs}</td>
-                                                                                                                                                                                `;
+                                                                                                                                                                                        <td>${sale.code}</td>
+                                                                                                                                                                                        <td>${sale.item_code}</td>
+                                                                                                                                                                                        <td>${sale.item_name}</td>
+                                                                                                                                                                                        <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                                                                                                                                                                                        <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                                                                                                                                                                                        <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                                                                                                                                                                                        <td>${sale.packs}</td>
+                                                                                                                                                                                    `;
                                 tableBody.appendChild(row);
                             });
                         }
 
 
-               document.addEventListener('keydown', function (e) {
-    if (e.key === "F1") {
-        e.preventDefault();
+                        document.addEventListener('keydown', function (e) {
+                            if (e.key === "F1") {
+                                e.preventDefault();
 
-        const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-        if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-            alert('No sales records in the table to print!');
-            return;
-        }
+                                const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+                                if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+                                    alert('No sales records in the table to print!');
+                                    return;
+                                }
 
-        const salesData = [];
-        tableRows.forEach(row => {
-            if (row.hasAttribute('data-sale-id')) {
-                const cells = row.querySelectorAll('td');
-                salesData.push({
-                    id: row.getAttribute('data-sale-id'),
-                    customer_code: row.getAttribute('data-customer-code'),
-                    customer_name: row.getAttribute('data-customer-name'),
-                    mobile: row.getAttribute('data-customer-mobile') || '',
-                    code: cells[0]?.textContent.trim() || '',
-                    item_code: cells[1]?.textContent.trim() || '',
-                    item_name: cells[2]?.textContent.trim() || '',
-                    weight: parseFloat(cells[3]?.textContent) || 0,
-                    price_per_kg: parseFloat(cells[4]?.textContent) || 0,
-                    total: parseFloat(cells[5]?.textContent) || 0,
-                    packs: parseInt(cells[6]?.textContent) || 0
-                });
-            }
-        });
+                                const salesData = [];
+                                tableRows.forEach(row => {
+                                    if (row.hasAttribute('data-sale-id')) {
+                                        const cells = row.querySelectorAll('td');
+                                        salesData.push({
+                                            id: row.getAttribute('data-sale-id'),
+                                            customer_code: row.getAttribute('data-customer-code'),
+                                            customer_name: row.getAttribute('data-customer-name'),
+                                            mobile: row.getAttribute('data-customer-mobile') || '',
+                                            code: cells[0]?.textContent.trim() || '',
+                                            item_code: cells[1]?.textContent.trim() || '',
+                                            item_name: cells[2]?.textContent.trim() || '',
+                                            weight: parseFloat(cells[3]?.textContent) || 0,
+                                            price_per_kg: parseFloat(cells[4]?.textContent) || 0,
+                                            total: parseFloat(cells[5]?.textContent) || 0,
+                                            packs: parseInt(cells[6]?.textContent) || 0
+                                        });
+                                    }
+                                });
 
-        if (!salesData.length) {
-            alert('No printable sales records found!');
-            return;
-        }
+                                if (!salesData.length) {
+                                    alert('No printable sales records found!');
+                                    return;
+                                }
 
-        const salesByCustomer = salesData.reduce((acc, sale) => {
-            (acc[sale.customer_code] ||= []).push(sale);
-            return acc;
-        }, {});
-        const customerCode = Object.keys(salesByCustomer)[0];
-        const customerSales = salesByCustomer[customerCode];
-       const customerName = customerSales[0].customer_code || 'N/A';
-        const mobile = customerSales[0]?.mobile || '-';
-        const billNo = Math.floor(1000 + Math.random() * 9000).toString();
-        const date = new Date().toLocaleDateString();
-        const time = new Date().toLocaleTimeString();
+                                const salesByCustomer = salesData.reduce((acc, sale) => {
+                                    (acc[sale.customer_code] ||= []).push(sale);
+                                    return acc;
+                                }, {});
+                                const customerCode = Object.keys(salesByCustomer)[0];
+                                const customerSales = salesByCustomer[customerCode];
+                                const customerName = customerSales[0].customer_code || 'N/A';
+                                const mobile = customerSales[0]?.mobile || '-';
+                                const billNo = Math.floor(1000 + Math.random() * 9000).toString();
+                                const date = new Date().toLocaleDateString();
+                                const time = new Date().toLocaleTimeString();
 
-        let totalAmountSum = 0;
-        const salesIds = [];
+                                let totalAmountSum = 0;
+                                const salesIds = [];
 
-        const itemsHtml = customerSales.map(sale => {
-            totalAmountSum += sale.total;
-            salesIds.push(sale.id);
-            return `
-                <tr>
-                    <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
-                    <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
-                    <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
-                    <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
-                </tr>
-            `;
-        }).join('');
+                                const itemsHtml = customerSales.map(sale => {
+                                    totalAmountSum += sale.total;
+                                    salesIds.push(sale.id);
+                                    return `
+                    <tr>
+                        <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
+                        <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
+                        <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
+                        <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
+                    </tr>
+                `;
+                                }).join('');
 
-        const receiptHtml = `
-            <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
-                <div class="company-info" style="text-align: center; margin-bottom: 5px;">
-                    <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;">
-                        <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
-                    </h3>
-                    <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
-                    <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
-                </div>
+                                const receiptHtml = `
+                <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
+                    <div class="company-info" style="text-align: center; margin-bottom: 5px;">
+                        <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;">
+                            <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
+                        </h3>
+                        <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
+                        <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
+                    </div>
 
-                <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                        <tr>
-                            <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
-                            <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
-                            <td colspan="2" style="text-align: right; padding: 0;">
-                                <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-
-                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
-
-                <div class="items-section">
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                        <thead>
+                    <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
+                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
                             <tr>
-                                <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
-                                <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
-                                <th style="text-align: right; padding: 2px 0;">මිල</th>
-                                <th style="text-align: right; padding: 2px 0;">අගය</th>
+                                <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
+                                <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td colspan="4"><div style="height: 4px; background-color: black; margin: 5px 0;"></div></td></tr>
-                            ${itemsHtml}
-                        </tbody>
-                    </table>
+                            <tr>
+                                <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
+                                <td colspan="2" style="text-align: right; padding: 0;">
+                                    <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+
+                    <div class="items-section">
+                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
+                                    <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
+                                    <th style="text-align: right; padding: 2px 0;">මිල</th>
+                                    <th style="text-align: right; padding: 2px 0;">අගය</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="4"><div style="height: 4px; background-color: black; margin: 5px 0;"></div></td></tr>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+
+                    <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
+                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                            <tr>
+                                <td colspan="3" style="text-align: left; padding: 0;">අගය :</td>
+                                <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
+                                    ${totalAmountSum.toFixed(2)}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+
+                    <div class="footer-section" style="text-align: center; margin-top: 10px;">
+                        <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                        <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
+                    </div>
                 </div>
+            `;
 
-                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
-
-                <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                        <tr>
-                            <td colspan="3" style="text-align: left; padding: 0;">අගය :</td>
-                            <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
-                                ${totalAmountSum.toFixed(2)}
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-
-                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
-
-                <div class="footer-section" style="text-align: center; margin-top: 10px;">
-                    <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                    <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
-                </div>
-            </div>
-        `;
-
-        printReceipt(receiptHtml, customerName, () => {
-            if (salesIds.length) {
-                fetch("{{ route('sales.markAsPrinted') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    console.log("Marked printed:", data);
-                    sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                    window.location.reload();
-                })
-                .catch(err => {
-                    console.error("Print marking failed:", err);
-                    alert('Failed to mark sales as printed.');
-                });
-            }
-        });
-    }
+                                printReceipt(receiptHtml, customerName, () => {
+                                    if (salesIds.length) {
+                                        fetch("{{ route('sales.markAsPrinted') }}", {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                            },
+                                            body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
+                                        })
+                                            .then(res => res.json())
+                                            .then(data => {
+                                                console.log("Marked printed:", data);
+                                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                                                window.location.reload();
+                                            })
+                                            .catch(err => {
+                                                console.error("Print marking failed:", err);
+                                                alert('Failed to mark sales as printed.');
+                                            });
+                                    }
+                                });
+                            }
 
 
 
@@ -2010,150 +2007,150 @@
                                     });
                             }
                         });
-                     function printReceipt(salesContent, customerName, onCompleteCallback) {
-    const printWindow = window.open('', '', 'width=300,height=600');
+                        function printReceipt(salesContent, customerName, onCompleteCallback) {
+                            const printWindow = window.open('', '', 'width=300,height=600');
 
-    printWindow.document.write(`
-        <html>
-            <head>
-                <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-                    body {
-                        font-family: 'Noto Sans Sinhala', sans-serif;
-                        margin: 0;
-                        padding: 5mm;
-                        font-size: 10px;
-                        line-height: 1.2;
-                        overflow: hidden;
-                    }
-                    .receipt-container {
-                        width: 100%;
-                        max-width: 70mm;
-                        margin-left: 0;
-                        margin-right: auto;
-                        border: none;
-                        padding: 0;
-                        text-align: left;
-                    }
-                    .company-info {
-                        text-align: left;
-                        margin-bottom: 5px;
-                    }
-                    .company-info h3 {
-                        font-size: 1.2em;
-                        margin-bottom: 2px;
-                        font-weight: bold;
-                    }
-                    .company-info p {
-                        margin: 0;
-                        line-height: 1.2;
-                    }
-                    .bill-details, .summary-section, .footer-section {
-                        text-align: left;
-                        margin-bottom: 5px;
-                    }
-                    .bill-details p, .summary-section p {
-                        margin: 0;
-                        line-height: 1.2;
-                        display: flex;
-                        justify-content: space-between;
-                    }
-                    .bill-details p span:first-child, .summary-section p span:first-child {
-                        text-align: left;
-                        font-weight: normal;
-                    }
-                    .bill-details p span:last-child, .summary-section p span:last-child {
-                        text-align: right;
-                        font-weight: bold;
-                    }
-                    .customer-name-on-bill {
-                        text-align: left;
-                        font-weight: bold;
-                        margin-top: 5px;
-                    }
-                    .divider {
-                        border-top: 1px dashed #000;
-                        margin: 8px 0;
-                    }
-                    .items-section table {
-                        width: 100%;
-                        border-bottom: none;
-                        font-size: 10px;
-                    }
-                    .items-section th, .items-section td {
-                        padding: 2px 0;
-                        text-align: right;
-                        border-bottom: none;
-                    }
-                    .items-section th {
-                        font-weight: bold;
-                        text-align: center;
-                    }
-                    .col-item {
-                        text-align: left;
-                        width: 40%;
-                    }
-                    .col-qty {
-                        width: 20%;
-                    }
-                    .col-rate {
-                        width: 20%;
-                    }
-                    .col-value {
-                        width: 20%;
-                    }
-                    .grand-total {
-                        font-size: 1.1em;
-                        font-weight: bold;
-                    }
-                    .footer-section {
-                        text-align: left;
-                        margin-top: 10px;
-                    }
-                    .footer-section p {
-                        margin: 0;
-                        line-height: 1.2;
-                    }
-                    hr {
-                        display: block;
-                        height: 1px;
-                        background: transparent;
-                        width: 100%;
-                        border: none;
-                        border-top: solid 2px #000 !important;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="receipt-container">
-                    ${salesContent}
-                </div>
-            </body>
-        </html>
-    `);
+                            printWindow.document.write(`
+            <html>
+                <head>
+                    <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+                        body {
+                            font-family: 'Noto Sans Sinhala', sans-serif;
+                            margin: 0;
+                            padding: 5mm;
+                            font-size: 10px;
+                            line-height: 1.2;
+                            overflow: hidden;
+                        }
+                        .receipt-container {
+                            width: 100%;
+                            max-width: 70mm;
+                            margin-left: 0;
+                            margin-right: auto;
+                            border: none;
+                            padding: 0;
+                            text-align: left;
+                        }
+                        .company-info {
+                            text-align: left;
+                            margin-bottom: 5px;
+                        }
+                        .company-info h3 {
+                            font-size: 1.2em;
+                            margin-bottom: 2px;
+                            font-weight: bold;
+                        }
+                        .company-info p {
+                            margin: 0;
+                            line-height: 1.2;
+                        }
+                        .bill-details, .summary-section, .footer-section {
+                            text-align: left;
+                            margin-bottom: 5px;
+                        }
+                        .bill-details p, .summary-section p {
+                            margin: 0;
+                            line-height: 1.2;
+                            display: flex;
+                            justify-content: space-between;
+                        }
+                        .bill-details p span:first-child, .summary-section p span:first-child {
+                            text-align: left;
+                            font-weight: normal;
+                        }
+                        .bill-details p span:last-child, .summary-section p span:last-child {
+                            text-align: right;
+                            font-weight: bold;
+                        }
+                        .customer-name-on-bill {
+                            text-align: left;
+                            font-weight: bold;
+                            margin-top: 5px;
+                        }
+                        .divider {
+                            border-top: 1px dashed #000;
+                            margin: 8px 0;
+                        }
+                        .items-section table {
+                            width: 100%;
+                            border-bottom: none;
+                            font-size: 10px;
+                        }
+                        .items-section th, .items-section td {
+                            padding: 2px 0;
+                            text-align: right;
+                            border-bottom: none;
+                        }
+                        .items-section th {
+                            font-weight: bold;
+                            text-align: center;
+                        }
+                        .col-item {
+                            text-align: left;
+                            width: 40%;
+                        }
+                        .col-qty {
+                            width: 20%;
+                        }
+                        .col-rate {
+                            width: 20%;
+                        }
+                        .col-value {
+                            width: 20%;
+                        }
+                        .grand-total {
+                            font-size: 1.1em;
+                            font-weight: bold;
+                        }
+                        .footer-section {
+                            text-align: left;
+                            margin-top: 10px;
+                        }
+                        .footer-section p {
+                            margin: 0;
+                            line-height: 1.2;
+                        }
+                        hr {
+                            display: block;
+                            height: 1px;
+                            background: transparent;
+                            width: 100%;
+                            border: none;
+                            border-top: solid 2px #000 !important;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-container">
+                        ${salesContent}
+                    </div>
+                </body>
+            </html>
+        `);
 
-    printWindow.document.close();
-    printWindow.focus();
+                            printWindow.document.close();
+                            printWindow.focus();
 
-    // Give it time to render styles, then print
-    setTimeout(() => {
-        printWindow.print();
+                            // Give it time to render styles, then print
+                            setTimeout(() => {
+                                printWindow.print();
 
-        // Auto-close after 10 seconds
-        setTimeout(() => {
-            if (!printWindow.closed) {
-                printWindow.close();
-            }
-            if (typeof onCompleteCallback === 'function') {
-                onCompleteCallback();
-            }
-        }, 00000);
-    }, 500);
-}
+                                // Auto-close after 10 seconds
+                                setTimeout(() => {
+                                    if (!printWindow.closed) {
+                                        printWindow.close();
+                                    }
+                                    if (typeof onCompleteCallback === 'function') {
+                                        onCompleteCallback();
+                                    }
+                                }, 00000);
+                            }, 500);
+                        }
 
 
-                        
+
 
                         // New event listener for page refresh or window close
                         document.addEventListener('DOMContentLoaded', function () {
@@ -2210,16 +2207,16 @@
                                 salesArray.forEach(sale => {
                                     // Construct the row HTML string, ensuring data-id, data-customer-code, data-customer-name are present
                                     rowsHtml += `
-                                            <tr data-sale-id="${sale.id}" data-id="${sale.id}" data-customer-code="${sale.customer_code}" data-customer-name="${sale.customer_name}">
-                <td data-field="code">${sale.code || 'N/A'}</td>
-                <td data-field="item_code">${sale.item_code || 'N/A'}</td>
-                <td data-field="item_name">${sale.item_name || 'N/A'}</td>
-                <td data-field="weight">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                <td data-field="price_per_kg">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                <td data-field="total">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                <td data-field="packs">${(parseFloat(sale.packs) || 0).toFixed(0)}</td>
-            </tr>
-                                                                                                                                                                                        `;
+                                                <tr data-sale-id="${sale.id}" data-id="${sale.id}" data-customer-code="${sale.customer_code}" data-customer-name="${sale.customer_name}">
+                    <td data-field="code">${sale.code || 'N/A'}</td>
+                    <td data-field="item_code">${sale.item_code || 'N/A'}</td>
+                    <td data-field="item_name">${sale.item_name || 'N/A'}</td>
+                    <td data-field="weight">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                    <td data-field="price_per_kg">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                    <td data-field="total">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                    <td data-field="packs">${(parseFloat(sale.packs) || 0).toFixed(0)}</td>
+                </tr>
+                                                                                                                                                                                            `;
                                     totalSalesValue += parseFloat(sale.total || 0);
                                 });
                             }
@@ -2256,6 +2253,7 @@
                             const grnDisplay = document.getElementById('grn_display');
                             grnDisplay.style.display = 'block'; // Or 'inline-block' if preferred
                             grnDisplay.value = sale.code || '';
+                            
 
                             // 2. Hide the `grn_select` dropdown
                             const grnSelect = document.getElementById('grn_select');
@@ -2293,6 +2291,7 @@
                             pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
                             packsField.value = parseInt(sale.packs || 0);
                             calculateTotal();
+                            
                             console.log("Weight:", weightField.value, "Price:", pricePerKgField.value, "Packs:", packsField.value);
 
                             salesEntryForm.action = `sales/update/${sale.id}`;
@@ -2369,6 +2368,8 @@
 
                                     // You might also want to check for its actual offset dimensions if it's outside the viewport or collapsed
                                     const isRendered = updateSalesEntryBtn.offsetWidth > 0 || updateSalesEntryBtn.offsetHeight > 0;
+                                      // Call update functions for initial display after clearing inputs
+                          
 
                                     if (isVisible && isRendered) {
                                         // Prevent the default form submission behavior

@@ -70,50 +70,55 @@ class ReportController extends Controller
 
     return view('dashboard.reports.resultsalesbasedonsuppliers', [
         'records' => $records,
-        'shop_no' => 'C11'
+        'shop_no' => 'C11',
+         'filters' => $request->all() 
     ]);
 }
 
 
 
-    public function fetchItemReport(Request $request)
-    {
-        
-        $validated = $request->validate([
-            'item_code' => 'required',
-            'supplier_code' => 'nullable|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-        ]);
+ public function fetchItemReport(Request $request)
+{
+    $validated = $request->validate([
+        'item_code' => 'required',
+        'supplier_code' => 'nullable|string',
+        'start_date' => 'nullable|date',
+        'end_date' => 'nullable|date',
+    ]);
 
-        $query = \App\Models\Sale::where('item_code', $validated['item_code']);
+    $query = \App\Models\Sale::where('item_code', $validated['item_code']);
 
-        if (!empty($request->supplier_code) && $request->supplier_code !== 'all') {
-            $query->where('supplier_code', $request->supplier_code);
-        }
-
-        // Use today's date if start or end date is missing
-        if ($request->start_date && $request->end_date) {
-            $query->whereDate('created_at', '>=', $request->start_date)
-                ->whereDate('created_at', '<=', $request->end_date);
-        } 
-
-        $sales = $query->get([
-            'item_code',
-            'packs',
-            'weight',
-            'price_per_kg',
-            'total',
-            'customer_code',
-            'supplier_code',
-            'bill_no',
-            'item_name'
-        ]);
-
-        return view('dashboard.reports.item-wise-report', compact('sales'));
+    if (!empty($request->supplier_code) && $request->supplier_code !== 'all') {
+        $query->where('supplier_code', $request->supplier_code);
     }
 
-   public function getweight(Request $request)
+    // Use today's date if start or end date is missing
+    if ($request->start_date && $request->end_date) {
+        $query->whereDate('created_at', '>=', $request->start_date)
+            ->whereDate('created_at', '<=', $request->end_date);
+    } 
+
+    $sales = $query->get([
+        'item_code',
+        'packs',
+        'weight',
+        'price_per_kg',
+        'total',
+        'customer_code',
+        'supplier_code',
+        'bill_no',
+        'item_name'
+    ]);
+
+    // Corrected line: Pass the 'sales' and 'filters' data to the view
+    return view('dashboard.reports.item-wise-report', [
+        'sales' => $sales,
+        'filters' => $request->all()
+    ]);
+}
+
+ 
+public function getweight(Request $request)
 {
     $grnCode = $request->input('grn_code');
     $startDate = $request->input('start_date');
@@ -142,9 +147,9 @@ class ReportController extends Controller
         'selectedGrnEntry' => $selectedGrnEntry,
         'startDate' => $startDate,
         'endDate' => $endDate,
+        'filters' => $request->all(), // Add this line to pass all filters
     ]);
-}
- public function getGrnSalecodereport(Request $request)
+} public function getGrnSalecodereport(Request $request)
 {
     $grnCode = $request->input('grn_code');
     $startDate = $request->input('start_date');
@@ -172,8 +177,9 @@ class ReportController extends Controller
         'selectedGrnEntry' => $selectedGrnEntry,
         'startDate' => $startDate,
         'endDate' => $endDate,
+        'filters' => $request->all(), // Add this line to pass all filters
     ]);
-}   public function getSalesFilterReport(Request $request)
+}  public function getSalesFilterReport(Request $request)
 {
     // Start with all sales data
     $query = Sale::query();
@@ -333,31 +339,33 @@ class ReportController extends Controller
             'reportData' => collect($reportData)
         ]);
     }
-     public function downloadReport(Request $request, $reportType, $format)
-    {
-        // 1. Fetch data based on the report type
-        list($reportData, $headings, $reportTitle) = $this->getReportData($reportType);
-        
-        // 2. Handle the download based on the requested format
-        if ($format === 'excel') {
-            $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.xlsx';
-            return Excel::download(new DynamicReportExport($reportData, $headings), $filename);
-        }
+    public function downloadReport(Request $request, $reportType, $format)
+{
+    // Pass the request inputs (filters) to the getReportData method
+    list($reportData, $headings, $reportTitle) = $this->getReportData($reportType, $request->all());
 
-        if ($format === 'pdf') {
-            $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
-            $pdf = Pdf::loadView('reports.generic_report_pdf', compact('reportData', 'headings', 'reportTitle'));
-            return $pdf->download($filename);
-        }
-
-        abort(404, 'Invalid report format.');
+    // Handle the download based on the requested format
+    if ($format === 'excel') {
+        // You'll need to create a DynamicReportExport class that handles this data
+        $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.xlsx';
+        return Excel::download(new DynamicReportExport($reportData, $headings), $filename);
     }
+
+    if ($format === 'pdf') {
+        // You'll need to create a generic_report_pdf view that displays this data
+        $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
+        $pdf = Pdf::loadView('reports.generic_report_pdf', compact('reportData', 'headings', 'reportTitle'));
+        return $pdf->download($filename);
+    }
+
+    abort(404, 'Invalid report format.');
+}
 
     /**
      * This function fetches and formats the data for a given report type.
      * You will need to customize this based on your report logic.
      */
-   protected function getReportData($reportType, $filters = [])
+     protected function getReportData($reportType, $filters = [])
 {
     $reportData = collect();
     $headings = [];
@@ -368,8 +376,8 @@ class ReportController extends Controller
             $reportTitle = 'Supplier Sales Report';
 
             $records = Sale::query()
-                ->when(isset($filters['supplier_code']), function ($query) use ($filters) {
-                    return $query->where('supplier_code', $filters['supplier_code']);
+                ->when(isset($filters['code']), function ($query) use ($filters) {
+                    return $query->where('code', $filters['code']);
                 })
                 ->when(isset($filters['date_from']), function ($query) use ($filters) {
                     return $query->whereDate('created_at', '>=', $filters['date_from']);
@@ -419,21 +427,90 @@ class ReportController extends Controller
         case 'item-wise-report':
             $reportTitle = 'Item-wise Report';
             
-            $records = Sale::query()
+            $query = Sale::query()
                 ->when(isset($filters['item_code']), function ($query) use ($filters) {
                     return $query->where('item_code', $filters['item_code']);
                 })
-                ->get()
-                ->groupBy('item_code');
+                ->when(isset($filters['supplier_code']) && $filters['supplier_code'] !== 'all', function ($query) use ($filters) {
+                    return $query->where('supplier_code', $filters['supplier_code']);
+                })
+                ->when(isset($filters['start_date']), function ($query) use ($filters) {
+                    return $query->whereDate('created_at', '>=', $filters['start_date']);
+                })
+                ->when(isset($filters['end_date']), function ($query) use ($filters) {
+                    return $query->whereDate('created_at', '<=', $filters['end_date']);
+                });
             
-            $headings = ['Item Code', 'Supplier Code', 'Packs', 'Weight (kg)', 'Total'];
-            $reportData = $records->map(function($sales, $itemCode) {
+            $records = $query->get();
+            
+            $headings = ['Bill No', 'Item Code', 'Item Name', 'Packs', 'Weight (kg)', 'Price per kg', 'Total', 'Customer Code', 'Supplier Code'];
+            $reportData = $records->map(function ($row) {
                 return [
-                    $itemCode,
-                    $sales->first()->supplier_code,
-                    $sales->sum('packs'),
-                    $sales->sum('weight'),
-                    $sales->sum('total'),
+                    $row->bill_no,
+                    $row->item_code,
+                    $row->item_name,
+                    $row->packs,
+                    $row->weight,
+                    $row->price_per_kg,
+                    $row->total,
+                    $row->customer_code,
+                    $row->supplier_code,
+                ];
+            });
+            break;
+
+        case 'grn-sales-report':
+            $reportTitle = 'GRN-based Sales Report';
+
+            $query = Sale::query()
+                ->when(isset($filters['grn_code']), function ($query) use ($filters) {
+                    return $query->where('code', $filters['grn_code']);
+                })
+                ->when(isset($filters['start_date']), function ($query) use ($filters) {
+                    return $query->whereDate('created_at', '>=', $filters['start_date']);
+                })
+                ->when(isset($filters['end_date']), function ($query) use ($filters) {
+                    return $query->whereDate('created_at', '<=', $filters['end_date']);
+                });
+            
+            $records = $query->orderBy('created_at', 'asc')->get();
+            
+            $headings = ['Item Code', 'Item Name', 'Packs', 'Weight (kg)', 'Total'];
+            $reportData = $records->map(function ($row) {
+                return [
+                    $row->item_code,
+                    $row->item_name,
+                    $row->packs,
+                    $row->weight,
+                    $row->total,
+                ];
+            });
+            break;
+
+        case 'grn-sale-code-report':
+            $reportTitle = 'GRN Code-based Sales Report';
+
+            $query = Sale::query()
+                ->when(isset($filters['grn_code']), function ($query) use ($filters) {
+                    return $query->where('code', $filters['grn_code']);
+                })
+                ->when(isset($filters['start_date']), function ($query) use ($filters) {
+                    return $query->whereDate('created_at', '>=', $filters['start_date']);
+                })
+                ->when(isset($filters['end_date']), function ($query) use ($filters) {
+                    return $query->whereDate('created_at', '<=', $filters['end_date']);
+                });
+            
+            $records = $query->orderBy('created_at', 'asc')->get();
+            
+            $headings = ['Item Code', 'Item Name', 'Packs', 'Weight (kg)', 'Total'];
+            $reportData = $records->map(function ($row) {
+                return [
+                    $row->item_code,
+                    $row->item_name,
+                    $row->packs,
+                    $row->weight,
+                    $row->total,
                 ];
             });
             break;

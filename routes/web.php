@@ -61,5 +61,5 @@ Route::get('/reports/grn-sales-overview', [ReportController::class, 'getGrnSales
 Route::get('/reports/grn-sales-overview2', [ReportController::class, 'getGrnSalesOverviewReport2'])->name('report.grn.sales.overview2');
 
 //Reports
-Route::get('/report/download/{reportType}/{format}', [ReportController::class, 'downloadReport'])->name('report.download');
+Route::post('/report/download/{reportType}/{format}', [ReportController::class, 'downloadReport'])->name('report.download');
 require __DIR__.'/auth.php';

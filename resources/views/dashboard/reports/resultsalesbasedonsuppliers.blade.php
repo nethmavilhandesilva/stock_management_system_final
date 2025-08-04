@@ -421,12 +421,26 @@
             </div>
         </div>
     </div>
-    <div class="page-utility-bar">
+   <div class="page-utility-bar">
     <span class="page-number">Page 1</span>
     <div>
-       
-        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" class="btn btn-success me-2">Download Excel</a>
-        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" class="btn btn-danger">Download PDF</a>
+        <form action="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" method="POST" class="d-inline">
+    @csrf
+    {{-- Add the hidden inputs here --}}
+    @foreach ($filters as $key => $value)
+        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+    @endforeach
+    <button type="submit" class="btn btn-success me-2">Download Excel</button>
+</form>
+
+<form action="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" method="POST" class="d-inline">
+    @csrf
+    {{-- Add the hidden inputs here --}}
+    @foreach ($filters as $key => $value)
+        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+    @endforeach
+    <button type="submit" class="btn btn-danger">Download PDF</button>
+</form>
     </div>
 </div>
 

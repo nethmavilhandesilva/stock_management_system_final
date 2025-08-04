@@ -16,10 +16,11 @@
         padding: 24px;
     }
 
-    .form-label {
-        font-weight: 500;
-        color: #003366;
-    }
+   .form-label {
+    font-weight: bold; /* Make the label bold */
+    color: black;      /* Make the label color pure black */
+}
+
 
     .btn-primary {
         background-color: #0d6efd;
@@ -146,6 +147,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // The correct ID for the select element is 'item_code'
         const itemSelect = document.getElementById('item_code');
         const supplierSelect = document.getElementById('supplier_code');
         const grnInput = document.getElementById('grn_no');
@@ -154,15 +156,17 @@
             const itemOption = itemSelect.options[itemSelect.selectedIndex];
             const supplierOption = supplierSelect.options[supplierSelect.selectedIndex];
 
+            // Get the item_type from the 'data-type' attribute of the selected option
             const itemType = itemOption?.getAttribute('data-type') || '';
             const supplierName = supplierOption?.getAttribute('data-name') || '';
 
             if (itemType && supplierName) {
                 const itemPart = itemType.trim().substring(0, 3).toUpperCase();
                 const supplierPart = supplierName.trim().substring(0, 3).toUpperCase();
-                const timestamp = Date.now().toString().slice(-4);
-                const generatedGRN = `${itemPart}${supplierPart}-${timestamp}`;
+                const generatedGRN = `${itemPart}-${supplierPart}`;
                 grnInput.value = generatedGRN;
+            } else {
+                grnInput.value = '';
             }
         }
 
