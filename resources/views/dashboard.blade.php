@@ -1024,10 +1024,7 @@
 
                                         // ... (rest of your success function remains the same)
                                     },
-                                    error: function (xhr, status, error) {
-                                        console.error("An error occurred:", error);
-                                        alert("Failed to fetch customer data. Please try again.");
-                                    }
+                                    
                                 });
                             } else {
                                 // The input field is empty, clear the table and total
@@ -1424,7 +1421,69 @@
                         console.log('--- End Initial Page Load Check ---');
                     });
                 </script>
-                {{-- Moving the sales records without pressing f1 or f5 to unprinted records --}}
+                {{-- TYPING THE CUSTOMER_CODE AND FETCHING UNPRINTED SALES --}}
+                 <script>
+    $(document).ready(function() {
+        // Debounce function to delay execution until the user stops typing
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        // Function to fetch and display unprinted sales data
+        function fetchUnprintedSales(customerCode) {
+            let tableBody = $('#mainSalesTableBody');
+            tableBody.empty(); // Clear the table body first
+            $('#customer_name').val('');
+           
+
+            if (customerCode) {
+                // Fetch unprinted sales data
+                $.ajax({
+                    url: '/api/sales/unprinted/' + customerCode,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.length > 0) {
+                            response.forEach(function(sale) {
+                                let row = `<tr>
+                                            <td>${sale.code}</td>
+                                            <td>${sale.item_code}</td>
+                                            <td>${sale.item_name}</td>
+                                            <td>${sale.weight}</td>
+                                            <td>${sale.price_per_kg}</td>
+                                            <td>${sale.total}</td>
+                                            <td>${sale.packs}</td>
+                                        </tr>`;
+                                tableBody.append(row);
+                            });
+                        } else {
+                            tableBody.html('<tr><td colspan="7" class="text-center">No unprinted sales records found for this customer.</td></tr>');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error("AJAX Error fetching sales records:", xhr.responseText);
+                        tableBody.html('<tr><td colspan="7" class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
+                    }
+                });
+            } else {
+                tableBody.html('<tr><td colspan="7" class="text-center">Please enter a customer code to view records.</td></tr>');
+            }
+        }
+
+        // Event listener for the customer code input field on 'keyup'
+        const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
+        $('#new_customer_code').on('keyup', function() {
+            let customerCode = $(this).val().trim();
+            debouncedFetchUnprintedSales(customerCode);
+        });
+    });
+</script>
+
+
 
 
 

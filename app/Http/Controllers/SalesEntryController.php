@@ -251,19 +251,7 @@ class SalesEntryController extends Controller
 
         return response()->json(['success' => true]);
     }
-    public function getUnprintedSales($customerCode)
-    {
-        // Assuming your sales model is named 'Sale' and has 'customer_code' and 'bill_printed' columns.
-        $sales = Sale::where('customer_code', $customerCode)
-            ->where('bill_printed', 'N')
-            ->get();
-
-        // You should return the data in a structured format, for example, grouped by the customer.
-        // The existing view code seems to group by customer code already.
-        // Adjust this query and data structure as needed to match your database schema.
-
-        return response()->json($sales);
-    }
+    
     public function clearAll(Request $request)
 {
     Sale::truncate();    // deletes all records from sales table
@@ -271,5 +259,17 @@ class SalesEntryController extends Controller
 
     return back()->with('success', 'All data cleared from Sales and GRN Entries.');
 }
+ public function getUnprintedSales($customer_code)
+    {
+        // Find all sales records for the given customer_code
+        // where the bill_printed column has the value 'N'
+        $sales = Sale::where('customer_code', $customer_code)
+                      ->where('bill_printed', 'N')
+                      ->get();
+
+        // Return the sales records as a JSON response
+        return response()->json($sales);
+    }
+       
  
 }
