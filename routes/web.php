@@ -49,9 +49,11 @@ Route::get('/fetch-customer/{customer_code?}', [SalesEntryController::class, 'fe
 //Bill printing
 Route::post('/sales/mark-printed', [SalesEntryController::class, 'markAsPrinted'])->name('sales.markAsPrinted');
 Route::post('/sales/save-as-unprinted', [SalesEntryController::class, 'saveAsUnprinted'])->name('sales.save-as-unprinted');
-
+Route::put('sales/update/{saleId}', 'SalesEntryController@update');
 // Clear data route
 Route::post('/clear-data', [SalesEntryController::class, 'clearAll'])->name('clear.data');
+Route::get('/sales/all-data', [SalesEntryController::class, 'getAllSalesData']);
+Route::get('/sales/all', [SalesEntryController::class, 'getAllSales']);
 
 //Reports
 Route::get('/report', [ReportController::class, 'index'])->name('report.index');

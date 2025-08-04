@@ -190,41 +190,54 @@ class SalesEntryController extends Controller
         }
     }
     
-    public function update(Request $request, Sale $sale)
-{
-    // Remove 'BillChangedOn' from validation since we will set it after the update
-    $validatedData = $request->validate([
-        'customer_code' => 'required|string|max:255',
-        'customer_name' => 'nullable|string|max:255',
-        'code' => 'required|string|max:255', // This is the GRN Code
-        'supplier_code' => 'required|string|max:255',
-        'item_code' => 'required|string|max:255',
-        'item_name' => 'required|string|max:255',
-        'weight' => 'required|numeric|min:0',
-        'price_per_kg' => 'required|numeric|min:0',
-        'total' => 'required|numeric|min:0',
-        'packs' => 'required|integer|min:0',
-        // 'BillChangedOn' => 'nullable', // Removed from validation
-        // Add any other fields that can be updated
-    ]);
+         public function update(Request $request, Sale $sale)
+    {
+        $validatedData = $request->validate([
+            'customer_code' => 'required|string|max:255',
+            'customer_name' => 'nullable|string|max:255', // <-- Make sure this is nullable
+            'code' => 'required|string|max:255',
+            'supplier_code' => 'required|string|max:255',
+            'item_code' => 'required|string|max:255',
+            'item_name' => 'required|string|max:255',
+            'weight' => 'required|numeric|min:0',
+            'price_per_kg' => 'required|numeric|min:0',
+            'total' => 'required|numeric|min:0',
+            'packs' => 'required|integer|min:0',
+        ]);
 
-    try {
-        // Add the 'updated' column to the data before updating
-        $validatedData['updated'] = 'Y'; // Assuming 'updated' is the column name
+        try {
+            // Update the sale record with the validated data
+            $sale->update([
+                'customer_code' => $validatedData['customer_code'],
+                'customer_name' => $validatedData['customer_name'] ?? $sale->customer_name, // <-- Use the new name, or the old one if it's not provided
+                'code' => $validatedData['code'],
+                'supplier_code' => $validatedData['supplier_code'],
+                'item_code' => $validatedData['item_code'],
+                'item_name' => $validatedData['item_name'],
+                'weight' => $validatedData['weight'],
+                'price_per_kg' => $validatedData['price_per_kg'],
+                'total' => $validatedData['total'],
+                'packs' => $validatedData['packs'],
+                'updated' => 'Y',
+                'BillChangedOn' => now(),
+            ]);
 
-        $updateSuccessful = $sale->update($validatedData);
+            // Get the freshly updated model instance
+            $updatedSale = $sale->fresh();
 
-        // Only update BillChangedOn if the main update was successful
-        if ($updateSuccessful) {
-            $sale->update(['BillChangedOn' => now()]);
+            // Return the complete, updated sale object
+            return response()->json([
+                'success' => true,
+                'message' => 'Sales record updated successfully!',
+                'sale' => $updatedSale
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update sales record: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json(['success' => true, 'message' => 'Sales record updated successfully!']);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => 'Failed to update sales record: ' . $e->getMessage()], 500);
     }
-}
-
     public function destroy(Sale $sale)
     {
         try {
@@ -270,6 +283,36 @@ class SalesEntryController extends Controller
         // Return the sales records as a JSON response
         return response()->json($sales);
     }
+     public function getAllSalesData()
+    {
+        try {
+            // Fetch all sales records from the database
+            $allSales = Sale::all();
+
+            // Return the sales records as a JSON response
+            return response()->json($allSales);
+
+        } catch (\Exception $e) {
+            // Log the full error for server-side debugging
+            Log::error('Failed to retrieve sales data: ' . $e->getMessage(), [
+                'exception_file' => $e->getFile(),
+                'exception_line' => $e->getLine(),
+                'exception_trace' => $e->getTraceAsString(),
+            ]);
+
+            // Return a detailed error response to the client
+            return response()->json([
+                'error' => 'Failed to retrieve sales data.',
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500);
+        }
+    }
+    public function getAllSales()
+{
+    $sales = Sale::all(); // or your logic
+    return response()->json(['sales' => $sales]);
+}
        
  
 }

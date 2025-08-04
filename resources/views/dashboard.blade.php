@@ -211,14 +211,14 @@
         /* If you want to reduce the size of the toggler icon on mobile */
         /* This is less common but can be done */
         /*
-                                                                                                                .navbar.navbar-compact .navbar-toggler {
-                                                                                                                    padding: 0.25rem 0.5rem !important;
-                                                                                                                }
-                                                                                                                .navbar.navbar-compact .navbar-toggler-icon {
-                                                                                                                    width: 1.2em !important;
-                                                                                                                    height: 1.2em !important;
-                                                                                                                }
-                                                                                                                */
+                                                                                                                            .navbar.navbar-compact .navbar-toggler {
+                                                                                                                                padding: 0.25rem 0.5rem !important;
+                                                                                                                            }
+                                                                                                                            .navbar.navbar-compact .navbar-toggler-icon {
+                                                                                                                                width: 1.2em !important;
+                                                                                                                                height: 1.2em !important;
+                                                                                                                            }
+                                                                                                                            */
     </style>
 @endsection
 
@@ -876,7 +876,6 @@
                         <div class="table-responsive">
 
                             <style>
-                            
                                 #mainSalesTableBody tr,
                                 #mainSalesTableBody td {
                                     background-color: black !important;
@@ -1004,8 +1003,6 @@
                 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-
-
                 <script>
                     $(document).ready(function () {
                         $('#new_customer_code').on('input', function () {
@@ -1024,7 +1021,7 @@
 
                                         // ... (rest of your success function remains the same)
                                     },
-                                    
+
                                 });
                             } else {
                                 // The input field is empty, clear the table and total
@@ -1034,6 +1031,7 @@
                         });
                     });
                 </script>
+
                 <script>
 
                     document.addEventListener('DOMContentLoaded', function () {
@@ -1422,148 +1420,148 @@
                     });
                 </script>
                 {{-- TYPING THE CUSTOMER_CODE AND FETCHING UNPRINTED SALES --}}
-               <!-- First script block: Define globally accessible functions -->
-<script>
-    function populateFormForEdit(sale) {
-        console.log("Populating form for sale:", sale);
+                <!-- First script block: Define globally accessible functions -->
+                <script>
+                    function populateFormForEdit(sale) {
+                        console.log("Populating form for sale:", sale);
 
-        saleIdField.value = sale.id;
-        newCustomerCodeField.value = sale.customer_code || '';
-        customerNameField.value = sale.customer_name || '';
-        
-        if (sale.customer_code) {
-            $('#customer_code_select').val(sale.customer_code).trigger('change.select2');
-            console.log("Setting customer_code_select to:", sale.customer_code);
-        } else {
-            $('#customer_code_select').val(null).trigger('change.select2');
-            console.log("Clearing customer_code_select.");
-        }
+                        saleIdField.value = sale.id;
+                        newCustomerCodeField.value = sale.customer_code || '';
+                        customerNameField.value = sale.customer_name || '';
 
-        // --- NEW LOGIC TO POPULATE GRN FIELDS ---
-        const grnDisplay = document.getElementById('grn_display');
-        grnDisplay.style.display = 'block';
-        grnDisplay.value = sale.code || '';
-
-        const grnSelect = document.getElementById('grn_select');
-        $(grnSelect).next('.select2-container').hide();
-
-        console.log("Setting grn_display to:", grnDisplay.value);
-
-        const grnOption = $('#grn_select option').filter(function () {
-            return $(this).val() === sale.code &&
-                $(this).data('supplierCode') === sale.supplier_code &&
-                $(this).data('itemCode') === sale.item_code;
-        });
-
-        if (grnOption.length) {
-            $('#grn_select').val(grnOption.val());
-            console.log("Setting grn_select to:", grnOption.val());
-        } else {
-            $('#grn_select').val(null);
-            console.log("Clearing grn_select.");
-        }
-        // --- END OF GRN LOGIC ---
-
-        supplierSelect.value = sale.supplier_code || '';
-        supplierDisplaySelect.value = sale.supplier_code || '';
-        itemSelect.value = sale.item_code || '';
-        itemSelect.dispatchEvent(new Event('change'));
-        console.log("Setting supplier_code to:", sale.supplier_code, "and item_select to:", sale.item_code);
-
-        itemNameDisplayFromGrn.value = sale.item_name || '';
-        itemNameField.value = sale.item_name || '';
-        console.log("Setting item name display to:", itemNameDisplayFromGrn.value);
-
-        weightField.value = parseFloat(sale.weight || 0).toFixed(2);
-        pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-        packsField.value = parseInt(sale.packs || 0);
-        calculateTotal();
-
-        console.log("Weight:", weightField.value, "Price:", pricePerKgField.value, "Packs:", packsField.value);
-
-        salesEntryForm.action = `sales/update/${sale.id}`;
-        console.log("Form action set to:", salesEntryForm.action);
-
-        addSalesEntryBtn.style.display = 'none';
-        updateSalesEntryBtn.style.display = 'inline-block';
-        deleteSalesEntryBtn.style.display = 'inline-block';
-        cancelEntryBtn.style.display = 'inline-block';
-        console.log("Buttons updated for edit mode.");
-    }
-
-   
-</script>
-
-<!-- Second script block: Main logic -->
-<script>
-    $(document).ready(function () {
-        // Debounce function to delay execution until the user stops typing
-        function debounce(func, delay) {
-            let timeout;
-            return function (...args) {
-                const context = this;
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), delay);
-            };
-        }
-
-        // Function to fetch and display unprinted sales data
-        function fetchUnprintedSales(customerCode) {
-            let tableBody = $('#mainSalesTableBody');
-            tableBody.empty(); // Clear the table body first
-            $('#customer_name').val('');
-
-            if (customerCode) {
-                $.ajax({
-                    url: '/api/sales/unprinted/' + customerCode,
-                    method: 'GET',
-                    success: function (response) {
-                        if (response.length > 0) {
-                            response.forEach(function (sale) {
-                                let row = $(`
-                                    <tr>
-                                        <td>${sale.code}</td>
-                                        <td>${sale.item_code}</td>
-                                        <td>${sale.item_name}</td>
-                                        <td>${sale.weight}</td>
-                                        <td>${sale.price_per_kg}</td>
-                                        <td>${sale.total}</td>
-                                        <td>${sale.packs}</td>
-                                    </tr>
-                                `);
-
-                                // Click handler to populate form with selected row
-                                row.on('click', function () {
-                                    populateFormForEdit(sale);
-                                });
-
-                                tableBody.append(row);
-                            });
-
-                            // Populate table + auto-fill form with first entry
-                            populateMainSalesTable(response);
-                            populateFormForEdit(response[0]);
+                        if (sale.customer_code) {
+                            $('#customer_code_select').val(sale.customer_code).trigger('change.select2');
+                            console.log("Setting customer_code_select to:", sale.customer_code);
                         } else {
-                            tableBody.html('<tr><td colspan="7" class="text-center">No unprinted sales records found for this customer.</td></tr>');
+                            $('#customer_code_select').val(null).trigger('change.select2');
+                            console.log("Clearing customer_code_select.");
                         }
-                    },
-                    error: function (xhr) {
-                        console.error("AJAX Error fetching sales records:", xhr.responseText);
-                        tableBody.html('<tr><td colspan="7" class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
-                    }
-                });
-            } else {
-                tableBody.html('<tr><td colspan="7" class="text-center">Please enter a customer code to view records.</td></tr>');
-            }
-        }
 
-        const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
-        $('#new_customer_code').on('keyup', function () {
-            let customerCode = $(this).val().trim();
-            debouncedFetchUnprintedSales(customerCode);
-        });
-    });
-</script>
+                        // --- NEW LOGIC TO POPULATE GRN FIELDS ---
+                        const grnDisplay = document.getElementById('grn_display');
+                        grnDisplay.style.display = 'block';
+                        grnDisplay.value = sale.code || '';
+
+                        const grnSelect = document.getElementById('grn_select');
+                        $(grnSelect).next('.select2-container').hide();
+
+                        console.log("Setting grn_display to:", grnDisplay.value);
+
+                        const grnOption = $('#grn_select option').filter(function () {
+                            return $(this).val() === sale.code &&
+                                $(this).data('supplierCode') === sale.supplier_code &&
+                                $(this).data('itemCode') === sale.item_code;
+                        });
+
+                        if (grnOption.length) {
+                            $('#grn_select').val(grnOption.val());
+                            console.log("Setting grn_select to:", grnOption.val());
+                        } else {
+                            $('#grn_select').val(null);
+                            console.log("Clearing grn_select.");
+                        }
+                        // --- END OF GRN LOGIC ---
+
+                        supplierSelect.value = sale.supplier_code || '';
+                        supplierDisplaySelect.value = sale.supplier_code || '';
+                        itemSelect.value = sale.item_code || '';
+                        itemSelect.dispatchEvent(new Event('change'));
+                        console.log("Setting supplier_code to:", sale.supplier_code, "and item_select to:", sale.item_code);
+
+                        itemNameDisplayFromGrn.value = sale.item_name || '';
+                        itemNameField.value = sale.item_name || '';
+                        console.log("Setting item name display to:", itemNameDisplayFromGrn.value);
+
+                        weightField.value = parseFloat(sale.weight || 0).toFixed(2);
+                        pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+                        packsField.value = parseInt(sale.packs || 0);
+                        calculateTotal();
+
+                        console.log("Weight:", weightField.value, "Price:", pricePerKgField.value, "Packs:", packsField.value);
+
+                        salesEntryForm.action = `sales/update/${sale.id}`;
+                        console.log("Form action set to:", salesEntryForm.action);
+
+                        addSalesEntryBtn.style.display = 'none';
+                        updateSalesEntryBtn.style.display = 'inline-block';
+                        deleteSalesEntryBtn.style.display = 'inline-block';
+                        cancelEntryBtn.style.display = 'inline-block';
+                        console.log("Buttons updated for edit mode.");
+                    }
+
+
+                </script>
+
+                <!-- Second script block: Main logic -->
+                <script>
+                    $(document).ready(function () {
+                        // Debounce function to delay execution until the user stops typing
+                        function debounce(func, delay) {
+                            let timeout;
+                            return function (...args) {
+                                const context = this;
+                                clearTimeout(timeout);
+                                timeout = setTimeout(() => func.apply(context, args), delay);
+                            };
+                        }
+
+                        // Function to fetch and display unprinted sales data
+                        function fetchUnprintedSales(customerCode) {
+                            let tableBody = $('#mainSalesTableBody');
+                            tableBody.empty(); // Clear the table body first
+                            $('#customer_name').val('');
+
+                            if (customerCode) {
+                                $.ajax({
+                                    url: '/api/sales/unprinted/' + customerCode,
+                                    method: 'GET',
+                                    success: function (response) {
+                                        if (response.length > 0) {
+                                            response.forEach(function (sale) {
+                                                let row = $(`
+                                                <tr>
+                                                    <td>${sale.code}</td>
+                                                    <td>${sale.item_code}</td>
+                                                    <td>${sale.item_name}</td>
+                                                    <td>${sale.weight}</td>
+                                                    <td>${sale.price_per_kg}</td>
+                                                    <td>${sale.total}</td>
+                                                    <td>${sale.packs}</td>
+                                                </tr>
+                                            `);
+
+                                                // Click handler to populate form with selected row
+                                                row.on('click', function () {
+                                                    populateFormForEdit(sale);
+                                                });
+
+                                                tableBody.append(row);
+                                            });
+
+                                            // Populate table + auto-fill form with first entry
+                                            populateMainSalesTable(response);
+                                            populateFormForEdit(response[0]);
+                                        } else {
+                                            tableBody.html('<tr><td colspan="7" class="text-center">No unprinted sales records found for this customer.</td></tr>');
+                                        }
+                                    },
+                                    error: function (xhr) {
+                                        console.error("AJAX Error fetching sales records:", xhr.responseText);
+                                        tableBody.html('<tr><td colspan="7" class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
+                                    }
+                                });
+                            } else {
+                                tableBody.html('<tr><td colspan="7" class="text-center">Please enter a customer code to view records.</td></tr>');
+                            }
+                        }
+
+                        const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
+                        $('#new_customer_code').on('keyup', function () {
+                            let customerCode = $(this).val().trim();
+                            debouncedFetchUnprintedSales(customerCode);
+                        });
+                    });
+                </script>
 
                 {{-- ALL Custom JavaScript Consolidated Here --}}
                 <script>
@@ -1656,18 +1654,18 @@
 
                                 // Construct the HTML for the tabular display for each row (data row only)
                                 const $result = $(`
-                                                                                                                                                                                                <div class="grn-option-row">
-                                                                                                                                                                                                    <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-                                                                                                                                                                                                    <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
-                                                                                                                                                                                                     <div class="grn-column grn-supplier-code">${originalWeight || ''}</div>
-                                                                                                                                                                                                      <div class="grn-column grn-supplier-code">${originalPacks || ''}</div>
+                                                                                                                                                                                                            <div class="grn-option-row">
+                                                                                                                                                                                                                <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+                                                                                                                                                                                                                <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
+                                                                                                                                                                                                                 <div class="grn-column grn-supplier-code">${originalWeight || ''}</div>
+                                                                                                                                                                                                                  <div class="grn-column grn-supplier-code">${originalPacks || ''}</div>
 
-                                                                                                                                                                                                    <div class="grn-column grn-grn-no">${weight || ''}</div>
-                                                                                                                                                                                                    <div class="grn-column grn-packs">${packs || 0}</div>
+                                                                                                                                                                                                                <div class="grn-column grn-grn-no">${weight || ''}</div>
+                                                                                                                                                                                                                <div class="grn-column grn-packs">${packs || 0}</div>
 
-                                                                                                                                                                                                    <div class="grn-column grn-txn-date">${txnDate || ''}</div>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            `);
+                                                                                                                                                                                                                <div class="grn-column grn-txn-date">${txnDate || ''}</div>
+                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                        `);
                                 return $result;
                             },
                             templateSelection: function (data) {
@@ -1713,19 +1711,19 @@
                                 console.log("Header not found, creating and prepending."); // Debugging log
 
                                 const $headerWrapper = $(`
-                                                                                                                                                                                                <div class="grn-header-row-wrapper">
-                                                                                                                                                                                                    <div class="grn-option-row grn-header-row">
-                                                                                                                                                                                                        <div class="grn-column grn-code">Code</div>
-                                                                                                                                                                                                        <div class="grn-column grn-supplier-code">Sup...</div>
-                                                                                                                                                                                                         <div class="grn-column grn-supplier-code">Original Weight</div>
-                                                                                                                                                                                                          <div class="grn-column grn-supplier-code">Original Packs</div>
-                                                                                                                                                                                                         <div class="grn-column grn-grn-no">Remaining Weight</div>
-                                                                                                                                                                                                        <div class="grn-column grn-packs"> Remaining Packs</div>
+                                                                                                                                                                                                            <div class="grn-header-row-wrapper">
+                                                                                                                                                                                                                <div class="grn-option-row grn-header-row">
+                                                                                                                                                                                                                    <div class="grn-column grn-code">Code</div>
+                                                                                                                                                                                                                    <div class="grn-column grn-supplier-code">Sup...</div>
+                                                                                                                                                                                                                     <div class="grn-column grn-supplier-code">Original Weight</div>
+                                                                                                                                                                                                                      <div class="grn-column grn-supplier-code">Original Packs</div>
+                                                                                                                                                                                                                     <div class="grn-column grn-grn-no">Remaining Weight</div>
+                                                                                                                                                                                                                    <div class="grn-column grn-packs"> Remaining Packs</div>
 
-                                                                                                                                                                                                        <div class="grn-column grn-txn-date">Date</div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            `);
+                                                                                                                                                                                                                    <div class="grn-column grn-txn-date">Date</div>
+                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                        `);
 
                                 // Prepend the header wrapper to the .select2-results element
                                 // This puts it before the <ul> which contains the actual options
@@ -1915,7 +1913,7 @@
 
                                 $('#grn_select').select2('open');
                             @endif
-                                                                                                                                                                                    });
+                                                                                                                                                                                                });
                         function populateSalesTable(salesArray) {
                             const tableBody = document.getElementById('mainSalesTableBody');
                             tableBody.innerHTML = ''; // Clear existing rows
@@ -1933,14 +1931,14 @@
                                 row.setAttribute('data-customer-name', sale.customer_name || 'N/A'); // Ensure customer_name exists
 
                                 row.innerHTML = `
-                                                                                                                                                                                        <td>${sale.code}</td>
-                                                                                                                                                                                        <td>${sale.item_code}</td>
-                                                                                                                                                                                        <td>${sale.item_name}</td>
-                                                                                                                                                                                        <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                                                                                                                                                                                        <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                                                                                                                                                                                        <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                                                                                                                                                                                        <td>${sale.packs}</td>
-                                                                                                                                                                                    `;
+                                                                                                                                                                                                    <td>${sale.code}</td>
+                                                                                                                                                                                                    <td>${sale.item_code}</td>
+                                                                                                                                                                                                    <td>${sale.item_name}</td>
+                                                                                                                                                                                                    <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                                                                                                                                                                                                    <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                                                                                                                                                                                                    <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                                                                                                                                                                                                    <td>${sale.packs}</td>
+                                                                                                                                                                                                `;
                                 tableBody.appendChild(row);
                             });
                         }
@@ -2000,83 +1998,83 @@
                                     totalAmountSum += sale.total;
                                     salesIds.push(sale.id);
                                     return `
-                    <tr>
-                        <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
-                        <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
-                        <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
-                        <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
-                    </tr>
-                `;
+                                <tr>
+                                    <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
+                                    <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
+                                    <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
+                                    <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
+                                </tr>
+                            `;
                                 }).join('');
 
                                 const receiptHtml = `
-                <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
-                    <div class="company-info" style="text-align: center; margin-bottom: 5px;">
-                        <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;">
-                            <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
-                        </h3>
-                        <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
-                        <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
-                    </div>
+                            <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
+                                <div class="company-info" style="text-align: center; margin-bottom: 5px;">
+                                    <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;">
+                                        <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
+                                    </h3>
+                                    <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
+                                    <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
+                                </div>
 
-                    <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
-                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                            <tr>
-                                <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
-                                <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
-                                <td colspan="2" style="text-align: right; padding: 0;">
-                                    <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+                                <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
+                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                                        <tr>
+                                            <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
+                                            <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
+                                            <td colspan="2" style="text-align: right; padding: 0;">
+                                                <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
 
-                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
 
-                    <div class="items-section">
-                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                            <thead>
-                                <tr>
-                                    <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
-                                    <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
-                                    <th style="text-align: right; padding: 2px 0;">මිල</th>
-                                    <th style="text-align: right; padding: 2px 0;">අගය</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td colspan="4"><div style="height: 4px; background-color: black; margin: 5px 0;"></div></td></tr>
-                                ${itemsHtml}
-                            </tbody>
-                        </table>
-                    </div>
+                                <div class="items-section">
+                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
+                                                <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
+                                                <th style="text-align: right; padding: 2px 0;">මිල</th>
+                                                <th style="text-align: right; padding: 2px 0;">අගය</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td colspan="4"><div style="height: 4px; background-color: black; margin: 5px 0;"></div></td></tr>
+                                            ${itemsHtml}
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
 
-                    <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
-                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                            <tr>
-                                <td colspan="3" style="text-align: left; padding: 0;">අගය :</td>
-                                <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
-                                    ${totalAmountSum.toFixed(2)}
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+                                <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
+                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                                        <tr>
+                                            <td colspan="3" style="text-align: left; padding: 0;">අගය :</td>
+                                            <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
+                                                ${totalAmountSum.toFixed(2)}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
 
-                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
 
-                    <div class="footer-section" style="text-align: center; margin-top: 10px;">
-                        <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                        <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
-                    </div>
-                </div>
-            `;
+                                <div class="footer-section" style="text-align: center; margin-top: 10px;">
+                                    <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                                    <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
+                                </div>
+                            </div>
+                        `;
 
                                 printReceipt(receiptHtml, customerName, () => {
                                     if (salesIds.length) {
@@ -2148,124 +2146,124 @@
                             const printWindow = window.open('', '', 'width=300,height=600');
 
                             printWindow.document.write(`
-            <html>
-                <head>
-                    <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
-                    <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-                        body {
-                            font-family: 'Noto Sans Sinhala', sans-serif;
-                            margin: 0;
-                            padding: 5mm;
-                            font-size: 10px;
-                            line-height: 1.2;
-                            overflow: hidden;
-                        }
-                        .receipt-container {
-                            width: 100%;
-                            max-width: 70mm;
-                            margin-left: 0;
-                            margin-right: auto;
-                            border: none;
-                            padding: 0;
-                            text-align: left;
-                        }
-                        .company-info {
-                            text-align: left;
-                            margin-bottom: 5px;
-                        }
-                        .company-info h3 {
-                            font-size: 1.2em;
-                            margin-bottom: 2px;
-                            font-weight: bold;
-                        }
-                        .company-info p {
-                            margin: 0;
-                            line-height: 1.2;
-                        }
-                        .bill-details, .summary-section, .footer-section {
-                            text-align: left;
-                            margin-bottom: 5px;
-                        }
-                        .bill-details p, .summary-section p {
-                            margin: 0;
-                            line-height: 1.2;
-                            display: flex;
-                            justify-content: space-between;
-                        }
-                        .bill-details p span:first-child, .summary-section p span:first-child {
-                            text-align: left;
-                            font-weight: normal;
-                        }
-                        .bill-details p span:last-child, .summary-section p span:last-child {
-                            text-align: right;
-                            font-weight: bold;
-                        }
-                        .customer-name-on-bill {
-                            text-align: left;
-                            font-weight: bold;
-                            margin-top: 5px;
-                        }
-                        .divider {
-                            border-top: 1px dashed #000;
-                            margin: 8px 0;
-                        }
-                        .items-section table {
-                            width: 100%;
-                            border-bottom: none;
-                            font-size: 10px;
-                        }
-                        .items-section th, .items-section td {
-                            padding: 2px 0;
-                            text-align: right;
-                            border-bottom: none;
-                        }
-                        .items-section th {
-                            font-weight: bold;
-                            text-align: center;
-                        }
-                        .col-item {
-                            text-align: left;
-                            width: 40%;
-                        }
-                        .col-qty {
-                            width: 20%;
-                        }
-                        .col-rate {
-                            width: 20%;
-                        }
-                        .col-value {
-                            width: 20%;
-                        }
-                        .grand-total {
-                            font-size: 1.1em;
-                            font-weight: bold;
-                        }
-                        .footer-section {
-                            text-align: left;
-                            margin-top: 10px;
-                        }
-                        .footer-section p {
-                            margin: 0;
-                            line-height: 1.2;
-                        }
-                        hr {
-                            display: block;
-                            height: 1px;
-                            background: transparent;
-                            width: 100%;
-                            border: none;
-                            border-top: solid 2px #000 !important;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="receipt-container">
-                        ${salesContent}
-                    </div>
-                </body>
-            </html>
-        `);
+                        <html>
+                            <head>
+                                <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
+                                <style>
+                                    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+                                    body {
+                                        font-family: 'Noto Sans Sinhala', sans-serif;
+                                        margin: 0;
+                                        padding: 5mm;
+                                        font-size: 10px;
+                                        line-height: 1.2;
+                                        overflow: hidden;
+                                    }
+                                    .receipt-container {
+                                        width: 100%;
+                                        max-width: 70mm;
+                                        margin-left: 0;
+                                        margin-right: auto;
+                                        border: none;
+                                        padding: 0;
+                                        text-align: left;
+                                    }
+                                    .company-info {
+                                        text-align: left;
+                                        margin-bottom: 5px;
+                                    }
+                                    .company-info h3 {
+                                        font-size: 1.2em;
+                                        margin-bottom: 2px;
+                                        font-weight: bold;
+                                    }
+                                    .company-info p {
+                                        margin: 0;
+                                        line-height: 1.2;
+                                    }
+                                    .bill-details, .summary-section, .footer-section {
+                                        text-align: left;
+                                        margin-bottom: 5px;
+                                    }
+                                    .bill-details p, .summary-section p {
+                                        margin: 0;
+                                        line-height: 1.2;
+                                        display: flex;
+                                        justify-content: space-between;
+                                    }
+                                    .bill-details p span:first-child, .summary-section p span:first-child {
+                                        text-align: left;
+                                        font-weight: normal;
+                                    }
+                                    .bill-details p span:last-child, .summary-section p span:last-child {
+                                        text-align: right;
+                                        font-weight: bold;
+                                    }
+                                    .customer-name-on-bill {
+                                        text-align: left;
+                                        font-weight: bold;
+                                        margin-top: 5px;
+                                    }
+                                    .divider {
+                                        border-top: 1px dashed #000;
+                                        margin: 8px 0;
+                                    }
+                                    .items-section table {
+                                        width: 100%;
+                                        border-bottom: none;
+                                        font-size: 10px;
+                                    }
+                                    .items-section th, .items-section td {
+                                        padding: 2px 0;
+                                        text-align: right;
+                                        border-bottom: none;
+                                    }
+                                    .items-section th {
+                                        font-weight: bold;
+                                        text-align: center;
+                                    }
+                                    .col-item {
+                                        text-align: left;
+                                        width: 40%;
+                                    }
+                                    .col-qty {
+                                        width: 20%;
+                                    }
+                                    .col-rate {
+                                        width: 20%;
+                                    }
+                                    .col-value {
+                                        width: 20%;
+                                    }
+                                    .grand-total {
+                                        font-size: 1.1em;
+                                        font-weight: bold;
+                                    }
+                                    .footer-section {
+                                        text-align: left;
+                                        margin-top: 10px;
+                                    }
+                                    .footer-section p {
+                                        margin: 0;
+                                        line-height: 1.2;
+                                    }
+                                    hr {
+                                        display: block;
+                                        height: 1px;
+                                        background: transparent;
+                                        width: 100%;
+                                        border: none;
+                                        border-top: solid 2px #000 !important;
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="receipt-container">
+                                    ${salesContent}
+                                </div>
+                            </body>
+                        </html>
+                    `);
 
                             printWindow.document.close();
                             printWindow.focus();
@@ -2320,278 +2318,323 @@
 
 
                         // Function to populate the main sales table
-                        function populateMainSalesTable(salesArray) {
-                            console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
-                            // Update the currentDisplayedSalesData
-                            currentDisplayedSalesData = salesArray;
-                            console.log("currentDisplayedSalesData updated to:", currentDisplayedSalesData);
+                     function populateMainSalesTable(salesArray) {
+    console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
 
-                            const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+    currentDisplayedSalesData = salesArray;
+    console.log("currentDisplayedSalesData updated to:", currentDisplayedSalesData);
 
-                            if (!mainSalesTableBodyElement) {
-                                console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
-                                return; // Exit if element is not found
-                            }
+    const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
 
-                            let rowsHtml = '';
-                            let totalSalesValue = 0;
+    if (!mainSalesTableBodyElement) {
+        console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
+        return;
+    }
 
-                            if (salesArray.length === 0) {
-                                console.log("Sales array is empty. Displaying 'No sales records found.'");
-                                rowsHtml = '<tr><td colspan="8" class="text-center">No sales records found for this selection.</td></tr>';
-                                totalSalesValue = 0;
-                            } else {
-                                salesArray.forEach(sale => {
-                                    // Construct the row HTML string, ensuring data-id, data-customer-code, data-customer-name are present
-                                    rowsHtml += `
-                                                <tr data-sale-id="${sale.id}" data-id="${sale.id}" data-customer-code="${sale.customer_code}" data-customer-name="${sale.customer_name}">
-                    <td data-field="code">${sale.code || 'N/A'}</td>
-                    <td data-field="item_code">${sale.item_code || 'N/A'}</td>
-                    <td data-field="item_name">${sale.item_name || 'N/A'}</td>
-                    <td data-field="weight">${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                    <td data-field="price_per_kg">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                    <td data-field="total">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                    <td data-field="packs">${(parseFloat(sale.packs) || 0).toFixed(0)}</td>
-                </tr>
-                                                                                                                                                                                            `;
-                                    totalSalesValue += parseFloat(sale.total || 0);
-                                });
-                            }
+    // Clear existing rows safely
+    while (mainSalesTableBodyElement.firstChild) {
+        mainSalesTableBodyElement.removeChild(mainSalesTableBodyElement.firstChild);
+    }
 
-                            console.log("Attempting to set tbody HTML with:", rowsHtml);
+    let totalSalesValue = 0;
 
-                            mainSalesTableBodyElement.innerHTML = rowsHtml;
+    if (salesArray.length === 0) {
+        console.log("Sales array is empty. Displaying 'No sales records found.'");
+        const noRecordsRow = document.createElement('tr');
+        noRecordsRow.innerHTML = '<td colspan="8" class="text-center">No sales records found for this selection.</td>';
+        mainSalesTableBodyElement.appendChild(noRecordsRow);
+        totalSalesValue = 0;
+    } else {
+        salesArray.forEach(sale => {
+            const newRow = document.createElement('tr');
+            newRow.dataset.saleId = sale.id;
+            newRow.dataset.id = sale.id;
+            newRow.dataset.customerCode = sale.customer_code;
+            newRow.dataset.customerName = sale.customer_name;
 
-                            $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
-                            console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2));
-                            console.log("Current tbody HTML after setting:", mainSalesTableBodyElement.innerHTML);
-                        }
+            // Ensure all values are handled gracefully, with a fallback to 'N/A' or 0
+            const code = sale.code || 'N/A';
+            const itemCode = sale.item_code || 'N/A';
+            const itemName = sale.item_name || 'N/A';
+            const weight = (parseFloat(sale.weight) || 0).toFixed(2);
+            const pricePerKg = (parseFloat(sale.price_per_kg) || 0).toFixed(2);
+            const total = (parseFloat(sale.total) || 0).toFixed(2);
+            const packs = (parseInt(sale.packs) || 0);
 
-                        populateMainSalesTable(allSalesData);
+            newRow.innerHTML = `
+                <td data-field="code">${code}</td>
+                <td data-field="item_code">${itemCode}</td>
+                <td data-field="item_name">${itemName}</td>
+                <td data-field="weight">${weight}</td>
+                <td data-field="price_per_kg">${pricePerKg}</td>
+                <td data-field="total">${total}</td>
+                <td data-field="packs">${packs}</td>
+            `;
 
-                        function populateFormForEdit(sale) {
-                            console.log("Populating form for sale:", sale);
-                            saleIdField.value = sale.id;
-                            newCustomerCodeField.value = sale.customer_code || '';
-                            customerNameField.value = sale.customer_name || '';
-                            newCustomerCodeField.readOnly = true;
+            mainSalesTableBodyElement.appendChild(newRow);
+            totalSalesValue += parseFloat(total);
+        });
+    }
 
-                            if (sale.customer_code) {
-                                $('#customer_code_select').val(sale.customer_code).trigger('change.select2');
-                                console.log("Setting customer_code_select to:", sale.customer_code);
-                            } else {
-                                $('#customer_code_select').val(null).trigger('change.select2');
-                                console.log("Clearing customer_code_select.");
-                            }
+    $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
+    console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2));
+}
 
-                            // --- NEW LOGIC TO POPULATE GRN FIELDS ---
 
-                            // 1. Show the `grn_display` input field
-                            const grnDisplay = document.getElementById('grn_display');
-                            grnDisplay.style.display = 'block'; // Or 'inline-block' if preferred
-                            grnDisplay.value = sale.code || '';
-                            
+// Call the function initially to populate the table
+populateMainSalesTable(allSalesData);
 
-                            // 2. Hide the `grn_select` dropdown
-                            const grnSelect = document.getElementById('grn_select');
-                            $(grnSelect).next('.select2-container').hide();
+function populateFormForEdit(sale) {
+    console.log("Populating form for sale:", sale);
+    saleIdField.value = sale.id;
+    newCustomerCodeField.value = sale.customer_code || '';
+    customerNameField.value = sale.customer_name || '';
+    newCustomerCodeField.readOnly = true;
 
-                            console.log("Setting grn_display to:", grnDisplay.value);
+    if (sale.customer_code) {
+        $('#customer_code_select').val(sale.customer_code).trigger('change.select2');
+        console.log("Setting customer_code_select to:", sale.customer_code);
+    } else {
+        $('#customer_code_select').val(null).trigger('change.select2');
+        console.log("Clearing customer_code_select.");
+    }
 
-                            // This part of your code is already looking for the correct option and selecting it.
-                            const grnOption = $('#grn_select option').filter(function () {
-                                return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code &&
-                                    $(this).data('itemCode') === sale.item_code;
-                            });
-                            if (grnOption.length) {
-                                // Set the value of the underlying select, even though it's hidden.
-                                $('#grn_select').val(grnOption.val());
-                                console.log("Setting grn_select to:", grnOption.val());
-                            } else {
-                                $('#grn_select').val(null);
-                                console.log("Clearing grn_select.");
-                            }
+    // --- NEW LOGIC TO POPULATE GRN FIELDS ---
 
-                            // --- END OF NEW LOGIC ---
+    // 1. Show the `grn_display` input field
+    const grnDisplay = document.getElementById('grn_display');
+    grnDisplay.style.display = 'block';
+    grnDisplay.value = sale.code || '';
 
-                            supplierSelect.value = sale.supplier_code || '';
-                            supplierDisplaySelect.value = sale.supplier_code || '';
-                            itemSelect.value = sale.item_code || '';
-                            itemSelect.dispatchEvent(new Event('change'));
-                            console.log("Setting supplier_code to:", sale.supplier_code, "and item_select to:", sale.item_code);
+    // 2. Hide the `grn_select` dropdown
+    const grnSelect = document.getElementById('grn_select');
+    $(grnSelect).next('.select2-container').hide();
+    console.log("Setting grn_display to:", grnDisplay.value);
 
-                            itemNameDisplayFromGrn.value = sale.item_name || '';
-                            itemNameField.value = sale.item_name || '';
-                            console.log("Setting item name display to:", itemNameDisplayFromGrn.value);
+    // Set value of hidden select if option matches
+    const grnOption = $('#grn_select option').filter(function () {
+        return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code &&
+            $(this).data('itemCode') === sale.item_code;
+    });
+    if (grnOption.length) {
+        $('#grn_select').val(grnOption.val());
+        console.log("Setting grn_select to:", grnOption.val());
+    } else {
+        $('#grn_select').val(null);
+        console.log("Clearing grn_select.");
+    }
 
-                            weightField.value = parseFloat(sale.weight || 0).toFixed(2);
-                            pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-                            packsField.value = parseInt(sale.packs || 0);
-                            calculateTotal();
-                            
-                            console.log("Weight:", weightField.value, "Price:", pricePerKgField.value, "Packs:", packsField.value);
+    // --- END OF NEW LOGIC ---
 
-                            salesEntryForm.action = `sales/update/${sale.id}`;
-                            console.log("Form action set to:", salesEntryForm.action);
+    supplierSelect.value = sale.supplier_code || '';
+    supplierDisplaySelect.value = sale.supplier_code || '';
+    itemSelect.value = sale.item_code || '';
+    itemSelect.dispatchEvent(new Event('change'));
+    console.log("Setting supplier_code to:", sale.supplier_code, "and item_select to:", sale.item_code);
 
-                            addSalesEntryBtn.style.display = 'none';
-                            updateSalesEntryBtn.style.display = 'inline-block';
-                            deleteSalesEntryBtn.style.display = 'inline-block';
-                            cancelEntryBtn.style.display = 'inline-block';
-                            console.log("Buttons updated for edit mode.");
-                        }
-                        function resetForm() {
-                            console.log("Resetting form...");
-                            salesEntryForm.reset();
-                            saleIdField.value = '';
-                            newCustomerCodeField.readOnly = false;
-                            $('#customer_code_select').val(null).trigger('change.select2');
-                            $('#grn_select').val(null).trigger('change.select2');
-                            grnDisplay.value = 'Select GRN Entry...';
-                            supplierSelect.value = '';
-                            supplierDisplaySelect.value = '';
-                            itemSelect.value = '';
-                            itemSelect.dispatchEvent(new Event('change'));
-                            itemNameDisplayFromGrn.value = '';
-                            itemNameField.value = '';
-                            calculateTotal();
+    itemNameDisplayFromGrn.value = sale.item_name || '';
+    itemNameField.value = sale.item_name || '';
+    console.log("Setting item name display to:", itemNameDisplayFromGrn.value);
 
-                            salesEntryForm.action = "{{ route('grn.store') }}";
+    weightField.value = parseFloat(sale.weight || 0).toFixed(2);
+    pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+    packsField.value = parseInt(sale.packs || 0);
+    calculateTotal();
 
-                            addSalesEntryBtn.style.display = 'inline-block';
-                            updateSalesEntryBtn.style.display = 'none';
-                            deleteSalesEntryBtn.style.display = 'none';
-                            cancelEntryBtn.style.display = 'none';
+    console.log("Weight:", weightField.value, "Price:", pricePerKgField.value, "Packs:", packsField.value);
 
-                            newCustomerCodeField.focus();
-                            console.log("Form reset complete.");
-                        }
+    salesEntryForm.action = `sales/update/${sale.id}`;
+    console.log("Form action set to:", salesEntryForm.action);
 
-                        document.getElementById('mainSalesTableBody').addEventListener('click', function (event) {
-                            const clickedRow = event.target.closest('tr[data-sale-id]');
-                            if (clickedRow) {
-                                const saleId = clickedRow.dataset.saleId;
-                                console.log("Row clicked, sale ID:", saleId);
-                                const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
-                                if (saleToEdit) {
-                                    console.log("Sale found in currentDisplayedSalesData for ID:", saleId, saleToEdit);
-                                    populateFormForEdit(saleToEdit);
-                                } else {
-                                    console.warn("Sale NOT found in currentDisplayedSalesData for ID:", saleId);
-                                    alert(
-                                        "Could not find this record for editing. It might not be in the currently displayed sales list. Please try reloading the page if this persists."
-                                    );
-                                }
-                            }
-                        });
+    addSalesEntryBtn.style.display = 'none';
+    updateSalesEntryBtn.style.display = 'inline-block';
+    deleteSalesEntryBtn.style.display = 'inline-block';
+    cancelEntryBtn.style.display = 'inline-block';
+    console.log("Buttons updated for edit mode.");
 
-                        // Get references to your form and button
-                        const salesEntryForm = document.getElementById('salesEntryForm');
-                        const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
-                        const saleIdField = document.getElementById('sale_id');
+    // ✅ Focus the cursor on the weight field
+    weightField.focus();
+}
 
-                        // It's good practice to ensure these elements exist before adding listeners
-                        if (salesEntryForm && updateSalesEntryBtn && saleIdField) {
+// When Enter pressed in #weight input, move focus to #price_per_kg
+document.getElementById('weight').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault(); // prevent form submission or other defaults
+        document.getElementById('price_per_kg').focus();
+    }
+});
 
-                            // Add a keypress listener to the form itself
-                            salesEntryForm.addEventListener('keypress', function (event) {
-                                // Check if the pressed key is 'Enter' AND if the button is visible
-                                if (event.key === 'Enter') {
-                                    // Get the computed style of the button
-                                    const computedStyle = window.getComputedStyle(updateSalesEntryBtn);
+document.getElementById('price_per_kg').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault(); // prevent form submission or other defaults
+        document.getElementById('packs').focus();
+    }
+});
 
-                                    // Check if the button is not hidden by display: none or visibility: hidden
-                                    const isVisible = computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden';
 
-                                    // You might also want to check for its actual offset dimensions if it's outside the viewport or collapsed
-                                    const isRendered = updateSalesEntryBtn.offsetWidth > 0 || updateSalesEntryBtn.offsetHeight > 0;
-                                      // Call update functions for initial display after clearing inputs
-                          
+function resetForm() {
+    console.log("Resetting form...");
+    salesEntryForm.reset();
+    saleIdField.value = '';
+    newCustomerCodeField.readOnly = false;
+    $('#customer_code_select').val(null).trigger('change.select2');
+    $('#grn_select').val(null).trigger('change.select2');
+    grnDisplay.value = 'Select GRN Entry...';
+    supplierSelect.value = '';
+    supplierDisplaySelect.value = '';
+    itemSelect.value = '';
+    itemSelect.dispatchEvent(new Event('change'));
+    itemNameDisplayFromGrn.value = '';
+    itemNameField.value = '';
+    calculateTotal();
 
-                                    if (isVisible && isRendered) {
-                                        // Prevent the default form submission behavior
-                                        event.preventDefault();
+    salesEntryForm.action = "{{ route('grn.store') }}";
 
-                                        // Trigger the click event on your update button
-                                        updateSalesEntryBtn.click();
-                                    }
-                                }
-                            });
+    addSalesEntryBtn.style.display = 'inline-block';
+    updateSalesEntryBtn.style.display = 'none';
+    deleteSalesEntryBtn.style.display = 'none';
+    cancelEntryBtn.style.display = 'none';
 
-                            // Your existing click event listener for the button (no changes needed here)
-                            updateSalesEntryBtn.addEventListener('click', function () {
-                                const saleId = saleIdField.value;
-                                if (!saleId) {
-                                    alert('No record selected for update.');
-                                    return;
-                                }
+    newCustomerCodeField.focus();
+    console.log("Form reset complete.");
+}
 
-                                const formData = new FormData(salesEntryForm);
-                                const data = {};
-                                formData.forEach((value, key) => {
-                                    data[key] = value;
-                                });
-                                data['_method'] = 'PUT';
-                                data['_token'] = '{{ csrf_token() }}';
+document.getElementById('mainSalesTableBody').addEventListener('click', function (event) {
+    const clickedRow = event.target.closest('tr[data-sale-id]');
+    if (clickedRow) {
+        const saleId = clickedRow.dataset.saleId;
+        console.log("Row clicked, sale ID:", saleId);
+        const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
+        if (saleToEdit) {
+            console.log("Sale found in currentDisplayedSalesData for ID:", saleId, saleToEdit);
+            populateFormForEdit(saleToEdit);
+        } else {
+            console.warn("Sale NOT found in currentDisplayedSalesData for ID:", saleId);
+            alert(
+                "Could not find this record for editing. It might not be in the currently displayed sales list. Please try reloading the page if this persists."
+            );
+        }
+    }
+});
 
-                                fetch(`sales/update/${saleId}`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify(data)
-                                })
-                                    .then(response => {
-                                        if (!response.ok) {
-                                            return response.json().then(errorData => Promise.reject(errorData));
-                                        }
-                                        return response.json();
-                                    })
-                                    .then(result => {
-                                        if (result.success && result.sale) {
-                                            alert(result.message);
+// Get references
+const salesEntryForm = document.getElementById('salesEntryForm');
+const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
+const saleIdField = document.getElementById('sale_id');
 
-                                            // Find the index of the sale object to be updated in the global array
-                                            const updatedSaleIndex = currentDisplayedSalesData.findIndex(sale => sale.id == saleId);
+let originalFormData = {}; // To store the original values for comparison
 
-                                            if (updatedSaleIndex !== -1) {
-                                                // Update the object in the array with the new data from the response
-                                                // This line is now safer because we've already checked for result.sale
-                                                currentDisplayedSalesData[updatedSaleIndex] = result.sale;
+// Helper function to get current form data as an object
+function getCurrentFormData(form) {
+    const formData = new FormData(form);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+    return data;
+}
 
-                                                // Now, call the populate function to rebuild the table with the corrected data
-                                                populateMainSalesTable(currentDisplayedSalesData);
-                                            } else {
-                                                // If the sale wasn't found in the array, reload the page to get the latest data
-                                                window.location.reload();
-                                            }
+// Store original form data when a record is selected (you must call this manually when loading data)
+function storeOriginalFormData() {
+    if (salesEntryForm) {
+        originalFormData = getCurrentFormData(salesEntryForm);
+    }
+}
 
-                                            salesEntryForm.reset();
-                                            // You can keep this line if you want to focus on a particular element after the update
-                                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                        } else {
-                                            // If success is false or the sale data is missing, handle the error
-                                            alert('Update ok: ' + result.message);
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error('Error updating sales entry:', error);
-                                        let errorMessage = 'An error occurred during update.';
-                                        if (error && error.message) {
-                                            errorMessage += '\n' + error.message;
-                                        }
-                                        if (error && error.errors) {
-                                            for (const key in error.errors) {
-                                                errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
-                                            }
-                                        }
-                                        alert(errorMessage);
-                                    });
+// Compare current data with original to see if any changes were made
+function isFormDataChanged(currentData) {
+    for (let key in currentData) {
+        if (currentData[key] !== originalFormData[key]) {
+            return true; // At least one field has changed
+        }
+    }
+    return false;
+}
 
-                            });
+if (salesEntryForm && updateSalesEntryBtn && saleIdField) {
 
-                        } else {
+    // Enter keypress triggers update only if update button is visible
+    salesEntryForm.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+            const style = window.getComputedStyle(updateSalesEntryBtn);
+            const visible = style.display !== 'none' && style.visibility !== 'hidden';
+            const rendered = updateSalesEntryBtn.offsetWidth > 0 || updateSalesEntryBtn.offsetHeight > 0;
+
+            if (visible && rendered) {
+                event.preventDefault();
+                updateSalesEntryBtn.click();
+            }
+        }
+    });
+
+    // Click event for update button
+    updateSalesEntryBtn.addEventListener('click', function () {
+        const saleId = saleIdField.value;
+        if (!saleId) {
+            alert('No record selected for update.');
+            return;
+        }
+
+        const currentFormData = getCurrentFormData(salesEntryForm);
+        if (!isFormDataChanged(currentFormData)) {
+            alert('No changes detected. Update not required.');
+            return;
+        }
+
+        // Add method and token
+        currentFormData['_method'] = 'PUT';
+        currentFormData['_token'] = '{{ csrf_token() }}';
+
+        fetch(`sales/update/${saleId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(currentFormData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => Promise.reject(errorData));
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log("Server response:", result);
+
+                // Check the structure of the returned `sale` object here
+                console.log("Updated sale record received from server:", result.sale); // THIS IS THE NEW LOG TO HELP YOU DEBUG
+
+                if (result.success && result.sale) {
+                    alert(result.message);
+
+                    const updatedIndex = currentDisplayedSalesData.findIndex(sale => String(sale.id) === String(saleId));
+                    if (updatedIndex !== -1) {
+                        currentDisplayedSalesData[updatedIndex] = result.sale;
+                        populateMainSalesTable(currentDisplayedSalesData);
+                    } else {
+                        alert("Record updated on server but not found in local data. Reloading.");
+                        window.location.reload();
+                    }
+
+                    resetForm(); // Reset form
+                } else {
+                    alert('Update failed: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating sales entry:', error);
+                let errorMessage = 'An error occurred during update.';
+                if (error?.message) errorMessage += '\n' + error.message;
+                if (error?.errors) {
+                    for (const key in error.errors) {
+                        errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
+                    }
+                }
+                alert(errorMessage);
+            });
+    });
+}else {
                             console.error("Form, update button, or sale ID field not found. Please check their IDs.");
                         }
                         deleteSalesEntryBtn.addEventListener('click', function () {
