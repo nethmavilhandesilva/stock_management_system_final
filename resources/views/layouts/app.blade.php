@@ -60,7 +60,8 @@
     @include('layouts.partials.item-wisemodal')
     @include('layouts.partials.weight-modal')
     @include('layouts.partials.salecode-modal')
-     @include('layouts.partials.sales-modal')
+    @include('layouts.partials.sales-modal')
+    @include('layouts.partials.salesadjustments-modal')
 
 </div>
 

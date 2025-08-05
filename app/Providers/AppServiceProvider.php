@@ -34,7 +34,8 @@ class AppServiceProvider extends ServiceProvider
             'layouts.partials.report-modal',
             'layouts.partials.weight-modal',
             'layouts.partials.salecode-modal',
-            'layouts.partials.item-wisemodal', // Keep if this modal still exists and uses 'entries'
+            'layouts.partials.item-wisemodal',
+            'layouts.partials.salesadjustments-modal' // Keep if this modal still exists and uses 'entries'
         ], function ($view) {
             $view->with('entries', GrnEntry::all());
         });

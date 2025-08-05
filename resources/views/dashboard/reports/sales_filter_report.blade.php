@@ -18,31 +18,17 @@
         </div>
 
         <div class="card-body">
-            {{-- Filter Summary - Removed as per user's previous request (though not explicitly stated in this turn, it was removed from the provided code) --}}
-            {{-- If you still need the filter summary, uncomment the block below and re-add the `filter-summary` div. --}}
-            {{--
-            <div class="filter-summary alert p-3 mb-4">
-                <h5 class="alert-heading mb-2">යොදන ලද පෙරහන්:</h5>
-                <ul class="list-unstyled mb-0">
-                    <li><strong>සැපයුම්කරු කේතය:</strong> {{ $request->supplier_code ?? 'සියලු' }}</li>
-                    <li><strong>පාරිභෝගික කේතය:</strong> {{ $request->customer_code ?? 'සියලු' }}</li>
-                    <li><strong>අයිතම කේතය:</strong> {{ $request->item_code ?? 'සියලු' }}</li>
-                    <li><strong>ආරම්භක දිනය:</strong> {{ $request->start_date ?? 'සියලු' }}</li>
-                    <li><strong>අවසන් දිනය:</strong> {{ $request->end_date ?? 'සියලු' }}</li>
-                    <li><strong>අනුපිළිවෙල:</strong> {{ str_replace('_', ' ', $request->order_by ?? 'සාමාන්‍ය (නව සිට පැරණි)') }}</li>
-                </ul>
-            </div>
-            --}}
+         
 
             <div class="table-responsive">
                 <table class="table table-striped table-hover table-bordered">
                     <thead>
                         <tr>
                             <th>සැපයුම්කරු</th>
-                            <th>ඇසුරුම්</th>
-                            <th>අයිතමයේ නම</th>
-                            <th>බර (kg)</th>
-                            <th>මිල/කිලෝග්‍රෑමය</th>
+                            <th>මලු</th>
+                            <th>වර්ගය</th>
+                            <th>බර</th>
+                            <th>මිල</th>
                             <th>මුළු මුදල</th>
                             <th>බිල්පත් අංකය</th>
                             <th>පාරිභෝගික කේතය</th>

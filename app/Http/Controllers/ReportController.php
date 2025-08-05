@@ -12,6 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\DynamicReportExport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\Salesadjustment;
 
 class ReportController extends Controller
 {
@@ -518,6 +519,29 @@ public function getweight(Request $request)
 
     return [$reportData, $headings, $reportTitle];
 }
+public function salesAdjustmentReport(Request $request)
+{
+    $code = $request->input('code');
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+
+    $query = Salesadjustment::query();
+
+    if ($code) {
+        $query->where('code', $code);
+    }
+    if ($startDate) {
+        $query->whereDate('created_at', '>=', $startDate);
+    }
+    if ($endDate) {
+        $query->whereDate('created_at', '<=', $endDate);
+    }
+
+    $entries = $query->orderBy('created_at', 'desc')->paginate(20);
+
+    return view('dashboard.reports.salesadjustment', compact('entries', 'code', 'startDate', 'endDate'));
+}
+
 }
 
 

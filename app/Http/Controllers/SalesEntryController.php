@@ -9,6 +9,7 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\salesadjustment;
 
 class SalesEntryController extends Controller
 {
@@ -190,63 +191,117 @@ class SalesEntryController extends Controller
         }
     }
     
-         public function update(Request $request, Sale $sale)
-    {
-        $validatedData = $request->validate([
-            'customer_code' => 'required|string|max:255',
-            'customer_name' => 'nullable|string|max:255', // <-- Make sure this is nullable
-            'code' => 'required|string|max:255',
-            'supplier_code' => 'required|string|max:255',
-            'item_code' => 'required|string|max:255',
-            'item_name' => 'required|string|max:255',
-            'weight' => 'required|numeric|min:0',
-            'price_per_kg' => 'required|numeric|min:0',
-            'total' => 'required|numeric|min:0',
-            'packs' => 'required|integer|min:0',
+        public function update(Request $request, Sale $sale)
+{
+    $validatedData = $request->validate([
+        'customer_code' => 'required|string|max:255',
+        'customer_name' => 'nullable|string|max:255',
+        'code' => 'required|string|max:255',
+        'supplier_code' => 'required|string|max:255',
+        'item_code' => 'required|string|max:255',
+        'item_name' => 'required|string|max:255',
+        'weight' => 'required|numeric|min:0',
+        'price_per_kg' => 'required|numeric|min:0',
+        'total' => 'required|numeric|min:0',
+        'packs' => 'required|integer|min:0',
+    ]);
+
+    try {
+        if ($sale->bill_printed === 'Y') {
+            // Save original data before update
+            $originalData = $sale->replicate()->toArray();
+
+            // Save original as adjustment
+            Salesadjustment::create([
+                'customer_code' => $originalData['customer_code'],
+                'supplier_code' => $originalData['supplier_code'],
+                'code' => $originalData['code'],
+                'item_code' => $originalData['item_code'],
+                'item_name' => $originalData['item_name'],
+                'weight' => $originalData['weight'],
+                'price_per_kg' => $originalData['price_per_kg'],
+                'total' => $originalData['total'],
+                'packs' => $originalData['packs'],
+                'bill_no' => $originalData['bill_no'],                
+                'user_id' => 'c11',
+                'type' => 'original', // ← Add this line
+            ]);
+        }
+
+        // Update the sale
+        $sale->update([
+            'customer_code' => $validatedData['customer_code'],
+            'customer_name' => $validatedData['customer_name'] ?? $sale->customer_name,
+            'code' => $validatedData['code'],
+            'supplier_code' => $validatedData['supplier_code'],
+            'item_code' => $validatedData['item_code'],
+            'item_name' => $validatedData['item_name'],
+            'weight' => $validatedData['weight'],
+            'price_per_kg' => $validatedData['price_per_kg'],
+            'total' => $validatedData['total'],
+            'packs' => $validatedData['packs'],
+            'updated' => 'Y',
+            'BillChangedOn' => now(),
         ]);
 
-        try {
-            // Update the sale record with the validated data
-            $sale->update([
-                'customer_code' => $validatedData['customer_code'],
-                'customer_name' => $validatedData['customer_name'] ?? $sale->customer_name, // <-- Use the new name, or the old one if it's not provided
-                'code' => $validatedData['code'],
-                'supplier_code' => $validatedData['supplier_code'],
-                'item_code' => $validatedData['item_code'],
-                'item_name' => $validatedData['item_name'],
-                'weight' => $validatedData['weight'],
-                'price_per_kg' => $validatedData['price_per_kg'],
-                'total' => $validatedData['total'],
-                'packs' => $validatedData['packs'],
-                'updated' => 'Y',
-                'BillChangedOn' => now(),
-            ]);
+        // Save updated version as adjustment
+        if ($sale->bill_printed === 'Y') {
+            $newData = $sale->fresh();
 
-            // Get the freshly updated model instance
-            $updatedSale = $sale->fresh();
-
-            // Return the complete, updated sale object
-            return response()->json([
-                'success' => true,
-                'message' => 'Sales record updated successfully!',
-                'sale' => $updatedSale
+            Salesadjustment::create([
+                'customer_code' => $newData->customer_code,
+                'supplier_code' => $newData->supplier_code,
+                'code' => $newData->code,
+                'item_code' => $newData->item_code,
+                'item_name' => $newData->item_name,
+                'weight' => $newData->weight,
+                'price_per_kg' => $newData->price_per_kg,
+                'total' => $newData->total,
+                'packs' => $newData->packs,
+                'bill_no'=> $newData->bill_no,
+                'user_id' => 'c11',
+                'type' => 'updated', // ← Add this line
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update sales record: ' . $e->getMessage()
-            ], 500);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sales record updated successfully!',
+            'sale' => $sale->fresh(),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update sales record: ' . $e->getMessage()
+        ], 500);
     }
+}
     public function destroy(Sale $sale)
-    {
-        try {
-            $sale->delete();
-            return response()->json(['success' => true, 'message' => 'Sales record deleted successfully!']);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to delete sales record: ' . $e->getMessage()], 500);
-        }
+{ 
+    try {
+        // Copy the sale data into Salesadjustment
+        Salesadjustment::create([
+            'customer_code' => $sale->customer_code,
+            'supplier_code' => $sale->supplier_code,
+            'code'          => $sale->code,
+            'item_code'     => $sale->item_code,
+            'item_name'     => $sale->item_name,
+            'weight'        => $sale->weight,
+            'price_per_kg'  => $sale->price_per_kg,
+            'total'         => $sale->total,
+            'packs'         => $sale->packs,
+            'bill_no'       => $sale->bill_no,
+            'type'          => 'deleted', // Mark this record as deleted
+        ]);
+
+        // Now delete the sale record
+        $sale->delete();
+
+        return response()->json(['success' => true, 'message' => 'Sales record deleted and copied to Salesadjustment table.']);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Failed to delete sales record: ' . $e->getMessage()], 500);
     }
+}
     public function saveAsUnprinted(Request $request)
     {
         // Validate the incoming request to ensure it's an array of IDs
