@@ -63,8 +63,8 @@ class GrnEntryController extends Controller
     }
 
     // 3. Construct the 'code' string using the new sequential number, and the first three letters of the item name and supplier name
-    $itemTypePrefix = substr($item->type, 0, 3);
-    $supplierNamePrefix = substr($supplier->name, 0, 3);
+    $itemTypePrefix = substr($item->no, 0, 3);
+    $supplierNamePrefix = substr($supplier->code, 0, 3);
 
     $code = $itemTypePrefix . '-' . $supplierNamePrefix . '-' . $nextSequentialNumber;
     // --- END NEW LOGIC ---

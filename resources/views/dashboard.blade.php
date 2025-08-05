@@ -812,7 +812,7 @@
                             <div style="flex: 1 1 100px;">
                                 <input type="text" id="item_name_display_from_grn" class="form-control" readonly
                                     placeholder="අයිතමයේ නම (Item Name)"
-                                    style="background-color: #e9ecef; color: black; height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black;">
+                                    style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
                             </div>
 
                             <!-- Weight -->
@@ -820,7 +820,7 @@
                                 <input type="number" name="weight" id="weight" step="0.01"
                                     class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
                                     placeholder="බර (kg)" required
-                                    style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
                                 <small id="remaining_weight_display" class="form-text text-danger fw-bold"
                                     style="font-size: 0.85rem;">Remaining: 0.00 kg</small>
                             </div>
@@ -830,7 +830,7 @@
                                 <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
                                     class="form-control @error('price_per_kg') is-invalid @enderror"
                                     value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
-                                    style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
                             </div>
 
 
@@ -840,7 +840,7 @@
                                 <input type="number" name="packs" id="packs"
                                     class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
                                     placeholder="ඇසුරුම් (Packs)" required
-                                    style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
                                 <small id="remaining_packs_display" class="form-text text-danger fw-bold"
                                     style="font-size: 0.85rem;">Remaining Packs: 0</small>
                             </div>

@@ -276,32 +276,57 @@ class SalesEntryController extends Controller
         ], 500);
     }
 }
-    public function destroy(Sale $sale)
-{ 
+  public function destroy(Sale $sale)
+{
     try {
-        // Copy the sale data into Salesadjustment
-        Salesadjustment::create([
-            'customer_code' => $sale->customer_code,
-            'supplier_code' => $sale->supplier_code,
-            'code'          => $sale->code,
-            'item_code'     => $sale->item_code,
-            'item_name'     => $sale->item_name,
-            'weight'        => $sale->weight,
-            'price_per_kg'  => $sale->price_per_kg,
-            'total'         => $sale->total,
-            'packs'         => $sale->packs,
-            'bill_no'       => $sale->bill_no,
-            'type'          => 'deleted', // Mark this record as deleted
-        ]);
+        // Check if bill_printed is 'Y' before sending to Salesadjustment
+        if ($sale->bill_printed === 'Y') {
+            // Insert original copy
+            Salesadjustment::create([
+                'customer_code' => $sale->customer_code,
+                'supplier_code' => $sale->supplier_code,
+                'code'          => $sale->code,
+                'item_code'     => $sale->item_code,
+                'item_name'     => $sale->item_name,
+                'weight'        => $sale->weight,
+                'price_per_kg'  => $sale->price_per_kg,
+                'total'         => $sale->total,
+                'packs'         => $sale->packs,
+                'bill_no'       => $sale->bill_no,
+                'type'          => 'original',
+            ]);
 
-        // Now delete the sale record
+            // Insert deleted copy
+            Salesadjustment::create([
+                'customer_code' => $sale->customer_code,
+                'supplier_code' => $sale->supplier_code,
+                'code'          => $sale->code,
+                'item_code'     => $sale->item_code,
+                'item_name'     => $sale->item_name,
+                'weight'        => $sale->weight,
+                'price_per_kg'  => $sale->price_per_kg,
+                'total'         => $sale->total,
+                'packs'         => $sale->packs,
+                'bill_no'       => $sale->bill_no,
+                'type'          => 'deleted',
+            ]);
+        }
+
+        // Always delete the original record
         $sale->delete();
 
-        return response()->json(['success' => true, 'message' => 'Sales record deleted and copied to Salesadjustment table.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Sale deleted. Salesadjustment logged if bill_printed = Y.'
+        ]);
     } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => 'Failed to delete sales record: ' . $e->getMessage()], 500);
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to delete sales record: ' . $e->getMessage()
+        ], 500);
     }
 }
+
     public function saveAsUnprinted(Request $request)
     {
         // Validate the incoming request to ensure it's an array of IDs
