@@ -313,6 +313,7 @@ class SalesEntryController extends Controller
     $sales = Sale::all(); // or your logic
     return response()->json(['sales' => $sales]);
 }
+
        
  
 }

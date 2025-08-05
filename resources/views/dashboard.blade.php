@@ -211,14 +211,14 @@
         /* If you want to reduce the size of the toggler icon on mobile */
         /* This is less common but can be done */
         /*
-                                                                                                                                                            .navbar.navbar-compact .navbar-toggler {
-                                                                                                                                                                padding: 0.25rem 0.5rem !important;
-                                                                                                                                                            }
-                                                                                                                                                            .navbar.navbar-compact .navbar-toggler-icon {
-                                                                                                                                                                width: 1.2em !important;
-                                                                                                                                                                height: 1.2em !important;
-                                                                                                                                                            }
-                                                                                                                                                            */
+                                                                                                                                                                .navbar.navbar-compact .navbar-toggler {
+                                                                                                                                                                    padding: 0.25rem 0.5rem !important;
+                                                                                                                                                                }
+                                                                                                                                                                .navbar.navbar-compact .navbar-toggler-icon {
+                                                                                                                                                                    width: 1.2em !important;
+                                                                                                                                                                    height: 1.2em !important;
+                                                                                                                                                                }
+                                                                                                                                                                */
     </style>
 @endsection
 
@@ -1010,26 +1010,26 @@
                 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-                 {{-- PASSCODE FOR DELETE BUTTON --}}
-                 <script>
-    // Get references to the elements
-    const verificationField = document.getElementById('verificationField');
-    const deleteAllButton = document.getElementById('deleteAllButton');
-    const requiredText = 'nethma123'; // The specific text to enable the button
+                {{-- PASSCODE FOR DELETE BUTTON --}}
+                <script>
+                    // Get references to the elements
+                    const verificationField = document.getElementById('verificationField');
+                    const deleteAllButton = document.getElementById('deleteAllButton');
+                    const requiredText = 'nethma123'; // The specific text to enable the button
 
-    // Add an event listener that fires every time the user types
-    verificationField.addEventListener('input', function() {
-        // Check if the input field's current value matches the required text
-        if (this.value === requiredText) {
-            // If it matches, enable the button
-            deleteAllButton.disabled = false;
-        } else {
-            // If it doesn't match, keep the button disabled
-            deleteAllButton.disabled = true;
-        }
-    });
-</script>
-   {{-- SCRIPTON SEARCHING BY BILL NO AND CUSTOMER CODE --}}
+                    // Add an event listener that fires every time the user types
+                    verificationField.addEventListener('input', function () {
+                        // Check if the input field's current value matches the required text
+                        if (this.value === requiredText) {
+                            // If it matches, enable the button
+                            deleteAllButton.disabled = false;
+                        } else {
+                            // If it doesn't match, keep the button disabled
+                            deleteAllButton.disabled = true;
+                        }
+                    });
+                </script>
+                {{-- SCRIPTON SEARCHING BY BILL NO AND CUSTOMER CODE --}}
                 <script>
                     const searchInput = document.getElementById('searchPrintedSales');
                     // Get a reference to the list of bills
@@ -1339,161 +1339,126 @@
                     });
                 </script>
                 {{-- FETCHING THE WEIGHT DETAILS --}}
-                <script>
-                    let originalGrnWeight = 0; // To store the weight from the selected GRN entry
-                    let originalGrnPacks = 0; // To store the packs from the selected GRN entry
+       <script>
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM Content Loaded. Initializing script for Add Mode.');
 
-                    document.addEventListener('DOMContentLoaded', function () {
-                        console.log('DOM Content Loaded. Initializing script.');
+    // Element references
+    const grnSelect = document.getElementById('grn_select');
+    const weightField = document.getElementById('weight');
+    const packsField = document.getElementById('packs');
+    const remainingWeightDisplay = document.getElementById('remaining_weight_display');
+    const remainingPacksDisplay = document.getElementById('remaining_packs_display');
 
-                        const grnSelect = $('#grn_select');
-                        const weightInput = document.getElementById('weight');
-                        const remainingWeightDisplay = document.getElementById('remaining_weight_display');
-                        const packsInput = document.getElementById('packs');
-                        const remainingPacksDisplay = document.getElementById('remaining_packs_display');
+    // Other fields (for GRN metadata)
+    const supplierCodeDisplay = document.getElementById('supplier_code_display');
+    const supplierCodeHidden = document.getElementById('supplier_code');
+    const itemSelect = document.getElementById('item_select');
+    const itemCodeHidden = document.querySelector('input[name="item_code"]');
+    const itemNameDisplay = document.getElementById('item_name_display_from_grn');
+    const pricePerKgInput = document.getElementById('price_per_kg');
+    const totalInput = document.getElementById('total');
+    const grnEntryCodeHidden = document.getElementById('grn_entry_code');
 
-                        // Other elements (keeping them here for completeness)
-                        const supplierCodeDisplay = document.getElementById('supplier_code_display');
-                        const supplierCodeHidden = document.getElementById('supplier_code');
-                        const itemSelect = document.getElementById('item_select');
-                        const itemCodeHidden = document.querySelector('input[name="item_code"]');
-                        const itemNameDisplay = document.getElementById('item_name_display_from_grn');
-                        const pricePerKgInput = document.getElementById('price_per_kg');
-                        const totalInput = document.getElementById('total');
-                        const grnEntryCodeHidden = document.getElementById('grn_entry_code');
+    // Shared global variables
+    let originalGrnPacks = 0;
+    let originalGrnWeight = 0;
 
-                        // Function to update remaining weight display
-                        function updateRemainingWeight() {
-                            const currentWeightInput = parseFloat(weightInput.value);
+    // --- Function to update the remaining stock in add mode ---
+    function updateRemainingStock() {
+        const currentPacks = parseInt(packsField.value) || 0;
+        const currentWeight = parseFloat(weightField.value) || 0;
 
-                            console.log('--- Inside updateRemainingWeight ---');
-                            console.log('originalGrnWeight:', originalGrnWeight);
-                            console.log('currentWeightInput (from input field):', weightInput.value, '(parsed:', currentWeightInput, ')');
+        let remainingPacks = originalGrnPacks - currentPacks;
+        let remainingWeight = originalGrnWeight - currentWeight;
 
-                            if (!isNaN(currentWeightInput) && originalGrnWeight > 0) {
-                                let remaining = originalGrnWeight - currentWeightInput;
-                                if (remaining < 0) {
-                                    remaining = 0;
-                                }
-                                remainingWeightDisplay.textContent = `Remaining: ${remaining.toFixed(2)} kg`;
-                                console.log('Calculated Remaining (weight dynamic):', remaining.toFixed(2));
-                            } else if (originalGrnWeight > 0) {
-                                remainingWeightDisplay.textContent = `Remaining: ${originalGrnWeight.toFixed(2)} kg`;
-                                console.log('Displaying Full GRN Weight (weight input not valid):', originalGrnWeight.toFixed(2));
-                            } else {
-                                remainingWeightDisplay.textContent = `Remaining: 0.00 kg`;
-                                console.log('Displaying default 0.00 kg (no GRN weight or zero)');
-                            }
-                            console.log('Current remaining_weight_display text:', remainingWeightDisplay.textContent);
-                            console.log('-----------------------------------');
-                        }
+        // Ensure remaining values don't go below zero
+        if (remainingPacks < 0) remainingPacks = 0;
+        if (remainingWeight < 0) remainingWeight = 0;
 
-                        // Function to update remaining packs display
-                        function updateRemainingPacks() {
-                            const currentPacksInput = parseInt(packsInput.value);
+        remainingPacksDisplay.textContent = `Remaining Packs: ${remainingPacks}`;
+        remainingWeightDisplay.textContent = `Remaining: ${remainingWeight.toFixed(2)} kg`;
+    }
 
-                            console.log('--- Inside updateRemainingPacks ---');
-                            console.log('originalGrnPacks:', originalGrnPacks);
-                            console.log('currentPacksInput (from input field):', packsInput.value, '(parsed:', currentPacksInput, ')');
+    // --- GRN Change Handler (Modified to use jQuery) ---
+    // Make sure jQuery is available before this part
+    if (window.jQuery && typeof jQuery === 'function') {
+        $(grnSelect).select2();
+        console.log('Select2 initialized.');
 
-                            if (!isNaN(currentPacksInput) && originalGrnPacks > 0) {
-                                let remaining = originalGrnPacks - currentPacksInput;
-                                if (remaining < 0) {
-                                    remaining = 0;
-                                }
-                                remainingPacksDisplay.textContent = `Remaining Packs: ${remaining}`;
-                                console.log('Calculated Remaining Packs (dynamic):', remaining);
-                            } else if (originalGrnPacks > 0) {
-                                remainingPacksDisplay.textContent = `Remaining Packs: ${originalGrnPacks}`;
-                                console.log('Displaying Full GRN Packs (packs input not valid):', originalGrnPacks);
-                            } else {
-                                remainingPacksDisplay.textContent = `Remaining Packs: 0`;
-                                console.log('Displaying default 0 packs (no GRN packs or zero)');
-                            }
-                            console.log('Current remaining_packs_display text:', remainingPacksDisplay.textContent);
-                            console.log('-----------------------------------');
-                        }
+        // Use jQuery's 'change' event listener, which is compatible with Select2
+        $(grnSelect).on('change', function () {
+            const selected = $(this).find('option:selected');
+            if (!selected.length || !selected.val()) {
+                // If nothing is selected, reset values
+                originalGrnWeight = 0;
+                originalGrnPacks = 0;
+                supplierCodeDisplay.value = '';
+                supplierCodeHidden.value = '';
+                itemSelect.value = '';
+                itemCodeHidden.value = '';
+                itemNameDisplay.value = '';
+                pricePerKgInput.value = '';
+                totalInput.value = '';
+                grnEntryCodeHidden.value = '';
+                
+                // Reset inputs and update display
+                weightField.value = '';
+                packsField.value = '';
+                updateRemainingStock();
+                return;
+            }
 
-                        // Initialize Select2
-                        grnSelect.select2();
-                        console.log('Select2 initialized for #grn_select');
+            // Get original GRN stock values from data attributes
+            // Note: Use .data() to get attributes with jQuery
+            originalGrnWeight = parseFloat(selected.data('original-weight')) || 0;
+            originalGrnPacks = parseInt(selected.data('original-packs')) || 0;
 
-                        // Event listener for Select2's custom 'select2:select' event
-                        grnSelect.on('select2:select', function (e) {
-                            console.log('--- GRN Select event fired (select2:select) ---');
-                            const selectedOption = e.params.data.element; // Get the raw option element
+            // Populate other fields
+            supplierCodeDisplay.value = selected.data('supplier-code') || '';
+            supplierCodeHidden.value = selected.data('supplier-code') || '';
+            itemSelect.value = selected.data('item-code') || '';
+            itemCodeHidden.value = selected.data('item-code') || '';
+            itemNameDisplay.value = selected.data('item-name') || '';
+            pricePerKgInput.value = selected.data('price') || '';
+            totalInput.value = selected.data('total') || '';
+            grnEntryCodeHidden.value = selected.data('code') || '';
 
-                            // Log raw dataset values to ensure they are available
-                            console.log('Raw data-weight from option:', selectedOption.dataset.weight);
-                            console.log('Raw data-packs from option:', selectedOption.dataset.packs);
+            // Reset inputs to trigger an immediate update of remaining stock
+            weightField.value = '';
+            packsField.value = '';
 
-                            // Set original weight and packs
-                            originalGrnWeight = parseFloat(selectedOption.dataset.weight);
-                            originalGrnPacks = parseInt(selectedOption.dataset.packs);
+            // Call the stock update function immediately
+            updateRemainingStock();
+        });
+    } else {
+        // Fallback for when Select2 is not present, using native JS
+        grnSelect?.addEventListener('change', function () {
+            // ... (your previous non-jQuery change handler code here)
+        });
+        console.log('jQuery or Select2 not found. Using native JS event listener.');
+    }
 
-                            console.log('originalGrnWeight set to:', originalGrnWeight);
-                            console.log('originalGrnPacks set to:', originalGrnPacks);
+    // --- Attach listeners for input fields ---
+    packsField.addEventListener('input', updateRemainingStock);
+    weightField.addEventListener('input', updateRemainingStock);
+
+    // --- Initial page load logic ---
+    // This part should work correctly because it doesn't rely on an event
+    if (grnSelect.value) {
+        const selected = grnSelect.options[grnSelect.selectedIndex];
+        if (selected) {
+            originalGrnWeight = parseFloat(selected.getAttribute('data-original-weight')) || 0;
+            originalGrnPacks = parseInt(selected.getAttribute('data-original-packs')) || 0;
+            grnEntryCodeHidden.value = selected.getAttribute('data-code') || '';
+        }
+    }
+    // Perform the initial calculation and display on page load
+    updateRemainingStock();
+});
+</script>
 
 
-                            // Populate other fields
-                            supplierCodeDisplay.value = selectedOption.dataset.supplierCode;
-                            supplierCodeHidden.value = selectedOption.dataset.supplierCode;
-                            itemSelect.value = selectedOption.dataset.itemCode;
-                            itemCodeHidden.value = selectedOption.dataset.itemCode;
-                            itemNameDisplay.value = selectedOption.dataset.itemName;
-                            pricePerKgInput.value = selectedOption.dataset.price;
-                            totalInput.value = selectedOption.dataset.total;
-                            grnEntryCodeHidden.value = selectedOption.dataset.code;
-
-                            // Clear input fields initially, so Remaining displays full GRN value
-                            weightInput.value = '';
-                            packsInput.value = ''; // Clear packs input
-
-                            // Call update functions for initial display after clearing inputs
-                            updateRemainingWeight();
-                            updateRemainingPacks();
-                            console.log('--- End GRN Select event ---');
-                        });
-
-                        // Event listener for weight input changes
-                        weightInput.addEventListener('input', function () {
-                            console.log('--- Weight Input event fired ---');
-                            updateRemainingWeight();
-                        });
-
-                        // Event listener for packs input changes
-                        packsInput.addEventListener('input', function () {
-                            console.log('--- Packs Input event fired ---');
-                            updateRemainingPacks();
-                        });
-
-                        // Initial update on page load (e.g., if form reloads with old values)
-                        console.log('--- Initial Page Load Check ---');
-                        if (grnSelect.val()) { // Check if a value is pre-selected in Select2
-                            const selectedOption = grnSelect.find(':selected')[0]; // Get the raw option element
-                            if (selectedOption && selectedOption.dataset.weight && selectedOption.dataset.packs) {
-                                originalGrnWeight = parseFloat(selectedOption.dataset.weight);
-                                originalGrnPacks = parseInt(selectedOption.dataset.packs);
-
-                                grnEntryCodeHidden.value = selectedOption.dataset.code;
-
-                                // Value for weightInput and packsInput are already set by Blade's old() helper.
-                                // Call update functions to display initial remaining based on old() values.
-                                updateRemainingWeight();
-                                updateRemainingPacks();
-                            } else {
-                                console.log('No pre-selected GRN or missing data-attributes on load.');
-                                remainingWeightDisplay.textContent = `Remaining: 0.00 kg`;
-                                remainingPacksDisplay.textContent = `Remaining Packs: 0`;
-                            }
-                        } else {
-                            console.log('No GRN selected initially on page load.');
-                            remainingWeightDisplay.textContent = `Remaining: 0.00 kg`;
-                            remainingPacksDisplay.textContent = `Remaining Packs: 0`;
-                        }
-                        console.log('--- End Initial Page Load Check ---');
-                    });
-                </script>
                 {{-- TYPING THE CUSTOMER_CODE AND FETCHING UNPRINTED SALES --}}
 
 
@@ -1524,16 +1489,16 @@
                                         if (response.length > 0) {
                                             response.forEach(function (sale) {
                                                 let row = $(`
-                                                                                <tr>
-                                                                                    <td>${sale.code}</td>
-                                                                                    <td>${sale.item_code}</td>
-                                                                                    <td>${sale.item_name}</td>
-                                                                                    <td>${sale.weight}</td>
-                                                                                    <td>${sale.price_per_kg}</td>
-                                                                                    <td>${sale.total}</td>
-                                                                                    <td>${sale.packs}</td>
-                                                                                </tr>
-                                                                            `);
+                                                                                    <tr>
+                                                                                        <td>${sale.code}</td>
+                                                                                        <td>${sale.item_code}</td>
+                                                                                        <td>${sale.item_name}</td>
+                                                                                        <td>${sale.weight}</td>
+                                                                                        <td>${sale.price_per_kg}</td>
+                                                                                        <td>${sale.total}</td>
+                                                                                        <td>${sale.packs}</td>
+                                                                                    </tr>
+                                                                                `);
 
                                                 // Click handler to populate form with selected row
                                                 row.on('click', function () {
@@ -1659,18 +1624,18 @@
 
                                 // Construct the HTML for the tabular display for each row (data row only)
                                 const $result = $(`
-                                                                                                                                                                                                                                            <div class="grn-option-row">
-                                                                                                                                                                                                                                                <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-                                                                                                                                                                                                                                                <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
-                                                                                                                                                                                                                                                 <div class="grn-column grn-supplier-code">${originalWeight || ''}</div>
-                                                                                                                                                                                                                                                  <div class="grn-column grn-supplier-code">${originalPacks || ''}</div>
+                                                                                                                                                                                                                                                <div class="grn-option-row">
+                                                                                                                                                                                                                                                    <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+                                                                                                                                                                                                                                                    <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
+                                                                                                                                                                                                                                                     <div class="grn-column grn-supplier-code">${originalWeight || ''}</div>
+                                                                                                                                                                                                                                                      <div class="grn-column grn-supplier-code">${originalPacks || ''}</div>
 
-                                                                                                                                                                                                                                                <div class="grn-column grn-grn-no">${weight || ''}</div>
-                                                                                                                                                                                                                                                <div class="grn-column grn-packs">${packs || 0}</div>
+                                                                                                                                                                                                                                                    <div class="grn-column grn-grn-no">${weight || ''}</div>
+                                                                                                                                                                                                                                                    <div class="grn-column grn-packs">${packs || 0}</div>
 
-                                                                                                                                                                                                                                                <div class="grn-column grn-txn-date">${txnDate || ''}</div>
-                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                        `);
+                                                                                                                                                                                                                                                    <div class="grn-column grn-txn-date">${txnDate || ''}</div>
+                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                            `);
                                 return $result;
                             },
                             templateSelection: function (data) {
@@ -1716,19 +1681,19 @@
                                 console.log("Header not found, creating and prepending."); // Debugging log
 
                                 const $headerWrapper = $(`
-                                                                                                                                                                                                                                            <div class="grn-header-row-wrapper">
-                                                                                                                                                                                                                                                <div class="grn-option-row grn-header-row">
-                                                                                                                                                                                                                                                    <div class="grn-column grn-code">Code</div>
-                                                                                                                                                                                                                                                    <div class="grn-column grn-supplier-code">Sup...</div>
-                                                                                                                                                                                                                                                     <div class="grn-column grn-supplier-code">Original Weight</div>
-                                                                                                                                                                                                                                                      <div class="grn-column grn-supplier-code">Original Packs</div>
-                                                                                                                                                                                                                                                     <div class="grn-column grn-grn-no">Remaining Weight</div>
-                                                                                                                                                                                                                                                    <div class="grn-column grn-packs"> Remaining Packs</div>
+                                                                                                                                                                                                                                                <div class="grn-header-row-wrapper">
+                                                                                                                                                                                                                                                    <div class="grn-option-row grn-header-row">
+                                                                                                                                                                                                                                                        <div class="grn-column grn-code">Code</div>
+                                                                                                                                                                                                                                                        <div class="grn-column grn-supplier-code">Sup...</div>
+                                                                                                                                                                                                                                                         <div class="grn-column grn-supplier-code">Original Weight</div>
+                                                                                                                                                                                                                                                          <div class="grn-column grn-supplier-code">Original Packs</div>
+                                                                                                                                                                                                                                                         <div class="grn-column grn-grn-no">Remaining Weight</div>
+                                                                                                                                                                                                                                                        <div class="grn-column grn-packs"> Remaining Packs</div>
 
-                                                                                                                                                                                                                                                    <div class="grn-column grn-txn-date">Date</div>
+                                                                                                                                                                                                                                                        <div class="grn-column grn-txn-date">Date</div>
+                                                                                                                                                                                                                                                    </div>
                                                                                                                                                                                                                                                 </div>
-                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                        `);
+                                                                                                                                                                                                                                            `);
 
                                 // Prepend the header wrapper to the .select2-results element
                                 // This puts it before the <ul> which contains the actual options
@@ -1918,7 +1883,7 @@
 
                                 $('#grn_select').select2('open');
                             @endif
-                                                                                                                                                                                                                                });
+                                                                                                                                                                                                                                    });
                         function populateSalesTable(salesArray) {
                             const tableBody = document.getElementById('mainSalesTableBody');
                             tableBody.innerHTML = ''; // Clear existing rows
@@ -1936,14 +1901,14 @@
                                 row.setAttribute('data-customer-name', sale.customer_name || 'N/A'); // Ensure customer_name exists
 
                                 row.innerHTML = `
-                                                                                                                                                                                                                                    <td>${sale.code}</td>
-                                                                                                                                                                                                                                    <td>${sale.item_code}</td>
-                                                                                                                                                                                                                                    <td>${sale.item_name}</td>
-                                                                                                                                                                                                                                    <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                                                                                                                                                                                                                                    <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                                                                                                                                                                                                                                    <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                                                                                                                                                                                                                                    <td>${sale.packs}</td>
-                                                                                                                                                                                                                                `;
+                                                                                                                                                                                                                                        <td>${sale.code}</td>
+                                                                                                                                                                                                                                        <td>${sale.item_code}</td>
+                                                                                                                                                                                                                                        <td>${sale.item_name}</td>
+                                                                                                                                                                                                                                        <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                                                                                                                                                                                                                                        <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                                                                                                                                                                                                                                        <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                                                                                                                                                                                                                                        <td>${sale.packs}</td>
+                                                                                                                                                                                                                                    `;
                                 tableBody.appendChild(row);
                             });
                         }
@@ -1983,6 +1948,17 @@
                                     alert('No printable sales records found!');
                                     return;
                                 }
+                                function getNextBillNo() {
+                                    let lastBillNo = localStorage.getItem('lastBillNo');
+                                    if (!lastBillNo) {
+                                        lastBillNo = 1000;
+                                    } else {
+                                        lastBillNo = parseInt(lastBillNo) + 1;
+                                    }
+                                    localStorage.setItem('lastBillNo', lastBillNo);
+                                    return lastBillNo.toString();
+                                }
+
 
                                 const salesByCustomer = salesData.reduce((acc, sale) => {
                                     (acc[sale.customer_code] ||= []).push(sale);
@@ -1992,7 +1968,8 @@
                                 const customerSales = salesByCustomer[customerCode];
                                 const customerName = customerSales[0].customer_code || 'N/A';
                                 const mobile = customerSales[0]?.mobile || '-';
-                                const billNo = Math.floor(1000 + Math.random() * 9000).toString();
+                               const billNo = getNextBillNo();
+
                                 const date = new Date().toLocaleDateString();
                                 const time = new Date().toLocaleTimeString();
 
@@ -2003,83 +1980,83 @@
                                     totalAmountSum += sale.total;
                                     salesIds.push(sale.id);
                                     return `
-                                                                <tr>
-                                                                    <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
-                                                                    <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
-                                                                    <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
-                                                                    <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
-                                                                </tr>
-                                                            `;
+                                                                    <tr>
+                                                                        <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
+                                                                        <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
+                                                                        <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
+                                                                        <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
+                                                                    </tr>
+                                                                `;
                                 }).join('');
 
                                 const receiptHtml = `
-                                                            <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
-                                                                <div class="company-info" style="text-align: center; margin-bottom: 5px;">
-                                                                    <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;">
-                                                                        <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
-                                                                    </h3>
-                                                                    <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
-                                                                    <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
-                                                                </div>
+                                                                <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
+                                                                    <div class="company-info" style="text-align: center; margin-bottom: 5px;">
+                                                                        <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;">
+                                                                            <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
+                                                                        </h3>
+                                                                        <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
+                                                                        <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
+                                                                    </div>
 
-                                                                <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
-                                                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                        <tr>
-                                                                            <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
-                                                                            <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
-                                                                            <td colspan="2" style="text-align: right; padding: 0;">
-                                                                                <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </table>
-                                                                </div>
-
-                                                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
-
-                                                                <div class="items-section">
-                                                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                        <thead>
+                                                                    <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
+                                                                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
                                                                             <tr>
-                                                                                <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
-                                                                                <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
-                                                                                <th style="text-align: right; padding: 2px 0;">මිල</th>
-                                                                                <th style="text-align: right; padding: 2px 0;">අගය</th>
+                                                                                <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
+                                                                                <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
                                                                             </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                                            <tr><td colspan="4"><div style="height: 4px; background-color: black; margin: 5px 0;"></div></td></tr>
-                                                                            ${itemsHtml}
-                                                                        </tbody>
-                                                                    </table>
+                                                                            <tr>
+                                                                                <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
+                                                                                <td colspan="2" style="text-align: right; padding: 0;">
+                                                                                    <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </table>
+                                                                    </div>
+
+                                                                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+
+                                                                    <div class="items-section">
+                                                                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
+                                                                                    <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
+                                                                                    <th style="text-align: right; padding: 2px 0;">මිල</th>
+                                                                                    <th style="text-align: right; padding: 2px 0;">අගය</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                <tr><td colspan="4"><div style="height: 4px; background-color: black; margin: 5px 0;"></div></td></tr>
+                                                                                ${itemsHtml}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+
+                                                                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+
+                                                                    <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
+                                                                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                                                                            <tr>
+                                                                                <td colspan="3" style="text-align: left; padding: 0;">අගය :</td>
+                                                                                <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
+                                                                                    ${totalAmountSum.toFixed(2)}
+                                                                                </td>
+                                                                            </tr>
+                                                                        </table>
+                                                                    </div>
+
+                                                                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+
+                                                                    <div class="footer-section" style="text-align: center; margin-top: 10px;">
+                                                                        <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                                                                        <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
+                                                                    </div>
                                                                 </div>
-
-                                                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
-
-                                                                <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
-                                                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                        <tr>
-                                                                            <td colspan="3" style="text-align: left; padding: 0;">අගය :</td>
-                                                                            <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
-                                                                                ${totalAmountSum.toFixed(2)}
-                                                                            </td>
-                                                                        </tr>
-                                                                    </table>
-                                                                </div>
-
-                                                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
-
-                                                                <div class="footer-section" style="text-align: center; margin-top: 10px;">
-                                                                    <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                                                                    <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
-                                                                </div>
-                                                            </div>
-                                                        `;
+                                                            `;
 
                                 printReceipt(receiptHtml, customerName, () => {
                                     if (salesIds.length) {
@@ -2151,124 +2128,124 @@
                             const printWindow = window.open('', '', 'width=300,height=600');
 
                             printWindow.document.write(`
-                                                        <html>
-                                                            <head>
-                                                                <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
-                                                                <style>
-                                                                    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-                                                                    body {
-                                                                        font-family: 'Noto Sans Sinhala', sans-serif;
-                                                                        margin: 0;
-                                                                        padding: 5mm;
-                                                                        font-size: 10px;
-                                                                        line-height: 1.2;
-                                                                        overflow: hidden;
-                                                                    }
-                                                                    .receipt-container {
-                                                                        width: 100%;
-                                                                        max-width: 70mm;
-                                                                        margin-left: 0;
-                                                                        margin-right: auto;
-                                                                        border: none;
-                                                                        padding: 0;
-                                                                        text-align: left;
-                                                                    }
-                                                                    .company-info {
-                                                                        text-align: left;
-                                                                        margin-bottom: 5px;
-                                                                    }
-                                                                    .company-info h3 {
-                                                                        font-size: 1.2em;
-                                                                        margin-bottom: 2px;
-                                                                        font-weight: bold;
-                                                                    }
-                                                                    .company-info p {
-                                                                        margin: 0;
-                                                                        line-height: 1.2;
-                                                                    }
-                                                                    .bill-details, .summary-section, .footer-section {
-                                                                        text-align: left;
-                                                                        margin-bottom: 5px;
-                                                                    }
-                                                                    .bill-details p, .summary-section p {
-                                                                        margin: 0;
-                                                                        line-height: 1.2;
-                                                                        display: flex;
-                                                                        justify-content: space-between;
-                                                                    }
-                                                                    .bill-details p span:first-child, .summary-section p span:first-child {
-                                                                        text-align: left;
-                                                                        font-weight: normal;
-                                                                    }
-                                                                    .bill-details p span:last-child, .summary-section p span:last-child {
-                                                                        text-align: right;
-                                                                        font-weight: bold;
-                                                                    }
-                                                                    .customer-name-on-bill {
-                                                                        text-align: left;
-                                                                        font-weight: bold;
-                                                                        margin-top: 5px;
-                                                                    }
-                                                                    .divider {
-                                                                        border-top: 1px dashed #000;
-                                                                        margin: 8px 0;
-                                                                    }
-                                                                    .items-section table {
-                                                                        width: 100%;
-                                                                        border-bottom: none;
-                                                                        font-size: 10px;
-                                                                    }
-                                                                    .items-section th, .items-section td {
-                                                                        padding: 2px 0;
-                                                                        text-align: right;
-                                                                        border-bottom: none;
-                                                                    }
-                                                                    .items-section th {
-                                                                        font-weight: bold;
-                                                                        text-align: center;
-                                                                    }
-                                                                    .col-item {
-                                                                        text-align: left;
-                                                                        width: 40%;
-                                                                    }
-                                                                    .col-qty {
-                                                                        width: 20%;
-                                                                    }
-                                                                    .col-rate {
-                                                                        width: 20%;
-                                                                    }
-                                                                    .col-value {
-                                                                        width: 20%;
-                                                                    }
-                                                                    .grand-total {
-                                                                        font-size: 1.1em;
-                                                                        font-weight: bold;
-                                                                    }
-                                                                    .footer-section {
-                                                                        text-align: left;
-                                                                        margin-top: 10px;
-                                                                    }
-                                                                    .footer-section p {
-                                                                        margin: 0;
-                                                                        line-height: 1.2;
-                                                                    }
-                                                                    hr {
-                                                                        display: block;
-                                                                        height: 1px;
-                                                                        background: transparent;
-                                                                        width: 100%;
-                                                                        border: none;
-                                                                        border-top: solid 2px #000 !important;
-                                                                    }
-                                                                </style>
-                                                            </head>
-                                                            <body>
-                                                                <div class="receipt-container">
-                                                                    ${salesContent}
-                                                                </div>
-                                                            </body>
-                                                        </html>
-                                                    `);
+                                                            <html>
+                                                                <head>
+                                                                    <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
+                                                                    <style>
+                                                                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+                                                                        body {
+                                                                            font-family: 'Noto Sans Sinhala', sans-serif;
+                                                                            margin: 0;
+                                                                            padding: 5mm;
+                                                                            font-size: 10px;
+                                                                            line-height: 1.2;
+                                                                            overflow: hidden;
+                                                                        }
+                                                                        .receipt-container {
+                                                                            width: 100%;
+                                                                            max-width: 70mm;
+                                                                            margin-left: 0;
+                                                                            margin-right: auto;
+                                                                            border: none;
+                                                                            padding: 0;
+                                                                            text-align: left;
+                                                                        }
+                                                                        .company-info {
+                                                                            text-align: left;
+                                                                            margin-bottom: 5px;
+                                                                        }
+                                                                        .company-info h3 {
+                                                                            font-size: 1.2em;
+                                                                            margin-bottom: 2px;
+                                                                            font-weight: bold;
+                                                                        }
+                                                                        .company-info p {
+                                                                            margin: 0;
+                                                                            line-height: 1.2;
+                                                                        }
+                                                                        .bill-details, .summary-section, .footer-section {
+                                                                            text-align: left;
+                                                                            margin-bottom: 5px;
+                                                                        }
+                                                                        .bill-details p, .summary-section p {
+                                                                            margin: 0;
+                                                                            line-height: 1.2;
+                                                                            display: flex;
+                                                                            justify-content: space-between;
+                                                                        }
+                                                                        .bill-details p span:first-child, .summary-section p span:first-child {
+                                                                            text-align: left;
+                                                                            font-weight: normal;
+                                                                        }
+                                                                        .bill-details p span:last-child, .summary-section p span:last-child {
+                                                                            text-align: right;
+                                                                            font-weight: bold;
+                                                                        }
+                                                                        .customer-name-on-bill {
+                                                                            text-align: left;
+                                                                            font-weight: bold;
+                                                                            margin-top: 5px;
+                                                                        }
+                                                                        .divider {
+                                                                            border-top: 1px dashed #000;
+                                                                            margin: 8px 0;
+                                                                        }
+                                                                        .items-section table {
+                                                                            width: 100%;
+                                                                            border-bottom: none;
+                                                                            font-size: 10px;
+                                                                        }
+                                                                        .items-section th, .items-section td {
+                                                                            padding: 2px 0;
+                                                                            text-align: right;
+                                                                            border-bottom: none;
+                                                                        }
+                                                                        .items-section th {
+                                                                            font-weight: bold;
+                                                                            text-align: center;
+                                                                        }
+                                                                        .col-item {
+                                                                            text-align: left;
+                                                                            width: 40%;
+                                                                        }
+                                                                        .col-qty {
+                                                                            width: 20%;
+                                                                        }
+                                                                        .col-rate {
+                                                                            width: 20%;
+                                                                        }
+                                                                        .col-value {
+                                                                            width: 20%;
+                                                                        }
+                                                                        .grand-total {
+                                                                            font-size: 1.1em;
+                                                                            font-weight: bold;
+                                                                        }
+                                                                        .footer-section {
+                                                                            text-align: left;
+                                                                            margin-top: 10px;
+                                                                        }
+                                                                        .footer-section p {
+                                                                            margin: 0;
+                                                                            line-height: 1.2;
+                                                                        }
+                                                                        hr {
+                                                                            display: block;
+                                                                            height: 1px;
+                                                                            background: transparent;
+                                                                            width: 100%;
+                                                                            border: none;
+                                                                            border-top: solid 2px #000 !important;
+                                                                        }
+                                                                    </style>
+                                                                </head>
+                                                                <body>
+                                                                    <div class="receipt-container">
+                                                                        ${salesContent}
+                                                                    </div>
+                                                                </body>
+                                                            </html>
+                                                        `);
 
                             printWindow.document.close();
                             printWindow.focus();
@@ -2368,14 +2345,14 @@
                                     const packs = (parseInt(sale.packs) || 0);
 
                                     newRow.innerHTML = `
-                                            <td data-field="code">${code}</td>
-                                            <td data-field="item_code">${itemCode}</td>
-                                            <td data-field="item_name">${itemName}</td>
-                                            <td data-field="weight">${weight}</td>
-                                            <td data-field="price_per_kg">${pricePerKg}</td>
-                                            <td data-field="total">${total}</td>
-                                            <td data-field="packs">${packs}</td>
-                                        `;
+                                                <td data-field="code">${code}</td>
+                                                <td data-field="item_code">${itemCode}</td>
+                                                <td data-field="item_name">${itemName}</td>
+                                                <td data-field="weight">${weight}</td>
+                                                <td data-field="price_per_kg">${pricePerKg}</td>
+                                                <td data-field="total">${total}</td>
+                                                <td data-field="packs">${packs}</td>
+                                            `;
 
                                     mainSalesTableBodyElement.appendChild(newRow);
                                     totalSalesValue += parseFloat(total);
@@ -2405,6 +2382,7 @@
 
                         // This function performs the subtraction from the remaining stock
                         function updateRemainingStock() {
+                              if (updateSalesEntryBtn.style.display === 'inline-block') { 
                             // Get the current values from the input fields as the user types
                             const currentPacks = parseInt(packsField.value) || 0;
                             const currentWeight = parseFloat(weightField.value) || 0;
@@ -2420,7 +2398,7 @@
                             // Update the display with the new remaining values
                             remainingPacksDisplay.textContent = `Remaining Packs: ${finalRemainingPacks}`;
                             remainingWeightDisplay.textContent = `Remaining: ${finalRemainingWeight.toFixed(2)} kg`;
-                        }
+                        }}
 
                         // Attach the update function to the input fields' 'input' event
                         packsField.addEventListener('input', updateRemainingStock);

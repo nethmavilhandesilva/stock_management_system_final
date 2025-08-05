@@ -6,6 +6,7 @@ use App\Models\GrnEntry;
 use App\Models\Item;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class GrnEntryController extends Controller
 {
@@ -139,6 +140,22 @@ class GrnEntryController extends Controller
 
         return response()->json(['error' => 'GRN Entry not found.'], 404);
     }
+  public function getUsedData($code)
+{
+    $usedWeight = DB::table('grn_entries')
+                    ->where('code', $code)
+                    ->sum('weight');
+
+    $usedPacks = DB::table('grn_entries')
+                    ->where('code', $code)
+                    ->sum('packs');
+
+    return response()->json([
+        'used_weight' => $usedWeight,
+        'used_packs' => $usedPacks
+    ]);
+}
+
 
 }
 
