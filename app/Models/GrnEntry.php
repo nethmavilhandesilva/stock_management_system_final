@@ -23,6 +23,7 @@ class GrnEntry extends Model
         'warehouse_no',
         'original_packs',
         'original_weight',
+        'sequence_no'
     ];
 
     // Optional: If you don't want timestamps (created_at, updated_at)

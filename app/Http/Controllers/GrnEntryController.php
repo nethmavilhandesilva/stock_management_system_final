@@ -21,50 +21,72 @@ class GrnEntryController extends Controller
         $suppliers = Supplier::all();
         return view('dashboard.grn.create', compact('items', 'suppliers'));
     }
-    public function store(Request $request)
-    {
-        $request->validate([
-            'item_code' => 'required',
-            'supplier_code' => 'required',
-            'packs' => 'required|integer',
-            'weight' => 'required|numeric',
-            'txn_date' => 'required|date',
-            'grn_no' => 'required',
-            'warehouse_no' => 'required',
-          
-        ]);
+  public function store(Request $request)
+{
+    $request->validate([
+        'item_code' => 'required',
+        'supplier_code' => 'required',
+        'packs' => 'required|integer',
+        'weight' => 'required|numeric',
+        'txn_date' => 'required|date',
+        'grn_no' => 'nullable',
+        'warehouse_no' => 'nullable',
+    ]);
 
-        // 🔍 Fetch item name (type) using item_code (which is item.no)
-        $item = Item::where('no', $request->item_code)->first();
-        if (!$item) {
-            return back()->withErrors(['item_code' => 'Invalid item selected.']);
-        }
-
-        // Auto generate GRN entry code
-        $last = GrnEntry::latest()->first();
-        $autoNo = $last ? $last->id + 1 : 1;
-        $autoPurchaseNo = str_pad($autoNo, 4, '0', STR_PAD_LEFT);
-
-        $code = $request->item_code . '-' . $request->supplier_code . '-' . rand(100, 999);
-
-        // 📝 Store the record
-        GrnEntry::create([
-            'auto_purchase_no' => $autoPurchaseNo,
-            'code' => $code,
-            'supplier_code' => $request->supplier_code,
-            'item_code' => $request->item_code,
-            'item_name' => $item->type, // 👍 this is the item name
-            'packs' => $request->packs,
-            'weight' => $request->weight,
-            'txn_date' => $request->txn_date,
-            'grn_no' => $request->grn_no,
-            'warehouse_no' => $request->warehouse_no,
-            'original_packs' => $request->packs,
-            'original_weight'=>$request->weight,
-        ]);
-
-        return redirect()->route('grn.index')->with('success', 'GRN Entry added successfully.');
+    // 🔍 Fetch item name (type) and supplier name using their respective codes
+    $item = Item::where('no', $request->item_code)->first();
+    if (!$item) {
+        return back()->withErrors(['item_code' => 'Invalid item selected.']);
     }
+
+    $supplier = Supplier::where('code', $request->supplier_code)->first();
+    if (!$supplier) {
+        return back()->withErrors(['supplier_code' => 'Invalid supplier selected.']);
+    }
+
+    // Auto generate GRN entry code
+    $last = GrnEntry::latest()->first();
+    $autoNo = $last ? $last->id + 1 : 1;
+    $autoPurchaseNo = str_pad($autoNo, 4, '0', STR_PAD_LEFT);
+
+    // --- NEW LOGIC FOR SEQUENTIAL NUMBER ---
+    // 1. Get the last GRN Entry record and its sequential number
+    $lastGrnEntry = GrnEntry::orderBy('sequence_no', 'desc')->first();
+
+    // 2. Determine the next sequential number
+    if ($lastGrnEntry) {
+        $nextSequentialNumber = $lastGrnEntry->sequence_no + 1;
+    } else {
+        // If no records exist, start from 1000
+        $nextSequentialNumber = 1000;
+    }
+
+    // 3. Construct the 'code' string using the new sequential number, and the first three letters of the item name and supplier name
+    $itemTypePrefix = substr($item->type, 0, 3);
+    $supplierNamePrefix = substr($supplier->name, 0, 3);
+
+    $code = $itemTypePrefix . '-' . $supplierNamePrefix . '-' . $nextSequentialNumber;
+    // --- END NEW LOGIC ---
+
+    // 📝 Store the record
+    GrnEntry::create([
+        'auto_purchase_no' => $autoPurchaseNo,
+        'code' => $code,
+        'supplier_code' => $request->supplier_code,
+        'item_code' => $request->item_code,
+        'item_name' => $item->type,
+        'packs' => $request->packs,
+        'weight' => $request->weight,
+        'txn_date' => $request->txn_date,
+        'grn_no' => $request->grn_no,
+        'warehouse_no' => $request->warehouse_no,
+        'original_packs' => $request->packs,
+        'original_weight' => $request->weight,
+        'sequence_no' => $nextSequentialNumber, // Save the new sequence number
+    ]);
+
+    return redirect()->route('grn.index')->with('success', 'GRN Entry added successfully.');
+}
 
     public function edit($id)
     {
@@ -107,16 +129,16 @@ class GrnEntryController extends Controller
 
         return redirect()->route('grn.index')->with('success', 'Entry deleted.');
     }
- public function getGrnEntryByCode($code)
-{
-    $grnEntry = GrnEntry::where('code', $code)->first();
-    
-    if ($grnEntry) {
-        return response()->json($grnEntry);
-    }
+    public function getGrnEntryByCode($code)
+    {
+        $grnEntry = GrnEntry::where('code', $code)->first();
 
-    return response()->json(['error' => 'GRN Entry not found.'], 404);
-}
+        if ($grnEntry) {
+            return response()->json($grnEntry);
+        }
+
+        return response()->json(['error' => 'GRN Entry not found.'], 404);
+    }
 
 }
 
