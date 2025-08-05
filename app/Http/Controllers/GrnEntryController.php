@@ -107,6 +107,16 @@ class GrnEntryController extends Controller
 
         return redirect()->route('grn.index')->with('success', 'Entry deleted.');
     }
+ public function getGrnEntryByCode($code)
+{
+    $grnEntry = GrnEntry::where('code', $code)->first();
+    
+    if ($grnEntry) {
+        return response()->json($grnEntry);
+    }
+
+    return response()->json(['error' => 'GRN Entry not found.'], 404);
+}
 
 }
 

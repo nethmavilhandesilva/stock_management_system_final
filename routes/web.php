@@ -32,7 +32,7 @@ Route::resource('suppliers', SupplierController::class);
 //GRN
 Route::resource('grn', GrnEntryController::class);
 Route::post('/grn/store', [GrnEntryController::class, 'store'])->name('grn.store2');
-
+Route::get('api/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntryByCode']);
 //Sales
 Route::get('/dashboard', [SalesEntryController::class, 'create'])->name('dashboard');
 Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.store');
