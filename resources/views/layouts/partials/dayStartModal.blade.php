@@ -11,7 +11,7 @@
             <div class="modal-body" style="padding: 20px; background-color: #f9f9f9;">
                 <p style="font-size: 16px;">Are you sure you want to start a new day?</p>
                 <p style="font-size: 15px; color: #555;">All current sales will be <strong>archived</strong> and removed.</p>
-                <p><strong>Date:</strong> {{ \Carbon\Carbon::now()->addDay()->format('Y-m-d') }}</p>
+                <p><strong>Date:</strong> {{ \Carbon\Carbon::now()->format('Y-m-d') }}</p>
             </div>
             <div class="modal-footer" style="background-color: #f1f1f1;">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

@@ -600,7 +600,7 @@ public function salesAdjustmentReport(Request $request)
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
 
-    $query = SalesHistory::query();
+    $query = Salesadjustment::query();
 
     if ($code) {
         $query->where('code', $code);
