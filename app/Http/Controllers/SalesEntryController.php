@@ -276,25 +276,33 @@ class SalesEntryController extends Controller
         ], 500);
     }
 }
-  public function destroy(Sale $sale)
+ public function destroy(Sale $sale)
 {
     try {
         // Check if bill_printed is 'Y' before sending to Salesadjustment
         if ($sale->bill_printed === 'Y') {
-            // Insert original copy
-            Salesadjustment::create([
-                'customer_code' => $sale->customer_code,
-                'supplier_code' => $sale->supplier_code,
-                'code'          => $sale->code,
-                'item_code'     => $sale->item_code,
-                'item_name'     => $sale->item_name,
-                'weight'        => $sale->weight,
-                'price_per_kg'  => $sale->price_per_kg,
-                'total'         => $sale->total,
-                'packs'         => $sale->packs,
-                'bill_no'       => $sale->bill_no,
-                'type'          => 'original',
-            ]);
+            // Check if an 'original' record already exists in Salesadjustment for this code and bill_no
+            $alreadyExists = Salesadjustment::where('code', $sale->code)
+                ->where('bill_no', $sale->bill_no)
+                ->where('type', 'original')
+                ->exists();
+
+            // Insert original only if it doesn't exist
+            if (!$alreadyExists) {
+                Salesadjustment::create([
+                    'customer_code' => $sale->customer_code,
+                    'supplier_code' => $sale->supplier_code,
+                    'code'          => $sale->code,
+                    'item_code'     => $sale->item_code,
+                    'item_name'     => $sale->item_name,
+                    'weight'        => $sale->weight,
+                    'price_per_kg'  => $sale->price_per_kg,
+                    'total'         => $sale->total,
+                    'packs'         => $sale->packs,
+                    'bill_no'       => $sale->bill_no,
+                    'type'          => 'original',
+                ]);
+            }
 
             // Insert deleted copy
             Salesadjustment::create([
@@ -326,6 +334,7 @@ class SalesEntryController extends Controller
         ], 500);
     }
 }
+
 
     public function saveAsUnprinted(Request $request)
     {
