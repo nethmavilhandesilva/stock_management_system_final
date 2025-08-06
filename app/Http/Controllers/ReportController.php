@@ -316,7 +316,7 @@ public function getweight(Request $request)
         // Pass data to the report view
         return view('dashboard.reports.sales_filter_report', compact('sales', 'grandTotal', 'request'));
     }
-    public function getGrnSalesOverviewReport()
+       public function getGrnSalesOverviewReport()
     {
         // Fetch all GRN entries
         $grnEntries = GrnEntry::all();
@@ -325,14 +325,26 @@ public function getweight(Request $request)
 
         foreach ($grnEntries as $grnEntry) {
             // Fetch sales related to this GRN entry's code
-            // IMPORTANT: Confirm 'code' in GrnEntry matches the foreign key in Sale.
-            // If Sale has a 'grn_entry_code' column that stores GrnEntry->code,
-            // then use: $relatedSales = Sale::where('grn_entry_code', $grnEntry->code)->get();
-            $relatedSales = Sale::where('code', $grnEntry->code)->get();
+            // First, try to get sales from the 'sales' table
+            $currentSales = Sale::where('code', $grnEntry->code)->get();
+
+            // Then, get sales from the 'sales_histories' table
+            $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
+
+            // Combine the results from both tables
+            // Using a simple merge if you're sure there won't be duplicates
+            // or if you want to prioritize current sales.
+            $relatedSales = $currentSales->merge($historicalSales);
+
+            // If there's a possibility of duplicate entries (e.g., a sale
+            // exists in both tables temporarily during migration), you might
+            // want to consider distinct records based on a unique identifier
+            // like 'UniqueCode' or 'id' if applicable after merging.
+            // Example: $relatedSales = $currentSales->merge($historicalSales)->unique('UniqueCode');
 
             $totalSoldPacks = $relatedSales->sum('packs');
             $totalSoldWeight = $relatedSales->sum('weight');
-            $totalSalesValueForGrn = $relatedSales->sum('total'); // NEW: Sum of total for related sales
+            $totalSalesValueForGrn = $relatedSales->sum('total');
 
             $remainingPacks = $grnEntry->original_packs - $totalSoldPacks;
             $remainingWeight = $grnEntry->original_weight - $totalSoldWeight;
@@ -345,7 +357,7 @@ public function getweight(Request $request)
                 'original_weight' => $grnEntry->original_weight,
                 'sold_packs' => $totalSoldPacks,
                 'sold_weight' => $totalSoldWeight,
-                'total_sales_value' => $totalSalesValueForGrn, // NEW: Add to report data
+                'total_sales_value' => $totalSalesValueForGrn,
                 'remaining_packs' => $remainingPacks,
                 'remaining_weight' => number_format($remainingWeight, 2),
             ];
@@ -356,7 +368,7 @@ public function getweight(Request $request)
             'reportData' => collect($reportData)
         ]);
     }
-    public function getGrnSalesOverviewReport2()
+ public function getGrnSalesOverviewReport2()
     {
         // Fetch all GRN entries
         $grnEntries = GrnEntry::all();
@@ -365,14 +377,21 @@ public function getweight(Request $request)
 
         foreach ($grnEntries as $grnEntry) {
             // Fetch sales related to this GRN entry's code
-            // IMPORTANT: Confirm 'code' in GrnEntry matches the foreign key in Sale.
-            // If Sale has a 'grn_entry_code' column that stores GrnEntry->code,
-            // then use: $relatedSales = Sale::where('grn_entry_code', $grnEntry->code)->get();
-            $relatedSales = Sale::where('code', $grnEntry->code)->get();
+            // First, try to get sales from the 'sales' table
+            $currentSales = Sale::where('code', $grnEntry->code)->get();
+
+            // Then, get sales from the 'sales_histories' table
+            $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
+
+            // Combine the results from both tables
+            // Using a simple merge. Consider unique() if duplicate 'code' entries are possible
+            $relatedSales = $currentSales->merge($historicalSales);
+            // Example if 'UniqueCode' is a reliable unique identifier:
+            // $relatedSales = $currentSales->merge($historicalSales)->unique('UniqueCode');
 
             $totalSoldPacks = $relatedSales->sum('packs');
             $totalSoldWeight = $relatedSales->sum('weight');
-            $totalSalesValueForGrn = $relatedSales->sum('total'); // NEW: Sum of total for related sales
+            $totalSalesValueForGrn = $relatedSales->sum('total');
 
             $remainingPacks = $grnEntry->original_packs - $totalSoldPacks;
             $remainingWeight = $grnEntry->original_weight - $totalSoldWeight;
@@ -385,7 +404,7 @@ public function getweight(Request $request)
                 'original_weight' => $grnEntry->original_weight,
                 'sold_packs' => $totalSoldPacks,
                 'sold_weight' => $totalSoldWeight,
-                'total_sales_value' => $totalSalesValueForGrn, // NEW: Add to report data
+                'total_sales_value' => $totalSalesValueForGrn,
                 'remaining_packs' => $remainingPacks,
                 'remaining_weight' => number_format($remainingWeight, 2),
             ];
