@@ -30,6 +30,7 @@ class Sale extends Model
         'CustomerBillEnteredOn',
         'FirstTimeBillPrintedOn',
         'BillChangedOn',
+        'UniqueCode'
 
     ];
 

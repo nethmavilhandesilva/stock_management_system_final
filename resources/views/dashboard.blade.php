@@ -849,7 +849,7 @@
                                 <input type="number" name="total" id="total" readonly
                                     class="form-control bg-light @error('total') is-invalid @enderror"
                                     value="{{ old('total') }}" placeholder="සමස්ත (Total)"
-                                    style="height: 45px; font-size: 14px; padding: 6px 10px; border: 1px solid black; color: black;">
+                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
                             </div>
                         </div>
 

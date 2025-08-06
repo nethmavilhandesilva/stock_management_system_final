@@ -23,6 +23,14 @@
 
             <x-input-error :messages="$errors->get('role')" class="mt-2" />
         </div>
+        <!-- User ID -->
+        <div>
+            <x-input-label for="user_id" :value="__('User ID')" />
+            <x-text-input id="user_id" class="block mt-1 w-full" type="text" name="user_id" :value="old('user_id')"
+                required autofocus />
+            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
+        </div>
+
 
 
         <!-- Email Address -->

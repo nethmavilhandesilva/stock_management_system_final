@@ -8,6 +8,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\GrnEntryController;
 use App\Http\Controllers\SalesEntryController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 
 // New default route to redirect to login
 Route::get('/', function () {
@@ -19,7 +20,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
+Route::get('/register', [RegisteredUserController::class, 'create'])
+     ->middleware('guest')
+     ->name('register');
 //Item
 Route::resource('items', ItemController::class);
 
