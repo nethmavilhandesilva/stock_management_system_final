@@ -10,7 +10,7 @@
         }
 
         .custom-card {
-            background-color:#006400 !important;
+            background-color: #006400 !important;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             padding: 24px;
@@ -79,23 +79,22 @@
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
-                                <th>ස්වයංක්‍රීය මිලදී ගැනීම් අංකය</th> {{-- Auto Purchase No --}}
-                                <th>කේතය</th> {{-- Code --}}
-                                <th>සැපයුම්කරු කේතය</th> {{-- Supplier Code --}}
-                                <th>අයිතම කේතය</th> {{-- Item Code --}}
-                                <th>අයිතම නාමය</th> {{-- Item Name --}}
-                                <th>පැක්‌</th> {{-- Packs --}}
-                                <th>බර (kg)</th> {{-- Weight --}}
-                                <th>ගනුදෙනු දිනය</th> {{-- Txn Date --}}
-                                <th>GRN අංකය</th> {{-- GRN No --}}
-                                <th>ගබඩා අංකය</th> {{-- Warehouse --}}
-                                <th>මෙහෙයුම්</th> {{-- Actions --}}
+                                <th>ස්වයංක්‍රීය මිලදී ගැනීම් අංකය</th>
+                                <th>කේතය</th>
+                                <th>සැපයුම්කරු කේතය</th>
+                                <th>අයිතම කේතය</th>
+                                <th>අයිතම නාමය</th>
+                                <th>පැක්‌</th>
+                                <th>බර (kg)</th>
+                                <th>ගනුදෙනු දිනය</th>
+                                <th>GRN අංකය</th>
+                                <th>ගබඩා අංකය</th>
+                                <th>මෙහෙයුම්</th>
                             </tr>
-
                         </thead>
                         <tbody>
                             @foreach($entries as $entry)
-                                <tr>
+                                <tr class="grn-row" data-entry-id="{{ $entry->id }}">
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $entry->auto_purchase_no }}</td>
                                     <td>{{ $entry->code }}</td>
@@ -151,15 +150,83 @@
 @endsection
 
 @push('scripts')
+    <style>
+        .custom-context-menu {
+            position: absolute;
+            z-index: 9999;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 5px 0;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+            display: none;
+            width: 140px;
+        }
+
+        .custom-context-menu li {
+            list-style: none;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .custom-context-menu li:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+
+    <ul class="custom-context-menu" id="contextMenu">
+        <li id="hideOption">Hide</li>
+        <li id="unhideOption">Don't Hide</li>
+    </ul>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
-            deleteConfirmationModal.addEventListener('show.bs.modal', function (event) {
-                var button = event.relatedTarget;
-                var entryId = button.getAttribute('data-entry-id');
-                var actionUrl = '{{ route('grn.destroy', ':id') }}'.replace(':id', entryId);
-                var form = deleteConfirmationModal.querySelector('#deleteForm');
-                form.setAttribute('action', actionUrl);
+            const contextMenu = document.getElementById('contextMenu');
+            let currentEntryId = null;
+
+            document.querySelectorAll('.grn-row').forEach(row => {
+                row.addEventListener('contextmenu', function (e) {
+                    e.preventDefault();
+                    currentEntryId = this.dataset.entryId;
+                    contextMenu.style.top = `${e.pageY}px`;
+                    contextMenu.style.left = `${e.pageX}px`;
+                    contextMenu.style.display = 'block';
+                });
+            });
+
+            document.addEventListener('click', () => {
+                contextMenu.style.display = 'none';
+            });
+
+            const csrfToken = '{{ csrf_token() }}';
+
+            document.getElementById('hideOption').addEventListener('click', function () {
+                if (currentEntryId) {
+                    fetch(`/grn/${currentEntryId}/hide`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                        },
+                    }).then(() => {
+                        alert("Entry marked as hidden in the database.");
+                        contextMenu.style.display = 'none';
+                    });
+                }
+            });
+
+            document.getElementById('unhideOption').addEventListener('click', function () {
+                if (currentEntryId) {
+                    fetch(`/grn/${currentEntryId}/unhide`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                        },
+                    }).then(() => {
+                        alert("Entry marked as visible in the database.");
+                        contextMenu.style.display = 'none';
+                    });
+                }
             });
         });
     </script>

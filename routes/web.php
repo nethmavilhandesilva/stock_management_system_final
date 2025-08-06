@@ -37,6 +37,8 @@ Route::resource('grn', GrnEntryController::class);
 Route::post('/grn/store', [GrnEntryController::class, 'store'])->name('grn.store2');
 Route::get('api/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntryByCode']);
 Route::get('/grn-used-data/{code}', [GrnEntryController::class, 'getUsedData']);
+Route::post('/grn/{id}/hide', [GrnEntryController::class, 'hide'])->name('grn.hide');
+Route::post('/grn/{id}/unhide', [GrnEntryController::class, 'unhide'])->name('grn.unhide');
 
 
 //Sales

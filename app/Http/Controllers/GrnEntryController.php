@@ -155,6 +155,23 @@ class GrnEntryController extends Controller
         'used_packs' => $usedPacks
     ]);
 }
+public function hide($id)
+{
+    $entry = GrnEntry::findOrFail($id);
+    $entry->is_hidden = true;
+    $entry->save();
+
+    return response()->json(['status' => 'hidden']);
+}
+
+public function unhide($id)
+{
+    $entry = GrnEntry::findOrFail($id);
+    $entry->is_hidden = false;
+    $entry->save();
+
+    return response()->json(['status' => 'unhidden']);
+}
 
 
 }

@@ -23,9 +23,11 @@ class SalesEntryController extends Controller
     public function create()
     {
         $suppliers = Supplier::all();
-        $items = GrnEntry::select('item_name', 'item_code', 'code')->distinct()->get();
-        $entries = GrnEntry::latest()->take(10)->get();
-
+        $items = GrnEntry::select('item_name', 'item_code', 'code')
+            ->where('is_hidden', 0) // Add the condition here
+            ->distinct()
+            ->get();
+        $entries = GrnEntry::where('is_hidden', 0)->latest()->take(10)->get();
 
         // Fetch ALL sales records to display
         $sales = Sale::where('Processed', 'N')->get();
@@ -50,7 +52,7 @@ class SalesEntryController extends Controller
         $lastDayStart = SalesHistory::latest()->first();
         $nextDay = $lastDayStart ? Carbon::parse($lastDayStart->day_started_at)->addDay()->toDateString() : null;
 
-        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum','nextDay'));
+        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay'));
     }
 
 

@@ -37,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
             'layouts.partials.item-wisemodal',
             'layouts.partials.salesadjustments-modal' // Keep if this modal still exists and uses 'entries'
         ], function ($view) {
-            $view->with('entries', GrnEntry::all());
+           $view->with('entries', GrnEntry::where('is_hidden', 0)->get());
         });
 
         // ✅ NEW: Share filter options specifically with layouts.partials.report-modal
