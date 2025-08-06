@@ -9,6 +9,7 @@ use App\Http\Controllers\GrnEntryController;
 use App\Http\Controllers\SalesEntryController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\CustomersLoanController;
 
 // New default route to redirect to login
 Route::get('/', function () {
@@ -76,4 +77,10 @@ Route::post('/reports/salesadjustment/filter', [ReportController::class, 'salesA
 
 //Reports
 Route::post('/report/download/{reportType}/{format}', [ReportController::class, 'downloadReport'])->name('report.download');
+//customer loans
+Route::get('/customers-loans', [CustomersLoanController::class, 'index'])->name('customers-loans.index');
+Route::post('/customers-loans', [CustomersLoanController::class, 'store'])->name('customers-loans.store');
+Route::get('/customers-loans/{loan}/edit', [CustomersLoanController::class, 'edit'])->name('customers-loans.edit');
+Route::put('/customers-loans/{loan}', [CustomersLoanController::class, 'update'])->name('customers-loans.update');
+Route::delete('/customers-loans/{loan}', [CustomersLoanController::class, 'destroy'])->name('customers-loans.destroy');
 require __DIR__.'/auth.php';
