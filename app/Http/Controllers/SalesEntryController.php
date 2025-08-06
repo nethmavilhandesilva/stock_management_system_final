@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\salesadjustment;
+use App\Models\SalesHistory;
 
 class SalesEntryController extends Controller
 {
@@ -410,6 +411,61 @@ class SalesEntryController extends Controller
         $sales = Sale::all(); // or your logic
         return response()->json(['sales' => $sales]);
     }
+    public function dayStart()
+{
+    try {
+        DB::beginTransaction();
+
+        // Get all current sales
+        $sales = Sale::all();
+
+        if ($sales->isEmpty()) {
+            return redirect()->back()->with('warning', 'No sales found to archive.');
+        }
+
+        // Prepare sales for history table
+        $salesHistoryData = $sales->map(function ($sale) {
+            return [
+                'customer_name' => $sale->customer_name,
+                'customer_code' => $sale->customer_code,
+                'supplier_code' => $sale->supplier_code,
+                'code' => $sale->code,
+                'item_code' => $sale->item_code,
+                'item_name' => $sale->item_name,
+                'weight' => $sale->weight,
+                'price_per_kg' => $sale->price_per_kg,
+                'total' => $sale->total,
+                'packs' => $sale->packs,
+                'bill_printed' => $sale->bill_printed,
+                'Processed' => $sale->Processed,
+                'bill_no' => $sale->bill_no,
+                'updated' => $sale->updated,
+                'is_printed' => $sale->is_printed,
+                'CustomerBillEnteredOn' => $sale->CustomerBillEnteredOn,
+                'FirstTimeBillPrintedOn' => $sale->FirstTimeBillPrintedOn,
+                'BillChangedOn' => $sale->BillChangedOn,
+                'UniqueCode' => $sale->UniqueCode,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        })->toArray();
+
+        // Insert into sales_histories
+        SalesHistory::insert($salesHistoryData);
+
+        // Delete original sales
+        Sale::truncate();
+
+        DB::commit();
+
+        return redirect()->back()->with('success', 'Sales archived and day started successfully.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Day Start Process Failed: ' . $e->getMessage());
+        return redirect()->back();
+    }
+}
 
 
 

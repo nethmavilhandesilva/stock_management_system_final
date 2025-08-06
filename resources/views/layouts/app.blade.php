@@ -62,6 +62,8 @@
     @include('layouts.partials.salecode-modal')
     @include('layouts.partials.sales-modal')
     @include('layouts.partials.salesadjustments-modal')
+     @include('layouts.partials.dayStartModal')
+
 
 </div>
 

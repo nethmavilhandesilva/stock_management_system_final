@@ -60,7 +60,7 @@ Route::put('sales/update/{saleId}', 'SalesEntryController@update');
 Route::post('/clear-data', [SalesEntryController::class, 'clearAll'])->name('clear.data');
 Route::get('/sales/all-data', [SalesEntryController::class, 'getAllSalesData']);
 Route::get('/sales/all', [SalesEntryController::class, 'getAllSales']);
-
+Route::post('/sales/day-start', [SalesEntryController::class, 'dayStart'])->name('sales.dayStart');
 //Reports
 Route::get('/report', [ReportController::class, 'index'])->name('report.index');
 Route::post('/report/fetch', [ReportController::class, 'fetch'])->name('report.fetch');

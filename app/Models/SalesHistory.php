@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SalesHistory extends Model
 {
-    // Table name (optional if follows Laravel naming convention)
-    protected $table = 'sales_history';
+    use HasFactory;
 
-    // Mass assignable attributes
+    protected $table = 'sales_histories';
+
     protected $fillable = [
-        'customer_id',
+        'customer_name',
+        'customer_code',
         'supplier_code',
         'code',
         'item_code',
@@ -20,9 +22,16 @@ class SalesHistory extends Model
         'price_per_kg',
         'total',
         'packs',
+        'bill_printed',
+        'Processed',
+        'bill_no',
+        'updated',
+        'is_printed',
+        'CustomerBillEnteredOn',
+        'FirstTimeBillPrintedOn',
+        'BillChangedOn',
+        'UniqueCode',
+        'created_at',
+        'updated_at',
     ];
-     public function customer()
-    {
-        return $this->belongsTo(Customer::class, 'customer_id', 'id');
-    }
 }
