@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\salesadjustment;
 use App\Models\SalesHistory;
-use Carbon\Carbon; // Import Carbon
+use Carbon\Carbon;
+use App\Models\Setting; // Import Carbon
 
 class SalesEntryController extends Controller
 {
@@ -49,9 +50,10 @@ class SalesEntryController extends Controller
 
         // Calculate total for unprocessed sales
         $totalUnprintedSum = Sale::where('bill_printed', 'N')->sum('total');
-        $lastDayStart = SalesHistory::latest()->first();
-        $nextDay = $lastDayStart ? Carbon::parse($lastDayStart->day_started_at)->addDay()->toDateString() : null;
+        $lastDayStartedSetting = Setting::where('key', 'last_day_started_date')->first();
+        $lastDayStartedDate = $lastDayStartedSetting ? Carbon::parse($lastDayStartedSetting->value) : null;
 
+        $nextDay = $lastDayStartedDate ? $lastDayStartedDate->addDay() : Carbon::now();
         return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay'));
     }
 
@@ -416,62 +418,81 @@ class SalesEntryController extends Controller
         $sales = Sale::all(); // or your logic
         return response()->json(['sales' => $sales]);
     }
-    public function dayStart()
-    {
-        try {
-            DB::beginTransaction();
+ public function dayStart()
+{
+    try {
+        DB::beginTransaction();
 
-            // Get all current sales
-            $sales = Sale::all();
+        // Get last processed date from settings
+        $setting = Setting::where('key', 'last_day_started_date')->first();
 
-            if ($sales->isEmpty()) {
-                return redirect()->back()->with('warning', 'No sales found to archive.');
-            }
+        // Determine the correct "Day Start" date
+        if (!$setting) {
+            // First time: use today
+            $dayStartDate = now()->startOfDay();
+        } else {
+            // Subsequent times: add 1 day to last processed date
+            $dayStartDate = Carbon::parse($setting->value)->addDay()->startOfDay();
+        }
 
-            // Prepare sales for history table
-            $salesHistoryData = $sales->map(function ($sale) {
-                return [
-                    'customer_name' => $sale->customer_name,
-                    'customer_code' => $sale->customer_code,
-                    'supplier_code' => $sale->supplier_code,
-                    'code' => $sale->code,
-                    'item_code' => $sale->item_code,
-                    'item_name' => $sale->item_name,
-                    'weight' => $sale->weight,
-                    'price_per_kg' => $sale->price_per_kg,
-                    'total' => $sale->total,
-                    'packs' => $sale->packs,
-                    'bill_printed' => $sale->bill_printed,
-                    'Processed' => $sale->Processed,
-                    'bill_no' => $sale->bill_no,
-                    'updated' => $sale->updated,
-                    'is_printed' => $sale->is_printed,
-                    'CustomerBillEnteredOn' => $sale->CustomerBillEnteredOn,
-                    'FirstTimeBillPrintedOn' => $sale->FirstTimeBillPrintedOn,
-                    'BillChangedOn' => $sale->BillChangedOn,
-                    'UniqueCode' => $sale->UniqueCode,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            })->toArray();
+        // Get all current sales
+        $sales = Sale::all();
 
-            // Insert into sales_histories
-            SalesHistory::insert($salesHistoryData);
-
-            // Delete original sales
-            Sale::truncate();
+        if ($sales->isEmpty()) {
+            // Even if there are no sales, record the new day
+            Setting::updateOrCreate(
+                ['key' => 'last_day_started_date'],
+                ['value' => $dayStartDate->format('Y-m-d')]
+            );
 
             DB::commit();
-
-            return redirect()->back()->with('success', 'Sales archived and day started successfully.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Day Start Process Failed: ' . $e->getMessage());
-            return redirect()->back();
+            return redirect()->back()->with('warning', 'No sales found. Day start recorded for ' . $dayStartDate->format('Y-m-d'));
         }
+
+        // Archive existing sales
+        $salesHistoryData = $sales->map(function ($sale) {
+            return [
+                'customer_name' => $sale->customer_name,
+                'customer_code' => $sale->customer_code,
+                'supplier_code' => $sale->supplier_code,
+                'code' => $sale->code,
+                'item_code' => $sale->item_code,
+                'item_name' => $sale->item_name,
+                'weight' => $sale->weight,
+                'price_per_kg' => $sale->price_per_kg,
+                'total' => $sale->total,
+                'packs' => $sale->packs,
+                'bill_printed' => $sale->bill_printed,
+                'Processed' => $sale->Processed,
+                'bill_no' => $sale->bill_no,
+                'updated' => $sale->updated,
+                'is_printed' => $sale->is_printed,
+                'CustomerBillEnteredOn' => $sale->CustomerBillEnteredOn,
+                'FirstTimeBillPrintedOn' => $sale->FirstTimeBillPrintedOn,
+                'BillChangedOn' => $sale->BillChangedOn,
+                'UniqueCode' => $sale->UniqueCode,
+                'created_at' => $sale->created_at,
+                'updated_at' => $sale->updated_at,
+            ];
+        })->toArray();
+
+        SalesHistory::insert($salesHistoryData);
+        Sale::truncate();
+
+        // Save the new day start date
+        Setting::updateOrCreate(
+            ['key' => 'last_day_started_date'],
+            ['value' => $dayStartDate->format('Y-m-d')]
+        );
+
+        DB::commit();
+        return redirect()->back()->with('success', 'Day started for ' . $dayStartDate->format('Y-m-d'));
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Day Start Failed: ' . $e->getMessage());
+        return redirect()->back();
     }
-
-
+}
 
 }
