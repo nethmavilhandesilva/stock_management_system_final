@@ -14,6 +14,8 @@ use App\Models\SalesHistory;
 use Carbon\Carbon;
 use App\Models\Setting; // Import Carbon
 use App\Models\CustomersLoan;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\DayStartReport;
 
 class SalesEntryController extends Controller
 {
@@ -419,104 +421,125 @@ class SalesEntryController extends Controller
         $sales = Sale::all(); // or your logic
         return response()->json(['sales' => $sales]);
     }
- public function dayStart()
-{
-    try {
-        DB::beginTransaction();
+      public function dayStart()
+    {
+        try {
+            DB::beginTransaction();
 
-        // Get last processed date from settings
-        $setting = Setting::where('key', 'last_day_started_date')->first();
+            $setting = Setting::where('key', 'last_day_started_date')->first();
 
-        // Determine the correct "Day Start" date
-        if (!$setting) {
-            // First time: use today
-            $dayStartDate = now()->startOfDay();
-        } else {
-            // Subsequent times: add 1 day to last processed date
-            $dayStartDate = Carbon::parse($setting->value)->addDay()->startOfDay();
+            if (!$setting) {
+                $dayStartDate = now()->startOfDay();
+            } else {
+                $dayStartDate = Carbon::parse($setting->value)->addDay()->startOfDay();
+            }
+
+            $sales = Sale::all();
+
+            if ($sales->isNotEmpty()) {
+                $groupedData = $sales->groupBy('item_name');
+                $reportData = [];
+
+                foreach ($groupedData as $itemName => $items) {
+                    $stock = Sale::where('item_name', $itemName)->first();
+                    $originalPacks = $stock ? $stock->packs : 0;
+                    $originalWeight = $stock ? $stock->weight : 0;
+
+                    $soldPacks = $items->sum('packs');
+                    $soldWeight = $items->sum('weight');
+                    $totalSalesValue = $items->sum('total');
+                    $remainingPacks = $originalPacks - $soldPacks;
+                    $remainingWeight = $originalWeight - $soldWeight;
+
+                    $reportData[] = [
+                        'item_name' => $itemName,
+                        'original_packs' => $originalPacks,
+                        'original_weight' => $originalWeight,
+                        'sold_packs' => $soldPacks,
+                        'sold_weight' => $soldWeight,
+                        'total_sales_value' => $totalSalesValue,
+                        'remaining_packs' => $remainingPacks,
+                        'remaining_weight' => $remainingWeight,
+                    ];
+                }
+
+                Mail::send(new DayStartReport($reportData, $dayStartDate));
+
+                // ARCHIVE sales by explicitly mapping the correct columns
+                $salesHistoryData = $sales->map(function ($sale) {
+                    // Only return the columns that exist in the `sales_histories` table
+                    return [
+                        'id' => $sale->id,
+                        'bill_no' => $sale->bill_no,
+                        'code'=>$sale->code,
+                        'item_code' => $sale->item_code,
+                        'item_name' => $sale->item_name,
+                        'packs' => $sale->packs,
+                        'weight' => $sale->weight,
+                        'price_per_kg' => $sale->price_per_kg,
+                        'total' => $sale->total,
+                        'customer_code' => $sale->customer_code,
+                        'customer_name' => $sale->customer_name,
+                        'supplier_code' => $sale->supplier_code,
+                        'bill_printed' => $sale->bill_printed,
+                        'is_printed' => $sale->is_printed,
+                        'created_at' => $sale->created_at->format('Y-m-d H:i:s'), // Fix date format
+                        'updated_at' => $sale->updated_at->format('Y-m-d H:i:s'), // Fix date format
+                        // Add any other columns that exist in BOTH tables
+                    ];
+                })->toArray();
+
+                SalesHistory::insert($salesHistoryData);
+                Sale::truncate();
+
+                Setting::updateOrCreate(
+                    ['key' => 'last_day_started_date'],
+                    ['value' => $dayStartDate->format('Y-m-d')]
+                );
+
+                DB::commit();
+                return redirect()->back()->with('success', 'Day started for ' . $dayStartDate->format('Y-m-d') . '. Report sent successfully.');
+
+            } else {
+                Setting::updateOrCreate(
+                    ['key' => 'last_day_started_date'],
+                    ['value' => $dayStartDate->format('Y-m-d')]
+                );
+
+                DB::commit();
+                return redirect()->back()->with('warning', 'No sales found. Day start recorded for ' . $dayStartDate->format('Y-m-d'));
+            }
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Day Start Failed: ' . $e->getMessage());
+            return redirect()->back();
+        }
+    }
+
+
+    public function getLoanAmount(Request $request)
+    {
+        // Validate the request to ensure a customer_short_name is present.
+        $request->validate(['customer_short_name' => 'required|string']);
+
+        $customerShortName = $request->input('customer_short_name');
+
+        // Find the customer by the provided customer short name.
+        $customer = Customer::where('short_name', $customerShortName)->first();
+
+        // If the customer doesn't exist, return a 404 or a zero amount.
+        if (!$customer) {
+            return response()->json(['total_loan_amount' => 0.00]);
         }
 
-        // Get all current sales
-        $sales = Sale::all();
+        // Calculate the sum of the 'amount' for the customer from the CustomersLoan table.
+        $totalLoanAmount = CustomersLoan::where('customer_id', $customer->id)
+            ->sum('amount');
 
-        if ($sales->isEmpty()) {
-            // Even if there are no sales, record the new day
-            Setting::updateOrCreate(
-                ['key' => 'last_day_started_date'],
-                ['value' => $dayStartDate->format('Y-m-d')]
-            );
-
-            DB::commit();
-            return redirect()->back()->with('warning', 'No sales found. Day start recorded for ' . $dayStartDate->format('Y-m-d'));
-        }
-
-        // Archive existing sales
-        $salesHistoryData = $sales->map(function ($sale) {
-            return [
-                'customer_name' => $sale->customer_name,
-                'customer_code' => $sale->customer_code,
-                'supplier_code' => $sale->supplier_code,
-                'code' => $sale->code,
-                'item_code' => $sale->item_code,
-                'item_name' => $sale->item_name,
-                'weight' => $sale->weight,
-                'price_per_kg' => $sale->price_per_kg,
-                'total' => $sale->total,
-                'packs' => $sale->packs,
-                'bill_printed' => $sale->bill_printed,
-                'Processed' => $sale->Processed,
-                'bill_no' => $sale->bill_no,
-                'updated' => $sale->updated,
-                'is_printed' => $sale->is_printed,
-                'CustomerBillEnteredOn' => $sale->CustomerBillEnteredOn,
-                'FirstTimeBillPrintedOn' => $sale->FirstTimeBillPrintedOn,
-                'BillChangedOn' => $sale->BillChangedOn,
-                'UniqueCode' => $sale->UniqueCode,
-                'created_at' => $sale->created_at,
-                'updated_at' => $sale->updated_at,
-            ];
-        })->toArray();
-
-        SalesHistory::insert($salesHistoryData);
-        Sale::truncate();
-
-        // Save the new day start date
-        Setting::updateOrCreate(
-            ['key' => 'last_day_started_date'],
-            ['value' => $dayStartDate->format('Y-m-d')]
-        );
-
-        DB::commit();
-        return redirect()->back()->with('success', 'Day started for ' . $dayStartDate->format('Y-m-d'));
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Day Start Failed: ' . $e->getMessage());
-        return redirect()->back();
+        // Return the sum as a JSON response.
+        return response()->json(['total_loan_amount' => $totalLoanAmount]);
     }
-}
-public function getLoanAmount(Request $request)
-{
-    // Validate the request to ensure a customer_short_name is present.
-    $request->validate(['customer_short_name' => 'required|string']);
-
-    $customerShortName = $request->input('customer_short_name');
-
-    // Find the customer by the provided customer short name.
-    $customer = Customer::where('short_name', $customerShortName)->first();
-
-    // If the customer doesn't exist, return a 404 or a zero amount.
-    if (!$customer) {
-        return response()->json(['total_loan_amount' => 0.00]);
-    }
-
-    // Calculate the sum of the 'amount' for the customer from the CustomersLoan table.
-    $totalLoanAmount = CustomersLoan::where('customer_id', $customer->id)
-        ->sum('amount');
-
-    // Return the sum as a JSON response.
-    return response()->json(['total_loan_amount' => $totalLoanAmount]);
-}
 
 
 }
