@@ -46,7 +46,7 @@
         }
     </style>
 
-   <div class="container my-4">
+    <div class="container my-4">
         <div class="custom-card">
 
             <h3 class="mb-4">Customers Loans</h3>
@@ -63,7 +63,7 @@
                         <label><strong>Loan Type:</strong></label><br>
                         <label><input type="radio" name="loan_type" value="old" checked>වෙළෙන්දාගේ ලාද පරණ නය</label>
                         <label class="ms-3"><input type="radio" name="loan_type" value="today">වෙළෙන්දාගේ අද දින නය ගැනීම
-                            </label>
+                        </label>
                     </div>
                     <input type="hidden" name="loan_id" id="loan_id">
 
@@ -81,40 +81,42 @@
                         <label class="ms-3"><input type="radio" name="settling_way" value="cheque"> Cheque</label>
                     </div>
 
-                    <div class="col-md-4 mb-2" id="billNoSection"> <label for="bill_no">Bill No</label>
+                    {{-- Bill No Section - Initially visible (controlled by JS and d-none) --}}
+                    <div class="col-md-4 mb-2" id="billNoSection">
+                        <label for="bill_no">Bill No</label>
                         <input type="text" class="form-control" name="bill_no">
                     </div>
 
-                   <div class="col-md-4 mb-2">
-    <label for="description">විස්තරය</label>
-    <input type="text" class="form-control" name="description" id="description" required>
-    <span id="totalAmountDisplay" style="color: #ff0000; font-weight: bold; font-size: 0.9rem; margin-left: 10px;"></span>
-</div>
+                    <div class="col-md-4 mb-2">
+                        <label for="description">විස්තරය</label>
+                        <input type="text" class="form-control" name="description" id="description" required>
+                        <span id="totalAmountDisplay" style="color: #ff0000; font-weight: bold; font-size: 0.9rem; margin-left: 10px;"></span>
+                    </div>
 
-
-
-                    <div class="col-md-4 mb-2"> <label for="amount">මුදල</label>
+                    <div class="col-md-4 mb-2">
+                        <label for="amount">මුදල</label>
                         <input type="number" step="0.01" class="form-control" name="amount" required>
                     </div>
 
-                    <div id="chequeFields" class="d-flex flex-wrap gap-3 mb-2" style="display: none;">
-                        <div class="col-md-3"> <label for="cheque_date">Cheque Date</label>
-                            <input type="date" class="form-control" name="cheque_date" value="{{ date('Y-m-d') }}">
+                    {{-- Cheque Fields - Initially hidden using Bootstrap's d-none class --}}
+                    <div id="chequeFields" class="d-flex flex-wrap gap-3 mb-2 d-none">
+                        <div class="col-md-3">
+                            <label for="cheque_date">Cheque Date</label>
+                            <input type="date" class="form-control" name="cheque_date" value="{{ date('Y-m-d') }}" disabled>
                         </div>
-                        <div class="col-md-3"> <label for="cheque_no">Cheque No</label>
-                            <input type="text" class="form-control" name="cheque_no">
+                        <div class="col-md-3">
+                            <label for="cheque_no">Cheque No</label>
+                            <input type="text" class="form-control" name="cheque_no" disabled>
                         </div>
-                        <div class="col-md-3"> <label for="bank">Bank</label>
-                            <input type="text" class="form-control" name="bank" id="bank">
+                        <div class="col-md-3">
+                            <label for="bank">Bank</label>
+                            <input type="text" class="form-control" name="bank" id="bank" disabled>
                         </div>
                     </div>
 
-
                     <div class="col-md-12 mt-2">
-                        <button type="submit" class="btn btn-light text-dark" id="addLoanButton" style="display: none;">Add
-                            Loan</button>
-                            <button type="submit" class="btn btn-success" id="updateLoanButton" style="display:none;">Update Loan</button>
-
+                        <button type="submit" class="btn btn-light text-dark" id="addLoanButton">Add Loan</button>
+                        <button type="submit" class="btn btn-success" id="updateLoanButton" style="display:none;">Update Loan</button>
                     </div>
                 </div>
             </form>
@@ -146,25 +148,22 @@
                 <table class="table table-bordered table-sm mt-2 bg-white text-dark">
                     <thead>
                         <tr>
-                            
                             <th>විස්තරය</th>
                             <th>මුදල</th>
                             <th>විලා</th>
                             <th>Loan Type</th>
                             <th>Bill No</th>
-                          
-                            <th>Actions</th> </tr>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
                         @forelse($loans as $loan)
                             <tr class="loan-row" data-loan='@json($loan)'>
-                              
                                 <td>{{ $loan->description }}</td>
                                 <td>{{ number_format($loan->amount, 2) }}</td>
-                                 <td>{{ $loan->customer->short_name }}</td>
+                                <td>{{ $loan->customer->short_name }}</td>
                                 <td>{{ ucfirst($loan->loan_type) }}</td>
-                                 <td>{{ $loan->bill_no ?? '-' }}</td>
-                             
+                                <td>{{ $loan->bill_no ?? '-' }}</td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-warning edit-loan-btn">Edit</button>
                                     <form action="{{ route('customers-loans.destroy', $loan->id) }}" method="POST"
@@ -187,7 +186,6 @@
 
         </div>
     </div>
-
 
     {{-- Include Select2 CSS --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -213,7 +211,7 @@
 
             if (loanType === 'old') {
                 descriptionField.value = "වෙළෙන්දාගේ ලාද පරණ නය"; // "Customers old loans"
-                totalAmountDisplay.text('');  // Clear sum display
+                totalAmountDisplay.text(''); // Clear sum display
             } else if (loanType === 'today') {
                 descriptionField.value = "වෙළෙන්දාගේ අද දින නය ගැනීම"; // "Customer loans today"
 
@@ -223,7 +221,10 @@
                         url: `/customers/${customerId}/loans-total`,
                         method: 'GET',
                         success: function(response) {
-                            const formattedAmount = parseFloat(response.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            const formattedAmount = parseFloat(response.total_amount).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
                             totalAmountDisplay.text(`(Total Loans: ${formattedAmount})`);
                         },
                         error: function() {
@@ -231,7 +232,7 @@
                         }
                     });
                 } else {
-                    totalAmountDisplay.text('');  // No customer selected, clear sum
+                    totalAmountDisplay.text(''); // No customer selected, clear sum
                 }
             } else if (settlingWay === 'cheque') {
                 const bankName = bankField.value.trim();
@@ -247,7 +248,7 @@
             }
         }
 
-        $(document).ready(function () {
+        $(document).ready(function() {
             // Initialize Select2 on customer dropdown (and potentially #filter_customer if it exists)
             $('#customer_id, #filter_customer').select2({
                 placeholder: "-- Select Customer --",
@@ -256,30 +257,43 @@
             });
 
             // Event listener: When Select2 dropdown for customer_id opens, focus its search field.
-            $('#customer_id').on('select2:open', function () {
-                setTimeout(function () {
+            $('#customer_id').on('select2:open', function() {
+                setTimeout(function() {
                     $('.select2-container--open .select2-search__field').focus();
                 }, 50); // Small delay to ensure full rendering
             });
 
-            // Event listener: Show/hide cheque fields and manage description based on settling_way selection.
-            $('input[name="settling_way"]').on('change', function () {
-                const isCheque = $(this).val() === 'cheque';
-                $('#chequeFields').toggle(isCheque);
-                $('#billNoSection').toggle(!isCheque);
+            // --- IMPORTANT CHANGE HERE ---
+            // Function to handle visibility and disabled state of fields
+            function toggleSettlingWayFields() {
+                const isCheque = $('input[name="settling_way"]:checked').val() === 'cheque';
 
-                // Enable/disable fields to control which data is sent with the form.
+                // Toggle visibility using Bootstrap classes
+                if (isCheque) {
+                    $('#chequeFields').removeClass('d-none'); // Show cheque fields
+                    $('#billNoSection').addClass('d-none');    // Hide bill no section
+                } else {
+                    $('#chequeFields').addClass('d-none');     // Hide cheque fields
+                    $('#billNoSection').removeClass('d-none'); // Show bill no section
+                }
+
+                // Set disabled state for inputs within chequeFields
                 $('#chequeFields input').prop('disabled', !isCheque);
+
+                // Set disabled state for bill_no input
                 $('input[name="bill_no"]').prop('disabled', isCheque);
 
-                updateDescription(); // Update description after settling way changes.
-            });
+                updateDescription(); // Always update description when settling way changes
+            }
+
+            // Event listener for settling_way radio buttons
+            $('input[name="settling_way"]').on('change', toggleSettlingWayFields);
 
             // Event listener: Update description when loan_type changes.
             $('input[name="loan_type"]').on('change', updateDescription);
 
             // Event listener: Update description in real-time as bank name is typed (if settling way is cheque).
-            $('#bank').on('input', function () {
+            $('#bank').on('input', function() {
                 if ($('input[name="settling_way"]:checked').val() === 'cheque') {
                     updateDescription();
                 }
@@ -290,75 +304,68 @@
                 updateDescription();
             });
 
-            // Initial form reset and visibility setup on page load.
-            // This ensures the form starts in a clean state (cash by default).
+            // Initial form setup on page load
             $('#loanForm')[0].reset();
-            $('#addLoanButton').show(); // Initially show add button, hide update
+            $('#addLoanButton').show();
             $('#updateLoanButton').hide();
             $('#totalAmountDisplay').text('');
 
-            // Manually trigger the 'change' event for settling_way and loan_type
-            // on page load to ensure initial correct state of description and field visibility.
-            $('input[name="settling_way"]:checked').trigger('change');
-            $('input[name="loan_type"]:checked').trigger('change');
+            // --- CRUCIAL: Trigger the function on page load to set initial state ---
+            // This ensures "Cash" is selected and fields are correctly hidden/shown from the start.
+            $('input[name="settling_way"][value="cash"]').prop('checked', true); // Ensure cash is checked
+            toggleSettlingWayFields(); // Manually call the function to set initial visibility and disabled states
+            $('input[name="loan_type"]:checked').trigger('change'); // Ensure loan type description is updated
 
 
             // Event listener for Enter key navigation within the form.
-         $('#loanForm').on('keydown', 'input, select', function (e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
+            $('#loanForm').on('keydown', 'input, select', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
 
-        // Get current element
-        const $current = $(this);
+                    const $current = $(this);
 
-        // Check if current is one of the loan_type radios
-        if ($current.attr('name') === 'loan_type') {
-            // Focus the Bill No input
-            $('input[name="bill_no"]').focus();
-            return; // stop further processing
-        }
+                    if ($current.attr('name') === 'loan_type') {
+                        $('#customer_id').select2('open');
+                        return;
+                    }
 
-        // Existing logic to move to next input
-        const $inputs = $('#loanForm').find('input:visible:enabled:not(:button), select:visible:enabled').filter(function () {
-            return !$(this).hasClass('select2-search__field');
-        });
-        const idx = $inputs.index(this);
+                    const $inputs = $('#loanForm').find('input:visible:enabled:not(:button), select:visible:enabled').filter(
+                        function() {
+                            return !$(this).hasClass('select2-search__field');
+                        });
+                    const idx = $inputs.index(this);
 
-        if (idx > -1 && idx + 1 < $inputs.length) {
-            const nextInput = $inputs.eq(idx + 1);
-            if (nextInput.hasClass('select2-hidden-accessible')) {
-                nextInput.select2('open');
-            } else {
-                nextInput.focus();
-            }
-        } else {
-            const form = $(this).closest('form')[0];
-            if (form.checkValidity()) {
-                form.submit();
-            }
-        }
-    }
-});
+                    if (idx > -1 && idx + 1 < $inputs.length) {
+                        const nextInput = $inputs.eq(idx + 1);
+                        if (nextInput.hasClass('select2-hidden-accessible')) {
+                            nextInput.select2('open');
+                        } else {
+                            nextInput.focus();
+                        }
+                    } else {
+                        const form = $(this).closest('form')[0];
+                        if (form.checkValidity()) {
+                            form.submit();
+                        }
+                    }
+                }
+            });
 
             // Edit Loan Button Handler
-            $('.edit-loan-btn').on('click', function () {
+            $('.edit-loan-btn').on('click', function() {
                 const loan = $(this).closest('tr').data('loan');
 
-                // Populate common fields
                 $('#loan_id').val(loan.id);
                 $('#customer_id').val(loan.customer_id).trigger('change');
                 $('input[name="loan_type"][value="' + loan.loan_type + '"]').prop('checked', true);
                 $('input[name="amount"]').val(loan.amount);
-                // Set description early, updateDescription will refine it
-                $('input[name="description"]').val(loan.description); 
+                $('input[name="description"]').val(loan.description);
 
-                // Set settling way radio button AND TRIGGER ITS CHANGE EVENT
-                // This is the crucial part that ensures visibility is updated.
-                $('input[name="settling_way"][value="' + loan.settling_way + '"]')
-                    .prop('checked', true)
-                    .trigger('change'); 
-                
-                // Populate bill_no or cheque details after the visibility is handled by the trigger('change')
+                // Set settling way radio button and trigger the new dedicated function
+                $('input[name="settling_way"][value="' + loan.settling_way + '"]').prop('checked', true);
+                toggleSettlingWayFields(); // Call the dedicated function
+
+                // Populate fields based on settling_way
                 if (loan.settling_way === 'cash') {
                     $('input[name="bill_no"]').val(loan.bill_no ?? '');
                     // Clear cheque fields to ensure no stale data if the form was previously in cheque mode
@@ -373,15 +380,11 @@
                     $('input[name="bill_no"]').val('');
                 }
 
-                // Call updateDescription after all relevant form values are set
-                // This will correctly update the description field based on the chosen loan type and settling way
-                updateDescription();
+                updateDescription(); // Final description update
 
-                // Toggle buttons visibility
                
                 $('#updateLoanButton').show();
             });
-            
         });
     </script>
 
