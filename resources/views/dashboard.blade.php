@@ -55,7 +55,7 @@
                             class="btn btn-success nav-link d-flex align-items-center {{ Request::routeIs('customers-loans.index') ? 'active' : '' }}"
                             aria-current="{{ Request::routeIs('customers-loans.index') ? 'page' : '' }}">
                             <span class="material-icons me-2">payments</span>
-                            <span class="text-white">Customer Loans</span>
+                            <span class="text-white">ආදායම් / වියදම්</span>
                         </a>
                     </li>
 
