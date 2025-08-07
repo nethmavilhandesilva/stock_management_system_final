@@ -78,9 +78,6 @@ Route::post('/reports/salesadjustment/filter', [ReportController::class, 'salesA
 //Reports
 Route::post('/report/download/{reportType}/{format}', [ReportController::class, 'downloadReport'])->name('report.download');
 //customer loans
-Route::get('/customers-loans', [CustomersLoanController::class, 'index'])->name('customers-loans.index');
-Route::post('/customers-loans', [CustomersLoanController::class, 'store'])->name('customers-loans.store');
-Route::get('/customers-loans/{loan}/edit', [CustomersLoanController::class, 'edit'])->name('customers-loans.edit');
-Route::put('/customers-loans/{loan}', [CustomersLoanController::class, 'update'])->name('customers-loans.update');
-Route::delete('/customers-loans/{loan}', [CustomersLoanController::class, 'destroy'])->name('customers-loans.destroy');
+Route::resource('customers-loans', CustomersLoanController::class);
+
 require __DIR__.'/auth.php';
