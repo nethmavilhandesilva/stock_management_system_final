@@ -34,50 +34,69 @@ class CustomersLoanController extends Controller
 }
 
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function store(Request $request)
+  public function store(Request $request)
     {
-        // Define validation rules based on the 'settling_way'
+        // Base validation rules
         $rules = [
-            'loan_type' => 'required|string|in:old,today', // Ensure specific values
-            'settling_way' => 'required|string|in:cash,cheque', // Ensure specific values
+            'loan_type' => 'required|string|in:old,today',
+            'settling_way' => 'required|string|in:cash,cheque',
             'customer_id' => 'required|exists:customers,id',
-            'amount' => 'required|numeric|min:0.01', // Amount should be positive
-            'bill_no' => 'required|string|max:255', // Bill No is now always required as per your Blade JS
+            'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
-            // Conditional validation for cheque fields
+            'bill_no' => 'nullable|string|max:255', // initially nullable
             'cheque_no' => 'nullable|string|max:255',
             'bank' => 'nullable|string|max:255',
             'cheque_date' => 'nullable|date',
         ];
 
-        // Apply conditional requiredness for cheque fields
+        // Conditional required fields based on settling_way
         if ($request->input('settling_way') === 'cheque') {
             $rules['cheque_no'] = 'required|string|max:255';
             $rules['bank'] = 'required|string|max:255';
             $rules['cheque_date'] = 'required|date';
+            $rules['bill_no'] = 'nullable'; // not required if cheque
+        } else {
+            $rules['bill_no'] = 'required|string|max:255'; // required if not cheque
+            $rules['cheque_no'] = 'nullable';
+            $rules['bank'] = 'nullable';
+            $rules['cheque_date'] = 'nullable';
         }
 
         $validated = $request->validate($rules);
 
-        CustomersLoan::create($validated);
+        // Fetch the customer using the customer_id from the request
+        $customer = Customer::find($validated['customer_id']);
 
-        // Redirect with a success message
+        // Create model and assign fields explicitly
+        $loan = new CustomersLoan();
+        $loan->loan_type = $validated['loan_type'];
+        $loan->settling_way = $validated['settling_way'];
+        $loan->customer_id = $validated['customer_id'];
+        $loan->amount = $validated['amount'];
+        $loan->description = $validated['description'];
+
+        // Assign the customer's short_name
+        $loan->customer_short_name = $customer->short_name; // This is the new line
+
+        if ($validated['settling_way'] === 'cheque') {
+            $loan->cheque_no = $validated['cheque_no'];
+            $loan->bank = $validated['bank'];
+            $loan->cheque_date = $validated['cheque_date'];
+            $loan->bill_no = null;  // clear bill_no when cheque
+        } else {
+            $loan->bill_no = $validated['bill_no'];
+            $loan->cheque_no = null;
+            $loan->bank = null;
+            $loan->cheque_date = null;
+        }
+
+        $loan->save();
+
         return redirect()->route('customers-loans.index')->with('success', 'Loan added successfully!');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     * This method might not be directly used if editing is done via AJAX/Blade population.
-     *
-     * @param  \App\Models\CustomersLoan  $loan
-     * @return \Illuminate\View\View
-     */
+
+  
     public function edit(CustomersLoan $loan)
     {
         // Fetch all customers for the dropdown/search in the edit form
@@ -133,6 +152,11 @@ class CustomersLoanController extends Controller
     } catch (\Exception $e) {
         return redirect()->back()->withErrors('Failed to delete loan: ' . $e->getMessage());
     }
+}
+public function getTotalLoanAmount($customerId)
+{
+    $totalAmount = CustomersLoan::where('customer_id', $customerId)->sum('amount');
+    return response()->json(['total_amount' => $totalAmount]);
 }
 
 }

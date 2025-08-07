@@ -13,6 +13,7 @@ use App\Models\salesadjustment;
 use App\Models\SalesHistory;
 use Carbon\Carbon;
 use App\Models\Setting; // Import Carbon
+use App\Models\CustomersLoan;
 
 class SalesEntryController extends Controller
 {
@@ -494,5 +495,28 @@ class SalesEntryController extends Controller
         return redirect()->back();
     }
 }
+public function getLoanAmount(Request $request)
+{
+    // Validate the request to ensure a customer_short_name is present.
+    $request->validate(['customer_short_name' => 'required|string']);
+
+    $customerShortName = $request->input('customer_short_name');
+
+    // Find the customer by the provided customer short name.
+    $customer = Customer::where('short_name', $customerShortName)->first();
+
+    // If the customer doesn't exist, return a 404 or a zero amount.
+    if (!$customer) {
+        return response()->json(['total_loan_amount' => 0.00]);
+    }
+
+    // Calculate the sum of the 'amount' for the customer from the CustomersLoan table.
+    $totalLoanAmount = CustomersLoan::where('customer_id', $customer->id)
+        ->sum('amount');
+
+    // Return the sum as a JSON response.
+    return response()->json(['total_loan_amount' => $totalLoanAmount]);
+}
+
 
 }

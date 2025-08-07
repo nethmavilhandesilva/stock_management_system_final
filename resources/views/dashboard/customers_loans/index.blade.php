@@ -85,9 +85,13 @@
                         <input type="text" class="form-control" name="bill_no">
                     </div>
 
-                    <div class="col-md-4 mb-2"> <label for="description">Description</label>
-                        <input type="text" class="form-control" name="description" id="description" required>
-                    </div>
+                 <div class="col-md-4 mb-2">
+    <label for="description">Description</label>
+    <input type="text" class="form-control" name="description" id="description" required>
+    <span id="totalAmountDisplay" style="color: #ff0000; font-weight: bold; font-size: 0.9rem; margin-left: 10px;"></span>
+</div>
+
+
 
                     <div class="col-md-4 mb-2"> <label for="amount">Amount</label>
                         <input type="number" step="0.01" class="form-control" name="amount" required>
@@ -207,18 +211,21 @@
             const descriptionField = document.getElementById('description');
             const bankField = document.getElementById('bank');
 
-            if (loanType === 'old') {
-                descriptionField.value = "Customers old loans";
-            } else if (settlingWay === 'cheque') {
-                const bankName = bankField.value.trim();
-                if (bankName) {
-                    descriptionField.value = `Cheque payment from ${bankName}`;
-                } else {
-                    descriptionField.value = "Cheque payment";
-                }
-            } else {
-                descriptionField.value = "";
-            }
+          if (loanType === 'old') {
+    descriptionField.value = "Customers old loans";
+} else if (loanType === 'today') {
+    descriptionField.value = "Customer loans today";
+} else if (settlingWay === 'cheque') {
+    const bankName = bankField.value.trim();
+    if (bankName) {
+        descriptionField.value = `Cheque payment from ${bankName}`;
+    } else {
+        descriptionField.value = "Cheque payment";
+    }
+} else {
+    descriptionField.value = "";
+}
+
         }
 
         $(document).ready(function () {
@@ -337,6 +344,55 @@
     $('#addLoanButton').hide();
     $('#updateLoanButton').show();
 });
+function updateDescription() {
+    const loanType = document.querySelector('input[name="loan_type"]:checked').value;
+    const settlingWay = document.querySelector('input[name="settling_way"]:checked').value;
+    const descriptionField = document.getElementById('description');
+    const bankField = document.getElementById('bank');
+    const customerId = $('#customer_id').val();
+    const totalAmountDisplay = $('#totalAmountDisplay');
+
+    if (loanType === 'old') {
+        descriptionField.value = "Customers old loans";
+        totalAmountDisplay.text('');  // Clear sum display
+    } else if (loanType === 'today') {
+        descriptionField.value = "Customer loans today";
+
+        // Fetch total amount for this customer
+        if (customerId) {
+            $.ajax({
+                url: `/customers/${customerId}/loans-total`,
+                method: 'GET',
+                success: function(response) {
+                    const formattedAmount = parseFloat(response.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    totalAmountDisplay.text(`(Total Loans: ${formattedAmount})`);
+                },
+                error: function() {
+                    totalAmountDisplay.text('(Could not fetch total loans)');
+                }
+            });
+        } else {
+            totalAmountDisplay.text('');  // No customer selected, clear sum
+        }
+    } else if (settlingWay === 'cheque') {
+        const bankName = bankField.value.trim();
+        if (bankName) {
+            descriptionField.value = `Cheque payment from ${bankName}`;
+        } else {
+            descriptionField.value = "Cheque payment";
+        }
+        totalAmountDisplay.text('');
+    } else {
+        descriptionField.value = "";
+        totalAmountDisplay.text('');
+    }
+}
+
+// Also trigger updateDescription when customer selection changes (important for updating the sum)
+$('#customer_id').on('change', function() {
+    updateDescription();
+});
+
 
 
     </script>

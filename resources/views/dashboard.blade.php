@@ -763,6 +763,13 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                            <div class="col-md-2" style="margin-top: -4px; margin-bottom: 6px; max-width: 120px;">
+    <div class="form-control" style="height: 45px; font-size: 16px; padding: 8px 16px; width: 100%; border: 1px solid black; color: black; background-color: #f0f0f0;">
+        <span id="loan_amount_display">0.00</span>
+    </div>
+    <label class="form-label" for="loan_amount_display" style="font-weight: bold; font-size: 14px;">ණය මුදල</label>
+</div>
+
 
                             <div class="row">
                                 <div class="col-md-12 mb-1" style="margin-bottom: 2px;">
@@ -955,6 +962,7 @@
                                 <strong>Total Sales Value:</strong> Rs. <span
                                     id="mainTotalSalesValue">{{ number_format($totalSum, 2) }}</span>
                             </h5>
+                            
                         </div>
                     </div>
                 </div>
@@ -1055,6 +1063,46 @@
                 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+     {{-- Fetch loan amount--}}
+<script>
+    $(document).ready(function() {
+        // Function to fetch and display the loan amount
+        function fetchLoanAmount(customerShortName) { // Changed parameter name
+            // Get the CSRF token from the meta tag
+            let csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+            $.ajax({
+                url: '{{ route('get.loan.amount') }}',
+                method: 'POST',
+                data: {
+                    _token: csrfToken,
+                    customer_short_name: customerShortName // Changed key to match backend
+                },
+                success: function(response) {
+                    // Update the display with the fetched loan amount
+                    $('#loan_amount_display').text(parseFloat(response.total_loan_amount).toFixed(2));
+                },
+                error: function(xhr) {
+                    console.error("AJAX error:", xhr.responseText);
+                    // Reset the loan amount display on error
+                    $('#loan_amount_display').text('0.00');
+                }
+            });
+        }
+
+        // Bind the function to the 'keyup' event of the customer code input field
+        $('#new_customer_code').on('keyup', function() {
+            let customerShortName = $(this).val(); // Read value from the input
+            if (customerShortName) {
+                fetchLoanAmount(customerShortName); // Pass the short name
+            } else {
+                // If the input is empty, reset the display
+                $('#loan_amount_display').text('0.00');
+            }
+        });
+    });
+</script>
                 {{-- PASSCODE FOR DELETE BUTTON --}}
                 <script>
                     // Get references to the elements

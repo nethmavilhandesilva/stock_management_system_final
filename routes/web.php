@@ -79,5 +79,8 @@ Route::post('/reports/salesadjustment/filter', [ReportController::class, 'salesA
 Route::post('/report/download/{reportType}/{format}', [ReportController::class, 'downloadReport'])->name('report.download');
 //customer loans
 Route::resource('customers-loans', CustomersLoanController::class);
+// Example route in web.php
+Route::get('/customers/{id}/loans-total', [CustomersLoanController::class, 'getTotalLoanAmount']);
+Route::post('/get-loan-amount', [SalesEntryController::class, 'getLoanAmount'])->name('get.loan.amount');
 
 require __DIR__.'/auth.php';
