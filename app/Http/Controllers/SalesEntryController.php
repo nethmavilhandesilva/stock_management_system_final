@@ -518,28 +518,34 @@ class SalesEntryController extends Controller
     }
 
 
-    public function getLoanAmount(Request $request)
-    {
-        // Validate the request to ensure a customer_short_name is present.
-        $request->validate(['customer_short_name' => 'required|string']);
+  public function getLoanAmount(Request $request)
+{
+    // Validate the request to ensure a customer_short_name is present.
+    $request->validate(['customer_short_name' => 'required|string']);
 
-        $customerShortName = $request->input('customer_short_name');
+    $customerShortName = $request->input('customer_short_name');
 
-        // Find the customer by the provided customer short name.
-        $customer = Customer::where('short_name', $customerShortName)->first();
+    // Sum of 'old' loan_type amounts
+    $oldSum = CustomersLoan::where('customer_short_name', $customerShortName)
+        ->where('loan_type', 'old')
+        ->sum('amount');
 
-        // If the customer doesn't exist, return a 404 or a zero amount.
-        if (!$customer) {
-            return response()->json(['total_loan_amount' => 0.00]);
-        }
+    // Sum of 'today' loan_type amounts
+    $todaySum = CustomersLoan::where('customer_short_name', $customerShortName)
+        ->where('loan_type', 'today')
+        ->sum('amount');
 
-        // Calculate the sum of the 'amount' for the customer from the CustomersLoan table.
-        $totalLoanAmount = CustomersLoan::where('customer_id', $customer->id)
-            ->sum('amount');
-
-        // Return the sum as a JSON response.
-        return response()->json(['total_loan_amount' => $totalLoanAmount]);
+    // Calculate total loan amount based on your logic
+    if ($todaySum == 0) {
+        $totalLoanAmount = $oldSum;
+    } else {
+        $totalLoanAmount = $oldSum - $todaySum;
     }
+
+    // Return the sum as a JSON response.
+    return response()->json(['total_loan_amount' => $totalLoanAmount]);
+}
+
 
 
 }

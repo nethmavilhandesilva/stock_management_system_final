@@ -183,9 +183,23 @@ class CustomersLoanController extends Controller
 }
 public function getTotalLoanAmount($customerId)
 {
-    $totalAmount = CustomersLoan::where('customer_id', $customerId)->sum('amount');
+    $oldSum = CustomersLoan::where('customer_id', $customerId)
+                ->where('loan_type', 'old')
+                ->sum('amount');
+
+    $todaySum = CustomersLoan::where('customer_id', $customerId)
+                ->where('loan_type', 'today')
+                ->sum('amount');
+
+    if ($todaySum == 0) {
+        $totalAmount = $oldSum;
+    } else {
+        $totalAmount = $oldSum - $todaySum;
+    }
+
     return response()->json(['total_amount' => $totalAmount]);
 }
+
  public function loanReportResults(Request $request)
 {
     // Validate password first (optional)

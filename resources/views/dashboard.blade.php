@@ -1078,44 +1078,124 @@
                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
                 {{-- Fetch loan amount--}}
-                <script>
-                    $(document).ready(function () {
-                        // Function to fetch and display the loan amount
-                        function fetchLoanAmount(customerShortName) { // Changed parameter name
-                            // Get the CSRF token from the meta tag
-                            let csrfToken = $('meta[name="csrf-token"]').attr('content');
+              <script>
+$(document).ready(function () {
+    // Global vars to hold last fetched loan amount and customer short name
+    let latestLoanAmount = 0;
+    let latestCustomerShortName = '';
 
-                            $.ajax({
-                                url: '{{ route('get.loan.amount') }}',
-                                method: 'POST',
-                                data: {
-                                    _token: csrfToken,
-                                    customer_short_name: customerShortName // Changed key to match backend
-                                },
-                                success: function (response) {
-                                    // Update the display with the fetched loan amount
-                                    $('#loan_amount_display').text(parseFloat(response.total_loan_amount).toFixed(2));
-                                },
-                                error: function (xhr) {
-                                    console.error("AJAX error:", xhr.responseText);
-                                    // Reset the loan amount display on error
-                                    $('#loan_amount_display').text('0.00');
-                                }
-                            });
-                        }
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
 
-                        // Bind the function to the 'keyup' event of the customer code input field
-                        $('#new_customer_code').on('keyup', function () {
-                            let customerShortName = $(this).val(); // Read value from the input
-                            if (customerShortName) {
-                                fetchLoanAmount(customerShortName); // Pass the short name
-                            } else {
-                                // If the input is empty, reset the display
-                                $('#loan_amount_display').text('0.00');
-                            }
-                        });
+    function fetchLoanAmount(customerShortName) {
+        if (!customerShortName) {
+            $('#loan_amount_display').text('0.00');
+            latestLoanAmount = 0;
+            latestCustomerShortName = '';
+            return;
+        }
+
+        let csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+        $.ajax({
+            url: '{{ route('get.loan.amount') }}',
+            method: 'POST',
+            data: {
+                _token: csrfToken,
+                customer_short_name: customerShortName
+            },
+            success: function(response) {
+                let amount = parseFloat(response.total_loan_amount) || 0;
+                $('#loan_amount_display').text(amount.toFixed(2));
+                // Save globally for print handler
+                latestLoanAmount = amount;
+                latestCustomerShortName = customerShortName;
+            },
+            error: function(xhr) {
+                console.error("AJAX error:", xhr.responseText);
+                $('#loan_amount_display').text('0.00');
+                latestLoanAmount = 0;
+                latestCustomerShortName = '';
+            }
+        });
+    }
+
+    const debouncedFetch = debounce(function() {
+        let val = $('#new_customer_code').val();
+        fetchLoanAmount(val);
+    }, 300);
+
+    $('#new_customer_code').on('keyup', debouncedFetch);
+
+    $('#customer_code_select').on('change', function () {
+        let selectedShortName = $(this).val();
+        fetchLoanAmount(selectedShortName);
+    });
+
+    // F1 print handler using latestLoanAmount & latestCustomerShortName
+    document.addEventListener('keydown', function (e) {
+        if (e.key === "F1") {
+            e.preventDefault();
+
+            const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+            if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+                alert('No sales records in the table to print!');
+                return;
+            }
+
+            const salesData = [];
+            tableRows.forEach(row => {
+                if (row.hasAttribute('data-sale-id')) {
+                    const cells = row.querySelectorAll('td');
+                    salesData.push({
+                        id: row.getAttribute('data-sale-id'),
+                        customer_code: row.getAttribute('data-customer-code'),
+                        customer_name: row.getAttribute('data-customer-name'),
+                        mobile: row.getAttribute('data-customer-mobile') || '',
+                        code: cells[0]?.textContent.trim() || '',
+                        item_code: cells[1]?.textContent.trim() || '',
+                        item_name: cells[2]?.textContent.trim() || '',
+                        weight: parseFloat(cells[3]?.textContent) || 0,
+                        price_per_kg: parseFloat(cells[4]?.textContent) || 0,
+                        total: parseFloat(cells[5]?.textContent) || 0,
+                        packs: parseInt(cells[6]?.textContent) || 0
                     });
-                </script>
+                }
+            });
+
+            if (!salesData.length) {
+                alert('No printable sales records found!');
+                return;
+            }
+
+            const salesByCustomer = salesData.reduce((acc, sale) => {
+                (acc[sale.customer_code] ||= []).push(sale);
+                return acc;
+            }, {});
+
+            const customerCode = Object.keys(salesByCustomer)[0];
+
+            // Use loan amount only if customer matches
+            let loanAmountForPrint = 0;
+            if (customerCode === latestCustomerShortName) {
+                loanAmountForPrint = latestLoanAmount;
+            }
+
+            // You can now pass loanAmountForPrint into your print template
+            console.log('Loan amount for print:', loanAmountForPrint);
+
+            // Continue with your existing print logic...
+
+        }
+    });
+});
+</script>
+
                 {{-- PASSCODE FOR DELETE BUTTON --}}
                 <script>
                     // Get references to the elements
@@ -2034,193 +2114,211 @@
                         }
 
 
-                        document.addEventListener('keydown', function (e) {
-                            if (e.key === "F1") {
-                                e.preventDefault();
+                      let globalLoanAmount = 0;  // global variable to hold loan amount
 
-                                const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-                                if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-                                    alert('No sales records in the table to print!');
-                                    return;
-                                }
+document.addEventListener('keydown', function (e) {
+    if (e.key === "F1") {
+        e.preventDefault();
 
-                                const salesData = [];
-                                tableRows.forEach(row => {
-                                    if (row.hasAttribute('data-sale-id')) {
-                                        const cells = row.querySelectorAll('td');
-                                        salesData.push({
-                                            id: row.getAttribute('data-sale-id'),
-                                            customer_code: row.getAttribute('data-customer-code'),
-                                            customer_name: row.getAttribute('data-customer-name'),
-                                            mobile: row.getAttribute('data-customer-mobile') || '',
-                                            code: cells[0]?.textContent.trim() || '',
-                                            item_code: cells[1]?.textContent.trim() || '',
-                                            item_name: cells[2]?.textContent.trim() || '',
-                                            weight: parseFloat(cells[3]?.textContent) || 0,
-                                            price_per_kg: parseFloat(cells[4]?.textContent) || 0,
-                                            total: parseFloat(cells[5]?.textContent) || 0,
-                                            packs: parseInt(cells[6]?.textContent) || 0
-                                        });
-                                    }
-                                });
+        const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+        if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+            alert('No sales records in the table to print!');
+            return;
+        }
 
-                                if (!salesData.length) {
-                                    alert('No printable sales records found!');
-                                    return;
-                                }
+        const salesData = [];
+        tableRows.forEach(row => {
+            if (row.hasAttribute('data-sale-id')) {
+                const cells = row.querySelectorAll('td');
+                salesData.push({
+                    id: row.getAttribute('data-sale-id'),
+                    customer_code: row.getAttribute('data-customer-code'),
+                    customer_name: row.getAttribute('data-customer-name'),
+                    mobile: row.getAttribute('data-customer-mobile') || '',
+                    code: cells[0]?.textContent.trim() || '',
+                    item_code: cells[1]?.textContent.trim() || '',
+                    item_name: cells[2]?.textContent.trim() || '',
+                    weight: parseFloat(cells[3]?.textContent) || 0,
+                    price_per_kg: parseFloat(cells[4]?.textContent) || 0,
+                    total: parseFloat(cells[5]?.textContent) || 0,
+                    packs: parseInt(cells[6]?.textContent) || 0
+                });
+            }
+        });
 
-                                // --- NEW CODE STARTS HERE ---
-                                // 1. Get a unique identifier for the current set of sales records.
-                                // We'll create a sorted list of the sale IDs and join them to make a unique key.
-                                const saleIds = salesData.map(sale => sale.id).sort();
-                                const salesKey = saleIds.join('_');
+        if (!salesData.length) {
+            alert('No printable sales records found!');
+            return;
+        }
 
-                                // 2. Check if a bill number for this key already exists in local storage.
-                                let billNo = localStorage.getItem('billNo_' + salesKey);
+        // Unique key for bill number
+        const saleIds = salesData.map(sale => sale.id).sort();
+        const salesKey = saleIds.join('_');
 
-                                // 3. If a bill number does NOT exist, generate a new one and store it.
-                                if (!billNo) {
-                                    function getNextBillNo() {
-                                        let lastBillNo = localStorage.getItem('lastBillNo');
-                                        if (!lastBillNo) {
-                                            lastBillNo = 1000;
-                                        } else {
-                                            lastBillNo = parseInt(lastBillNo) + 1;
-                                        }
-                                        localStorage.setItem('lastBillNo', lastBillNo);
-                                        return lastBillNo.toString();
-                                    }
-                                    billNo = getNextBillNo();
-                                    // Store the new bill number with the unique sales key.
-                                    localStorage.setItem('billNo_' + salesKey, billNo);
-                                }
-                                // --- NEW CODE ENDS HERE ---
+        let billNo = localStorage.getItem('billNo_' + salesKey);
 
-                                const salesByCustomer = salesData.reduce((acc, sale) => {
-                                    (acc[sale.customer_code] ||= []).push(sale);
-                                    return acc;
-                                }, {});
-                                const customerCode = Object.keys(salesByCustomer)[0];
-                                const customerSales = salesByCustomer[customerCode];
-                                const customerName = customerSales[0].customer_code || 'N/A';
-                                const mobile = customerSales[0]?.mobile || '-';
+        if (!billNo) {
+            function getNextBillNo() {
+                let lastBillNo = localStorage.getItem('lastBillNo');
+                if (!lastBillNo) {
+                    lastBillNo = 1000;
+                } else {
+                    lastBillNo = parseInt(lastBillNo) + 1;
+                }
+                localStorage.setItem('lastBillNo', lastBillNo);
+                return lastBillNo.toString();
+            }
+            billNo = getNextBillNo();
+            localStorage.setItem('billNo_' + salesKey, billNo);
+        }
 
-                                const date = new Date().toLocaleDateString();
-                                const time = new Date().toLocaleTimeString();
+        const salesByCustomer = salesData.reduce((acc, sale) => {
+            (acc[sale.customer_code] ||= []).push(sale);
+            return acc;
+        }, {});
+        const customerCode = Object.keys(salesByCustomer)[0];
+        const customerSales = salesByCustomer[customerCode];
+        const customerName = customerSales[0].customer_code || 'N/A';
+        const mobile = customerSales[0]?.mobile || '-';
 
-                                let totalAmountSum = 0;
-                                const salesIds = [];
+        // Fetch loan amount via AJAX before printing
+        fetch('{{ route('get.loan.amount') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ customer_short_name: customerCode })
+        })
+        .then(res => res.json())
+        .then(data => {
+            globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
 
-                                const itemsHtml = customerSales.map(sale => {
-                                    totalAmountSum += sale.total;
-                                    salesIds.push(sale.id);
-                                    return `
-                                                                                                                                <tr>
-                                                                                                                                    <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
-                                                                                                                                    <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
-                                                                                                                                    <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
-                                                                                                                                    <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
-                                                                                                                                </tr>
-                                                                                                                            `;
-                                }).join('');
+            const date = new Date().toLocaleDateString();
+            const time = new Date().toLocaleTimeString();
 
-                                const receiptHtml = `
-                                                                                                                            <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
-                                                                                                                                <div class="company-info" style="text-align: center; margin-bottom: 5px;">
-                                                                                                                                    <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;">
-                                                                                                                                        <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
-                                                                                                                                    </h3>
-                                                                                                                                    <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
-                                                                                                                                    <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
-                                                                                                                                </div>
+            let totalAmountSum = 0;
+            const salesIds = [];
 
-                                                                                                                                <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
-                                                                                                                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                                                                                        <tr>
-                                                                                                                                            <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
-                                                                                                                                            <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
-                                                                                                                                        </tr>
-                                                                                                                                        <tr>
-                                                                                                                                            <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
-                                                                                                                                        </tr>
-                                                                                                                                        <tr>
-                                                                                                                                            <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
-                                                                                                                                            <td colspan="2" style="text-align: right; padding: 0;">
-                                                                                                                                                <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
-                                                                                                                                            </td>
-                                                                                                                                        </tr>
-                                                                                                                                    </table>
-                                                                                                                                </div>
+            const itemsHtml = customerSales.map(sale => {
+                totalAmountSum += sale.total;
+                salesIds.push(sale.id);
+                return `
+                    <tr>
+                        <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
+                        <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
+                        <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
+                        <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join('');
 
-                                                                                                                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+            const receiptHtml = `
+                <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
+                    <div class="company-info" style="text-align: center; margin-bottom: 5px;">
+                        <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;">
+                            <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
+                        </h3>
+                        <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
+                        <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
+                    </div>
 
-                                                                                                                                <div class="items-section">
-                                                                                                                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                                                                                        <thead>
-                                                                                                                                            <tr>
-                                                                                                                                                <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
-                                                                                                                                                <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
-                                                                                                                                                <th style="text-align: right; padding: 2px 0;">මිල</th>
-                                                                                                                                                <th style="text-align: right; padding: 2px 0;">අගය</th>
-                                                                                                                                            </tr>
-                                                                                                                                        </thead>
-                                                                                                                                        <tbody>
-                                                                                                                                            <tr><td colspan="4"><div style="height: 4px; background-color: black; margin: 5px 0;"></div></td></tr>
-                                                                                                                                            ${itemsHtml}
-                                                                                                                                        </tbody>
-                                                                                                                                    </table>
-                                                                                                                                </div>
+                    <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
+                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                            <tr>
+                                <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
+                                <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
+                                <td colspan="2" style="text-align: right; padding: 0;">
+                                    <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
 
-                                                                                                                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
 
-                                                                                                                                <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
-                                                                                                                                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                                                                                        <tr>
-                                                                                                                                            <td colspan="3" style="text-align: left; padding: 0;">අගය :</td>
-                                                                                                                                            <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
-                                                                                                                                                ${totalAmountSum.toFixed(2)}
-                                                                                                                                            </td>
-                                                                                                                                        </tr>
-                                                                                                                                    </table>
-                                                                                                                                </div>
+                    <div class="items-section">
+                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
+                                    <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
+                                    <th style="text-align: right; padding: 2px 0;">මිල</th>
+                                    <th style="text-align: right; padding: 2px 0;">අගය</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="4"><div style="height: 4px; background-color: black; margin: 5px 0;"></div></td></tr>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
 
-                                                                                                                                <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
 
-                                                                                                                                <div class="footer-section" style="text-align: center; margin-top: 10px;">
-                                                                                                                                    <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                                                                                                                                    <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
-                                                                                                                                </div>
-                                                                                                                            </div>
-                                                                                                                        `;
+                    <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
+                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                          <tr>
+    <td colspan="3" style="text-align: left; padding: 0;">
+        ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :
+    </td>
+    <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
+        ${totalAmountSum.toFixed(2)}
+    </td>
+</tr>
+<tr>
+   
+    <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
+        ${(globalLoanAmount + totalAmountSum).toFixed(2)}
+    </td>
+</tr>
 
-                                printReceipt(receiptHtml, customerName, () => {
-                                    if (salesIds.length) {
-                                        fetch("{{ route('sales.markAsPrinted') }}", {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                            },
-                                            body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
-                                        })
-                                            .then(res => res.json())
-                                            .then(data => {
-                                                console.log("Marked printed:", data);
-                                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                                window.location.reload();
-                                            })
-                                            .catch(err => {
-                                                console.error("Print marking failed:", err);
-                                                alert('Failed to mark sales as printed.');
-                                            });
-                                    }
-                                });
-                            }
+                        </table>
+                    </div>
 
+                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
 
+                    <div class="footer-section" style="text-align: center; margin-top: 10px;">
+                        <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                        <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
+                    </div>
+                </div>
+            `;
 
-
-
+            printReceipt(receiptHtml, customerName, () => {
+                if (salesIds.length) {
+                    fetch("{{ route('sales.markAsPrinted') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("Marked printed:", data);
+                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                        window.location.reload();
+                    })
+                    .catch(err => {
+                        console.error("Print marking failed:", err);
+                        alert('Failed to mark sales as printed.');
+                    });
+                }
+            });
+        })
+        .catch(err => {
+            console.error('Failed to fetch loan amount:', err);
+            alert('Failed to fetch loan amount. Printing aborted.');
+        });
+    }
 
                             else if (e.key === "F5") {
                                 e.preventDefault();
