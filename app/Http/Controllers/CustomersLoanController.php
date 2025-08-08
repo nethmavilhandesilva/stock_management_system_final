@@ -92,7 +92,7 @@ class CustomersLoanController extends Controller
 
         $loan->save();
 
-        return redirect()->route('customers-loans.index')->with('success', 'Loan added successfully!');
+        return redirect()->route('customers-loans.index');
     }
 
 
