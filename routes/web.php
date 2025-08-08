@@ -82,6 +82,8 @@ Route::resource('customers-loans', CustomersLoanController::class);
 // Example route in web.php
 Route::get('/customers/{id}/loans-total', [CustomersLoanController::class, 'getTotalLoanAmount']);
 Route::post('/get-loan-amount', [SalesEntryController::class, 'getLoanAmount'])->name('get.loan.amount');
+Route::get('/sales/codes', [SalesEntryController::class, 'listCodes'])->name('sales.codes');
+Route::get('/sales/code/{code}', [SalesEntryController::class, 'showByCode'])->name('sales.byCode');
 
 Route::post('/loan-report/results', [CustomersLoanController::class, 'loanReportResults'])->name('loan.report.results');
 require __DIR__.'/auth.php';

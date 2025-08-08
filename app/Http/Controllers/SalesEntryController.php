@@ -57,7 +57,11 @@ class SalesEntryController extends Controller
         $lastDayStartedDate = $lastDayStartedSetting ? Carbon::parse($lastDayStartedSetting->value) : null;
 
         $nextDay = $lastDayStartedDate ? $lastDayStartedDate->addDay() : Carbon::now();
-        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay'));
+        $codes = Sale::select('code')
+                ->distinct()
+                ->orderBy('code')
+                ->get();
+        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay','codes'));
     }
 
 
@@ -421,7 +425,7 @@ class SalesEntryController extends Controller
         $sales = Sale::all(); // or your logic
         return response()->json(['sales' => $sales]);
     }
-      public function dayStart()
+    public function dayStart()
     {
         try {
             DB::beginTransaction();
@@ -471,7 +475,7 @@ class SalesEntryController extends Controller
                     return [
                         'id' => $sale->id,
                         'bill_no' => $sale->bill_no,
-                        'code'=>$sale->code,
+                        'code' => $sale->code,
                         'item_code' => $sale->item_code,
                         'item_name' => $sale->item_name,
                         'packs' => $sale->packs,
@@ -518,34 +522,46 @@ class SalesEntryController extends Controller
     }
 
 
-  public function getLoanAmount(Request $request)
-{
-    // Validate the request to ensure a customer_short_name is present.
-    $request->validate(['customer_short_name' => 'required|string']);
+    public function getLoanAmount(Request $request)
+    {
+        // Validate the request to ensure a customer_short_name is present.
+        $request->validate(['customer_short_name' => 'required|string']);
 
-    $customerShortName = $request->input('customer_short_name');
+        $customerShortName = $request->input('customer_short_name');
 
-    // Sum of 'old' loan_type amounts
-    $oldSum = CustomersLoan::where('customer_short_name', $customerShortName)
-        ->where('loan_type', 'old')
-        ->sum('amount');
+        // Sum of 'old' loan_type amounts
+        $oldSum = CustomersLoan::where('customer_short_name', $customerShortName)
+            ->where('loan_type', 'old')
+            ->sum('amount');
 
-    // Sum of 'today' loan_type amounts
-    $todaySum = CustomersLoan::where('customer_short_name', $customerShortName)
-        ->where('loan_type', 'today')
-        ->sum('amount');
+        // Sum of 'today' loan_type amounts
+        $todaySum = CustomersLoan::where('customer_short_name', $customerShortName)
+            ->where('loan_type', 'today')
+            ->sum('amount');
 
-    // Calculate total loan amount based on your logic
-    if ($todaySum == 0) {
-        $totalLoanAmount = $oldSum;
-    } else {
-        $totalLoanAmount = $oldSum - $todaySum;
+        // Calculate total loan amount based on your logic
+        if ($todaySum == 0) {
+            $totalLoanAmount = $oldSum;
+        } else {
+            $totalLoanAmount = $oldSum - $todaySum;
+        }
+
+        // Return the sum as a JSON response.
+        return response()->json(['total_loan_amount' => $totalLoanAmount]);
+    }
+    public function listCodes()
+    {
+        // Get unique codes from sales
+        $codes = Sale::select('code')->distinct()->orderBy('code')->get();
+        return view('dashboard', compact('codes'));
     }
 
-    // Return the sum as a JSON response.
-    return response()->json(['total_loan_amount' => $totalLoanAmount]);
-}
-
+    public function showByCode($code)
+    {
+        // Get all sales with that code
+        $sales = Sale::where('code', $code)->get();
+        return view('dashboard.sales.by_code', compact('sales', 'code'));
+    }
 
 
 }
