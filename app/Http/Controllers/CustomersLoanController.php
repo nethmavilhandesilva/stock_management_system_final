@@ -186,5 +186,29 @@ public function getTotalLoanAmount($customerId)
     $totalAmount = CustomersLoan::where('customer_id', $customerId)->sum('amount');
     return response()->json(['total_amount' => $totalAmount]);
 }
+ public function loanReportResults(Request $request)
+{
+    // Validate password first (optional)
+   
+
+    $query = CustomersLoan::query();
+
+    // Filter by customer_short_name if provided
+    if ($request->filled('customer_short_name')) {
+        $query->where('customer_short_name', $request->customer_short_name);
+    }
+
+    // Filter by date range if provided (assuming created_at exists)
+    if ($request->filled('start_date')) {
+        $query->whereDate('created_at', '>=', $request->start_date);
+    }
+    if ($request->filled('end_date')) {
+        $query->whereDate('created_at', '<=', $request->end_date);
+    }
+
+    $loans = $query->orderBy('created_at', 'desc')->get();
+
+    return view('dashboard.reports.loan-results', compact('loans'));
+}
 
 }

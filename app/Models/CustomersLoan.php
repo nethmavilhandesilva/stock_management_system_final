@@ -9,7 +9,7 @@ class CustomersLoan extends Model
     protected $fillable = [
         'customer_id', 'loan_type', 'settling_way',
         'bill_no', 'description', 'amount',
-        'cheque_no', 'bank', 'cheque_date'
+        'cheque_no', 'bank', 'cheque_date','customer_short_name'
     ];
 
     public function customer()

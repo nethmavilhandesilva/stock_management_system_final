@@ -63,6 +63,7 @@
     @include('layouts.partials.sales-modal')
     @include('layouts.partials.salesadjustments-modal')
      @include('layouts.partials.dayStartModal')
+     @include('layouts.partials.LoanReport-Modal')
 
 
 </div>

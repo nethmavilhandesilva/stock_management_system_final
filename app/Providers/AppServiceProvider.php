@@ -63,5 +63,10 @@ class AppServiceProvider extends ServiceProvider
             // You have 'suppliers' twice here, you can remove one if it's not intentional.
             // $view->with('suppliers', Supplier::all());
         });
+         View::composer('layouts.partials.LoanReport-Modal', function ($view) {
+           
+            $view->with('customers', Customer::all());
+        
+        });
     }
 }
