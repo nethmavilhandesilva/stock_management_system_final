@@ -194,7 +194,7 @@ public function getTotalLoanAmount($customerId)
     if ($todaySum == 0) {
         $totalAmount = $oldSum;
     } else {
-        $totalAmount = $oldSum - $todaySum;
+        $totalAmount = $todaySum - $oldSum;
     }
 
     return response()->json(['total_amount' => $totalAmount]);

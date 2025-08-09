@@ -74,7 +74,7 @@
     <div class="container my-4">
         <div class="custom-card">
 
-            <h3 class="mb-4">Customers Loans</h3>
+        
 
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
@@ -235,22 +235,24 @@
                 }
             } else if (loanType === 'today') {
                 descriptionField.value = "වෙළෙන්දාගේ අද දින නය ගැනීම";
-                if (customerId) {
-                    $.ajax({
-                        url: `/customers/${customerId}/loans-total`,
-                        method: 'GET',
-                        success: function(response) {
-                            const formattedAmount = parseFloat(response.total_amount).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            });
-                            totalAmountDisplay.text(`(Total Loans: ${formattedAmount})`);
-                        },
-                        error: function() {
-                            totalAmountDisplay.text('(Could not fetch total loans)');
-                        }
-                    });
-                }
+            }
+
+            // This is the new part. Check for both 'today' and 'old' to fetch the total loans.
+            if (customerId && (loanType === 'today' || loanType === 'old')) {
+                $.ajax({
+                    url: `/customers/${customerId}/loans-total`,
+                    method: 'GET',
+                    success: function(response) {
+                        const formattedAmount = parseFloat(response.total_amount).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                        totalAmountDisplay.text(`(Total Loans: ${formattedAmount})`);
+                    },
+                    error: function() {
+                        totalAmountDisplay.text('(Could not fetch total loans)');
+                    }
+                });
             }
         }
 
@@ -349,6 +351,7 @@
                 $('#customer_id').val('').trigger('change');
                 toggleLoanTypeDependentFields();
                 updateDescription();
+                
                
                 $('#updateLoanButton').hide();
                 $('#cancelEditButton').hide();

@@ -571,7 +571,7 @@ public function dayStart()
         if ($todaySum == 0) {
             $totalLoanAmount = $oldSum;
         } else {
-            $totalLoanAmount = $oldSum - $todaySum;
+            $totalLoanAmount = $todaySum - $oldSum;
         }
 
         // Return the sum as a JSON response.
