@@ -544,7 +544,7 @@ public function dayStart()
     } catch (\Exception $e) {
         DB::rollBack();
         Log::error('Day Start Failed: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Day start failed: ' . $e->getMessage());
+        return redirect()->back();
     }
 }
 

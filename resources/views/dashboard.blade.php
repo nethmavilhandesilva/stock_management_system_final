@@ -753,171 +753,176 @@
 
 
 
-                        <div class="row justify-content-end" style="margin-top: -15px;">
-                            <div class="col-md-3">
-                                <select name="customer_code_select" id="customer_code_select"
-                                    class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror"
-                                    style="height: 34px; font-size: 14px; padding: 6px 12px; line-height: 1.5;">
-                                    <option value="" disabled selected style="color: #999;">-- පාරිභෝගිකයා තෝරන්න --
-                                    </option>
-                                    @foreach ($customers as $customer)
-                                        <option value="{{ $customer->short_name }}"
-                                            data-customer-code="{{ $customer->short_name }}"
-                                            data-customer-name="{{ $customer->name }}" {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
-                                            {{ $customer->name }} ({{ $customer->short_name }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('customer_code')
-                                    <div class="invalid-feedback" style="font-size: 11px;">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="row g-1 form-row align-items-start mt-1">
-                            <div class="col-md-2" style="margin-top: -4px; margin-bottom: 6px; max-width: 120px;">
-                                <input type="text" name="customer_code" id="new_customer_code"
-                                    class="form-control text-uppercase @error('customer_code') is-invalid @enderror"
-                                    value="{{ old('customer_code') }}" placeholder="පාරිභෝගික කේතය"
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; width: 100%; border: 1px solid black; color: black;"
-                                    required>
-                                @error('customer_code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-2" style="margin-top: -4px; margin-bottom: 6px; max-width: 120px;">
-                                <div class="form-control"
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; width: 100%; border: 1px solid black; color: black; background-color: #f0f0f0;">
-                                    <span id="loan_amount_display">0.00</span>
-                                </div>
-                                <label class="form-label" for="loan_amount_display"
-                                    style="font-weight: bold; font-size: 14px;">ණය මුදල</label>
-                            </div>
+                    <div class="row justify-content-end" style="margin-top: -15px;">
+    <div class="row g-2 align-items-center">
 
+        {{-- Customer Select --}}
+        <div class="col-md-6">
+            <select name="customer_code_select" id="customer_code_select"
+                class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror"
+                style="height: 34px; font-size: 14px; padding: 6px 12px; line-height: 1.5;">
+                <option value="" disabled selected style="color: #999;">-- පාරිභෝගිකයා තෝරන්න --</option>
+                @foreach ($customers as $customer)
+                    <option value="{{ $customer->short_name }}"
+                        data-customer-code="{{ $customer->short_name }}"
+                        data-customer-name="{{ $customer->name }}"
+                        {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
+                        {{ $customer->name }} ({{ $customer->short_name }})
+                    </option>
+                @endforeach
+            </select>
+            @error('customer_code')
+                <div class="invalid-feedback" style="font-size: 11px;">{{ $message }}</div>
+            @enderror
+        </div>
 
-                            <div class="row">
-                                <div class="col-md-12 mb-1" style="margin-bottom: 2px;">
-                                    <input type="text" id="grn_display" class="form-control"
-                                        placeholder="Select GRN Entry..." readonly
-                                        style="height: 45px; font-size: 16px; padding: 8px 16px; display: none; text-align: center !important; border: 1px solid black; color: black;">
-                                    <select id="grn_select" class="form-select select2"
-                                        style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black;">
-                                        <option value="">-- Select GRN Entry --</option>
-                                        @foreach ($entries as $entry)
-                                            <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
-                                                data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
-                                                data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
-                                                data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
-                                                data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
-                                                data-txn-date="{{ $entry->txn_date }}"
-                                                data-original-weight="{{ $entry->original_weight }}"
-                                                data-original-packs="{{ $entry->original_packs }}">
-                                                {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
-                                                {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
-                                                {{ $entry->txn_date }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+        {{-- Customer Code Input --}}
+        <div class="col-md-3">
+            <input type="text" name="customer_code" id="new_customer_code"
+                class="form-control text-uppercase @error('customer_code') is-invalid @enderror"
+                value="{{ old('customer_code') }}" placeholder="පාරිභෝගික කේතය"
+                style="height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black;"
+                required>
+            @error('customer_code')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
 
+        {{-- Loan Amount Display --}}
+        <div class="col-md-3">
+            <div class="form-control"
+                style="height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black; background-color: #f0f0f0;">
+                <span id="loan_amount_display">0.00</span>
+            </div>
+        </div>
 
-                            </div>
+    </div>
+</div>
 
-                            <input type="hidden" name="customer_name" id="customer_name_hidden"
-                                value="{{ old('customer_name') }}">
-                            <input type="hidden" name="grn_entry_code" id="grn_entry_code" value="">
-                        </div>
+{{-- GRN Section --}}
+<div class="row mt-2">
+    <div class="col-md-12">
+        <input type="text" id="grn_display" class="form-control"
+            placeholder="Select GRN Entry..." readonly
+            style="height: 45px; font-size: 16px; padding: 8px 16px; display: none; text-align: center !important; border: 1px solid black; color: black;">
+        <select id="grn_select" class="form-select select2"
+            style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black;">
+            <option value="">-- Select GRN Entry --</option>
+            @foreach ($entries as $entry)
+                <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
+                    data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
+                    data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
+                    data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
+                    data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
+                    data-txn-date="{{ $entry->txn_date }}"
+                    data-original-weight="{{ $entry->original_weight }}"
+                    data-original-packs="{{ $entry->original_packs }}">
+                    {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
+                    {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
+                    {{ $entry->txn_date }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+</div>
 
-                        <div class="row g-1 form-row">
-                            <div class="col-md-3 mb-1 d-none">
-                                <select name="supplier_code_display" id="supplier_code_display"
-                                    class="form-select @error('supplier_code') is-invalid @enderror" disabled
-                                    style="border: 1px solid black; color: black;">
-                                    <option value="" disabled selected>සැපයුම්කරු (Supplier)</option>
-                                    @php $currentSupplierCode = old('supplier_code', $sale->supplier_code ?? ''); @endphp
-                                    @foreach ($suppliers as $supplier)
-                                        <option value="{{ $supplier->code }}" {{ $currentSupplierCode == $supplier->code ? 'selected' : '' }}>
-                                            {{ $supplier->name }} ({{ $supplier->code }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <input type="hidden" name="supplier_code" id="supplier_code"
-                                    value="{{ $currentSupplierCode }}">
-                                @error('supplier_code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+{{-- Hidden fields for customer and GRN --}}
+<input type="hidden" name="customer_name" id="customer_name_hidden" value="{{ old('customer_name') }}">
+<input type="hidden" name="grn_entry_code" id="grn_entry_code" value="">
 
-                            <div class="col-md-3 mb-1 d-none">
-                                <input type="hidden" name="item_code" value="{{ old('item_code') }}">
-                                <select id="item_select" class="form-select @error('item_code') is-invalid @enderror"
-                                    disabled style="border: 1px solid black; color: black;">
-                                    <option value="" disabled selected>අයිතමය තෝරන්න (Select Item)</option>
-                                    @foreach ($items as $item)
-                                        <option value="{{ $item->item_code }}" data-code="{{ $item->code }}"
-                                            data-item-code="{{ $item->item_code }}" data-item-name="{{ $item->item_name }}" {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
-                                            ({{ $item->item_code }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('item_code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
+{{-- Supplier Section (Hidden) --}}
+<div class="row g-1 form-row mt-2">
+    <div class="col-md-3 mb-1 d-none">
+        <select name="supplier_code_display" id="supplier_code_display"
+            class="form-select @error('supplier_code') is-invalid @enderror" disabled
+            style="border: 1px solid black; color: black;">
+            <option value="" disabled selected>සැපයුම්කරු (Supplier)</option>
+            @php $currentSupplierCode = old('supplier_code', $sale->supplier_code ?? ''); @endphp
+            @foreach ($suppliers as $supplier)
+                <option value="{{ $supplier->code }}" {{ $currentSupplierCode == $supplier->code ? 'selected' : '' }}>
+                    {{ $supplier->name }} ({{ $supplier->code }})
+                </option>
+            @endforeach
+        </select>
+        <input type="hidden" name="supplier_code" id="supplier_code" value="{{ $currentSupplierCode }}">
+        @error('supplier_code')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
 
-                        <div class="d-flex flex-wrap gap-2 align-items-start">
+    <div class="col-md-3 mb-1 d-none">
+        <input type="hidden" name="item_code" value="{{ old('item_code') }}">
+        <select id="item_select" class="form-select @error('item_code') is-invalid @enderror" disabled
+            style="border: 1px solid black; color: black;">
+            <option value="" disabled selected>අයිතමය තෝරන්න (Select Item)</option>
+            @foreach ($items as $item)
+                <option value="{{ $item->item_code }}" data-code="{{ $item->code }}"
+                    data-item-code="{{ $item->item_code }}" data-item-name="{{ $item->item_name }}"
+                    {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
+                    ({{ $item->item_code }})
+                </option>
+            @endforeach
+        </select>
+        @error('item_code')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
 
-                            <!-- Item Name -->
-                            <div style="flex: 1 1 100px;">
-                                <input type="text" id="item_name_display_from_grn" class="form-control" readonly
-                                    placeholder="අයිතමයේ නම (Item Name)"
-                                    style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
-                            </div>
+{{-- Item Details Section --}}
+<div class="d-flex flex-wrap gap-2 align-items-start mt-2">
 
-                            <!-- Weight -->
-                            <div style="flex: 1 1 120px;">
-                                <input type="number" name="weight" id="weight" step="0.01"
-                                    class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
-                                    placeholder="බර (kg)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                                <small id="remaining_weight_display" class="form-text text-danger fw-bold"
-                                    style="font-size: 0.85rem;">Remaining: 0.00 kg</small>
-                            </div>
+    <!-- Item Name -->
+    <div style="flex: 1 1 100px;">
+        <input type="text" id="item_name_display_from_grn" class="form-control" readonly
+            placeholder="අයිතමයේ නම (Item Name)"
+            style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+    </div>
 
-                            <!-- Price per KG -->
-                            <div style="flex: 1 1 120px;">
-                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-                                    class="form-control @error('price_per_kg') is-invalid @enderror"
-                                    value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                            </div>
+    <!-- Weight -->
+    <div style="flex: 1 1 120px;">
+        <input type="number" name="weight" id="weight" step="0.01"
+            class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
+            placeholder="බර (kg)" required
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+        <small id="remaining_weight_display" class="form-text text-danger fw-bold" style="font-size: 0.85rem;">
+            Remaining: 0.00 kg
+        </small>
+    </div>
 
+    <!-- Price per KG -->
+    <div style="flex: 1 1 120px;">
+        <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+            class="form-control @error('price_per_kg') is-invalid @enderror"
+            value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+    </div>
 
+    <!-- Packs -->
+    <div style="flex: 1 1 120px;">
+        <input type="number" name="packs" id="packs"
+            class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
+            placeholder="ඇසුරුම් (Packs)" required
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+        <small id="remaining_packs_display" class="form-text text-danger fw-bold" style="font-size: 0.85rem;">
+            Remaining Packs: 0
+        </small>
+    </div>
 
-                            <!-- Packs -->
-                            <div style="flex: 1 1 120px;">
-                                <input type="number" name="packs" id="packs"
-                                    class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
-                                    placeholder="ඇසුරුම් (Packs)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                                <small id="remaining_packs_display" class="form-text text-danger fw-bold"
-                                    style="font-size: 0.85rem;">Remaining Packs: 0</small>
-                            </div>
-                            <!-- Total -->
-                            <div style="flex: 1 1 100px;">
-                                <input type="number" name="total" id="total" readonly
-                                    class="form-control bg-light @error('total') is-invalid @enderror"
-                                    value="{{ old('total') }}" placeholder="සමස්ත (Total)"
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                            </div>
-                        </div>
+    <!-- Total -->
+    <div style="flex: 1 1 100px;">
+        <input type="number" name="total" id="total" readonly
+            class="form-control bg-light @error('total') is-invalid @enderror"
+            value="{{ old('total') }}" placeholder="සමස්ත (Total)"
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+    </div>
+</div>
 
-                        <!-- Hidden fields -->
-                        <input type="hidden" name="code" id="code" value="{{ old('code') }}">
-                        <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
-                        <input type="hidden" name="original_weight" id="original_weight_input">
-                        <input type="hidden" name="original_packs" id="original_packs_input">
-
+<!-- Hidden Fields -->
+<input type="hidden" name="code" id="code" value="{{ old('code') }}">
+<input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
+<input type="hidden" name="original_weight" id="original_weight_input">
+<input type="hidden" name="original_packs" id="original_packs_input">
 
 
 
