@@ -8,7 +8,6 @@
             background-color: #99ff99;
         }
 
-
         .custom-card {
             background-color: #006400 !important;
             border-radius: 12px;
@@ -18,11 +17,8 @@
 
         .form-label {
             font-weight: bold;
-            /* Make the label bold */
             color: black;
-            /* Make the label color pure black */
         }
-
 
         .btn-primary {
             background-color: #0d6efd;
@@ -68,7 +64,7 @@
                         {{-- Supplier Selection --}}
                         <div class="mb-3">
                             <label for="supplier_code" class="form-label">සැපයුම්කරු <span
-                                    class="text-danger">*</span></label>
+                                        class="text-danger">*</span></label>
                             <select id="supplier_code" name="supplier_code"
                                 class="form-control @error('supplier_code') is-invalid @enderror" required>
                                 <option value="" disabled selected>-- Select a Supplier --</option>
@@ -83,7 +79,7 @@
                             @enderror
                         </div>
 
-                        {{-- GRN No (Auto-generated) --}}
+                        {{-- GRN No --}}
                         <div class="mb-3">
                             <label for="grn_no" class="form-label">GRN අංකය </label>
                             <input type="text" id="grn_no" name="grn_no" value="{{ old('grn_no') }}"
@@ -126,6 +122,22 @@
                             @enderror
                         </div>
 
+                        {{-- Password for Total GRN --}}
+                        <div class="mb-3">
+                            <label for="password_total" class="form-label">මුරපදය</label>
+                            <input type="password" id="password_total" class="form-control" placeholder="Enable Total GRN input...">
+                        </div>
+                        
+                        {{-- Total For GRN (Locked by password) --}}
+                        <div class="mb-3">
+                            <label for="total_grn" class="form-label">GRN සඳහා මුළු එකතුව</label>
+                            <input type="number" id="total_grn" name="total_grn" step="0.01" value="{{ old('total_grn') }}"
+                                class="form-control @error('total_grn') is-invalid @enderror" readonly>
+                            @error('total_grn')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         {{-- Transaction Date --}}
                         <div class="mb-3">
                             <label for="txn_date" class="form-label">ගනුදෙනු දිනය <span class="text-danger">*</span></label>
@@ -150,5 +162,34 @@
         </div>
     </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const passwordField = document.getElementById('password_total');
+        const totalGrnField = document.getElementById('total_grn');
+        
+        passwordField.addEventListener('input', function () {
+            // The correct password to unlock the field
+            const correctPassword = 'nethma123';
+            
+            // Check if the entered password matches
+            if (passwordField.value === correctPassword) {
+                totalGrnField.removeAttribute('readonly');
+                totalGrnField.focus(); // Automatically focus on the unlocked field
+                passwordField.style.backgroundColor = '#d4edda'; // Light green for success
+                passwordField.style.borderColor = '#28a745';
+            } else {
+                totalGrnField.setAttribute('readonly', true);
+                passwordField.style.backgroundColor = '#f8d7da'; // Light red for incorrect
+                passwordField.style.borderColor = '#dc3545';
+            }
+
+            // Clear the styling if the password field is empty
+            if (passwordField.value === '') {
+                passwordField.style.backgroundColor = '';
+                passwordField.style.borderColor = '';
+            }
+        });
+    });
+</script>
 
 @endsection

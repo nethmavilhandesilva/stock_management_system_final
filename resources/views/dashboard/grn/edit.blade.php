@@ -18,8 +18,8 @@
     }
 
     .form-label {
-        font-weight: 700;  /* Bold */
-        color: #000000;    /* Bright black */
+        font-weight: 700;
+        color: #000000;
     }
 
     .form-control,
@@ -61,6 +61,11 @@
 
     .text-end {
         text-align: right;
+    }
+
+    /* Styles for the password-protected field */
+    .password-protected {
+        display: none;
     }
 </style>
 
@@ -115,13 +120,25 @@
             </div>
 
             <div class="col-md-6">
-                <label for="weight" class="form-label">බර (කෝ.ග්‍රෑ)</label>
+                <label for="weight" class="form-label">බර (කෝ.ග්‍රෑ)</label>
                 <input type="number" id="weight" name="weight" class="form-control" value="{{ $entry->weight }}" required>
             </div>
 
             <div class="col-md-6">
                 <label for="txn_date" class="form-label">ගනුදෙනු දිනය</label>
                 <input type="date" id="txn_date" name="txn_date" class="form-control" value="{{ $entry->txn_date }}">
+            </div>
+            
+            <hr class="mt-4">
+            
+            <div class="col-md-6">
+                <label for="edit_password" class="form-label">මුරපදය (Password)</label>
+                <input type="password" id="edit_password" class="form-control" placeholder="Enter password to edit total">
+            </div>
+
+            <div class="col-md-6 password-protected" id="total_grn_field">
+                <label for="total_grn" class="form-label">GRN සඳහා මුළු එකතුව (Total for GRN)</label>
+                <input type="number" id="total_grn" name="total_grn" class="form-control" value="{{ $entry->total_grn ?? '' }}">
             </div>
         </div>
 
@@ -136,3 +153,25 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const passwordField = document.getElementById('edit_password');
+        const totalGrnField = document.getElementById('total_grn_field');
+        const correctPassword = 'nethma123';
+
+        passwordField.addEventListener('input', function () {
+            if (passwordField.value === correctPassword) {
+                totalGrnField.style.display = 'block';
+                passwordField.style.backgroundColor = '#d4edda';
+                passwordField.style.borderColor = '#28a745';
+            } else {
+                totalGrnField.style.display = 'none';
+                passwordField.style.backgroundColor = '';
+                passwordField.style.borderColor = '';
+            }
+        });
+    });
+</script>
+@endpush

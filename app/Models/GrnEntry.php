@@ -24,7 +24,8 @@ class GrnEntry extends Model
         'original_packs',
         'original_weight',
         'sequence_no',
-         'is_hidden' 
+         'is_hidden' ,
+         'total_grn'
     ];
 
     // Optional: If you don't want timestamps (created_at, updated_at)

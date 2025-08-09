@@ -51,6 +51,12 @@
             background-color: #dc3545;
             border-color: #dc3545;
         }
+        
+        /* Initial state of the hidden column */
+        .total-grn-column,
+        .total-grn-header {
+            display: none;
+        }
     </style>
 
     <div class="container-fluid mt-5">
@@ -68,6 +74,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
+
+            <div class="mb-3">
+                <label for="list_password" class="form-label">මුරපදය</label>
+                <input type="password" id="list_password" class="form-control" placeholder="View hidden column...">
+            </div>
 
             @if($entries->isEmpty())
                 <div class="alert alert-info text-center" role="alert">
@@ -89,6 +100,7 @@
                                 <th>ගනුදෙනු දිනය</th>
                                 <th>GRN අංකය</th>
                                 <th>ගබඩා අංකය</th>
+                                <th class="total-grn-header">GRN සඳහා මුළු එකතුව</th>
                                 <th>මෙහෙයුම්</th>
                             </tr>
                         </thead>
@@ -106,6 +118,7 @@
                                     <td>{{ $entry->txn_date }}</td>
                                     <td>{{ $entry->grn_no }}</td>
                                     <td>{{ $entry->warehouse_no }}</td>
+                                    <td class="total-grn-column">{{ $entry->total_grn }}</td>
                                     <td>
                                         <a href="{{ route('grn.edit', $entry->id) }}" class="btn btn-sm btn-info me-1" title="Edit">
                                             <i class="material-icons">edit</i>
@@ -228,6 +241,35 @@
                     });
                 }
             });
+
+            // Password logic for the hidden column
+            const passwordField = document.getElementById('list_password');
+            const totalGrnCells = document.querySelectorAll('.total-grn-column');
+            const totalGrnHeader = document.querySelector('.total-grn-header');
+            
+            passwordField.addEventListener('input', function () {
+                const correctPassword = 'nethma123';
+                const isPasswordCorrect = passwordField.value === correctPassword;
+
+                if (isPasswordCorrect) {
+                    totalGrnCells.forEach(cell => cell.style.display = 'table-cell');
+                    totalGrnHeader.style.display = 'table-cell';
+                    passwordField.style.backgroundColor = '#d4edda'; // Light green for success
+                    passwordField.style.borderColor = '#28a745';
+                } else {
+                    totalGrnCells.forEach(cell => cell.style.display = 'none');
+                    totalGrnHeader.style.display = 'none';
+                    passwordField.style.backgroundColor = '#f8d7da'; // Light red for incorrect
+                    passwordField.style.borderColor = '#dc3545';
+                }
+
+                // Clear the styling if the password field is empty
+                if (passwordField.value === '') {
+                    passwordField.style.backgroundColor = '';
+                    passwordField.style.borderColor = '';
+                }
+            });
+
         });
     </script>
 @endpush
