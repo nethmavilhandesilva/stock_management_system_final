@@ -100,29 +100,46 @@ class GrnEntryController extends Controller
         return view('dashboard.grn.edit', compact('entry', 'items', 'suppliers'));
     }
 
-    public function update(Request $request, $id)
+   public function update(Request $request, $id)
     {
+        // Define the validation rules for the form fields.
+        // `total_grn` is added as `nullable|numeric` because it is an optional field.
         $request->validate([
             'item_code' => 'required',
             'supplier_code' => 'required',
             'packs' => 'required|integer',
             'weight' => 'required|numeric',
             'txn_date' => 'required|date',
-            'grn_no' => 'required'
+            'grn_no' => 'required',
+            'warehouse_no' => 'required',
+            'total_grn' => 'nullable|numeric' // Added validation for the new field
         ]);
 
+        // Find the GRN entry by its ID.
         $entry = GrnEntry::findOrFail($id);
 
-        $entry->update([
+        // Prepare the data to be updated.
+        $updateData = [
             'item_code' => $request->item_code,
+            'item_name' => $request->item_name,
             'supplier_code' => $request->supplier_code,
             'packs' => $request->packs,
             'weight' => $request->weight,
             'txn_date' => $request->txn_date,
             'grn_no' => $request->grn_no,
             'warehouse_no' => $request->warehouse_no,
-        ]);
+        ];
+        
+        // Only update `total_grn` if it's present in the request.
+        // This prevents overwriting with a null value if the password isn't entered.
+        if ($request->has('total_grn')) {
+            $updateData['total_grn'] = $request->total_grn;
+        }
 
+        // Update the entry in the database.
+        $entry->update($updateData);
+
+        // Redirect back to the index page with a success message.
         return redirect()->route('grn.index')->with('success', 'Entry updated successfully.');
     }
 

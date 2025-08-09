@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Day Start Report</title>
+    <title>Combined Daily Report</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -117,7 +117,7 @@
                         $grandTotalRemainingWeight = 0;
                     @endphp
 
-                    @forelse($reportData as $item)
+                    @forelse($dayStartReportData as $item)
                         @php
                             $grandTotalOriginalPacks += $item['original_packs'];
                             $grandTotalOriginalWeight += $item['original_weight'];
@@ -152,6 +152,87 @@
                         <td>Rs. {{ number_format($grandTotalSalesValue, 2) }}</td>
                         <td>{{ number_format($grandTotalRemainingPacks) }}</td>
                         <td>{{ number_format($grandTotalRemainingWeight, 2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <br>
+        <hr>
+        <br>
+
+        <div class="header">
+            <h4 class="fw-bold">📦විකුණුම්/බර මත්තෙහි ඉතිරි වාර්තාව (GRN)</h4>
+            <span class="date-info">{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
+        </div>
+
+        <div class="table-container">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">දින</th>
+                        <th rowspan="2">GRN කේතය</th>
+                        <th rowspan="2">වර්ගය</th>
+                        <th colspan="2">මිලදී ගැනීම</th>
+                        <th colspan="2">විකුණුම්</th>
+                        <th rowspan="2">එකතුව</th>
+                        <th colspan="2">ඉතිරි</th>
+                    </tr>
+                    <tr>
+                        <th>මලු</th>
+                        <th>බර</th>
+                        <th>මලු</th>
+                        <th>බර</th>
+                        <th>මලු</th>
+                        <th>බර</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $grnGrandTotalOriginalPacks = 0;
+                        $grnGrandTotalOriginalWeight = 0;
+                        $grnGrandTotalSoldPacks = 0;
+                        $grnGrandTotalSoldWeight = 0;
+                        $grnGrandTotalSalesValue = 0;
+                        $grnGrandTotalRemainingPacks = 0;
+                        $grnGrandTotalRemainingWeight = 0;
+                    @endphp
+                    @forelse($grnReportData as $item)
+                        @php
+                            $grnGrandTotalOriginalPacks += $item['original_packs'];
+                            $grnGrandTotalOriginalWeight += $item['original_weight'];
+                            $grnGrandTotalSoldPacks += $item['sold_packs'];
+                            $grnGrandTotalSoldWeight += $item['sold_weight'];
+                            $grnGrandTotalSalesValue += $item['total_sales_value'];
+                            $grnGrandTotalRemainingPacks += $item['remaining_packs'];
+                            $grnGrandTotalRemainingWeight += $item['remaining_weight'];
+                        @endphp
+                        <tr>
+                            <td>{{ $item['date'] }}</td>
+                            <td>{{ $item['grn_code'] }}</td>
+                            <td>{{ $item['item_name'] }}</td>
+                            <td>{{ number_format($item['original_packs']) }}</td>
+                            <td>{{ number_format($item['original_weight'], 2) }}</td>
+                            <td>{{ number_format($item['sold_packs']) }}</td>
+                            <td>{{ number_format($item['sold_weight'], 2) }}</td>
+                            <td>Rs. {{ number_format($item['total_sales_value'], 2) }}</td>
+                            <td>{{ number_format($item['remaining_packs']) }}</td>
+                            <td>{{ number_format($item['remaining_weight'], 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-4">GRN දත්ත නොමැත.</td>
+                        </tr>
+                    @endforelse
+                    <tr class="total-row">
+                        <td colspan="3">සමස්ත එකතුව:</td>
+                        <td>{{ number_format($grnGrandTotalOriginalPacks) }}</td>
+                        <td>{{ number_format($grnGrandTotalOriginalWeight, 2) }}</td>
+                        <td>{{ number_format($grnGrandTotalSoldPacks) }}</td>
+                        <td>{{ number_format($grnGrandTotalSoldWeight, 2) }}</td>
+                        <td>Rs. {{ number_format($grnGrandTotalSalesValue, 2) }}</td>
+                        <td>{{ number_format($grnGrandTotalRemainingPacks) }}</td>
+                        <td>{{ number_format($grnGrandTotalRemainingWeight, 2) }}</td>
                     </tr>
                 </tbody>
             </table>
