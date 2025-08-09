@@ -381,7 +381,9 @@ class SalesEntryController extends Controller
     public function clearAll(Request $request)
     {
         Sale::truncate();    // deletes all records from sales table
-        GrnEntry::truncate(); // deletes all records from grn_entries table
+        GrnEntry::truncate();
+        CustomersLoan::truncate();
+        Salesadjustment::truncate(); // deletes all records from grn_entries table
 
         return back()->with('success', 'All data cleared from Sales and GRN Entries.');
     }

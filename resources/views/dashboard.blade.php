@@ -69,7 +69,7 @@
                         <div style="font-weight: bold; font-size: 14px; color: white;">
                             @php
                                 $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
-                                $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->addDay()->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
+                                $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
                             @endphp
 
                             {{ $nextDay }}
@@ -83,103 +83,73 @@
         </div>
     </nav>
     {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav">
-        <div class="container-fluid">
-            <span class="navbar-text text-white me-3 d-none d-lg-block">වාර්තා:</span> <!-- Reports: -->
+   <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
+      aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
-                aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
+      <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-3">
+        <li class="nav-item">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal" class="nav-link text-white">
+            සැපයුම්කරු
+          </a>
+        </li>
 
-            <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
-                <ul class="navbar-nav mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal" class="nav-link text-white">
+            එළවළු
+          </a>
+        </li>
 
-                    <!-- Supplier -->
-                    <li class="nav-item mx-2">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal"
-                            class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-info">person</span>
-                            <span class="text-white">සැපයුම්කරු</span>
-                        </a>
-                    </li>
+        <li class="nav-item">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal" class="nav-link text-white">
+            බර මත
+          </a>
+        </li>
 
-                    <!-- Vegetables / Item-wise -->
-                    <li class="nav-item mx-2">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
-                            class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-warning">category</span>
-                            <span class="text-white">එළවළු</span>
-                        </a>
-                    </li>
+        <li class="nav-item">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal" class="nav-link text-white">
+            මිල එක්කතුව
+          </a>
+        </li>
 
-                    <!-- By Weight -->
-                    <li class="nav-item mx-2">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
-                            class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-danger">scale</span>
-                            <span class="text-white">බර මත</span>
-                        </a>
-                    </li>
+        <li class="nav-item">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal1" class="nav-link text-white">
+            විකුණුම්
+          </a>
+        </li>
 
-                    <!-- Price Collection / GRN Sales -->
-                    <li class="nav-item mx-2">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
-                            class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-success">receipt_long</span>
-                            <span class="text-white">මිල එක්කතුව</span>
-                        </a>
-                    </li>
+        <li class="nav-item">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9" class="nav-link text-white">
+            වෙනස් කිරීම
+          </a>
+        </li>
 
-                    <!-- Sales -->
-                    <li class="nav-item mx-2">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal1"
-                            class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2" style="font-size: 18px;">shopping_cart</span>
-                            <span class="text-white">විකුණුම්</span>
-                        </a>
-                    </li>
+        <li class="nav-item">
+          <a href="{{ route('report.grn.sales.overview') }}" target="_blank" class="nav-link text-white">
+            ඉතිරි වාර්තාව 1
+          </a>
+        </li>
 
-                    <li class="nav-item mx-2">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9"
-                            class="nav-link d-flex align-items-center text-white">
-                            <span class="material-icons me-2" style="font-size: 20px;">settings_backup_restore</span>
-                            <span class="text-white">වෙනස් කිරීම</span>
-                        </a>
-                    </li>
+        <li class="nav-item">
+          <a href="{{ route('report.grn.sales.overview2') }}" target="_blank" class="nav-link text-white">
+            ඉතිරි වාර්තාව 2
+          </a>
+        </li>
 
-                    <!-- Remaining Report 1 -->
-                    <li class="nav-item mx-2">
-                        <a href="{{ route('report.grn.sales.overview') }}" target="_blank"
-                            class="nav-link d-flex align-items-center text-white">
-                            <span class="material-icons me-2" style="font-size: 18px;">storage</span>
-                            ඉතිරි වාර්තාව 1
-                        </a>
-                    </li>
+        <li class="nav-item">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="nav-link text-white">
+            ණය වාර්තාව
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
 
-                    <!-- Remaining Report 2 -->
-                    <li class="nav-item mx-2">
-                        <a href="{{ route('report.grn.sales.overview2') }}" target="_blank"
-                            class="nav-link d-flex align-items-center text-white">
-                            <span class="material-icons me-2" style="font-size: 18px;">storage</span>
-                            ඉතිරි වාර්තාව 2
-                        </a>
-                    </li>
-
-                    <!-- Loan Report / Changes -->
-                    <li class="nav-item mx-2">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal"
-                            class="nav-link d-flex align-items-center text-white">
-                            <span class="material-icons me-2" style="font-size: 20px;">account_balance_wallet</span>
-                            <span class="text-white">ණය වාර්තාව</span>
-                        </a>
-                    </li>
-
-
-                </ul>
-            </div>
-        </div>
-    </nav>
 
 
 
@@ -755,6 +725,17 @@
 
                     <div class="row justify-content-end" style="margin-top: -15px;">
     <div class="row g-2 align-items-center">
+         {{-- Customer Code Input --}}
+        <div class="col-md-3">
+            <input type="text" name="customer_code" id="new_customer_code"
+                class="form-control text-uppercase @error('customer_code') is-invalid @enderror"
+                value="{{ old('customer_code') }}" placeholder="පාරිභෝගික කේතය"
+                style="height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black;"
+                required>
+            @error('customer_code')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
 
         {{-- Customer Select --}}
         <div class="col-md-6">
@@ -776,17 +757,7 @@
             @enderror
         </div>
 
-        {{-- Customer Code Input --}}
-        <div class="col-md-3">
-            <input type="text" name="customer_code" id="new_customer_code"
-                class="form-control text-uppercase @error('customer_code') is-invalid @enderror"
-                value="{{ old('customer_code') }}" placeholder="පාරිභෝගික කේතය"
-                style="height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black;"
-                required>
-            @error('customer_code')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
-        </div>
+       
 
         {{-- Loan Amount Display --}}
         <div class="col-md-3">
