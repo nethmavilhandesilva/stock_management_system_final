@@ -66,7 +66,7 @@
                             <span class="text-white">Day Start Process</span>
                         </a>
 
-                        <div style="font-weight: bold; font-size: 14px; color: white;">
+                   <div style="font-weight: bold; font-size: 16px; color: red; margin-left: 250px;">
                             @php
                                 $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
                                 $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');

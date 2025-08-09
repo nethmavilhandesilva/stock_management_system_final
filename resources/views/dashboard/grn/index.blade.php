@@ -51,12 +51,47 @@
             background-color: #dc3545;
             border-color: #dc3545;
         }
-        
+
         /* Initial state of the hidden column */
         .total-grn-column,
         .total-grn-header {
             display: none;
         }
+
+        /* Search box style */
+        #searchInput {
+            max-width: 400px;
+            margin-bottom: 1rem;
+        }
+        /* Make the table more compact */
+        #entriesTable {
+            font-size: 0.85rem; /* smaller font */
+        }
+
+        #entriesTable th,
+        #entriesTable td {
+            padding: 0.3rem 0.5rem; /* reduce padding */
+            vertical-align: middle;
+        }
+
+        #entriesTable thead th {
+            font-weight: 600;
+        }
+
+        .btn-sm {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+        }
+
+        .material-icons {
+            font-size: 16px; /* smaller icons */
+        }
+
+        /* Optional: reduce spacing around the table */
+        .custom-card {
+            padding: 12px 16px;
+        }
+
     </style>
 
     <div class="container-fluid mt-5">
@@ -80,26 +115,25 @@
                 <input type="password" id="list_password" class="form-control" placeholder="View hidden column...">
             </div>
 
+            <input type="text" id="searchInput" class="form-control" placeholder="Search by Code, Supplier Code, Item Code, or Item Name...">
+
             @if($entries->isEmpty())
                 <div class="alert alert-info text-center" role="alert">
                     කිසිඳු GRN ඇතුළත් කර නොමැත.
                 </div>
             @else
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped table-hover align-middle">
+                    <table class="table table-bordered table-striped table-hover align-middle" id="entriesTable">
                         <thead class="table-light">
                             <tr>
-                                <th>#</th>
-                                <th>ස්වයංක්‍රීය මිලදී ගැනීම් අංකය</th>
                                 <th>කේතය</th>
-                                <th>සැපයුම්කරු කේතය</th>
-                                <th>අයිතම කේතය</th>
+                                <th class="d-none">සැපයුම්කරුගේ කේතය</th> {{-- Hidden header --}}
+                                <th class="d-none">අයිතම කේතය</th> {{-- Hidden header --}}
                                 <th>අයිතම නාමය</th>
                                 <th>පැක්‌</th>
                                 <th>බර (kg)</th>
                                 <th>ගනුදෙනු දිනය</th>
                                 <th>GRN අංකය</th>
-                                <th>ගබඩා අංකය</th>
                                 <th class="total-grn-header">GRN සඳහා මුළු එකතුව</th>
                                 <th>මෙහෙයුම්</th>
                             </tr>
@@ -107,17 +141,14 @@
                         <tbody>
                             @foreach($entries as $entry)
                                 <tr class="grn-row" data-entry-id="{{ $entry->id }}">
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $entry->auto_purchase_no }}</td>
-                                    <td>{{ $entry->code }}</td>
-                                    <td>{{ $entry->supplier_code }}</td>
-                                    <td>{{ $entry->item_code }}</td>
-                                    <td>{{ $entry->item_name }}</td>
+                                    <td class="search-code">{{ $entry->code }}</td>
+                                    <td class="search-supplier-code d-none">{{ $entry->supplier_code }}</td> {{-- Hidden cell, but searchable --}}
+                                    <td class="search-item-code d-none">{{ $entry->item_code }}</td> {{-- Hidden cell, but searchable --}}
+                                    <td class="search-item-name">{{ $entry->item_name }}</td>
                                     <td>{{ $entry->packs }}</td>
                                     <td>{{ $entry->weight }}</td>
                                     <td>{{ $entry->txn_date }}</td>
                                     <td>{{ $entry->grn_no }}</td>
-                                    <td>{{ $entry->warehouse_no }}</td>
                                     <td class="total-grn-column">{{ $entry->total_grn }}</td>
                                     <td>
                                         <a href="{{ route('grn.edit', $entry->id) }}" class="btn btn-sm btn-info me-1" title="Edit">
@@ -137,7 +168,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel"
         aria-hidden="true">
         <div class="modal-dialog">
@@ -246,7 +276,7 @@
             const passwordField = document.getElementById('list_password');
             const totalGrnCells = document.querySelectorAll('.total-grn-column');
             const totalGrnHeader = document.querySelector('.total-grn-header');
-            
+
             passwordField.addEventListener('input', function () {
                 const correctPassword = 'nethma123';
                 const isPasswordCorrect = passwordField.value === correctPassword;
@@ -268,6 +298,31 @@
                     passwordField.style.backgroundColor = '';
                     passwordField.style.borderColor = '';
                 }
+            });
+
+            // Search filter logic
+            const searchInput = document.getElementById('searchInput');
+            const table = document.getElementById('entriesTable');
+            const tbody = table.tBodies[0];
+            const rows = tbody.getElementsByTagName('tr');
+
+            searchInput.addEventListener('keyup', function () {
+                const filter = searchInput.value.toLowerCase();
+
+                Array.from(rows).forEach(row => {
+                    // Get text content of all four search-relevant cells
+                    const code = row.querySelector('.search-code').textContent.toLowerCase();
+                    const supplierCode = row.querySelector('.search-supplier-code').textContent.toLowerCase();
+                    const itemCode = row.querySelector('.search-item-code').textContent.toLowerCase();
+                    const itemName = row.querySelector('.search-item-name').textContent.toLowerCase();
+
+                    // Check if filter matches any of the fields
+                    if (code.includes(filter) || supplierCode.includes(filter) || itemCode.includes(filter) || itemName.includes(filter)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
             });
 
         });
