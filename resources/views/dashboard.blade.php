@@ -403,121 +403,47 @@
             padding: 0 !important;
         }
 
-        /* Flexbox for the row layout inside the dropdown */
-        .grn-option-row {
-            display: flex;
-            justify-content: space-between;
-            /* Distribute space between columns */
-            align-items: center;
-            /* Vertically center content */
-            padding: 5px 8px;
-            /* Padding for the entire row */
-            border-bottom: 1px solid #eee;
-            /* Separator between rows */
-            font-family: Arial, sans-serif;
-            /* Adjust font as needed */
-            font-size: 10px;
-            /* Adjust font size as needed */
-            line-height: 1.2;
-            /* Adjust line height for multi-line content */
-            color: #333;
-            /* Default text color */
-        }
+ .grn-header-row {
+    display: grid;
+    /* Adjusted column widths and added more space to move columns to the right */
+    grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
+    gap: 20px; /* Increased the gap between columns for more space */
+    background-color: white !important; /* white bg */
+    color: black !important;            /* black text */
+    font-weight: bold;
+    padding: 8px 12px;
+    white-space: nowrap;     /* prevent wrapping */
+    border-bottom: 2px solid #ccc;
+}
 
-        /* Style for the single header row within the dropdown */
-        .grn-header-row {
-            font-weight: bold;
-            background-color: #f0f0f0;
-            /* Light grey background for header */
-            border-bottom: 1px solid #ccc;
-            /* Stronger border below header */
-            padding-top: 2px;
-            padding-bottom: 2px;
-            /* Ensure the header row is not affected by select2's default option styling */
-            margin-top: -1px;
-            /* Adjust to sit flush with the top of the dropdown */
-        }
+/* Data rows styling */
+.grn-option-row {
+    display: grid;
+    /* Use the same column widths as the header for perfect alignment */
+    grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
+    gap: 15px; /* Increased the gap between columns for more space */
+    background-color: black; /* black bg */
+    color: white;            /* white text */
+    padding: 8px 12px;
+    white-space: nowrap;     /* prevent wrapping */
+    align-items: center;
+    border-bottom: 1px solid #222;
+}
 
-        /* NEW: Styles for the GRN Header Wrapper */
-        .grn-header-row-wrapper {
-            position: sticky;
-            /* Make the wrapper sticky */
-            top: 0;
-            z-index: 10;
-            background-color: #fff;
-            /* Ensure background is white to hide content underneath when sticky */
-            border-bottom: 1px solid #ccc;
-            /* Optional: a border below the header */
-        }
+/* Make sure Code column text does not wrap and stays in one line */
+.grn-code {
+    white-space: nowrap;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis; /* optional: show ellipsis if too long */
+}
 
-        /* NEW: Add padding to the results list to prevent options from being hidden by the sticky header */
-        .select2-results__options.has-custom-header {
-            padding-top: 30px;
-            /* Adjust this value based on the actual height of your header row */
-        }
-
-        .grn-option-row:last-child {
-            border-bottom: none;
-            /* No border for the last row */
-        }
-
-        /* Individual column styling and width distribution */
-        .grn-column {
-            flex: 1;
-            /* Changed from flex: 4; as flex-basis below will dictate initial size */
-            padding: 5px;
-            /* Adjusted padding for better fit, corrected typo '25 px' to '25px' previously, but now making it more balanced */
-            white-space: nowrap;
-            /* Prevent text wrapping unless necessary */
-            overflow: hidden;
-            text-align: center !important;
-            /* IMPORTANT: Center text within each column */
-            /* Hide overflow */
-            text-overflow: ellipsis;
-            /* Add ellipsis for overflow */
-            box-sizing: border-box;
-            /* Include padding in element's total width */
-        }
-
-        /* Specific column widths - adjust these values as needed for your data */
-        .grn-code {
-            flex-basis: 15%;
-            /* Using flex-basis for explicit width distribution */
-            max-width: 15%;
-        }
-
-        .grn-supplier-code {
-            flex-basis: 25%;
-            max-width: 25%;
-        }
-
-        .grn-item-code {
-            flex-basis: 15%;
-            max-width: 15%;
-        }
-
-        .grn-item-name {
-            flex-basis: 25%;
-            max-width: 25%;
-        }
-
-        /* Wider for names */
-        .grn-packs {
-            flex-basis: 10%;
-            max-width: 10%;
-            text-align: right !important;
-            /* Keep right alignment for packs if desired */
-        }
-
-        .grn-grn-no {
-            flex-basis: 15%;
-            max-width: 15%;
-        }
-
-        .grn-txn-date {
-            flex-basis: 15%;
-            max-width: 15%;
-        }
+/* Other columns */
+.grn-column {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
         /* Highlighted (hovered) option in Select2 dropdown */
         .select2-container--default .select2-results__option--highlighted {
@@ -1801,78 +1727,68 @@
 
                                 const txnDate = option.data('txnDate');
 
-                                // Construct the HTML for the tabular display for each row (data row only)
-                                const $result = $(`
-                                                                                                                                                                                                                                                                                                                                            <div class="grn-option-row">
-                                                                                                                                                                                                                                                                                                                                                <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-                                                                                                                                                                                                                                                                                                                                                <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
-                                                                                                                                                                                                                                                                                                                                                 <div class="grn-column grn-supplier-code">${originalWeight || ''}</div>
-                                                                                                                                                                                                                                                                                                                                                  <div class="grn-column grn-supplier-code">${originalPacks || ''}</div>
+                            const $result = $(`
+<div class="grn-option-row">
+    <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+    <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
+    <div class="grn-column grn-original-weight">${originalWeight || ''}</div>
+    <div class="grn-column grn-original-packs">${originalPacks || ''}</div>
+    <div class="grn-column grn-grn-no">${weight || ''}</div>
+    <div class="grn-column grn-packs">${packs || 0}</div>
+    <div class="grn-column grn-txn-date">${txnDate || ''}</div>
+</div>
+`);
 
-                                                                                                                                                                                                                                                                                                                                                <div class="grn-column grn-grn-no">${weight || ''}</div>
-                                                                                                                                                                                                                                                                                                                                                <div class="grn-column grn-packs">${packs || 0}</div>
+return $result;
+},
+templateSelection: function (data) {
+    if (!data.id) {
+        return data.text;
+    }
+    const option = $(data.element);
+    const code = option.data('code');
+    const supplierCode = option.data('supplierCode');
+    const itemCode = option.data('itemCode');
+    const itemName = option.data('itemName');
+    const packs = option.data('packs');
+    const grnNo = option.data('grnNo');
+    const weight = option.data('weight');
+    const txnDate = option.data('txnDate');
+    const originalWeight = option.data('originalWeight');
+    const originalPacks = option.data('originalPacks');
 
-                                                                                                                                                                                                                                                                                                                                                <div class="grn-column grn-txn-date">${txnDate || ''}</div>
-                                                                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                                                                        `);
-                                return $result;
-                            },
-                            templateSelection: function (data) {
-                                if (!data.id) {
-                                    return data.text;
-                                }
-                                const option = $(data.element);
-                                const code = option.data('code');
-                                const supplierCode = option.data('supplierCode');
-                                const itemCode = option.data('itemCode');
-                                const itemName = option.data('itemName');
-                                const packs = option.data('packs');
-                                const grnNo = option.data('grnNo');
-                                const weight = option.data('weight');
-                                const txnDate = option.data('txnDate');
-                                const originalWeight = option.data('originalWeight');
-                                const originalPacks = option.data('originalPacks');
+    var $selection = $('<span></span>');
+    $selection.addClass('select2-black-text');
+    $selection.css('text-align', 'center');
 
-                                var $selection = $('<span></span>'); // Create a new jQuery span element
-                                // Add a class here, e.g., 'select2-black-text'
-                                $selection.addClass('select2-black-text');
-                                $selection.css('text-align', 'center'); // Add inline style
+    $selection.html(`${code || ''}(කිලෝ,: ${originalWeight || 0} /මලු: ${originalPacks || ''} /දිනය: ${txnDate || ''})`);
 
+    return $selection;
+}
+});
 
-                                $selection.html(`${code || ''}(කිලෝ,: ${originalWeight || 0} /මලු: ${originalPacks || ''} /දිනය: ${txnDate || ''})`);
+// Add an event listener for when the Select2 dropdown opens
+$('#grn_select').on('select2:open', function () {
+    console.log("Select2 dropdown opened. Attempting to add header...");
+    const $dropdown = $('.select2-dropdown');
+    const $resultsContainer = $dropdown.find('.select2-results__options');
 
-                                return $selection;
-                            }
-                        });
+    if ($dropdown.find('.grn-header-row-wrapper').length === 0) {
+        console.log("Header not found, creating and prepending.");
 
-                        // Add an event listener for when the Select2 dropdown opens
-                        $('#grn_select').on('select2:open', function () {
-                            console.log("Select2 dropdown opened. Attempting to add header..."); // Debugging log
-
-                            // Find the main dropdown container
-                            const $dropdown = $('.select2-dropdown');
-
-                            // Find the results container where options are listed
-                            const $resultsContainer = $dropdown.find('.select2-results__options');
-
-                            // Check if the header wrapper already exists within this dropdown instance
-                            if ($dropdown.find('.grn-header-row-wrapper').length === 0) {
-                                console.log("Header not found, creating and prepending."); // Debugging log
-
-                                const $headerWrapper = $(`
-                                                                                                                                                                                                                                                                                                                                            <div class="grn-header-row-wrapper">
-                                                                                                                                                                                                                                                                                                                                                <div class="grn-option-row grn-header-row">
-                                                                                                                                                                                                                                                                                                                                                    <div class="grn-column grn-code">Code</div>
-                                                                                                                                                                                                                                                                                                                                                    <div class="grn-column grn-supplier-code">Sup...</div>
-                                                                                                                                                                                                                                                                                                                                                     <div class="grn-column grn-supplier-code">Original Weight</div>
-                                                                                                                                                                                                                                                                                                                                                      <div class="grn-column grn-supplier-code">Original Packs</div>
-                                                                                                                                                                                                                                                                                                                                                     <div class="grn-column grn-grn-no">Remaining Weight</div>
-                                                                                                                                                                                                                                                                                                                                                    <div class="grn-column grn-packs"> Remaining Packs</div>
-
-                                                                                                                                                                                                                                                                                                                                                    <div class="grn-column grn-txn-date">Date</div>
-                                                                                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                                                                        `);
+        const $headerWrapper = $(`
+        <div class="grn-header-row-wrapper">
+            <div class="grn-option-row grn-header-row">
+                <div class="grn-column grn-code">Code</div>
+                <div class="grn-column grn-supplier-code">Sup</div>
+                <div class="grn-column grn-supplier-code">OWeight</div>
+                <div class="grn-column grn-supplier-code">OPacks</div>
+                <div class="grn-column grn-grn-no">BWeight</div>
+                <div class="grn-column grn-packs">BPacks</div>
+                <div class="grn-column grn-txn-date">Date</div>
+            </div>
+        </div>
+        `);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
 
                                 // Prepend the header wrapper to the .select2-results element
                                 // This puts it before the <ul> which contains the actual options
