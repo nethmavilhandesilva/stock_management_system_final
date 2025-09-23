@@ -4,11 +4,18 @@ export default function SalesEntry() {
   const initialSales = window.__INITIAL_SALES__ || [];
   const customers = window.__CUSTOMERS__ || [];
   const entries = window.__ENTRIES__ || [];
+  const initialPrintedSales = window.__PRINTED_SALES__ || []; // Get from backend
+  const initialUnprintedSales = window.__UNPRINTED_SALES__ || []; // New data from backend
   const STORE_URL = window.__STORE_URL__ || "/grn";
   const CSRF_TOKEN =
     document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
 
+  // --- State ---
   const [sales, setSales] = useState(initialSales);
+  const [printedSales, setPrintedSales] = useState(initialPrintedSales);
+  const [unprintedSales, setUnprintedSales] = useState(initialUnprintedSales);
+  const [selectedPrintedCustomer, setSelectedPrintedCustomer] = useState(null);
+  const [selectedUnprintedCustomer, setSelectedUnprintedCustomer] = useState(null);
   const [form, setForm] = useState({
     customer_code: "",
     customer_name: "",
@@ -28,26 +35,26 @@ export default function SalesEntry() {
   const [errors, setErrors] = useState({});
   const [grnPriceDisplay, setGrnPriceDisplay] = useState("");
 
-  // Calculate total whenever weight or price changes
-  useEffect(() => {
-    const w = parseFloat(form.weight) || 0;
-    const p = parseFloat(form.price_per_kg) || 0;
-    const tot = w * p;
-    setForm((prev) => ({
-      ...prev,
-      total: tot ? Number(tot.toFixed(2)) : "",
-    }));
-  }, [form.weight, form.price_per_kg]);
+  // --- Filtered Data & Display Logic ---
+  const printedCustomers = [...new Set(printedSales.map(s => s.customer_code))];
+  const unprintedCustomers = [...new Set(unprintedSales.map(s => s.customer_code))];
 
+  const displayedSales = selectedPrintedCustomer
+    ? printedSales.filter(s => s.customer_code === selectedPrintedCustomer)
+    : selectedUnprintedCustomer
+    ? unprintedSales.filter(s => s.customer_code === selectedUnprintedCustomer)
+    : unprintedSales; // Default view is all unprinted sales
+  
+  // --- Form handlers ---
   function handleInputChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
   }
 
   function handleCustomerSelect(e) {
     const short = e.target.value;
-    const c = customers.find((x) => String(x.short_name) === String(short));
-    setForm((prev) => ({
+    const c = customers.find(x => String(x.short_name) === String(short));
+    setForm(prev => ({
       ...prev,
       customer_code: short || prev.customer_code,
       customer_name: c?.name || "",
@@ -56,9 +63,9 @@ export default function SalesEntry() {
 
   function handleGrnSelect(e) {
     const code = e.target.value;
-    const entry = entries.find((x) => String(x.code) === String(code));
+    const entry = entries.find(x => String(x.code) === String(code));
     if (entry) {
-      setForm((prev) => ({
+      setForm(prev => ({
         ...prev,
         grn_entry_code: code,
         supplier_code: entry.supplier_code || prev.supplier_code || "",
@@ -71,7 +78,7 @@ export default function SalesEntry() {
       }));
       setGrnPriceDisplay(entry.price_per_kg ?? entry.PerKGPrice ?? entry.SalesKGPrice ?? "");
     } else {
-      setForm((prev) => ({
+      setForm(prev => ({
         ...prev,
         grn_entry_code: "",
         code: "",
@@ -85,6 +92,18 @@ export default function SalesEntry() {
     }
   }
 
+  // --- Calculate total ---
+  useEffect(() => {
+    const w = parseFloat(form.weight) || 0;
+    const p = parseFloat(form.price_per_kg) || 0;
+    const tot = w * p;
+    setForm(prev => ({
+      ...prev,
+      total: tot ? Number(tot.toFixed(2)) : "",
+    }));
+  }, [form.weight, form.price_per_kg]);
+
+  // --- Submit handler ---
   async function handleSubmit(e) {
     e.preventDefault();
     setErrors({});
@@ -129,8 +148,8 @@ export default function SalesEntry() {
       }
 
       const newSale = data.data || {};
-      setSales((prev) => [...prev, newSale]);
-
+      setSales(prev => [...prev, newSale]);
+      setUnprintedSales(prev => [...prev, newSale]); // Add new sale to unprinted list
       setForm({
         customer_code: form.customer_code,
         customer_name: form.customer_name,
@@ -148,7 +167,6 @@ export default function SalesEntry() {
         given_amount: "",
       });
       setGrnPriceDisplay("");
-
       window.currentDisplayedSalesData = [...sales, newSale];
     } catch (err) {
       setErrors({ form: err.message || "Network or server error" });
@@ -159,13 +177,18 @@ export default function SalesEntry() {
     const n = parseFloat(val);
     return Number.isFinite(n) ? n.toFixed(2) : "0.00";
   }
-
-  const mainTotal = sales.reduce((acc, s) => {
+  
+  const mainTotal = displayedSales.reduce((acc, s) => {
     const t = parseFloat(s.total) || parseFloat(s.weight || 0) * parseFloat(s.price_per_kg || 0);
     return acc + (isNaN(t) ? 0 : t);
   }, 0);
 
-  // --- F1 print & clear ---
+  const unprintedTotal = unprintedSales.reduce((acc, s) => {
+    const t = parseFloat(s.total) || parseFloat(s.weight || 0) * parseFloat(s.price_per_kg || 0);
+    return acc + (isNaN(t) ? 0 : t);
+  }, 0);
+
+  // --- F1: Print & Clear ---
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === "F1") {
@@ -177,9 +200,45 @@ export default function SalesEntry() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [sales]);
 
-  // -----------------------
-  // Advanced print logic
-  // -----------------------
+  // --- F5: Mark all processed ---
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === "F5") {
+        e.preventDefault();
+        markAllSalesAsProcessed();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  async function markAllSalesAsProcessed() {
+    if (!window.confirm("Are you sure you want to mark all unprocessed sales as processed?")) return;
+
+    try {
+      const res = await fetch("/sales/mark-all-processed", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": CSRF_TOKEN,
+        },
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || "All sales marked as processed successfully!");
+        setSales([]);
+        setUnprintedSales([]); // Clear the unprinted sales list
+        window.currentDisplayedSalesData = [];
+      } else {
+        alert(data.message || "Failed to mark sales as processed.");
+      }
+    } catch (err) {
+      console.error("Error marking sales as processed:", err);
+      alert("Failed to mark sales as processed. Check console for details.");
+    }
+  }
+
   async function handlePrintAndClear() {
     const salesData = window.currentDisplayedSalesData || [];
     if (!salesData.length) {
@@ -225,8 +284,10 @@ export default function SalesEntry() {
       const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>` + buildFullReceiptHTML(salesData, billNo, customerName);
       await printReceipt(copyHtml, customerName + " - Copy");
 
-      // Clear table
-      setSales([]);
+      // Clear table and update printed sales
+      setSales(prev => prev.filter(s => !salesIds.includes(s.id)));
+      setUnprintedSales(prev => prev.filter(s => !salesIds.includes(s.id))); // Update unprinted list
+      setPrintedSales(prev => [...prev, ...salesData.map(s => ({ ...s, bill_printed: 'Y' }))]);
       window.currentDisplayedSalesData = [];
     } catch (err) {
       console.error("Printing error:", err);
@@ -327,9 +388,89 @@ export default function SalesEntry() {
     });
   }
 
+  function handlePrintedCustomerClick(customerCode) {
+    setSelectedPrintedCustomer(customerCode === selectedPrintedCustomer ? null : customerCode);
+    setSelectedUnprintedCustomer(null);
+  }
+
+  function handleUnprintedCustomerClick(customerCode) {
+    setSelectedUnprintedCustomer(customerCode === selectedUnprintedCustomer ? null : customerCode);
+    setSelectedPrintedCustomer(null);
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <div className="w-full max-w-6xl bg-white shadow-2xl rounded-3xl p-10">
+    <div className="min-h-screen flex flex-row bg-gray-100 p-6">
+      {/* Left section: Printed Customers */}
+      <div className="w-1/4 bg-white shadow-xl rounded-xl p-4 mr-6 overflow-y-auto max-h-screen">
+        <h2 className="text-xl font-bold mb-4">Printed Customers</h2>
+        {printedSales.length === 0 ? (
+          <p className="text-gray-500">No printed sales yet.</p>
+        ) : (
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-700 mb-2">Customers</h3>
+            <ul>
+              {printedCustomers.map(customerCode => (
+                <li key={customerCode}>
+                  <button
+                    onClick={() => handlePrintedCustomerClick(customerCode)}
+                    className={`w-full text-left p-3 mb-2 rounded-xl border ${
+                      selectedPrintedCustomer === customerCode 
+                        ? 'bg-blue-500 text-white border-blue-600' 
+                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                    }`}
+                  >
+                    <div className="font-medium">
+                      {customerCode}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Sales: {printedSales.filter(s => s.customer_code === customerCode).length}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Middle section: Unprinted Sales */}
+      <div className="w-1/4 bg-white shadow-xl rounded-xl p-4 mr-6 overflow-y-auto max-h-screen">
+        <h2 className="text-xl font-bold mb-4">Unprinted Sales</h2>
+        <div className="bg-gray-50 p-3 rounded-xl shadow-sm mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Total Unprinted: <span className="text-red-600 font-bold">Rs. {formatDecimal(unprintedTotal)}</span></h3>
+        </div>
+        {unprintedSales.length === 0 ? (
+          <p className="text-gray-500">No unprinted sales.</p>
+        ) : (
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-700 mb-2">Customers</h3>
+            <ul>
+              {unprintedCustomers.map(customerCode => (
+                <li key={customerCode}>
+                  <button
+                    onClick={() => handleUnprintedCustomerClick(customerCode)}
+                    className={`w-full text-left p-3 mb-2 rounded-xl border ${
+                      selectedUnprintedCustomer === customerCode 
+                        ? 'bg-blue-500 text-white border-blue-600' 
+                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                    }`}
+                  >
+                    <div className="font-medium">
+                      {customerCode}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Sales: {unprintedSales.filter(s => s.customer_code === customerCode).length}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Right section: Form + Sales Table */}
+      <div className="w-1/2 bg-white shadow-2xl rounded-3xl p-10">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Sales Entry</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -350,7 +491,7 @@ export default function SalesEntry() {
             />
             <select value={form.customer_code} onChange={handleCustomerSelect} className="px-4 py-2 border rounded-xl">
               <option value="">-- Select Customer --</option>
-              {customers.map((c) => (
+              {customers.map(c => (
                 <option key={c.short_name} value={c.short_name}>
                   {c.name} ({c.short_name})
                 </option>
@@ -358,7 +499,7 @@ export default function SalesEntry() {
             </select>
             <select value={form.grn_entry_code} onChange={handleGrnSelect} className="px-4 py-2 border rounded-xl">
               <option value="">-- Select GRN Entry --</option>
-              {entries.map((en) => (
+              {entries.map(en => (
                 <option key={en.code} value={en.code}>
                   {en.code} | {en.item_name}
                 </option>
@@ -382,32 +523,44 @@ export default function SalesEntry() {
 
         {errors.form && <div className="mt-6 p-3 bg-red-100 text-red-700 rounded-xl">{errors.form}</div>}
 
-        {/* Sales Table */}
-        <div className="mt-10 overflow-x-auto">
-          <table className="min-w-full border border-gray-200 rounded-xl text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-2 border">Code</th>
-                <th className="px-4 py-2 border">Item</th>
-                <th className="px-4 py-2 border">Weight (kg)</th>
-                <th className="px-4 py-2 border">Price</th>
-                <th className="px-4 py-2 border">Total</th>
-                <th className="px-4 py-2 border">Packs</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sales.map((s, idx) => (
-                <tr key={idx} className="text-center hover:bg-gray-50">
-                  <td className="px-4 py-2 border">{s.code}</td>
-                  <td className="px-4 py-2 border">{s.item_name}</td>
-                  <td className="px-4 py-2 border">{formatDecimal(s.weight)}</td>
-                  <td className="px-4 py-2 border">{formatDecimal(s.price_per_kg)}</td>
-                  <td className="px-4 py-2 border">{formatDecimal(s.total)}</td>
-                  <td className="px-4 py-2 border">{s.packs}</td>
+        {/* Main Sales Table (Dynamically displays Unprinted or Printed sales) */}
+        <div className="mt-10">
+          <h3 className="text-xl font-bold mb-4">
+            {selectedPrintedCustomer
+              ? `Sales for ${selectedPrintedCustomer}`
+              : selectedUnprintedCustomer
+              ? `Unprinted Sales for ${selectedUnprintedCustomer}`
+              : "All Unprinted Sales"
+            }
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border border-gray-200 rounded-xl text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2 border">Code</th>
+                  <th className="px-4 py-2 border">Customer</th>
+                  <th className="px-4 py-2 border">Item</th>
+                  <th className="px-4 py-2 border">Weight (kg)</th>
+                  <th className="px-4 py-2 border">Price</th>
+                  <th className="px-4 py-2 border">Total</th>
+                  <th className="px-4 py-2 border">Packs</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {displayedSales.map((s, idx) => (
+                  <tr key={idx} className="text-center hover:bg-gray-50">
+                    <td className="px-4 py-2 border">{s.code}</td>
+                    <td className="px-4 py-2 border">{s.customer_code}</td>
+                    <td className="px-4 py-2 border">{s.item_name}</td>
+                    <td className="px-4 py-2 border">{formatDecimal(s.weight)}</td>
+                    <td className="px-4 py-2 border">{formatDecimal(s.price_per_kg)}</td>
+                    <td className="px-4 py-2 border">{formatDecimal(s.total)}</td>
+                    <td className="px-4 py-2 border">{s.packs}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

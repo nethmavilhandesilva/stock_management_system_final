@@ -18,6 +18,8 @@
     window.__CUSTOMERS__ = @json($customers->toArray());
     window.__ENTRIES__ = @json($entries->toArray());
     window.__STORE_URL__ = "{{ route('grn.store') }}";
+    window.__PRINTED_SALES__ = {!! json_encode($printedSales) !!};
+    window.__UNPRINTED_SALES__ = {!! json_encode($unprintedSales) !!};
   </script>
 </body>
 </html>
