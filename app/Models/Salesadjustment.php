@@ -20,6 +20,13 @@ class Salesadjustment extends Model
         'total',
         'packs',
         'bill_no',
-        'type'
+        'type',
+        'original_created_at',
+         'Date'
+    ];
+      // Cast the original_created_at and original_updated_at to Carbon
+    protected $casts = [
+        'original_created_at' => 'datetime',
+        'original_updated_at' => 'datetime',
     ];
 }

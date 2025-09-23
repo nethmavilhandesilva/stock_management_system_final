@@ -22,27 +22,8 @@
                                 $items = \App\Models\Item::all();
                             @endphp
                             @foreach($items as $item)
-                                <option value="{{ $item->no }}">{{ $item->no }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="item_grn_select" class="form-label" style="font-weight: bold; color: black;">GRN තොරතුරු තෝරන්න</label>
-                        <input type="hidden" name="supplier_code" id="item_supplier_code"> <select id="item_grn_select" class="form-select form-select-sm select2">
-                            <option value="">-- GRN තෝරන්න --</option>
-                            @foreach ($entries as $entry)
-                                <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
-                                    data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
-                                    data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
-                                    data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
-                                    data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
-                                    data-txn-date="{{ $entry->txn_date }}"
-                                    data-original-weight="{{ $entry->original_weight }}"
-                                    data-original-packs="{{ $entry->original_packs }}">
-                                    {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
-                                    {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
-                                    {{ $entry->txn_date }}
+                                <option value="{{ $item->no }}" data-supplier-code="{{ $item->supplier_code ?? '' }}">
+                                       {{ $item->no }}-{{ $item->type }}
                                 </option>
                             @endforeach
                         </select>
@@ -62,6 +43,9 @@
                 </div>
 
                 <div class="modal-footer">
+                      <a href="{{ route('report.itemwise.email') }}" class="btn btn-info">
+            📧 Daily Email Report
+        </a>
                     <button type="submit" class="btn btn-primary w-100">වාර්තාව ලබාගන්න</button>
                 </div>
             </div>
@@ -71,18 +55,21 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const grnSelect = document.getElementById('item_grn_select');
+        const itemSelect = document.getElementById('item_code_select');
         const supplierCodeInput = document.getElementById('item_supplier_code');
         const passwordInput = document.getElementById('item_password');
         const dateRangeContainer = document.getElementById('item_date_range_container');
+        const itemReportModal = document.getElementById('itemReportModal');
         const correctPassword = 'nethma123';
 
-        grnSelect.addEventListener('change', function () {
-            const selectedOption = grnSelect.options[grnSelect.selectedIndex];
+        // Auto-fill supplier code when selecting an item
+        itemSelect.addEventListener('change', function () {
+            const selectedOption = itemSelect.options[itemSelect.selectedIndex];
             const supplierCode = selectedOption.getAttribute('data-supplier-code');
             supplierCodeInput.value = supplierCode || '';
         });
 
+        // Show/hide date range when password is correct
         passwordInput.addEventListener('input', function () {
             if (passwordInput.value === correctPassword) {
                 dateRangeContainer.style.display = 'block';
@@ -92,5 +79,12 @@
                 document.getElementById('item_end_date').value = '';
             }
         });
+        
+        // Add the event listener to refresh the page when the modal closes
+        if (itemReportModal) {
+            itemReportModal.addEventListener('hidden.bs.modal', function () {
+                window.location.reload();
+            });
+        }
     });
 </script>

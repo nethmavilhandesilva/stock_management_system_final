@@ -4,6 +4,13 @@
             @csrf
             <div class="modal-content" style="background-color: #99ff99;">
 
+                <div class="modal-header" style="border-bottom: none; background-color: #99ff99;">
+                    <h5 class="modal-title" id="reportFilterModalLabel" style="font-weight: bold; color: black;">
+                        Filter Report
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="password" class="form-label" style="font-weight: bold; color: black;">පස්වර්ඩ් ඇතුල් කරන්න</label>
@@ -58,43 +65,27 @@
         </form>
     </div>
 </div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Initialize Select2 on the dropdown
-        $('#grn_select').select2();
-
-        const supplierCodeInput = document.getElementById('supplier_code');
+    document.addEventListener('DOMContentLoaded', function () {
         const passwordInput = document.getElementById('password');
         const dateRangeContainer = document.getElementById('date-range-container');
+        const reportFilterModal = document.getElementById('reportFilterModal');
+        const correctPassword = 'nethma123';
 
-        // Use the Select2 event listener to capture the selection
-        $('#grn_select').on('select2:select', function (e) {
-            const selectedOption = e.params.data.element;
-            const supplierCode = $(selectedOption).data('supplier-code');
-
-            // Set the hidden input value
-            supplierCodeInput.value = supplierCode || '';
-        });
-
-        // Handle case where user clears the selection
-        $('#grn_select').on('select2:unselect', function () {
-            supplierCodeInput.value = '';
-        });
-
-        // Show or hide date range inputs based on password
         passwordInput.addEventListener('input', function () {
-            const correctPassword = 'nethma123';
             if (passwordInput.value === correctPassword) {
                 dateRangeContainer.style.display = 'block';
             } else {
                 dateRangeContainer.style.display = 'none';
-                // Optional: Clear the date inputs when hidden
-                document.getElementById('start_date').value = '';
-                document.getElementById('end_date').value = '';
             }
         });
+
+        // Add the event listener to refresh the page on modal close
+        if (reportFilterModal) {
+            reportFilterModal.addEventListener('hidden.bs.modal', function () {
+                window.location.reload();
+            });
+        }
     });
 </script>
+

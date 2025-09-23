@@ -36,16 +36,22 @@
     .btn-success {
         background-color: #198754;
     }
+
+    #itemSearch {
+        max-width: 300px;
+        margin-bottom: 15px;
+    }
 </style>
 
 <div class="container-fluid mt-5">
     <div class="custom-card">
         <h2 class="mb-4 text-center text-primary">භාණ්ඩ ලැයිස්තුව (Items List)</h2>
 
-        <div class="text-end mb-3">
+        <div class="d-flex justify-content-between mb-3">
             <a href="{{ route('items.create') }}" class="btn btn-success">
                 + නව භාණ්ඩයක් එකතු කරන්න
             </a>
+            <input type="text" id="itemSearch" class="form-control form-control-sm" placeholder="අංකය හෝ වර්ගය අනුව සොයන්න">
         </div>
 
         @if(session('success'))
@@ -53,7 +59,7 @@
         @endif
 
         <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover align-middle">
+            <table class="table table-bordered table-striped table-hover align-middle" id="itemsTable">
                 <thead>
                     <tr>
                         <th>ක අංකය</th>
@@ -66,7 +72,7 @@
                 <tbody>
                     @foreach ($items as $item)
                     <tr>
-                       <td style="text-transform: uppercase;">{{ $item->no }}</td>
+                        <td style="text-transform: uppercase;">{{ $item->no }}</td>
                         <td>{{ $item->type }}</td>
                         <td>{{ number_format($item->pack_cost, 2) }}</td>
                         <td>{{ number_format($item->pack_due, 2) }}</td>
@@ -92,4 +98,26 @@
         </div>
     </div>
 </div>
+
+<script>
+    const searchInput = document.getElementById('itemSearch');
+    const table = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
+
+    searchInput.addEventListener('keyup', function() {
+        const filter = searchInput.value.toLowerCase();
+
+        Array.from(table.getElementsByTagName('tr')).forEach(row => {
+            const no = row.cells[0].textContent.toLowerCase();
+            const type = row.cells[1].textContent.toLowerCase();
+
+            // Only show rows where no OR type starts with the filter
+            if(no.startsWith(filter) || type.startsWith(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+
 @endsection

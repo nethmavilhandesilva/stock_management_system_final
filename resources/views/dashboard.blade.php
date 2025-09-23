@@ -2,156 +2,211 @@
 
 @section('horizontal_sidebar')
     {{-- This section will contain the content that was originally in the vertical sidebar --}}
+    <style>
+        .nav-item.dropdown {
+            position: relative;
+        }
+
+        .nav-item.dropdown .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #1a1a1a;
+            padding: 0.25rem 0;
+            min-width: 180px;
+        }
+
+        .nav-item.dropdown:hover .dropdown-menu {
+            display: block;
+            /* show on hover */
+        }
+
+        .dropdown-menu a {
+            color: white;
+            display: block;
+            padding: 0.25rem 1rem;
+            text-decoration: none;
+        }
+
+        .dropdown-menu a:hover {
+            background-color: #333;
+        }
+    </style>
+
     <nav
-        class="navbar navbar-expand-lg navbar-light shadow-sm rounded-bottom px-3 py-2 custom-dark-green-bg navbar-compact">
-        <div class="container-fluid">
-            {{-- Optional: Add a brand/logo if needed --}}
-            {{-- <a class="navbar-brand" href="#">Menu</a> --}}
+    class="navbar navbar-expand-lg navbar-light shadow-sm rounded-bottom px-3 py-1 custom-dark-green-bg navbar-compact">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        {{-- Navbar links --}}
+        <div class="collapse navbar-collapse" id="navbarNavHorizontal">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {{-- Dashboard --}}
+                <li class="nav-item">
+                    <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center small">
+                        <span class="material-icons me-1 text-primary" style="font-size:1.1em;">dashboard</span>
+                        <span class="text-white">Dashboard</span>
+                    </a>
+                </li>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavHorizontal"
-                aria-controls="navbarNavHorizontal" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                {{-- Master Dropdown --}}
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center small text-white">
+                        <span class="material-icons me-1">storage</span>
+                        Master
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('items.index') }}">භාණ්ඩ</a></li>
+                        <li><a class="dropdown-item" href="{{ route('customers.index') }}">ගනුදෙනුකරුවන්</a></li>
+                        <li><a class="dropdown-item" href="{{ route('suppliers.index') }}">සැපයුම්කරුවන්</a></li>
+                      
+                        <li><a class="dropdown-item" href="{{ route('customers-loans.report') }}"> ණය වාර්තාව දැකීම</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#codeSelectModal">
+                                GRN වාර්තාව
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
-            <div class="collapse navbar-collapse" id="navbarNavHorizontal">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-primary">dashboard</span> <span
-                                class="text-white">Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('items.index') }}"
-                            class="nav-link d-flex align-items-center {{ Request::routeIs('items.index') ? 'active' : '' }}"
-                            aria-current="{{ Request::routeIs('items.index') ? 'page' : '' }}">
-                            <span class="material-icons me-2 text-success">inventory_2</span> <span
-                                class="text-white">භාණ්ඩ</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('customers.index') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-primary">people</span> <span
-                                class="text-white">ගනුදෙනුකරුවන්</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('suppliers.index') }}" class="nav-link d-flex align-items-center">
-                            <span class="material-icons me-2 text-blue-600">local_shipping</span> <span
-                                class="text-white">සැපයුම්කරුවන්</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('grn.index') }}"
-                            class="list-group-item list-group-item-action d-flex align-items-center"
-                            style="background-color: transparent !important; color: white !important;">
-                            <span class="material-icons mr-3"
-                                style="color: black !important; font-size: 1.2em !important;">assignment_turned_in</span>
-                            <span class="text-white">GRN</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('customers-loans.index') }}"
-                            class="btn btn-success nav-link d-flex align-items-center {{ Request::routeIs('customers-loans.index') ? 'active' : '' }}"
-                            aria-current="{{ Request::routeIs('customers-loans.index') ? 'page' : '' }}">
-                            <span class="material-icons me-2">payments</span>
-                            <span class="text-white">ආදායම් / වියදම්</span>
-                        </a>
-                    </li>
+                {{-- Income / Expense --}}
+                <li class="nav-item">
+                    <a href="{{ route('customers-loans.index') }}"
+                        class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('customers-loans.index') ? 'active' : '' }}">
+                        <span class="material-icons me-1" style="font-size:1.1em;">payments</span>
+                        <span class="text-white">ආදායම් / වියදම්</span>
+                    </a>
+                </li>
+                {{-- GRN Button --}}
+                <li class="nav-item">
+                    <a href="{{ route('grn.create') }}"
+                        class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('grn.create') ? 'active' : '' }}">
+                        <span class="material-icons me-1" style="font-size:1.1em;">receipt_long</span>
+                        <span class="text-white">GRN</span>
+                    </a>
+                </li>
+                 <li class="nav-item">
+                    <a href="{{ route('grn.updateform') }}"
+                        class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('grn.create') ? 'active' : '' }}">
+                        <span class="material-icons me-1" style="font-size:1.1em;">receipt_long</span>
+                        <span class="text-white">GRN අලුත් කිරීම</span>
+                    </a>
+                </li>
+            </ul>
 
-                    <li class="nav-item d-flex align-items-center">
-                        <a href="#" class="nav-link d-flex align-items-center me-2" data-bs-toggle="modal"
-                            data-bs-target="#dayStartModal">
-                            <span class="material-icons me-2 text-blue-600">play_circle_filled</span>
-                            <span class="text-white">Day Start Process</span>
-                        </a>
-
-                        <div style="font-weight: bold; font-size: 16px; color: red; margin-left: 250px;">
-                            @php
-                                $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
-                                $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
-                            @endphp
-
-                            {{ $nextDay }}
-                        </div>
-                    </li>
-
-
-
-                </ul>
-            </div>
+            {{-- Day Start Process and Logout on the right --}}
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a href="#" class="nav-link d-flex align-items-center small" data-bs-toggle="modal"
+                        data-bs-target="#dayStartModal">
+                        <span class="material-icons me-1 text-blue-600" style="font-size:1.1em;">play_circle_filled</span>
+                        <span class="text-white">Day Start Process</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="nav-link d-flex align-items-center small"
+                            style="background:none; border:none; padding:0; cursor:pointer;">
+                            <span class="material-icons me-1 text-red-600" style="font-size:1.1em;">logout</span>
+                            <span style="color: white;">Logout</span>
+                        </button>
+                    </form>
+                </li>
+            </ul>
         </div>
-    </nav>
+
+        {{-- Next Day Info --}}
+        <div class="ms-3 fw-bold text-danger" style="white-space: nowrap;">
+            @php
+                $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
+                $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
+            @endphp
+            {{ $nextDay }}
+        </div>
+    </div>
+</nav>
+
+
     {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav">
-        <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
-                aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
+{{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav small">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
+            aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
-                <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-3">
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal" class="nav-link text-white">
-                            සැපයුම්කරු
-                        </a>
-                    </li>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
+            <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-2">
 
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal" class="nav-link text-white">
-                            එළවළු
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal" class="nav-link text-white">
-                            බර මත
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal" class="nav-link text-white">
-                            මිල එක්කතුව
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal1" class="nav-link text-white">
-                            විකුණුම්
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9" class="nav-link text-white">
-                            වෙනස් කිරීම
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{{ route('report.grn.sales.overview') }}" target="_blank" class="nav-link text-white">
-                            ඉතිරි වාර්තාව 1
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{{ route('report.grn.sales.overview2') }}" target="_blank" class="nav-link text-white">
-                            ඉතිරි වාර්තාව 2
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="nav-link text-white">
-                            ණය වාර්තාව
-                        </a>
-                    </li>
-                </ul>
-            </div>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
+                        class="nav-link text-white px-2 py-1">
+                        එළවළු
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
+                        class="nav-link text-white px-2 py-1">
+                        බර මත
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
+                        class="nav-link text-white px-2 py-1">
+                        මිල එක්කතුව
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9"
+                        class="nav-link text-white px-2 py-1">
+                        වෙනස් කිරීම
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('report.grn.sales.overview') }}" target="_blank"
+                        class="nav-link text-white px-2 py-1">
+                        ඉතිරි වාර්තාව 1
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('report.grn.sales.overview2') }}" target="_blank"
+                        class="nav-link text-white px-2 py-1">
+                        ඉතිරි වාර්තාව 2
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#filterModal"
+                        class="nav-link text-white px-2 py-1">
+                        විකුණුම් වාර්තාව
+                    </a>
+                </li>
+            </ul>
         </div>
-    </nav>
+    </div>
+</nav>
 
+{{-- Removed the Password Modal from here --}}
 
-
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // The script now simply adds the modal attributes back, 
+        // effectively disabling the password protection.
+        const protectedLinks = document.querySelectorAll(".protected-link");
+        
+        protectedLinks.forEach(link => {
+            const target = link.getAttribute("data-bs-target") || link.getAttribute("href");
+            if (target && target.startsWith("#")) {
+                link.setAttribute("data-bs-toggle", "modal");
+            }
+            // Remove the custom class and any opacity changes
+            link.classList.remove("protected-link");
+            link.style.opacity = ""; 
+        });
+    });
+</script>
 
     <style>
         /* Custom CSS to push content up if fixed-bottom nav bar covers it */
@@ -357,173 +412,114 @@
 
         /* Adjust card background to white for contrast */
         .card {
-            background-color: #87b387ff !important;
+            background-color: #111439ff !important;
         }
 
-        /* Select2 specific styling adjustments for smaller size */
-        .select2-container--bootstrap-5 .select2-selection--single {
-            min-height: calc(1.5em + 1rem + 2px);
-            /* Increased from 0.5rem to 1rem */
-            /* Matches form-control-sm height */
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            /* Matches form-control-sm font-size */
-            border: 1.5px solid #000000 !important;
-            /* Apply border to select2 */
+      /* ---------------------- */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #007bff !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    font-size: 16px !important;
+    line-height: 34px !important;
+    padding: 0 12px !important;
+}
+
+/* Optional: red text for special class */
+.select2-black-text {
+    color: #FF0000 !important;
+}
+
+/* ---------------------- */
+/* Tabular option rows */
+.grn-option-row {
+    display: grid;
+    /* Use 'fr' units to fill the available width */
+    grid-template-columns: 120px 60px 1fr 60px 60px 60px 70px;
+    gap: 1px;
+    padding: 2px 4px;
+    align-items: center;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #000000 !important;
+    background: #fff7cc;
+}
+
+/* Columns */
+.grn-column { 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    white-space: nowrap; 
+    padding: 0 2px; 
+}
+.grn-code { 
+    font-weight: bold; 
+    text-align: left; 
+}
+.grn-sp { 
+    text-align: center; 
+}
+.grn-item { 
+    /* Change this line */
+    text-align: center; 
+}
+.grn-ow, .grn-op, .grn-bw, .grn-bp { 
+    text-align: right; 
+}
+.grn-txn-date { 
+    text-align: center; 
+}
+
+/* ---------------------- */
+/* Header row styling */
+.grn-header-row {
+    display: grid;
+    /* Use 'fr' units to match the option rows */
+    grid-template-columns: 120px 60px 1fr 60px 60px 60px 70px;
+    gap: 1px;
+    background: #333;
+    color: #fff;
+    font-weight: bold;
+    font-size: 13px;
+    padding: 2px 4px;
+    border-bottom: 1px solid #ccc;
+    white-space: nowrap;
+}
+
+/* Highlighted option */
+.select2-container--default .select2-results__option--highlighted .grn-option-row {
+    background-color: #007bff !important;
+    color: #fff !important;
+}
+
+/* Remove default padding */
+.select2-container--default .select2-results__option {
+    padding: 0 !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+}
+
+    </style>
+      <style>
+        .col-custom-2-5 {
+            flex: 0 0 20.83333333%;
+            max-width: 20.83333333%;
         }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            line-height: calc(1.5em + 0.5rem + 2px);
-            padding-left: 0;
-            /* Remove default padding as it's set on the selection */
+        .col-custom-7 {
+            flex: 0 0 58.33333333%;
+            max-width: 58.33333333%;
         }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-            height: calc(1.5em + 0.5rem + 2px);
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        /* Custom CSS for the tabular Select2 dropdown */
-
-        /* Remove default padding from Select2 options to control inner spacing */
-        .select2-container--default .select2-results__option {
-            padding: 0 !important;
-        }
-
-        .grn-header-row {
-            display: grid;
-            /* Adjusted column widths and added more space to move columns to the right */
-            grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
-            gap: 20px;
-            /* Increased the gap between columns for more space */
-            background-color: white !important;
-            /* white bg */
-            color: black !important;
-            /* black text */
-            font-weight: bold;
-            padding: 8px 12px;
-            white-space: nowrap;
-            /* prevent wrapping */
-            border-bottom: 2px solid #ccc;
-        }
-
-        /* Data rows styling */
-        .grn-option-row {
-            display: grid;
-            /* Use the same column widths as the header for perfect alignment */
-            grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
-            gap: 15px;
-            /* Increased the gap between columns for more space */
-            background-color: black;
-            /* black bg */
-            color: white;
-            /* white text */
-            padding: 8px 12px;
-            white-space: nowrap;
-            /* prevent wrapping */
-            align-items: center;
-            border-bottom: 1px solid #222;
-        }
-
-        /* Make sure Code column text does not wrap and stays in one line */
-        .grn-code {
-            white-space: nowrap;
-            font-weight: 700;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            /* optional: show ellipsis if too long */
-        }
-
-        /* Other columns */
-        .grn-column {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Highlighted (hovered) option in Select2 dropdown */
-        .select2-container--default .select2-results__option--highlighted {
-            background-color: #007bff !important;
-            /* Blue highlight */
-            color: white !important;
-        }
-
-        /* Text color for selected option displayed in the Select2 input */
-        .select2-selection__rendered {
-            color: #333;
-            /* Default text color, overridden by .select2-black-text if present */
-        }
-
-        .select2-black-text {
-            color: #FF0000 !important;
-            text-align: center !important;
-            font-weight: bold !important;
-            font-size: 14px !important;
-            /* REMOVED: position: relative; and transform: translateY(-8px); for vertical centering */
-        }
-
-        /* Style for the main Select2 input field to match grn_display */
-        .select2-container--default .select2-selection--single {
-            height: 34px !important;
-            /* Keep the height from previous request */
-            /* Removed duplicate text-align, padding, font-size, border, border-radius as they are defined elsewhere or not needed here */
-        }
-
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 32px;
-            /* Adjusted to be slightly less than container height for better alignment */
-            top: 50%;
-            transform: translateY(-50%);
-            /* Center vertically */
-            right: 4px;
-            /* Adjust if needed */
-        }
-
-        /* Ensure search input inside dropdown (if visible) matches size */
-        .select2-search__field {
-            height: 24px !important;
-            font-size: 11px !important;
-            padding: 2px 6px !important;
-            border: 1px solid #ced4da !important;
-            border-radius: 0.25rem !important;
-        }
-
-        /* Style the placeholder option in the dropdown */
-        .select2-results__option[role=option][aria-disabled=true] {
-            color: #999;
-            text-align: center;
-            /* Grey out the placeholder option */
-        }
-
-        /* This targets the actual text display area inside the Select2 box. */
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 34px !important;
-            /* Match line-height to the height for vertical centering */
-            font-size: 16px !important;
-            /* Made text "some what big" (increased from 14px to 16px) */
-            padding: 0 12px !important;
-            /* CRITICAL CHANGE: Set top/bottom padding to 0 for vertical centering */
-            text-align: center !important;
-            /* Center the text horizontally */
-            font-weight: bold !important;
-            /* Make the text bold */
-        }
-
-        /* Optional: If you also want the options in the dropdown list to have the same font styling */
-        .select2-results__option {
-            font-size: 16px !important;
-            font-weight: bold !important;
-            /* text-align: center !important; -- This is now handled by .grn-column where appropriate for individual cells */
+        .col-custom-2-5-offset {
+            margin-left: 20.83333333%;
         }
     </style>
 
-    <div class="container-fluid mt-4">
-        <div class="row justify-content-center">
-            {{-- Container for the two stacked Printed Sales Records columns --}}
-            <div class="col-md-2">
+   <div class="container-fluid" style="margin-top: 10px;">
+        <div class="row justify-content-between">
+            {{-- Custom Left Column (2.5) --}}
+            <div class="col-custom-2-5">
                 {{-- ORIGINAL SECTION: Printed Sales Records (bill_printed = 'Y') - Top Left Column --}}
-                <div class="card shadow-sm border-0 rounded-3" style="height: 250px;">
+                <div class="card shadow-sm border-0 rounded-3" style="height: 450px;">
                     {{-- Fixed total height --}}
                     <div class="p-3"
                         style="background-color: #004d00; border-top-left-radius: .3rem; border-top-right-radius: .3rem;">
@@ -543,7 +539,7 @@
                                     {{-- Outer loop: CUSTOMER GROUP --}}
                                     @foreach ($salesPrinted->sortByDesc(fn($sales) => $sales->first()->created_at) as $customerCode => $salesForCustomer)
                                         @php
-                                            $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
+            $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
                                         @endphp
                                         <li data-customer-code="{{ $customerCode }}">
                                             <div class="customer-group-header">
@@ -553,14 +549,14 @@
                                                 {{-- Inner loop: BILL GROUP --}}
                                                 @foreach ($salesForCustomer->groupBy('bill_no')->sortByDesc(fn($sales) => $sales->first()->created_at) as $billNo => $salesForBill)
                                                     @php
-                                                        $totalBillAmount = $salesForBill->sum('total');
+                $totalBillAmount = $salesForBill->sum('total');
                                                     @endphp
                                                     <li>
                                                         <div class="customer-header bill-clickable"
                                                             data-customer-code="{{ $customerCode }}"
                                                             data-customer-name="{{ $customerName }}" data-bill-no="{{ $billNo ?? '' }}"
                                                             data-bill-type="printed"
-                                                            style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
+                                                            style="font-size: 17px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
                                                             <span style="flex: 1;">
                                                                 {{ strtoupper($customerCode ?? 'N/A') }} - Rs.
                                                                 {{ number_format($totalBillAmount, 2) }}
@@ -580,27 +576,12 @@
                         @endif
                     </div>
                 </div>
-                <form action="{{ route('clear.data') }}" method="POST"
-                    onsubmit="return confirm('Are you sure you want to delete all data?');">
-                    @csrf
 
-                    {{-- This is the new input field for the password --}}
-                    <input type="text" id="verificationField" class="form-control form-control-sm mt-3"
-                        placeholder="Enter 'nethma123' to enable">
-
-                    {{-- The button is initially disabled --}}
-                    <button type="submit" id="deleteAllButton" class="btn btn-danger mt-3" disabled>
-                        🗑️ Delete All Sales & GRN Entries
-                    </button>
-                </form>
             </div>
 
-
-
-            {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
-            <div class="col-md-8">
-                <div class="card shadow-sm border-0 rounded-3 p-4">
-
+            {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table (Custom 7) --}}
+            <div class="col-custom-7">
+                <div class="card shadow-sm border-0 rounded-3 p-2">
                     @if ($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <strong>Whoops!</strong> There were some problems with your input.
@@ -629,42 +610,36 @@
 
                     <form method="POST" action="{{ route('grn.store') }}" id="salesEntryForm">
                         @csrf
-
                         {{-- NEW TOP ROW: Select Customer Dropdown --}}
-
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <div id="billNoDisplay"
-                                style="color: black; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">
+                                style="color: white; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">
                                 {{-- Bill No will be displayed here --}}
                             </div>
-
                             <h5 style="font-size: 1.5rem; color: red; margin: 0; white-space: nowrap;">
                                 <strong>Total Sales Value:</strong> Rs. <span
                                     id="mainTotalSalesValue">{{ number_format($totalSum, 2) }}</span>
                             </h5>
                         </div>
 
-
-
                         <div class="row justify-content-end" style="margin-top: -15px;">
                             <div class="row g-2 align-items-center">
                                 {{-- Customer Code Input --}}
                                 <div class="col-md-3">
-                                    <input type="text" name="customer_code" id="new_customer_code"
+                                    <input type="text" name="customer_code" id="new_customer_code" maxlength="10"
                                         class="form-control text-uppercase @error('customer_code') is-invalid @enderror"
                                         value="{{ old('customer_code') }}" placeholder="පාරිභෝගික කේතය"
-                                        style="height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black;"
+                                        style="width: 140px; height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black;"
                                         required>
                                     @error('customer_code')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 {{-- Customer Select --}}
                                 <div class="col-md-6">
                                     <select name="customer_code_select" id="customer_code_select"
                                         class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror"
-                                        style="height: 34px; font-size: 14px; padding: 6px 12px; line-height: 1.5;">
+                                        style="width: 160px; height: 34px; font-size: 14px; padding: 6px 12px; line-height: 1.5;">
                                         <option value="" disabled selected style="color: #999;">-- පාරිභෝගිකයා තෝරන්න --
                                         </option>
                                         @foreach ($customers as $customer)
@@ -679,28 +654,23 @@
                                         <div class="invalid-feedback" style="font-size: 11px;">{{ $message }}</div>
                                     @enderror
                                 </div>
-
-
-
                                 {{-- Loan Amount Display --}}
                                 <div class="col-md-3">
                                     <div class="form-control"
-                                        style="height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black; background-color: #f0f0f0;">
+                                        style="width: 80px; height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black; background-color: #f0f0f0; text-align: right;">
                                         <span id="loan_amount_display">0.00</span>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
-
                         {{-- GRN Section --}}
                         <div class="row mt-2">
                             <div class="col-md-12">
                                 <input type="text" id="grn_display" class="form-control" placeholder="Select GRN Entry..."
                                     readonly
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; display: none; text-align: center !important; border: 1px solid black; color: black;">
+                                    style="height: 45px; font-size: 16px; padding: 8px 16px; display: none; text-align: center !important; border: 1px solid black; color: black; text-transform: uppercase;">
                                 <select id="grn_select" class="form-select select2"
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black;">
+                                    style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black; text-transform: uppercase;">
                                     <option value="">-- Select GRN Entry --</option>
                                     @foreach ($entries as $entry)
                                         <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
@@ -709,6 +679,7 @@
                                             data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
                                             data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
                                             data-txn-date="{{ $entry->txn_date }}"
+                                          data-sprice="{{ $entry->SalesKGPrice }}"
                                             data-original-weight="{{ $entry->original_weight }}"
                                             data-original-packs="{{ $entry->original_packs }}">
                                             {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
@@ -719,12 +690,11 @@
                                 </select>
                             </div>
                         </div>
-
+                        
                         {{-- Hidden fields for customer and GRN --}}
                         <input type="hidden" name="customer_name" id="customer_name_hidden"
                             value="{{ old('customer_name') }}">
                         <input type="hidden" name="grn_entry_code" id="grn_entry_code" value="">
-
                         {{-- Supplier Section (Hidden) --}}
                         <div class="row g-1 form-row mt-2">
                             <div class="col-md-3 mb-1 d-none">
@@ -763,66 +733,105 @@
                                 @enderror
                             </div>
                         </div>
-
                         {{-- Item Details Section --}}
                         <div class="d-flex flex-wrap gap-2 align-items-start mt-2">
+    <!-- Slightly smaller Item Name field -->
+    <div style="flex: 1.5 1 150px;">
+        <input type="text" id="item_name_display_from_grn" class="form-control" readonly
+            placeholder="අයිතමයේ නම (Item Name)"
+            style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+    </div>
+    
 
-                            <!-- Item Name -->
-                            <div style="flex: 1 1 100px;">
-                                <input type="text" id="item_name_display_from_grn" class="form-control" readonly
-                                    placeholder="අයිතමයේ නම (Item Name)"
-                                    style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
-                            </div>
+  <!-- Weight -->
+<div style="width: 100px;">
+    <input type="number" name="weight" id="weight" step="0.01"
+        class="form-control @error('weight') is-invalid @enderror"
+        value="{{ old('weight') }}" placeholder="බර (kg)" required
+        style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
 
-                            <!-- Weight -->
-                            <div style="flex: 1 1 120px;">
-                                <input type="number" name="weight" id="weight" step="0.01"
-                                    class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
-                                    placeholder="බර (kg)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                                <small id="remaining_weight_display" class="form-text text-danger fw-bold"
-                                    style="font-size: 0.85rem;">
-                                    Remaining: 0.00 kg
-                                </small>
-                            </div>
+   <small id="remaining_weight_display" 
+       class="form-text text-danger fw-bold"
+       style="font-size: 1.1rem; display: block; margin-top: 4px; margin-left: -180px; text-align: left;">
+    BW: 0.00
+</small>
 
-                            <!-- Price per KG -->
-                            <div style="flex: 1 1 120px;">
-                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-                                    class="form-control @error('price_per_kg') is-invalid @enderror"
-                                    value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                            </div>
+</div>
 
-                            <!-- Packs -->
-                            <div style="flex: 1 1 120px;">
-                                <input type="number" name="packs" id="packs"
-                                    class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
-                                    placeholder="ඇසුරුම් (Packs)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                                <small id="remaining_packs_display" class="form-text text-danger fw-bold"
-                                    style="font-size: 0.85rem;">
-                                    Remaining Packs: 0
-                                </small>
-                            </div>
 
-                            <!-- Total -->
-                            <div style="flex: 1 1 100px;">
-                                <input type="number" name="total" id="total" readonly
-                                    class="form-control bg-light @error('total') is-invalid @enderror"
-                                    value="{{ old('total') }}" placeholder="සමස්ත (Total)"
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
-                            </div>
-                        </div>
 
-                        <!-- Hidden Fields -->
+ <!-- price_per_kg -->
+   <div style="flex: 1 1 80px; position: relative;">
+    <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+        class="form-control @error('price_per_kg') is-invalid @enderror"
+        value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
+        style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+
+    <!-- GRN Price display -->
+    <small id="grn_price_display" style="color: red; display: none; font-size: 14px; margin-top: 4px; display: block;"></small>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const grnSelect = $('#grn_select'); 
+    const grnPriceDisplay = $('#grn_price_display');
+
+    // Initialize Select2
+    grnSelect.select2({
+        placeholder: '-- Select GRN Entry --',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // Listen to Select2 change
+    grnSelect.on('change', function() {
+        const selectedCode = $(this).val();
+
+        if (selectedCode) {
+            fetch(`https://wday.lk/AA/sms/grn-entry/${selectedCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.per_kg_price !== null) {
+                        grnPriceDisplay.text(`${data.per_kg_price}`).show();
+                    } else {
+                        grnPriceDisplay.text('').hide();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching GRN data:', error);
+                    grnPriceDisplay.text('').hide();
+                });
+        } else {
+            grnPriceDisplay.text('').hide();
+        }
+    });
+});
+</script>
+
+ 
+
+    <!-- Packs -->
+    <div style="flex: 1 1 80px;">
+        <input type="number" name="packs" id="packs"
+            class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
+            placeholder="ඇසුරුම් (Packs)" required
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+        <small id="remaining_packs_display" class="form-text text-danger fw-bold"
+            style="font-size: 1.3rem;">BP: 0</small>
+    </div>
+
+    <!-- Larger Total field -->
+    <div style="flex: 1.5 1 120px;">
+        <input type="number" name="total" id="total" readonly
+            class="form-control bg-light @error('total') is-invalid @enderror"
+            value="{{ old('total') }}" placeholder="සමස්ත (Total)"
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+    </div>
+</div>
                         <input type="hidden" name="code" id="code" value="{{ old('code') }}">
                         <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
                         <input type="hidden" name="original_weight" id="original_weight_input">
                         <input type="hidden" name="original_packs" id="original_packs_input">
-
-
-
                         {{-- Action Buttons --}}
                         <div class="d-grid gap-2 d-md-flex justify-content-center mt-4">
                             <input type="hidden" name="sale_id" id="sale_id">
@@ -833,6 +842,8 @@
                                 style="display:none;">
                                 <i class="material-icons me-2">edit</i>Update Sales Entry
                             </button>
+                       
+
                             <button type="button" class="btn btn-danger btn-sm shadow-sm" id="deleteSalesEntryBtn"
                                 style="display:none;">
                                 <i class="material-icons me-2">delete</i>Delete Sales Entry
@@ -842,16 +853,15 @@
                                 <i class="material-icons me-2">cancel</i>Cancel / New Entry
                             </button>
                         </div>
-                    </form>
+                   
+                    
 
 
 
-                    {{-- Main Sales Table - ALWAYS RENDERED --}}
+
+             {{-- Main Sales Table - ALWAYS RENDERED --}}
                     <div class="mt-0">
-
-
                         <div class="table-responsive">
-
                             <style>
                                 #mainSalesTableBody tr,
                                 #mainSalesTableBody td {
@@ -859,47 +869,258 @@
                                     color: white !important;
                                 }
                             </style>
-                            <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
-                                style="font-size: 0.85rem; margin-top: -10px;">
+                           <table class="table table-bordered table-hover shadow-sm mt-3" style="font-size:0.85rem;">
+    <thead>
+        <tr>
+            <th>කේතය</th>
+            <th>අයිතමය</th>
+            <th>බර (kg)</th>
+            <th>මිල</th>
+            <th>සමස්ත</th>
+            <th>මලු</th>
+        </tr>
+    </thead>
+    <tbody id="mainSalesTableBody">
+        @foreach($sales as $sale)
+        <tr data-sale='@json($sale)'>
+            <td>{{ $sale->code }}</td>
+            <td>{{ $sale->item_name }}</td>
+            <td>{{ number_format($sale->weight, 2) }}</td>
+            <td>{{ number_format($sale->price_per_kg, 2) }}</td>
+          <td>{{ number_format($sale->weight * $sale->price_per_kg, 2) }}</td>
 
-                                <thead style="background-color: white; color: black;">
-                                    <tr>
-                                        <th scope="col">කේතය</th>
+            <td>{{ $sale->packs }}</td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+{{-- Textbox for given amount --}}
+<div class="mt-3 d-flex justify-content-end">
+    <div class="w-25">
+       
+       <input type="number" step="0.01" name="given_amount" id="given_amount" 
+               class="form-control form-control-sm text-end" placeholder="දුන් මුදල">
+ 
+    </div>
+</div>
 
-                                        <th scope="col">අයිතමය</th>
-                                        <th scope="col">බර (kg)</th>
-                                        <th scope="col">මිල</th>
-                                        <th scope="col">සමස්ත</th>
-                                        <th scope="col">මලු</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="mainSalesTableBody">
-                                    {{-- This tbody will be dynamically populated by JavaScript. --}}
-                                    {{-- IMPORTANT: Ensure your JavaScript populating this table adds 'data-sale-id',
-                                    'data-customer-code', and 'data-customer-name' attributes to each <tr> --}}
-                                        {{-- Example:
-                                    <tr data-sale-id="123" data-customer-code="CUST001" data-customer-name="John Doe">...
-                                    </tr> --}}
-                                </tbody>
-                            </table>
+
+ 
+                        
+
+
+
+
                             <h5 style="font-size: 1.5rem; color: red; margin: 0; white-space: nowrap; text-align: right;">
-                                <strong>Total Sales Value:</strong> Rs. <span
-                                    id="mainTotalSalesValue">{{ number_format($totalSum, 2) }}</span>
+                                <strong>Total Sales Value:</strong> Rs.
+                                <span id="mainTotalSalesValueBottom">{{ number_format($totalSum, 2) }}</span>
                             </h5>
                             <div id="itemSummary"></div>
+                            <button id="printButton">Print Receipt</button>
+                            <button id="f5Button">Hold Receipt</button>
+                            <script>
+                                document.getElementById('f5Button').addEventListener('click', function (e) {
+                                    e.preventDefault(); // prevent any default behavior
+
+                                    if (confirm("Do you want to hold?")) {
+                                        // Create a KeyboardEvent simulating F5
+                                        const f5Event = new KeyboardEvent('keydown', {
+                                            key: 'F5',
+                                            code: 'F5',
+                                            keyCode: 116, // F5 key code
+                                            which: 116, // needed for some browsers
+                                            bubbles: true,
+                                            cancelable: true
+                                        });
+                                        // Dispatch the event on the document
+                                        document.dispatchEvent(f5Event);
+                                        console.log('F5 key simulated!');
+                                    } else {
+                                        console.log('Hold cancelled by user.');
+                                    }
+                                });
+                            </script>
+                            <button id="f10Button">Refresh</button>
+
+<script>
+    document.getElementById('f10Button').addEventListener('click', function(e) {
+        e.preventDefault(); // prevent any default behavior
+
+        if (confirm("Do you want to Refresh ?")) {
+            // Create a KeyboardEvent simulating F10
+            const f10Event = new KeyboardEvent('keydown', {
+                key: 'F10',
+                code: 'F10',
+                keyCode: 121, // F10 key code
+                which: 121,   // needed for some browsers
+                bubbles: true,
+                cancelable: true
+            });
+
+            // Dispatch the event on the document
+            document.dispatchEvent(f10Event);
+            console.log('F10 key simulated!');
+        } else {
+            console.log('F10 trigger cancelled by user.');
+        }
+    });
+</script>
 
                         </div>
                     </div>
                 </div>
             </div>
+             </form>
+             <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const salesEntryForm = document.getElementById('salesEntryForm');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    let submitted = false;
+
+    // --- Select2 Initialization and Event Listener ---
+    $('#grn_select').select2({
+        placeholder: '-- Select GRN Entry --',
+        allowClear: true,
+        width: '100%'
+    });
+
+    $('#grn_select').on('select2:open', function() {
+        const searchBox = document.querySelector('.select2-container--open .select2-search__field');
+        if (searchBox) {
+            searchBox.focus();
+            const len = searchBox.value.length;
+            searchBox.setSelectionRange(len, len);
+        }
+    });
+    // --- End Select2 Block ---
+
+    // Handle form submission via AJAX
+    salesEntryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (submitted) return false;
+        submitted = true;
+
+        const submitButton = salesEntryForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.innerHTML = 'Processing...';
+        submitButton.disabled = true;
+
+        const formData = new FormData(salesEntryForm);
+
+        fetch(salesEntryForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const newSale = data.data;
+                console.log("✅ New sale received:", newSale);
+
+                // Push new sale to global data arrays
+                window.allSalesData.push(newSale);
+
+                if (newSale.bill_printed) {
+                    if (Array.isArray(window.printedSalesData)) {
+                        window.printedSalesData.push(newSale);
+                    } else {
+                        // Handle the case where it's an object keyed by customer code
+                        if (!window.printedSalesData[newSale.customer_code]) {
+                            window.printedSalesData[newSale.customer_code] = [];
+                        }
+                        window.printedSalesData[newSale.customer_code].push(newSale);
+                    }
+                } else {
+                    if (Array.isArray(window.unprintedSalesData)) {
+                        window.unprintedSalesData.push(newSale);
+                    } else {
+                        // Handle the case where it's an object keyed by customer code
+                        if (!window.unprintedSalesData[newSale.customer_code]) {
+                            window.unprintedSalesData[newSale.customer_code] = [];
+                        }
+                        window.unprintedSalesData[newSale.customer_code].push(newSale);
+                    }
+                }
+                
+                // Update the currently displayed table data
+                window.currentDisplayedSalesData.push(newSale);
+                window.populateMainSalesTable(window.currentDisplayedSalesData);
+
+                // Preserve customer info
+                const customerCode = document.getElementById('new_customer_code').value;
+                const customerName = document.getElementById('customer_name_hidden').value;
+
+                salesEntryForm.reset();
+
+                document.getElementById('new_customer_code').value = customerCode;
+                document.getElementById('customer_name_hidden').value = customerName;
+
+                // Reset GRN select and related fields
+                $('#grn_select').val(null).trigger('change');
+                document.getElementById('grn_entry_code').value = '';
+                document.getElementById('remaining_weight_display').textContent = 'BW: 0.00 kg';
+                document.getElementById('remaining_packs_display').textContent = 'BP: 0';
+                
+                // Re-open GRN Select2 for next entry
+                setTimeout(() => {
+                    $('#grn_select').select2('open');
+                }, 50);
+
+            } else {
+                console.error('Submission error:', data.message);
+                alert('Error: ' + (data.message || 'Unknown error occurred'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error occurred. Please try again.');
+        })
+        .finally(() => {
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+            submitted = false;
+        });
+    });
+
+    // Handle GRN select change to show price
+    const grnSelect = $('#grn_select');
+    const grnPriceDisplay = $('#grn_price_display');
+    grnSelect.on('change', function() {
+        const selectedCode = $(this).val();
+        if (selectedCode) {
+            fetch(`https://wday.lk/AA/sms/grn-entry/${selectedCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.per_kg_price !== null) {
+                        grnPriceDisplay.text(`${data.per_kg_price}`).show();
+                    } else {
+                        grnPriceDisplay.text('').hide();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching GRN data:', error);
+                    grnPriceDisplay.text('').hide();
+                });
+        } else {
+            grnPriceDisplay.text('').hide();
+        }
+    });
+});
+</script>
 
             {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
-            <div class="col-md-2"> {{-- You can change to col-md-2 if needed for smaller width --}}
-                <div class="card shadow-sm border-0 rounded-3" style="height: 250px;"> {{-- Fixed total height --}}
+            <div class="col-custom-2-5">
+                <div class="card shadow-sm border-0 rounded-3" style="height: 250px;">
+                    {{-- Fixed total height --}}
                     <div class="p-3"
                         style="background-color: #004d00; border-top-left-radius: .3rem; border-top-right-radius: .3rem;">
                         <h6 class="mb-2 text-center text-white">
-                            මුද්‍රණය නොකළ විකුණුම් වාර්තා
+                           මුද්‍රණය නොකළ  වාර්තා
                         </h6>
                         {{-- 🔍 Search Bar --}}
                         <input type="text" id="searchUnprintedCustomerCode" class="form-control form-control-sm mb-2"
@@ -911,22 +1132,20 @@
                         @if ($salesNotPrinted->count())
                             <ul id="unprintedSalesList" style="list-style: none; padding-left: 0; margin: 0;">
                                 @php
-                                    $sortedSalesNotPrinted = $salesNotPrinted->sortByDesc(function ($salesForCustomer) {
-                                        return $salesForCustomer->max('created_at');
-                                    });
+        $sortedSalesNotPrinted = $salesNotPrinted->sortByDesc(function ($salesForCustomer) {
+            return $salesForCustomer->max('created_at');
+        });
                                 @endphp
-
                                 @foreach ($sortedSalesNotPrinted as $customerCode => $salesForCustomer)
                                     @php
-                                        $firstSaleForCustomer = $salesForCustomer->first();
-                                        $customerName = $firstSaleForCustomer->customer_name;
-                                        $totalCustomerSalesAmount = $salesForCustomer->sum('total');
+            $firstSaleForCustomer = $salesForCustomer->first();
+            $customerName = $firstSaleForCustomer->customer_name;
+            $totalCustomerSalesAmount = $salesForCustomer->sum('total');
                                     @endphp
-
                                     <li data-customer-code="{{ $customerCode }}">
                                         <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
                                             data-customer-name="{{ $customerName }}" data-bill-no="" data-bill-type="unprinted"
-                                            style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9; cursor: pointer;">
+                                            style="font-size: 17px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9; cursor: pointer;">
                                             <span style="flex: 1;">
                                                 ({{ strtoupper($customerCode) }}) -
                                                 Rs.{{ number_format($totalCustomerSalesAmount, 2) }}
@@ -947,15 +1166,11 @@
                 {{-- DUPLICATE SECTION: Sales Codes --}}
                 <div class="card shadow-sm border-0 rounded-3 p-3 mt-3"
                     style="background-color: #006400 !important; color: white; height: 180px; display: flex; flex-direction: column;">
-
-                    <h6 class="mb-2 text-center" style="flex-shrink: 0;">Sales Codes</h6>
-
+                    <h6 class="mb-2 text-center" style="flex-shrink: 0;">GRN Codes</h6>
                     <input type="text" id="searchByCode" class="form-control form-control-sm mb-2"
                         placeholder="Search code..." style="flex-shrink: 0; font-size: 12px; padding: 4px 8px;">
-
                     <ul class="list-group list-group-flush" id="codeList"
-                        style="font-size: 12px; overflow-y: auto; flex-grow: 1; margin-bottom: 0;">
-
+                        style="font-size: 17px; overflow-y: auto; flex-grow: 1; margin-bottom: 0;">
                         @foreach ($codes as $c)
                             <li class="list-group-item py-1 px-2" data-code="{{ $c->code }}"
                                 style="cursor: pointer; background-color: #f8f9fa;">
@@ -967,16 +1182,71 @@
                         @endforeach
                     </ul>
                 </div>
-
-
+            </div>
+        </div>
+       
+    </div>
 
 
                 {{-- JavaScript Includes (jQuery and Select2 should always be loaded before your custom script that uses
                 them)
                 --}}
+                
+
                 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                 {{-- Fetch customer code of unprocessed sales--}}
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                fetch("{{ url('/get-customer-code') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.customer_code) {
+                            document.getElementById("new_customer_code").value = data.customer_code;
+                        }
+                    })
+                    .catch(error => console.error("Error fetching customer code:", error));
+            });
+        </script>
+                  {{-- Triggering F1 AND F5 BUTTONS --}}
+                 <script>
+            // These event listeners will only run when the buttons are clicked with a mouse
+            document.getElementById('f1Button').addEventListener('click', function () {
+                // Ask for confirmation
+                if (confirm("Do you want to print?")) {
+                    // Simulate the F1 key press
+                    const f1Event = new KeyboardEvent('keydown', {
+                        key: 'F1',
+                        code: 'F1',
+                        keyCode: 112, // F1 keyCode
+                        bubbles: true
+                    });
+                    document.dispatchEvent(f1Event);
+                    console.log('F1 key simulated!');
+                } else {
+                    console.log('Print cancelled by user.');
+                }
+            });
+
+            document.getElementById('f5Button').addEventListener('click', function (e) {
+                e.preventDefault(); // stop form submission if inside a form
+                if (confirm("Do you want to hold?")) {
+                    // Simulate the F5 key press
+                    const f5Event = new KeyboardEvent('keydown', {
+                        key: 'F5',
+                        code: 'F5',
+                        keyCode: 116, // F5 keyCode
+                        bubbles: true
+                    });
+                    document.dispatchEvent(f5Event);
+                    console.log('F5 key simulated!');
+                } else {
+                    console.log('Hold cancelled by user.');
+                }
+            });
+
+        </script>
                 {{-- Fetch list of sales codes--}}
                 <script>
                     document.getElementById('searchByCode').addEventListener('keyup', function () {
@@ -1485,7 +1755,7 @@
                         let originalGrnWeight = 0;
 
                         // --- Function to update the remaining stock in add mode ---
-                        function updateRemainingStock() {
+                     function updateRemainingStock() {
                             const currentPacks = parseInt(packsField.value) || 0;
                             const currentWeight = parseFloat(weightField.value) || 0;
 
@@ -1496,9 +1766,10 @@
                             if (remainingPacks < 0) remainingPacks = 0;
                             if (remainingWeight < 0) remainingWeight = 0;
 
-                            remainingPacksDisplay.textContent = `Remaining Packs: ${remainingPacks}`;
-                            remainingWeightDisplay.textContent = `Remaining: ${remainingWeight.toFixed(2)} kg`;
+                            remainingPacksDisplay.textContent = `BP: ${remainingPacks}`;
+                            remainingWeightDisplay.textContent = `BW: ${remainingWeight.toFixed(2)} `;
                         }
+
 
                         // --- GRN Change Handler (Modified to use jQuery) ---
                         // Make sure jQuery is available before this part
@@ -1534,8 +1805,8 @@
                                 grnEntryCodeHidden.value = selected.data('code') || '';
 
                                 // Reset inputs to trigger an immediate update of remaining stock
-                                weightField.value = '';
-                                packsField.value = '';
+                              
+                                
 
                                 // Call the stock update function immediately
                                 updateRemainingStock();
@@ -1572,75 +1843,7 @@
 
 
                 <!-- Second script block: Main logic -->
-                <script>
-                    $(document).ready(function () {
-                        // Debounce function to delay execution until the user stops typing
-                        function debounce(func, delay) {
-                            let timeout;
-                            return function (...args) {
-                                const context = this;
-                                clearTimeout(timeout);
-                                timeout = setTimeout(() => func.apply(context, args), delay);
-                            };
-                        }
-
-                        // Function to fetch and display unprinted sales data
-                        function fetchUnprintedSales(customerCode) {
-                            let tableBody = $('#mainSalesTableBody');
-                            tableBody.empty(); // Clear the table body first
-                            $('#customer_name').val('');
-
-                            if (customerCode) {
-                                $.ajax({
-                                    url: '/api/sales/unprinted/' + customerCode,
-                                    method: 'GET',
-                                    success: function (response) {
-                                        if (response.length > 0) {
-                                            response.forEach(function (sale) {
-                                                let row = $(`
-                                                                                                                                                                                    <tr>
-                                                                                                                                                                                        <td>${sale.code}</td>
-                                                                                                                                                                                        <td>${sale.item_code}</td>
-                                                                                                                                                                                        <td>${sale.item_name}</td>
-                                                                                                                                                                                        <td>${sale.weight}</td>
-                                                                                                                                                                                        <td>${sale.price_per_kg}</td>
-                                                                                                                                                                                        <td>${sale.total}</td>
-                                                                                                                                                                                        <td>${sale.packs}</td>
-                                                                                                                                                                                    </tr>
-                                                                                                                                                                                `);
-
-                                                // Click handler to populate form with selected row
-                                                row.on('click', function () {
-                                                    populateFormForEdit(sale);
-                                                });
-
-                                                tableBody.append(row);
-                                            });
-
-                                            // Populate table + auto-fill form with first entry
-                                            populateMainSalesTable(response);
-                                            populateFormForEdit(response[0]);
-                                        } else {
-                                            tableBody.html('<tr><td colspan="7" class="text-center">No unprinted sales records found for this customer.</td></tr>');
-                                        }
-                                    },
-                                    error: function (xhr) {
-                                        console.error("AJAX Error fetching sales records:", xhr.responseText);
-                                        tableBody.html('<tr><td colspan="7" class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
-                                    }
-                                });
-                            } else {
-                                tableBody.html('<tr><td colspan="7" class="text-center">Please enter a customer code to view records.</td></tr>');
-                            }
-                        }
-
-                        const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
-                        $('#new_customer_code').on('keyup', function () {
-                            let customerCode = $(this).val().trim();
-                            debouncedFetchUnprintedSales(customerCode);
-                        });
-                    });
-                </script>
+         
 
                 {{-- ALL Custom JavaScript Consolidated Here --}}
                 <script>
@@ -1672,6 +1875,7 @@
 
                     // NEW: Get reference to the new item name display field
                     const itemNameDisplayFromGrn = document.getElementById('item_name_display_from_grn');
+                    const priceDisplayFromGrn = document.getElementById('price_per_kg');
 
 
                     function calculateTotal() {
@@ -1701,111 +1905,103 @@
                     pricePerKgField.addEventListener('input', calculateTotal);
                     calculateTotal(); // Initial calculation on page load
 
-                    $(document).ready(function () {
-                        // Initialize Select2 for GRN with custom templateResult and templateSelection
-                        $('#grn_select').select2({
-                            dropdownParent: $('#grn_select').parent(),
-                            placeholder: "-- Select GRN Entry --",
-                            width: '100%',
-                            allowClear: true,
-                            minimumResultsForSearch: 0, // Set to 0 to enable search but still use templateResult
-                            templateResult: function (data, container) {
-                                // If it's the placeholder, loading message, or has no ID, just return the text
-                                if (data.loading || !data.id) {
-                                    return data.text;
-                                }
+                   $(document).ready(function () {
+    // Initialize Select2 for GRN with custom templateResult and templateSelection
+ $('#grn_select').select2({
+    dropdownParent: $('#grn_select').parent(),
+    placeholder: "-- Select GRN Entry --",
+    width: '100%',
+    allowClear: true,
+    minimumResultsForSearch: 0, // Enable search
 
-                                // Get the raw option element to access data-attributes
-                                const option = $(data.element);
+    // Custom matcher: only show results when user types
+    matcher: function(params, data) {
+        if (!params.term || params.term.trim() === '') return null;
+        return data.text.toUpperCase().includes(params.term.toUpperCase()) ? data : null;
+    },
 
-                                // Extract data from data-attributes
-                                const code = option.data('code');
-                                const supplierCode = option.data('supplierCode');
-                                const itemCode = option.data('itemCode');
-                                const itemName = option.data('itemName');
-                                const packs = option.data('packs');
-                                const grnNo = option.data('grnNo');
-                                const weight = option.data('weight');
-                                const originalWeight = option.data('originalWeight');
-                                const originalPacks = option.data('originalPacks');
+    // Dropdown option template
+    templateResult: function (data) {
+        if (data.loading || !data.id) return data.text;
 
-                                const txnDate = option.data('txnDate');
+        const option = $(data.element);
+        const code = option.data('code');
+        const sp = option.data('sprice');
+        const itemName = option.data('itemName');
+        const packs = option.data('packs');
+        const weight = option.data('weight');
+        const originalWeight = option.data('originalWeight');
+        const originalPacks = option.data('originalPacks');
+        const txnDate = option.data('txnDate');
 
-                                const $result = $(`
-    <div class="grn-option-row">
-        <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-        <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
-        <div class="grn-column grn-original-weight">${originalWeight || ''}</div>
-        <div class="grn-column grn-original-packs">${originalPacks || ''}</div>
-        <div class="grn-column grn-grn-no">${weight || ''}</div>
-        <div class="grn-column grn-packs">${packs || 0}</div>
-        <div class="grn-column grn-txn-date">${txnDate || ''}</div>
-    </div>
-    `);
+        let formattedDate = '';
+        if (txnDate) {
+            const d = new Date(txnDate);
+            if (!isNaN(d)) {
+                formattedDate = `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            }
+        }
 
-                                return $result;
-                            },
-                            templateSelection: function (data) {
-                                if (!data.id) {
-                                    return data.text;
-                                }
-                                const option = $(data.element);
-                                const code = option.data('code');
-                                const supplierCode = option.data('supplierCode');
-                                const itemCode = option.data('itemCode');
-                                const itemName = option.data('itemName');
-                                const packs = option.data('packs');
-                                const grnNo = option.data('grnNo');
-                                const weight = option.data('weight');
-                                const txnDate = option.data('txnDate');
-                                const originalWeight = option.data('originalWeight');
-                                const originalPacks = option.data('originalPacks');
-
-                                var $selection = $('<span></span>');
-                                $selection.addClass('select2-black-text');
-                                $selection.css('text-align', 'center');
-
-                                $selection.html(`${code || ''}(කිලෝ,: ${originalWeight || 0} /මලු: ${originalPacks || ''} /දිනය: ${txnDate || ''})`);
-
-                                return $selection;
-                            }
-                        });
-
-                        // Add an event listener for when the Select2 dropdown opens
-                        $('#grn_select').on('select2:open', function () {
-                            console.log("Select2 dropdown opened. Attempting to add header...");
-                            const $dropdown = $('.select2-dropdown');
-                            const $resultsContainer = $dropdown.find('.select2-results__options');
-
-                            if ($dropdown.find('.grn-header-row-wrapper').length === 0) {
-                                console.log("Header not found, creating and prepending.");
-
-                                const $headerWrapper = $(`
-            <div class="grn-header-row-wrapper">
-                <div class="grn-option-row grn-header-row">
-                    <div class="grn-column grn-code">Code</div>
-                    <div class="grn-column grn-supplier-code">Sup</div>
-                    <div class="grn-column grn-supplier-code">OWeight</div>
-                    <div class="grn-column grn-supplier-code">OPacks</div>
-                    <div class="grn-column grn-grn-no">BWeight</div>
-                    <div class="grn-column grn-packs">BPacks</div>
-                    <div class="grn-column grn-txn-date">Date</div>
-                </div>
+        return $(`
+            <div class="grn-option-row">
+                <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+                <div class="grn-column grn-sp">${sp || ''}</div>
+                <div class="grn-column grn-item">${itemName || ''}</div>
+                <div class="grn-column grn-ow">${originalWeight || ''}</div>
+                <div class="grn-column grn-op">${originalPacks || ''}</div>
+                <div class="grn-column grn-bw">${weight || ''}</div>
+                <div class="grn-column grn-bp">${packs || 0}</div>
+               
             </div>
-            `);
+        `);
+    },
 
-                                // Prepend the header wrapper to the .select2-results element
-                                // This puts it before the <ul> which contains the actual options
-                                $dropdown.find('.select2-results').prepend($headerWrapper);
+    // Selected option template
+    templateSelection: function (data) {
+        if (!data.id) return data.text;
+        const option = $(data.element);
+        const code = option.data('code');
+        const sp = option.data('sprice');
+        const originalWeight = option.data('originalWeight');
+        const originalPacks = option.data('originalPacks');
+     
 
-                                // Add a class to the results options UL to give it padding at the top,
-                                // so options don't hide behind the sticky header.
+        return $('<span>')
+            .addClass('select2-black-text')
+            .css('text-align', 'center')
+            .html(`${code || ''} (SP: ${sp || ''} /කිලෝ: ${originalWeight || 0} / මලු: ${originalPacks || ''})`);
+    }
+});
 
+// Add header to dropdown and handle search
+$('#grn_select').on('select2:open', function () {
+    const $dropdown = $('.select2-dropdown');
+    const searchInput = $dropdown.find('.select2-search__field');
 
-                            } else {
-                                console.log("Header already exists, not re-adding."); // Debugging log
-                            }
-                        });
+    // Focus and uppercase input
+    searchInput.focus().off('input.lazySearch').on('input.lazySearch', function () {
+        this.value = this.value.toUpperCase();
+        $('#grn_select').trigger('select2:open'); // Refresh dropdown
+    });
+
+    // Add header once
+    if ($dropdown.find('.grn-header-row').length === 0) {
+        const $header = $(`
+            <div class="grn-header-row">
+                <div class="grn-column grn-code">Code</div>
+                <div class="grn-column grn-sp">SP</div>
+                <div class="grn-column grn-item">Item</div>
+                <div class="grn-column grn-ow">OW</div>
+                <div class="grn-column grn-op">OP</div>
+                <div class="grn-column grn-bw">BW</div>
+                <div class="grn-column grn-bp">BP</div>
+               
+            </div>
+        `);
+        $dropdown.find('.select2-results').prepend($header);
+    }
+});
+
 
 
                         $('#customer_code_select').select2({
@@ -1845,9 +2041,11 @@
                             const supplierCodeForDisplay = data.supplierCode || '';
                             const itemCodeForDisplay = data.itemCode || '';
                             const itemNameForDisplay = data.itemName || '';
+                            const itempriceForDisplay = data.sprice || '';
                             const packsForDisplay = data.packs || '';
                             const grnNoForDisplay = data.grnNo || '';
                             const txnDateForDisplay = data.txnDate || '';
+                            
                             grnDisplay.value =
                                 `${grnCodeForDisplay}| ${supplierCodeForDisplay}  | ${packsForDisplay} | ${grnNoForDisplay}`;
 
@@ -1856,15 +2054,16 @@
                             supplierDisplaySelect.value = data.supplierCode || ''; // Display select for supplier_code
 
                             itemSelect.value = data.itemCode || ''; // Set item code in disabled select
+                            
                             itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item_code
 
                             itemNameDisplayFromGrn.value = data.itemName || ''; // Populate the dedicated item name display field
+                             priceDisplayFromGrn.value = data.sprice || '';
                             itemNameField.value = data.itemName || '';
                             // Also set the hidden item_name field
 
-                            weightField.value = '';
-                            pricePerKgField.value = '';
-                            packsField.value = '';
+                        
+                           
 
                             // ADDED: Populate hidden fields for original_weight and original_packs
                             $('#original_weight_input').val(data.originalWeight); // Access using camelCase
@@ -1891,7 +2090,16 @@
                                 $('#grn_select').select2('open');
                             }
                         });
-
+                        $('#grn_select').on('select2:open', function() {
+    // Find the search input element created by Select2
+    const searchInput = $('.select2-search__field');
+    
+    // Add an event listener to this search input
+    searchInput.on('input', function() {
+        // Convert the typed value to uppercase and update the input field
+        this.value = this.value.toUpperCase();
+    });
+});
                         // Clear GRN selection and related fields
                         $('#grn_select').on('select2:clear', function () {
                             grnDisplay.value = 'Select GRN Entry...'; // Reset display field placeholder
@@ -1901,9 +2109,9 @@
                             itemSelect.dispatchEvent(new Event('change')); // Clear item related hidden fields
                             itemNameDisplayFromGrn.value = ''; // NEW: Clear the item name display field
                             itemNameField.value = ''; // NEW: Clear hidden item_name field
-                            weightField.value = '';
-                            pricePerKgField.value = '';
-                            packsField.value = '';
+                          
+                          
+                           
                             calculateTotal();
                         });
 
@@ -2013,297 +2221,405 @@
                         }
 
 
-                        let globalLoanAmount = 0;  // global variable to hold loan amount
+let globalLoanAmount = 0;
 
-                        document.addEventListener('keydown', function (e) {
-                            if (e.key === "F1") {
-                                e.preventDefault();
-
-                                const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-                                if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-                                    // Using a custom modal message box instead of alert()
-                                    // Assume you have a function or a modal to display messages
-                                    displayMessageBox('No sales records in the table to print!');
-                                    return;
-                                }
-
-                                const salesData = [];
-                                tableRows.forEach(row => {
-                                    if (row.hasAttribute('data-sale-id')) {
-                                        const cells = row.querySelectorAll('td');
-                                        salesData.push({
-                                            id: row.getAttribute('data-sale-id'),
-                                            customer_code: row.getAttribute('data-customer-code'),
-                                            customer_name: row.getAttribute('data-customer-name'),
-                                            mobile: row.getAttribute('data-customer-mobile') || '',
-                                            code: cells[0]?.textContent.trim() || '',
-                                            item_code: cells[1]?.textContent.trim() || '',
-                                            item_name: cells[1]?.textContent.trim() || '',
-                                            weight: parseFloat(cells[2]?.textContent) || 0,
-                                            price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                                            total: parseFloat(cells[4]?.textContent) || 0,
-                                            packs: parseInt(cells[5]?.textContent) || 0
-                                        });
-                                    }
-                                });
-
-                                if (!salesData.length) {
-                                    // Using a custom modal message box instead of alert()
-                                    displayMessageBox('No printable sales records found!');
-                                    return;
-                                }
-
-                                // Unique key for bill number
-                                const saleIds = salesData.map(sale => sale.id).sort();
-                                const salesKey = saleIds.join('_');
-
-                                let billNo = localStorage.getItem('billNo_' + salesKey);
-
-                                if (!billNo) {
-                                    function getNextBillNo() {
-                                        let lastBillNo = localStorage.getItem('lastBillNo');
-                                        if (!lastBillNo) {
-                                            lastBillNo = 1000;
-                                        } else {
-                                            lastBillNo = parseInt(lastBillNo) + 1;
-                                        }
-                                        localStorage.setItem('lastBillNo', lastBillNo);
-                                        return lastBillNo.toString();
-                                    }
-                                    billNo = getNextBillNo();
-                                    localStorage.setItem('billNo_' + salesKey, billNo);
-                                }
-
-                                const salesByCustomer = salesData.reduce((acc, sale) => {
-                                    (acc[sale.customer_code] ||= []).push(sale);
-                                    return acc;
-                                }, {});
-                                const customerCode = Object.keys(salesByCustomer)[0];
-                                const customerSales = salesByCustomer[customerCode];
-                                const customerName = customerSales[0].customer_code || 'N/A';
-                                const mobile = customerSales[0]?.mobile || '-';
-
-                                // Fetch loan amount via AJAX before printing
-                                fetch('{{ route('get.loan.amount') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify({ customer_short_name: customerCode })
-                                })
-                                    .then(res => res.json())
-                                    .then(data => {
-                                        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
-
-                                        const date = new Date().toLocaleDateString();
-                                        const time = new Date().toLocaleTimeString();
-
-                                        let totalAmountSum = 0;
-                                        const salesIds = [];
-                                        const itemGroups = {};
-
-                                        const itemsHtml = customerSales.map(sale => {
-                                            totalAmountSum += sale.total;
-                                            salesIds.push(sale.id);
-
-                                            // Calculate summary for printing
-                                            const itemName = sale.item_name || '';
-                                            const weight = parseFloat(sale.weight) || 0;
-                                            const packs = parseInt(sale.packs) || 0;
-
-                                            if (!itemGroups[itemName]) {
-                                                itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-                                            }
-                                            itemGroups[itemName].totalWeight += weight;
-                                            itemGroups[itemName].totalPacks += packs;
-
-                                            return `
-                                                    <tr>
-                                                        <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
-                                                        <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
-                                                        <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
-                                                        <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
-                                                    </tr>
-                                                `;
-                                        }).join('');
-
-                                        // Generate the item summary for the printed receipt using the requested div structure
-                                        let itemSummaryPrintHtml = '';
-                                        const entries = Object.entries(itemGroups);
-                                        entries.forEach(([itemName, totals], index) => {
-                                            itemSummaryPrintHtml += `
-        <span style="
-            padding: 0.1rem 0.3rem;
-            border-radius: 0.5rem;
-            background-color: #f3f4f6;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            font-size: 0.6rem;
-            white-space: nowrap;
-            display: inline-block;
-        ">
-            <strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}
-        </span>${index < entries.length - 1 ? ', ' : ''}
-      `;
-                                        });
+// Reusable print function
+function printReceipt(html, customerName) {
+    return new Promise((resolve) => {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${customerName} - Receipt</title>
+            </head>
+            <body>
+                ${html}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        setTimeout(() => {
+            printWindow.close();
+            resolve();
+        }, 500);
+    });
+}
 
 
 
-                                        const receiptHtml = `
-                                                <div class="receipt-container" style="width: 70mm; margin: 0 auto; padding: 0;">
-                                                    <div class="company-info" style="text-align: center; margin-bottom: 5px;">
-                                                        <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;">
-                                                            <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
-                                                        </h3>
-                                                        <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ / බෙදාහරින්නෝ</p>
-                                                        <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
-                                                    </div>
+async function handlePrint() {
+    // Use the currentDisplayedSalesData instead of scraping table rows
+    const salesData = window.currentDisplayedSalesData || [];
 
-                                                    <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
-                                                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                            <tr>
-                                                                <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
-                                                                <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
-                                                                <td colspan="2" style="text-align: right; padding: 0;">
-                                                                    <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
-                                                                </td>
-                                                            </tr>
-                                                        </table>
-                                                    </div>
+    if (!salesData.length) {
+        alert('No sales records to print!');
+        return;
+    }
 
-                                                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+    const salesIds = salesData.map(s => s.id);
 
-                                                    <div class="items-section">
-                                                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
-                                                                    <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
-                                                                    <th style="text-align: right; padding: 2px 0;">මිල</th>
-                                                                    <th style="text-align: right; padding: 2px 0;">අගය</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr><td colspan="4"><div style="height: 4px; background-color: black; margin: 5px 0;"></div></td></tr>
-                                                                ${itemsHtml}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
+    // Send sales data to backend to get bill number and mark as printed
+    const response = await fetch("{{ route('sales.markAsPrinted') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ sales_ids: salesIds })
+    });
 
-                                                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
+    const backendResponse = await response.json();
+    if (backendResponse.status !== 'success') {
+        alert('Failed to process print request.');
+        console.error('Backend error:', backendResponse.message);
+        return;
+    }
+
+    const billNo = backendResponse.bill_no;
+
+    // Group sales by customer
+    const salesByCustomer = salesData.reduce((acc, sale) => {
+        (acc[sale.customer_code] ||= []).push(sale);
+        return acc;
+    }, {});
+
+    const customerCode = Object.keys(salesByCustomer)[0];
+    const customerSales = salesByCustomer[customerCode];
+    const customerName = customerSales[0].customer_code || 'N/A';
+    const mobile = customerSales[0].mobile || '0773358518';
+    const recipientEmails = ["thrcorner@gmail.com", "nethmavilhan2005@gmail.com"];
+    
+    try {
+        // Fetch loan amount
+        const loanResponse = await fetch('{{ route('get.loan.amount') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            body: JSON.stringify({ customer_short_name: customerCode })
+        });
+        
+        const loanData = await loanResponse.json();
+        const globalLoanAmount = parseFloat(loanData.total_loan_amount) || 0;
+
+        const date = "{{ $billDate }}";
+        const time = new Date().toLocaleTimeString();
+        let totalAmountSum = 0;
+        const itemGroups = {};
+        let totalPacksSum = 0;
+
+        // SUM ALL given_amounts for this customer
+        const givenAmount = customerSales.reduce((sum, sale) => sum + (parseFloat(sale.given_amount) || 0), 0);
+
+        // Build items HTML
+        const itemsHtml = customerSales.map(sale => {
+            totalAmountSum += parseFloat(sale.total) || 0;
+            const itemName = sale.item_name || '';
+            const weight = parseFloat(sale.weight) || 0;
+            const packs = parseInt(sale.packs) || 0;
+            totalPacksSum += packs;
+
+            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+            itemGroups[itemName].totalWeight += weight;
+            itemGroups[itemName].totalPacks += packs;
+
+            return `<tr style="font-size: 1.2em;">
+                <td style="text-align:left;">${itemName} <br>${packs}</td>
+                <td style="text-align:right; padding-right:18px;">${weight.toFixed(2)}</td>
+                <td style="text-align:right;">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                <td style="text-align:right;">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+            </tr>`;
+        }).join('');
+
+        // Build item summary HTML
+        let itemSummaryHtml = '';
+        const entries = Object.entries(itemGroups);
+        for (let i = 0; i < entries.length; i += 2) {
+            const first = entries[i];
+            const second = entries[i + 1];
+
+            itemSummaryHtml += '<div style="display:flex; gap:0.5rem; margin-bottom:0.2rem;">';
+            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;">
+                                    <strong>${first[0]}</strong>:${first[1].totalWeight.toFixed(2)}/${first[1].totalPacks}
+                                </span>`;
+            if (second) {
+                itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;">
+                                        <strong>${second[0]}</strong>:${second[1].totalWeight.toFixed(2)}/${second[1].totalPacks}
+                                    </span>`;
+            }
+            itemSummaryHtml += '</div>';
+        }
+
+        const packCostTotal = window.globalTotalPackCostValue || 0;
+        const totalPrice = totalAmountSum;
+
+        // Correct calculations
+        const remaining = givenAmount - (totalPrice + packCostTotal); // ඉතිරිය
+        const totalWithLoan = globalLoanAmount + remaining; // Loan + remaining
+
+        // GIVEN AMOUNT ROW
+        const givenAmountRow = givenAmount > 0
+            ? `<tr>
+               <td style="width: 50%; text-align: left; white-space: nowrap;">
+    <span style="font-size: 0.75rem;">දුන් මුදල: </span>
+    <span style="font-weight: bold; font-size: 0.9rem;">${givenAmount.toFixed(2)}</span>
+</td>
+
+                <td style="width: 50%; text-align: right; white-space: nowrap; font-size: 1rem;">
+                    <span style="font-size: 0.8rem;">ඉතිරිය: </span>
+                    <span style="font-weight: bold; font-size: 1.5rem;">
+                        ${Math.abs(remaining).toFixed(2)}
+                    </span>
+                </td>
+              </tr>` 
+            : '';
+
+        // LOAN ROW
+        const loanRow = globalLoanAmount > 0
+            ? `<tr>
+                <td style="font-weight: normal; font-size: 0.7rem; text-align: left;">
+                    පෙර ණය : <span>${globalLoanAmount.toFixed(2)}</span>
+                </td>
+                <td style="font-weight: bold; text-align: right; font-size: 1.5em;">
+                     ${globalLoanAmount+totalPrice + packCostTotal}
+                </td>
+              </tr>`
+            : '';
+
+        // Build receipt HTML
+        const receiptHtml = `<div class="receipt-container" style="width: 100%; max-width: 300px; margin: 0 auto; padding: 5px;">
+            <!-- HEADER -->
+            <div style="text-align: center; margin-bottom: 5px;">
+                <h3 style="font-size: 1.8em; font-weight: bold; margin: 0;">
+                    <span style="border: 2px solid #000; padding: 0.1em 0.3em; display: inline-block; margin-right: 5px;">B32</span>
+                    TAG ට්‍රේඩර්ස්
+                </h3>
+                <p style="margin: 0; font-size: 0.7em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
+                <p style="margin: 0; font-size: 0.7em;">වි.ආ.ම. වේයන්ගොඩ</p>
+            </div>
+
+            <!-- CUSTOMER INFO -->
+            <div style="text-align: left; margin-bottom: 5px;">
+                <table style="width: 100%; font-size: 9px; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 50%;">දිනය : ${date}</td>
+                        <td style="width: 50%; text-align: right;">${time}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">දුර : ${mobile}</td>
+                    </tr>
+                    <tr>
+                        <td>බිල් අංකය : <strong>${billNo}</strong></td>
+                        <td style="text-align: right;">
+                            <strong style="font-size: 1.8em;">${customerName.toUpperCase()}</strong>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <hr style="border: 0.5px solid #000; margin: 5px 0;">
+
+            <!-- ITEMS -->
+            <table style="width: 100%; font-size: 9px; border-collapse: collapse;">
+                <thead style="font-size: 1.5em;">
+                    <tr>
+                        <th style="text-align: left; padding: 2px;">වර්ගය<br>මලු</th>
+                        <th style="padding: 2px;">කිලෝ</th>
+                        <th style="padding: 2px;">මිල</th>
+                        <th style="text-align: right; padding: 2px;">අගය</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4">
+                            <hr style="height: 1px; background-color: #000; margin: 2px 0;">
+                        </td>
+                    </tr>
+
+                    ${itemsHtml}
+
+                    <tr>
+                        <td colspan="4">
+                            <hr style="border: 0.5px solid #000; margin: 5px 0;">
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2" style="text-align: left; font-weight: bold; font-size: 1.2em;">
+                            ${totalPacksSum}
+                        </td>
+                        <td colspan="2" style="text-align: right; font-weight: bold; font-size: 1.2em;">
+                            ${totalPrice.toFixed(2)}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- SUMMARY -->
+            <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                <tr>
+                    <td>ප්‍රවාහන ගාස්තු:</td>
+                    <td style="text-align: right; font-weight: bold;">00</td>
+                </tr>
+                <tr>
+                    <td>කුලිය:</td>
+                    <td style="text-align: right; font-weight: bold;">${packCostTotal.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td>අගය:</td>
+                    <td style="text-align: right; font-weight: bold;">
+                        <span style="display: inline-block; border-top: 1px solid #000; border-bottom: 3px double #000; padding: 2px 4px; min-width: 80px; text-align: right;">
+                            ${(totalPrice + packCostTotal).toFixed(2)}
+                        </span>
+                    </td>
+                </tr>
+                ${givenAmountRow}
+                ${loanRow}
+            </table>
+
+            <hr style="border: 0.5px solid #000; margin: 5px 0;">
+
+            <div style="font-size: 10px;">${itemSummaryHtml}</div>
+
+            <div style="text-align: center; margin-top: 10px; font-size: 10px;">
+                <p style="margin: 0;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                <p style="margin: 0;">නැවත භාර ගනු නොලැබේ</p>
+            </div>
+        </div>`;
+
+        // Create duplicate with COPY
+        const duplicateHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>` + receiptHtml;
+
+        await Promise.all([
+            printReceipt(receiptHtml, customerName),
+            printReceipt(duplicateHtml, customerName + ' - Copy'),
+        ]);
+
+    } catch (err) {
+        console.error('An error occurred during loan fetch or printing:', err);
+    } finally {
+        window.location.reload();
+    }
+}
+
+
+// F5 function (Email only, no bill number)
+async function handleF5() {
+    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+        alert('No sales records to process!');
+        return;
+    }
+
+    const salesData = [];
+    tableRows.forEach(row => {
+        if (row.hasAttribute('data-sale-id')) {
+            const cells = row.querySelectorAll('td');
+            salesData.push({
+                id: row.getAttribute('data-sale-id'),
+                customer_code: row.getAttribute('data-customer-code'),
+                customer_name: row.getAttribute('data-customer-name'),
+                mobile: row.getAttribute('data-customer-mobile') || '',
+                email: "thrcorner@gmail.com",
+                code: cells[0]?.textContent.trim() || '',
+                item_code: cells[1]?.textContent.trim() || '',
+                item_name: cells[1]?.textContent.trim() || '',
+                weight: parseFloat(cells[2]?.textContent) || 0,
+                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                total: parseFloat(cells[4]?.textContent) || 0,
+                packs: parseInt(cells[5]?.textContent) || 0
+            });
+        }
+    });
+
+    if (!salesData.length) {
+        alert('No sales records to process!');
+        return;
+    }
+
+    const salesByCustomer = salesData.reduce((acc, sale) => {
+        (acc[sale.customer_code] ||= []).push(sale);
+        return acc;
+    }, {});
+
+    const customerCode = Object.keys(salesByCustomer)[0];
+    const customerSales = salesByCustomer[customerCode];
+    const customerName = customerSales[0].customer_code || 'N/A';
+    const mobile = customerSales[0]?.mobile || '-';
+    const recipientEmails = ["thrcorner@gmail.com", "nethmavilhan2005@gmail.com"];
+
+    let totalAmountSum = 0;
+    const itemGroups = {};
+
+    const itemsHtml = customerSales.map(sale => {
+        totalAmountSum += sale.total;
+        const itemName = sale.item_name || '';
+        const weight = parseFloat(sale.weight) || 0;
+        const packs = parseInt(sale.packs) || 0;
+        if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+        itemGroups[itemName].totalWeight += weight;
+        itemGroups[itemName].totalPacks += packs;
+        return `<tr>
+                    <td style="text-align:left;">${itemName} <br>${packs}</td>
+                    <td style="text-align:right;">${weight.toFixed(2)}</td>
+                    <td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
+                    <td style="text-align:right;">${sale.total.toFixed(2)}</td>
+                </tr>`;
+    }).join('');
+
+    let itemSummaryHtml = '';
+    const entries = Object.entries(itemGroups);
+    for (let i = 0; i < entries.length; i += 2) {
+        const first = entries[i];
+        const second = entries[i + 1];
+        itemSummaryHtml += '<div style="display:flex; gap:0.5rem; margin-bottom:0.2rem;">';
+        itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${first[0]}</strong>:${first[1].totalWeight.toFixed(2)}/${first[1].totalPacks}</span>`;
+        if (second) {
+            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${second[0]}</strong>:${second[1].totalWeight.toFixed(2)}/${second[1].totalPacks}</span>`;
+        }
+        itemSummaryHtml += '</div>';
+    }
+
+    try {
+        const loanRes = await fetch('{{ route('get.loan.amount') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            body: JSON.stringify({ customer_short_name: customerCode })
+        });
+       
+
+        
+        // Mark all as processed AFTER email
+        const processedRes = await fetch('{{ route('sales.markAllAsProcessed') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        });
+        const processedData = await processedRes.json();
+        console.log('F5 processed:', processedData);
+
+        window.location.reload();
+
+    } catch (err) {
+        console.error('F5 error:', err);
+        alert('Error processing F5 request');
+    }
+}
+
+// Keyboard events for F1 & F5
+document.addEventListener('keydown', e => {
+    if (e.key === "F1") { e.preventDefault(); handlePrint(); }
+    else if (e.key === "F5") { e.preventDefault(); handleF5(); }
+});
+
+// Optional buttons
+document.getElementById('printButton')?.addEventListener('click', function () {
+    if (confirm("Do you want to print?")) handlePrint();
+});
+document.getElementById('f5Button')?.addEventListener('click', function() {
+    if (confirm("Do you want to hold this receipt?")) handleF5();
+});
 
 
 
 
-
-                                                    <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
-                                                        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                            <tr>
-                                                                <td colspan="3" style="text-align: left; padding: 0;">
-                                                                    ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :
-                                                                </td>
-                                                                <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
-                                                                    ${totalAmountSum.toFixed(2)}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td colspan="3" style="text-align: left; padding: 0;">
-                                                                    මුලු එකතුව :
-                                                                </td>
-                                                                <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
-                                                                    ${(globalLoanAmount + totalAmountSum).toFixed(2)}
-                                                                </td>
-                                                            </tr>
-                                                        </table>
-
-                                                     <div class="item-summary-section" style="display: flex; flex-wrap: wrap; gap: 5px;">
-                                                ${itemSummaryPrintHtml}
-                                            </div>
-     </div>
-
-                                                    <hr style="border: none; height: 4px; background-color: black; margin: 5px 0; width: 100%;">
-
-                                                    <div class="footer-section" style="text-align: center; margin-top: 10px;">
-                                                        <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                                                        <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
-                                                    </div>
-                                                </div>
-                                            `;
-
-                                        printReceipt(receiptHtml, customerName, () => {
-                                            if (salesIds.length) {
-                                                fetch("{{ route('sales.markAsPrinted') }}", {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                                    },
-                                                    body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
-                                                })
-                                                    .then(res => res.json())
-                                                    .then(data => {
-                                                        console.log("Marked printed:", data);
-                                                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                                        window.location.reload();
-                                                    })
-                                                    .catch(err => {
-                                                        console.error("Print marking failed:", err);
-                                                        // Using a custom modal message box instead of alert()
-                                                        displayMessageBox('Failed to mark sales as printed.');
-                                                    });
-                                            }
-                                        });
-                                    })
-                                    .catch(err => {
-                                        console.error('Failed to fetch loan amount:', err);
-                                        // Using a custom modal message box instead of alert()
-                                        displayMessageBox('Failed to fetch loan amount. Printing aborted.');
-                                    });
-                            }
-
-                            else if (e.key === "F5") {
-                                e.preventDefault();
-                                console.log('F5 key pressed - attempting to mark all displayed sales as processed...');
-
-                                fetch("{{ route('sales.markAllAsProcessed') }}", {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    }
-                                })
-                                    .then(response => {
-                                        if (!response.ok) {
-                                            return response.text().then(text => {
-                                                throw new Error(
-                                                    `HTTP error! status: ${response.status}, message: ${text}`)
-                                            });
-                                        }
-                                        return response.json();
-                                    })
-                                    .then(data => {
-                                        console.log('Response from sales.markAllAsProcessed (F5):', data);
-                                        if (data.success) {
-                                            console.log(data.message);
-                                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                            window.location.reload();
-                                        } else {
-                                            console.error('Server reported an error:', data.message);
-                                            alert('Operation failed: ' + data.message);
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error('Error marking sales as processed by F5:', error);
-                                        alert('Failed to process sales on F5. Check console for details.');
-                                    });
-                            }
-                        });
                         function printReceipt(salesContent, customerName, onCompleteCallback) {
                             const printWindow = window.open('', '', 'width=300,height=600');
 
@@ -2464,297 +2780,338 @@
 
                         });
 
-                        // Store the PHP data in JavaScript variables for easier access
-                        const printedSalesData = @json($salesPrinted->toArray());
-                        const unprintedSalesData = @json($salesNotPrinted->toArray());
-                        // allSalesData is the initial data loaded for the main table
-                        const allSalesData = @json($sales->toArray());
+                       // Store the PHP data in JavaScript variables for easier access
+// This block initializes the global arrays on page load.
+window.allSalesData = @json($sales->toArray()) || [];
+window.printedSalesData = @json($salesPrinted->toArray()) || [];
+window.unprintedSalesData = @json($salesNotPrinted->toArray()) || [];
 
-                        // NEW: Variable to hold the currently displayed sales data in the main table
-                        let currentDisplayedSalesData = [];
+// Global variable for currently displayed sales
+window.currentDisplayedSalesData = [];
+
+// Function to populate table
+window.populateMainSalesTable = function(salesArray) {
+    console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
+
+    // Keep a global snapshot of what’s shown
+    window.currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
+
+    const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+    if (!mainSalesTableBodyElement) {
+        console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
+        return;
+    }
+
+    mainSalesTableBodyElement.innerHTML = '';
+
+    let totalSalesValue = 0;
+    let totalPackCostValue = 0;
+
+    if (!salesArray || salesArray.length === 0) {
+        mainSalesTableBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">No sales records found.</td></tr>';
+        document.getElementById('mainTotalSalesValue').textContent = '0.00';
+        document.getElementById('mainTotalSalesValueBottom').textContent = '0.00';
+        document.getElementById('itemSummary').innerHTML = '';
+        window.globalTotalPackCostValue = 0;
+        return;
+    }
+
+    salesArray.forEach(sale => {
+        const code = sale.code || 'N/A';
+        const itemName = sale.item_name || 'N/A';
+        const weight = sale.weight ? parseFloat(sale.weight).toFixed(2) : '0.00';
+        const pricePerKg = sale.price_per_kg ? parseFloat(sale.price_per_kg).toFixed(2) : '0.00';
+        const packs = sale.packs ? parseInt(sale.packs) : 0;
+        const total = sale.total ? parseFloat(sale.total).toFixed(2) : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
+        const packDue = sale.pack_due ? parseFloat(sale.pack_due) : 0;
+        const packCostValue = packs * packDue;
+
+        const newRow = document.createElement('tr');
+        newRow.dataset.saleId = sale.id;
+        newRow.dataset.id = sale.id;
+        newRow.dataset.customerCode = sale.customer_code;
+        newRow.dataset.customerName = sale.customer_name;
+        newRow.dataset.packDue = packDue; // Store pack_due in dataset for this row
+
+        newRow.innerHTML = `
+            <td data-field="code">${code}</td>
+            <td data-field="item_name">${itemName}</td>
+            <td data-field="weight">${weight}</td>
+            <td data-field="price_per_kg">${pricePerKg}</td>
+            <td data-field="total">${total}</td>
+            <td data-field="packs">${packs}</td>
+            <td data-field="pack_cost_value" style="display:none;">${packCostValue.toFixed(2)}</td>
+        `;
+
+        mainSalesTableBodyElement.appendChild(newRow);
+
+        totalSalesValue += parseFloat(total);
+        totalPackCostValue += packCostValue;
+    });
+
+    window.globalTotalPackCostValue = totalPackCostValue;
+
+    const combinedTotal = totalSalesValue + totalPackCostValue;
+    document.getElementById('mainTotalSalesValue').textContent = combinedTotal.toFixed(2);
+    document.getElementById('mainTotalSalesValueBottom').textContent = combinedTotal.toFixed(2);
+
+    // Build item summary
+    const itemGroups = {};
+    document.querySelectorAll('#mainSalesTableBody tr').forEach(row => {
+        const itemName = row.querySelector('td[data-field="item_name"]').textContent.trim() || '';
+        const weight = parseFloat(row.querySelector('td[data-field="weight"]').textContent) || 0;
+        const packs = parseInt(row.querySelector('td[data-field="packs"]').textContent) || 0;
+        const packCostValue = parseFloat(row.querySelector('td[data-field="pack_cost_value"]').textContent) || 0;
+
+        if (!itemGroups[itemName]) {
+            itemGroups[itemName] = { totalWeight: 0, totalPacks: 0, totalPackCost: 0 };
+        }
+
+        itemGroups[itemName].totalWeight += weight;
+        itemGroups[itemName].totalPacks += packs;
+        itemGroups[itemName].totalPackCost += packCostValue;
+    });
+
+    let summaryHtml = '<div style="font-size: 0.9rem; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 1rem;">';
+    for (const [itemName, totals] of Object.entries(itemGroups)) {
+        summaryHtml += `
+            <div style="padding: 0.25rem 0.5rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.8rem;">
+                <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}
+            </div>
+        `;
+    }
+    summaryHtml += '</div>';
+
+    const itemSummaryElement = document.getElementById('itemSummary');
+    if (itemSummaryElement) {
+        itemSummaryElement.innerHTML = summaryHtml;
+    }
+
+    console.log("populateMainSalesTable finished. Total sales:", totalSalesValue.toFixed(2), "Total pack cost:", totalPackCostValue.toFixed(2), "Combined total:", combinedTotal.toFixed(2));
+};
+
+// Call initially with all data
+window.populateMainSalesTable(window.allSalesData);
 
 
-                        console.log("Initial printedSalesData:", printedSalesData);
-                        console.log("Initial unprintedSalesData:", unprintedSalesData);
-                        console.log("Initial allSalesData (for default table view):", allSalesData);
+    // ================= REMAINING STOCK CALCULATIONS =================
+    let originalGrnPacks = 0;
+    let originalGrnWeight = 0;
+    let initialSalePacks = 0;
+    let initialSaleWeight = 0;
+
+    const remainingPacksDisplay = document.getElementById('remaining_packs_display');
+    const remainingWeightDisplay = document.getElementById('remaining_weight_display');
+    const packsField = document.getElementById('packs');
+    const weightField = document.getElementById('weight');
+
+    function updateRemainingStock() {
+        if (updateSalesEntryBtn.style.display === 'inline-block') {
+            const currentPacks = parseInt(packsField.value) || 0;
+            const currentWeight = parseFloat(weightField.value) || 0;
+
+            const packsDifference = currentPacks - initialSalePacks;
+            const weightDifference = currentWeight - initialSaleWeight;
+
+            const finalRemainingPacks = originalGrnPacks - packsDifference;
+            const finalRemainingWeight = originalGrnWeight - weightDifference;
+
+            remainingPacksDisplay.textContent = `BP: ${finalRemainingPacks}`;
+            remainingWeightDisplay.textContent = `BW: ${finalRemainingWeight.toFixed(2)}`;
+        }
+    }
+
+    packsField.addEventListener('input', updateRemainingStock);
+    weightField.addEventListener('input', updateRemainingStock);
 
 
-                        // Function to populate the main sales table
-                        function populateMainSalesTable(salesArray) {
-                            console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
+    // ================= POPULATE FORM FOR EDIT =================
+ // ================= POPULATE FORM FOR EDIT =================
+function populateFormForEdit(sale) {
+    console.log("Populating form for sale:", sale);
 
-                            currentDisplayedSalesData = salesArray;
-                            console.log("currentDisplayedSalesData updated to:", currentDisplayedSalesData);
+    saleIdField.value = sale.id;
+    newCustomerCodeField.value = sale.customer_code || '';
+    customerNameField.value = sale.customer_name || '';
+    newCustomerCodeField.readOnly = true;
 
-                            const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+    const grnDisplay = document.getElementById('grn_display');
+    const grnSelect = document.getElementById('grn_select');
 
-                            if (!mainSalesTableBodyElement) {
-                                console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
-                                return;
-                            }
+    grnDisplay.style.display = 'block';
+    grnDisplay.value = sale.code || '';
 
-                            // Clear existing rows safely
-                            while (mainSalesTableBodyElement.firstChild) {
-                                mainSalesTableBodyElement.removeChild(mainSalesTableBodyElement.firstChild);
-                            }
-                            console.log("After clearing, innerHTML:", mainSalesTableBodyElement.innerHTML);
+    $(grnSelect).next('.select2-container').hide();
 
-                            let totalSalesValue = 0;
+    const grnOption = $('#grn_select option').filter(function () {
+        return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code &&
+            $(this).data('itemCode') === sale.item_code;
+    });
 
-                            if (salesArray.length === 0) {
-                                console.log("Sales array is empty. Displaying 'No sales records found.'");
-                                const noRecordsRow = document.createElement('tr');
-                                noRecordsRow.innerHTML = '<td colspan="8" class="text-center">No sales records found for this selection.</td>';
-                                mainSalesTableBodyElement.appendChild(noRecordsRow);
-                                totalSalesValue = 0;
-                            } else {
-                                salesArray.forEach(sale => {
-                                    const newRow = document.createElement('tr');
-                                    newRow.dataset.saleId = sale.id;
-                                    newRow.dataset.id = sale.id;
-                                    newRow.dataset.customerCode = sale.customer_code;
-                                    newRow.dataset.customerName = sale.customer_name;
+    if (grnOption.length) {
+        $('#grn_select').val(grnOption.val());
+    } else {
+        $('#grn_select').val(null);
+    }
 
-                                    // Ensure all values are handled gracefully, with a fallback to 'N/A' or 0
-                                    const code = sale.code || 'N/A';
-                                    const itemCode = sale.item_code || 'N/A';
-                                    const itemName = sale.item_name || 'N/A';
-                                    const weight = (parseFloat(sale.weight) || 0).toFixed(2);
-                                    const pricePerKg = (parseFloat(sale.price_per_kg) || 0).toFixed(2);
-                                    const total = (parseFloat(sale.total) || 0).toFixed(2);
-                                    const packs = (parseInt(sale.packs) || 0);
+    // This is the key part:
+    // We only fetch data initially and populate the fields once.
+    if (sale.code) {
+        fetch(`https://wday.lk/AA/sms/api/grn-entry/${sale.code}`)
+            .then(response => response.json())
+            .then(grnData => {
+                originalGrnPacks = parseInt(grnData.packs || 0);
+                originalGrnWeight = parseFloat(grnData.weight || 0);
 
-                                    newRow.innerHTML = `
-                                            <td data-field="code">${code}</td>
-                                            <td data-field="item_name">${itemName}</td>
-                                            <td data-field="weight">${weight}</td>
-                                            <td data-field="price_per_kg">${pricePerKg}</td>
-                                            <td data-field="total">${total}</td>
-                                            <td data-field="packs">${packs}</td>
-                                        `;
+                initialSalePacks = parseInt(sale.packs || 0);
+                initialSaleWeight = parseFloat(sale.weight || 0);
 
-                                    mainSalesTableBodyElement.appendChild(newRow);
-                                    totalSalesValue += parseFloat(total);
-                                });
-                            }
+                weightField.value = initialSaleWeight.toFixed(2);
+                weightField.select();
 
-                            // Moved the function definition here, so it's defined once.
-                            // This function will now be called after the table is populated.
-                            function displayItemSums() {
-                                const rows = document.querySelectorAll('#mainSalesTableBody tr');
-                                const itemGroups = {};
+                packsField.value = initialSalePacks;
 
-                                rows.forEach(row => {
-                                    const itemName = row.querySelector('td[data-field="item_name"]')?.textContent.trim() || '';
-                                    const weight = parseFloat(row.querySelector('td[data-field="weight"]')?.textContent) || 0;
-                                    const packs = parseInt(row.querySelector('td[data-field="packs"]')?.textContent) || 0;
+                pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+                calculateTotal();
 
-                                    if (!itemGroups[itemName]) {
-                                        itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-                                    }
+                updateRemainingStock();
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                remainingPacksDisplay.textContent = 'Remaining Packs: N/A';
+                remainingWeightDisplay.textContent = 'Remaining: N/A kg';
+            });
+    } else {
+        pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+        calculateTotal();
+    }
 
-                                    itemGroups[itemName].totalWeight += weight;
-                                    itemGroups[itemName].totalPacks += packs;
-                                });
+    supplierSelect.value = sale.supplier_code || '';
+    supplierDisplaySelect.value = sale.supplier_code || '';
+    itemSelect.value = sale.item_code || '';
+    itemSelect.dispatchEvent(new Event('change'));
 
-                                // Build a simple summary string using flexbox for a single row display
-                                let summaryHtml = '<div style="font-size: 0.9rem; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 1rem;">';
-                                for (const [itemName, totals] of Object.entries(itemGroups)) {
-                                    summaryHtml += `
-                                          <div style="padding: 0.25rem 0.5rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.8rem;">
-                                                <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}
-                                            </div>
-                                        `;
-                                }
-                                summaryHtml += '</div>';
+    itemNameDisplayFromGrn.value = sale.item_name || '';
+    itemNameField.value = sale.item_name || '';
 
-                                // Place it inside your container below the table
-                                const itemSummaryElement = document.getElementById('itemSummary');
-                                if (itemSummaryElement) {
-                                    itemSummaryElement.innerHTML = summaryHtml;
-                                } else {
-                                    console.error("Error: div with ID 'itemSummary' not found!");
-                                }
-                            }
+    salesEntryForm.action = `sales/update/${sale.id}`;
 
-                            // ADDED: This is the critical line. Call the function after the table is built.
-                            displayItemSums();
+    addSalesEntryBtn.style.display = 'none';
+    updateSalesEntryBtn.style.display = 'inline-block';
+    deleteSalesEntryBtn.style.display = 'inline-block';
+    cancelEntryBtn.style.display = 'inline-block';
 
-                            $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
-                            console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2));
+    weightField.focus();
+    weightField.select();
+}
+
+
+    // ================= RESET FORM =================
+    function resetForm() {
+        console.log("Resetting form...");
+        salesEntryForm.reset();
+        saleIdField.value = '';
+        newCustomerCodeField.readOnly = false;
+        $('#customer_code_select').val(null).trigger('change.select2');
+        $('#grn_select').val(null).trigger('change.select2');
+        grnDisplay.value = 'Select GRN Entry...';
+        supplierSelect.value = '';
+        supplierDisplaySelect.value = '';
+        itemSelect.value = '';
+        itemSelect.dispatchEvent(new Event('change'));
+        itemNameDisplayFromGrn.value = '';
+        itemNameField.value = '';
+        calculateTotal();
+
+        salesEntryForm.action = "{{ route('grn.store') }}";
+
+        addSalesEntryBtn.style.display = 'inline-block';
+        updateSalesEntryBtn.style.display = 'none';
+        deleteSalesEntryBtn.style.display = 'none';
+        cancelEntryBtn.style.display = 'none';
+
+        newCustomerCodeField.focus();
+    }
+
+
+    // ================= TABLE CLICK HANDLER =================
+    document.getElementById('mainSalesTableBody').addEventListener('click', function (event) {
+        const clickedRow = event.target.closest('tr[data-sale-id]');
+        if (clickedRow) {
+            const saleId = clickedRow.dataset.saleId;
+            const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
+            if (saleToEdit) {
+                populateFormForEdit(saleToEdit);
+            }
+        }
+    });
+
+
+    // ================= ENTER KEY NAVIGATION =================
+    document.getElementById('weight').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('price_per_kg').focus();
+            document.getElementById('price_per_kg').select();
+        }
+    });
+
+    document.getElementById('price_per_kg').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('packs').focus();
+            document.getElementById('packs').select();
+        }
+    });
+
+
+    // ================= FETCH UNPRINTED SALES =================
+    $(document).ready(function () {
+        function debounce(func, delay) {
+            let timeout;
+            return function (...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        function fetchUnprintedSales(customerCode) {
+            let tableBody = $('#mainSalesTableBody');
+            tableBody.empty();
+            $('#customer_name').val('');
+            $('#mainTotalSalesValue').text("0.00");
+            $('#mainTotalSalesValueBottom').text("0.00");
+
+            if (customerCode) {
+                $.ajax({
+                     url: 'https://wday.lk/AA/sms/api/sales/unprinted/' + customerCode,
+
+                    method: 'GET',
+                    success: function (response) {
+                        if (response.length > 0) {
+                            populateMainSalesTable(response);
+                          
+                        } else {
+                            tableBody.html('<tr><td colspan="7" class="text-center"></td></tr>');
                         }
+                    },
+                    error: function (xhr) {
+                        console.error("AJAX Error fetching sales records:", xhr.responseText);
+                        tableBody.html('<tr><td colspan="7" class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
+                    }
+                });
+            } else {
+                tableBody.html('<tr><td colspan="7" class="text-center">Please enter a customer code to view records.</td></tr>');
+            }
+        }
 
-
-                        // Call the function initially to populate the table
-                        populateMainSalesTable(allSalesData);
-
-                        // Global variables to store the original GRN values
-                        // Global variables to store the fixed values needed for calculation
-                        let originalGrnPacks = 0;
-                        let originalGrnWeight = 0;
-                        let initialSalePacks = 0;
-                        let initialSaleWeight = 0;
-
-                        // Get references to the input fields and display elements
-                        const remainingPacksDisplay = document.getElementById('remaining_packs_display');
-                        const remainingWeightDisplay = document.getElementById('remaining_weight_display');
-                        const packsField = document.getElementById('packs');
-                        const weightField = document.getElementById('weight');
-
-                        // This function performs the subtraction from the remaining stock
-                        function updateRemainingStock() {
-                            if (updateSalesEntryBtn.style.display === 'inline-block') {
-                                // Get the current values from the input fields as the user types
-                                const currentPacks = parseInt(packsField.value) || 0;
-                                const currentWeight = parseFloat(weightField.value) || 0;
-
-                                // Calculate the difference between the initial sale value and the new input
-                                const packsDifference = currentPacks - initialSalePacks;
-                                const weightDifference = currentWeight - initialSaleWeight;
-
-                                // Calculate the final remaining values by subtracting the difference from the original GRN stock
-                                const finalRemainingPacks = originalGrnPacks - packsDifference;
-                                const finalRemainingWeight = originalGrnWeight - weightDifference;
-
-                                // Update the display with the new remaining values
-                                remainingPacksDisplay.textContent = `Remaining Packs: ${finalRemainingPacks}`;
-                                remainingWeightDisplay.textContent = `Remaining: ${finalRemainingWeight.toFixed(2)} kg`;
-                            }
-                        }
-
-                        // Attach the update function to the input fields' 'input' event
-                        packsField.addEventListener('input', updateRemainingStock);
-                        weightField.addEventListener('input', updateRemainingStock);
-
-                        function populateFormForEdit(sale) {
-                            console.log("Populating form for sale:", sale);
-
-                            // Set the form fields with the *sale* values.
-                            saleIdField.value = sale.id;
-                            newCustomerCodeField.value = sale.customer_code || '';
-                            customerNameField.value = sale.customer_name || '';
-                            newCustomerCodeField.readOnly = true;
-
-                            const grnDisplay = document.getElementById('grn_display');
-                            const grnSelect = document.getElementById('grn_select');
-
-                            grnDisplay.style.display = 'block';
-                            grnDisplay.value = sale.code || '';
-
-                            $(grnSelect).next('.select2-container').hide();
-
-                            const grnOption = $('#grn_select option').filter(function () {
-                                return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code &&
-                                    $(this).data('itemCode') === sale.item_code;
-                            });
-
-                            if (grnOption.length) {
-                                $('#grn_select').val(grnOption.val());
-                            } else {
-                                $('#grn_select').val(null);
-                            }
-
-                            // --- NEW LOGIC: FETCH ORIGINAL GRN VALUES AND STORE INITIAL SALE VALUES ---
-                            if (sale.code) {
-                                fetch(`/api/grn-entry/${sale.code}`) // Fetches original GRN data
-                                    .then(response => response.json())
-                                    .then(grnData => {
-                                        // Store the total original GRN values
-                                        originalGrnPacks = parseInt(grnData.packs || 0);
-                                        originalGrnWeight = parseFloat(grnData.weight || 0);
-
-                                        // Store the initial sale values from the record being edited
-                                        initialSalePacks = parseInt(sale.packs || 0);
-                                        initialSaleWeight = parseFloat(sale.weight || 0);
-
-                                        // Populate the input fields with the existing sale values
-                                        weightField.value = initialSaleWeight.toFixed(2);
-                                        weightField.select(); // Select the weight field content
-                                        // Do NOT focus here. Let the final focus below handle it,
-                                        // or if it's the first in the tab order.
-
-                                        packsField.value = initialSalePacks;
-                                        // packsField.select(); // This will be selected when focus moves here
-
-                                        // Ensure pricePerKgField is set BEFORE calculating total
-                                        pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-                                        // pricePerKgField.select(); // This will be selected when focus moves here
-
-                                        // Now, call calculateTotal() AFTER all necessary values are set
-                                        calculateTotal(); // ✨ Call calculateTotal here! ✨
-
-                                        // Perform the initial calculation to show the correct remaining stock.
-                                        updateRemainingStock();
-
-                                        console.log("Original GRN Packs:", originalGrnPacks, "Initial Sale Packs:", initialSalePacks);
-                                    })
-                                    .catch(error => {
-                                        console.error('Error fetching data:', error);
-                                        remainingPacksDisplay.textContent = 'Remaining Packs: N/A';
-                                        remainingWeightDisplay.textContent = 'Remaining: N/A kg';
-                                    });
-                            }
-                            // --- END OF NEW LOGIC ---
-
-                            supplierSelect.value = sale.supplier_code || '';
-                            supplierDisplaySelect.value = sale.supplier_code || '';
-                            itemSelect.value = sale.item_code || '';
-                            itemSelect.dispatchEvent(new Event('change'));
-
-                            itemNameDisplayFromGrn.value = sale.item_name || '';
-                            itemNameField.value = sale.item_name || '';
-
-                            // pricePerKgField.value is set inside the fetch, but also here for initial load in case fetch fails or sale.code is null
-                            if (!sale.code) { // Only set if not already handled by fetch success
-                                pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-                                calculateTotal();
-                            }
-
-
-                            salesEntryForm.action = `sales/update/${sale.id}`;
-
-                            addSalesEntryBtn.style.display = 'none';
-                            updateSalesEntryBtn.style.display = 'inline-block';
-                            deleteSalesEntryBtn.style.display = 'inline-block';
-                            cancelEntryBtn.style.display = 'inline-block';
-
-                            // Set initial focus to weightField and select its content
-                            weightField.focus();
-                            weightField.select();
-                        }
-
-                        // Global Event Listeners for Tab Navigation with Enter Key
-
-                        // When Enter is pressed in #weight input, move focus to #packs
-                        document.getElementById('weight').addEventListener('keydown', function (e) {
-                            if (e.key === 'Enter') {
-                                e.preventDefault(); // prevent form submission or other defaults
-                                document.getElementById('price_per_kg').focus();
-                                document.getElementById('price_per_kg').select(); // Select content of packs field
-                            }
-                        });
-
-                        // When Enter is pressed in #packs input, move focus to #price_per_kg
-                        document.getElementById('price_per_kg').addEventListener('keydown', function (e) {
-                            if (e.key === 'Enter') {
-                                e.preventDefault(); // prevent form submission or other defaults
-                                document.getElementById('packs').focus();
-                                document.getElementById('packs').select(); // Select content of price_per_kg field
-                            }
-                        });
-
-
-                        // When Enter is pressed in #price_per_kg input, move focus to the next logical field (e.g., a submit button, or another input)
-                        // For now, let's assume it moves to the update button or a relevant action.
-                        document.getElementById('price_per_kg').addEventListener('keydown', function (e) {
-                            if (e.key === 'Enter') {
-                                e.preventDefault(); // prevent form submission or other defaults
-                                // You might want to focus on your update button here, or another field
-                                // Example: document.getElementById('updateSalesEntryBtn').focus();
-                                // For demonstration, let's just log it or do nothing specific if no clear next field
-                                console.log("Enter pressed in Price per KG. Next action not explicitly defined.");
-                            }
-                        });
+        const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
+        $('#new_customer_code').on('keyup', function () {
+            let customerCode = $(this).val().trim();
+            debouncedFetchUnprintedSales(customerCode);
+        });
+    });
 
 
                         function resetForm() {
@@ -2772,6 +3129,7 @@
                             itemNameDisplayFromGrn.value = '';
                             itemNameField.value = '';
                             calculateTotal();
+                            
 
                             salesEntryForm.action = "{{ route('grn.store') }}";
 
@@ -2852,133 +3210,219 @@
                                 }
                             });
 
-                            // Click event for update button
-                            updateSalesEntryBtn.addEventListener('click', function () {
-                                const saleId = saleIdField.value;
-                                if (!saleId) {
-                                    alert('No record selected for update.');
-                                    return;
-                                }
+                              // Click event for update button
+                       updateSalesEntryBtn.addEventListener('click', function () {
+    const saleId = saleIdField.value;
+    if (!saleId) {
+        alert('No record selected for update.');
+        return;
+    }
 
-                                const currentFormData = getCurrentFormData(salesEntryForm);
-                                if (!isFormDataChanged(currentFormData)) {
-                                    alert('No changes detected. Update not required.');
-                                    return;
-                                }
+    let currentFormData = getCurrentFormData(salesEntryForm);
 
-                                // Add method and token
-                                currentFormData['_method'] = 'PUT';
-                                currentFormData['_token'] = '{{ csrf_token() }}';
+    // For updates, get the NEW values from the form fields
+    if (updateSalesEntryBtn.style.display === 'inline-block') {
+        // Get the NEW GRN code from the grn_display field (not the disabled select)
+        const newGrnCode = grnDisplay.value.split('|')[0].trim(); // Extract code from display format
 
-                                fetch(`sales/update/${saleId}`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify(currentFormData)
-                                })
-                                    .then(response => {
-                                        if (!response.ok) {
-                                            return response.json().then(errorData => Promise.reject(errorData));
-                                        }
-                                        return response.json();
-                                    })
-                                    .then(result => {
-                                        console.log("Server response:", result);
+        // Update form data with NEW values from the form
+        currentFormData['code'] = newGrnCode || '';
+        currentFormData['grn_entry_code'] = newGrnCode || '';
 
-                                        // Check the structure of the returned `sale` object here
-                                        console.log("Updated sale record received from server:", result.sale);
+        // Get other values from the form fields
+        currentFormData['item_name'] = itemNameDisplayFromGrn.value || '';
+        currentFormData['item_code'] = document.querySelector('input[name="item_code"]').value || '';
+        currentFormData['supplier_code'] = supplierSelect.value || '';
 
-                                        if (result.success && result.sale) {
-                                            alert(result.message);
+        // Remove the grn_select field from the form data since it's disabled
+        delete currentFormData['grn_select'];
+    }
 
-                                            const updatedIndex = currentDisplayedSalesData.findIndex(sale => String(sale.id) === String(saleId));
-                                            console.log("Found index to update:", updatedIndex);
-                                            if (updatedIndex !== -1) {
-                                                currentDisplayedSalesData[updatedIndex] = result.sale;
-                                                populateMainSalesTable(currentDisplayedSalesData);
-                                            } else {
-                                                alert("Record updated on server but not found in local data. Reloading.");
-                                                window.location.reload();
-                                            }
+    if (!isFormDataChanged(currentFormData)) {
+        alert('No changes detected. Update not required.');
+        return;
+    }
 
-                                            // This is the line that's causing the problem.
-                                            // It's calling a function that resets the form, and likely the table too.
-                                            // To fix this, you should remove or comment out the resetForm() call here.
-                                            // Instead, you should manually clear the form fields for the *current* entry.
+    // Add method and token
+    currentFormData['_method'] = 'PUT';
+    currentFormData['_token'] = '{{ csrf_token() }}';
 
-                                            // You should not call resetForm() here.
-                                            // Instead, manually clear the form fields like this:
-                                            saleIdField.value = '';
-                                            salesEntryForm.reset(); // If you still want to reset form fields without clearing the table.
+    fetch(`https://wday.lk/AA/sms/sales/update/${saleId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(currentFormData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => Promise.reject(errorData));
+        }
+        return response.json();
+    })
+    .then(result => {
+        console.log("Server response:", result);
+        console.log("Updated sale record received from server:", result.sale);
 
-                                            console.log("Form reset complete.");
-                                        } else {
-                                            alert('Update failed: ' + result.message);
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error('Error updating sales entry:', error);
-                                        let errorMessage = 'An error occurred during update.';
-                                        if (error?.message) errorMessage += '\n' + error.message;
-                                        if (error?.errors) {
-                                            for (const key in error.errors) {
-                                                errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
-                                            }
-                                        }
-                                        alert(errorMessage);
-                                    });
-                            });
-                        } else {
-                            console.error("Form, update button, or sale ID field not found. Please check their IDs.");
-                        }
-                        deleteSalesEntryBtn.addEventListener('click', function () {
-                            const saleId = saleIdField.value;
-                            if (!saleId) {
-                                alert('No record selected for deletion.');
-                                return;
-                            }
+        if (result.success && result.sale) {
+            const updatedSale = JSON.parse(JSON.stringify(result.sale));
 
-                            if (!confirm('Are you sure you want to delete this sales record?')) {
-                                return;
-                            }
+            // 1️⃣ Update currentDisplayedSalesData
+            const updatedIndex = currentDisplayedSalesData.findIndex(
+                sale => String(sale.id) === String(saleId)
+            );
+            if (updatedIndex !== -1) {
+                currentDisplayedSalesData[updatedIndex] = updatedSale;
+            }
 
-                            fetch(`sales/delete/${saleId}`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({
-                                    _method: 'DELETE',
-                                    _token: '{{ csrf_token() }}'
-                                })
-                            })
-                                .then(response => {
-                                    if (!response.ok) {
-                                        return response.json().then(errorData => Promise.reject(errorData));
-                                    }
-                                    return response.json();
-                                })
-                                .then(result => {
-                                    if (result.success) {
-                                        alert(result.message);
-                                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                        window.location.reload();
-                                    } else {
-                                        alert('Delete failed: ' + result.message);
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error deleting sales entry:', error);
-                                    let errorMessage = 'An error occurred during deletion.';
-                                    if (error && error.message) {
-                                        errorMessage += '\n' + error.message;
-                                    }
-                                    alert(errorMessage);
-                                });
-                        });
+            // 2️⃣ Update allSalesData
+            const allIndex = allSalesData.findIndex(
+                sale => String(sale.id) === String(saleId)
+            );
+            if (allIndex !== -1) {
+                allSalesData[allIndex] = updatedSale;
+            }
+
+            // 3️⃣ Update printed/unprinted arrays
+            // First remove old record
+            for (const arr of [printedSalesData, unprintedSalesData]) {
+                if (Array.isArray(arr)) {
+                    const idx = arr.findIndex(sale => String(sale.id) === String(saleId));
+                    if (idx !== -1) arr.splice(idx, 1);
+                } else {
+                    // If keyed by customer_code
+                    for (const key in arr) {
+                        const idx = arr[key].findIndex(sale => String(sale.id) === String(saleId));
+                        if (idx !== -1) arr[key].splice(idx, 1);
+                    }
+                }
+            }
+
+            // Then push updated one into correct place
+            if (updatedSale.bill_printed) {
+                if (Array.isArray(printedSalesData)) {
+                    printedSalesData.push(updatedSale);
+                } else {
+                    if (!printedSalesData[updatedSale.customer_code]) {
+                        printedSalesData[updatedSale.customer_code] = [];
+                    }
+                    printedSalesData[updatedSale.customer_code].push(updatedSale);
+                }
+            } else {
+                if (Array.isArray(unprintedSalesData)) {
+                    unprintedSalesData.push(updatedSale);
+                } else {
+                    if (!unprintedSalesData[updatedSale.customer_code]) {
+                        unprintedSalesData[updatedSale.customer_code] = [];
+                    }
+                    unprintedSalesData[updatedSale.customer_code].push(updatedSale);
+                }
+            }
+
+            // 4️⃣ Re-render the table
+            populateMainSalesTable(currentDisplayedSalesData);
+
+            // 5️⃣ Reset form + preserve customer code
+            document.getElementById('remaining_packs_display').innerText = "BP: 0";
+            document.getElementById('remaining_weight_display').innerText = "BW: 0.00 kg";
+            const preservedCustomerCode = newCustomerCodeField.value;
+            resetForm();
+            newCustomerCodeField.value = preservedCustomerCode;
+
+            console.log("✅ Sale record successfully updated in ALL local arrays");
+        } else {
+            alert('Update failed: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating sales entry:', error);
+        let errorMessage = 'An error occurred during update.';
+        if (error?.message) errorMessage += '\n' + error.message;
+        if (error?.errors) {
+            for (const key in error.errors) {
+                errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
+            }
+        }
+        alert(errorMessage);
+    });
+});
+}
+      deleteSalesEntryBtn.addEventListener('click', function () {
+    const saleId = saleIdField.value;
+    if (!saleId) {
+        alert('No record selected for deletion.');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to delete this sales record?')) {
+        return;
+    }
+
+   fetch(`https://wday.lk/AA/sms/sales/delete/${saleId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            _method: 'DELETE',
+            _token: '{{ csrf_token() }}'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => Promise.reject(errorData));
+        }
+        return response.json();
+    })
+    .then(result => {
+        if (result.success) {
+          
+
+            // ✅ Remove row from the table
+            const rowToDelete = document.querySelector(`#mainSalesTableBody tr[data-id="${saleId}"]`);
+            if (rowToDelete) {
+                rowToDelete.remove();
+                 currentDisplayedSalesData = currentDisplayedSalesData.filter(sale => String(sale.id) !== String(saleId));
+            }
+
+            // ✅ Recalculate totals
+            let totalSum = 0;
+            document.querySelectorAll('#mainSalesTableBody tr').forEach(row => {
+                const totalCell = row.querySelector('td:nth-child(5)'); // adjust column index if needed
+                if (totalCell) {
+                    totalSum += parseFloat(totalCell.textContent) || 0;
+                }
+            });
+
+            // Update total fields
+            document.getElementById('mainTotalSalesValue').textContent = totalSum.toFixed(2);
+            document.getElementById('mainTotalSalesValueBottom').textContent = totalSum.toFixed(2);
+
+           
+
+            // 🔹 Reset BP and BW displays
+            document.getElementById('remaining_packs_display').innerText = "BP: 0";
+            document.getElementById('remaining_weight_display').innerText = "BW: 0.00 kg";
+              const preservedCustomerCode = newCustomerCodeField.value;
+             resetForm();
+               newCustomerCodeField.value = preservedCustomerCode;
+
+            console.log("Form reset complete after deletion.");
+        } else {
+            alert('Delete failed: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting sales entry:', error);
+        let errorMessage = 'An error occurred during deletion.';
+        if (error && error.message) {
+            errorMessage += '\n' + error.message;
+        }
+        alert(errorMessage);
+    });
+});
 
 
                         cancelEntryBtn.addEventListener('click', resetForm);

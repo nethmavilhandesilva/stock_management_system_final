@@ -4,7 +4,7 @@
             @csrf
             <div class="modal-content" style="background-color: #99ff99;">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="grnSaleReportModalLabel">📄 GRN12 කේතය අනුව විකුණුම් වාර්තාව</h5>
+                    <h5 class="modal-title" id="grnSaleReportModalLabel">📄 GRN කේතය අනුව විකුණුම් වාර්තාව</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -55,6 +55,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                      <a href="{{ route('report.email.grn-sales') }}" class="btn btn-info">
+            📧 Daily Email Report
+        </a>
                     <button type="submit" class="btn btn-primary w-100">වාර්තාව ලබාගන්න</button>
                 </div>
             </div>
@@ -70,6 +73,7 @@
         const supplierCodeInput = document.getElementById('grn_supplier_code');
         const passwordField = document.getElementById('grn_password_field');
         const dateRangeFields = document.getElementById('grn_date_range_fields');
+        const grnSaleReportModal = document.getElementById('grnSaleReportModal');
         const correctPassword = 'nethma123';
 
         // Initialize Select2 on the dropdown
@@ -93,6 +97,13 @@
             }
             passwordField.addEventListener('input', checkPassword);
             checkPassword();
+        }
+
+        // Add the event listener to refresh the page on modal close
+        if (grnSaleReportModal) {
+            grnSaleReportModal.addEventListener('hidden.bs.modal', function () {
+                window.location.reload();
+            });
         }
     });
 </script>

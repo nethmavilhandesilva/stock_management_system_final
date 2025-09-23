@@ -13,12 +13,12 @@
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         padding: 30px 24px;
-        max-width: 600px;
+        max-width: 700px;
         margin: 40px auto;
     }
 
     h2 {
-        color: #4f46e5;
+        color: #fff;
         font-weight: 700;
         text-align: center;
         margin-bottom: 30px;
@@ -66,6 +66,10 @@
         background-color: #5a6268;
         border-color: #545b62;
     }
+
+    #credit_limit_wrapper {
+        display: none; /* hidden by default */
+    }
 </style>
 
 <div class="form-card">
@@ -75,29 +79,48 @@
         @csrf
         @method('PUT')
 
-        <div class="mb-3">
-            <label for="short_name_field" class="form-label">කෙටි නම</label>
-            <input type="text" name="short_name" id="short_name_field" value="{{ $customer->short_name }}" class="form-control" required>
-        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="short_name_field" class="form-label">කෙටි නම</label>
+                <input type="text" name="short_name" id="short_name_field"
+                    value="{{ $customer->short_name }}" class="form-control" required>
+            </div>
 
-        <div class="mb-3">
-            <label for="name_field" class="form-label">සම්පූර්ණ නම</label>
-            <input type="text" name="name" id="name_field" value="{{ $customer->name }}" class="form-control" required>
-        </div>
+            <div class="col-md-6 mb-3">
+                <label for="name_field" class="form-label">සම්පූර්ණ නම</label>
+                <input type="text" name="name" id="name_field" value="{{ $customer->name }}" class="form-control"
+                    required>
+            </div>
 
-        <div class="mb-3">
-            <label for="address_field" class="form-label">ලිපිනය</label>
-            <input type="text" name="address" id="address_field" value="{{ $customer->address }}" class="form-control">
-        </div>
+            <div class="col-md-6 mb-3">
+                <label for="ID_NO" class="form-label">ID_NO</label>
+                <input type="text" name="ID_NO" id="ID_NO" value="{{ $customer->ID_NO }}" class="form-control">
+            </div>
 
-        <div class="mb-3">
-            <label for="telephone_no_field" class="form-label">දුරකථන අංකය</label>
-            <input type="text" name="telephone_no" id="telephone_no_field" value="{{ $customer->telephone_no }}" class="form-control">
-        </div>
+            <div class="col-md-6 mb-3">
+                <label for="telephone_no_field" class="form-label">දුරකථන අංකය</label>
+                <input type="text" name="telephone_no" id="telephone_no_field"
+                    value="{{ $customer->telephone_no }}" class="form-control">
+            </div>
 
-        <div class="mb-3">
-            <label for="credit_limit_field" class="form-label">ණය සීමාව (Rs.)</label>
-            <input type="number" step="0.01" name="credit_limit" id="credit_limit_field" value="{{ $customer->credit_limit }}" class="form-control" required>
+            <div class="col-md-12 mb-3">
+                <label for="address_field" class="form-label">ලිපිනය</label>
+                <input type="text" name="address" id="address_field" value="{{ $customer->address }}"
+                    class="form-control">
+            </div>
+
+            <!-- Password to unlock credit limit -->
+            <div class="col-md-6 mb-3">
+                <label for="unlock_password" class="form-label">Password to Edit Credit Limit</label>
+                <input type="password" id="unlock_password" class="form-control" placeholder="Enter password">
+            </div>
+
+            <!-- Credit limit field (hidden by default) -->
+            <div class="col-md-6 mb-3" id="credit_limit_wrapper">
+                <label for="credit_limit_field" class="form-label">ණය සීමාව (Rs.)</label>
+                <input type="number" step="0.01" name="credit_limit" id="credit_limit_field"
+                    value="{{ $customer->credit_limit }}" class="form-control">
+            </div>
         </div>
 
         <div class="text-center mt-4">
@@ -110,4 +133,17 @@
         </div>
     </form>
 </div>
+
+<script>
+    document.getElementById("unlock_password").addEventListener("keyup", function () {
+        let entered = this.value;
+        let wrapper = document.getElementById("credit_limit_wrapper");
+
+        if (entered === "nethma123") {
+            wrapper.style.display = "block"; // show credit limit field
+        } else {
+            wrapper.style.display = "none"; // hide again
+        }
+    });
+</script>
 @endsection

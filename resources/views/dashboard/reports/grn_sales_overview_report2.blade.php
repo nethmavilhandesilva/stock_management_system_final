@@ -1,13 +1,95 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-4">
+<style>
+    /* Print ONLY header + report table */
+    @media print {
+        /* Hide everything by default */
+        body * {
+            visibility: hidden;
+        }
+
+        /* Show only the report card and its content */
+        .printable-area, .printable-area * {
+            visibility: visible;
+        }
+
+        /* Position printable content at top left */
+        .printable-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        /* Hide buttons when printing */
+        .print-btn,
+        .btn-success,
+        .btn-danger,
+        .btn-info {
+            display: none !important;
+        }
+
+        /* Remove scrollbars for print */
+        .table-responsive {
+            overflow: visible !important;
+        }
+
+        /* Force A4 page layout */
+        @page {
+            size: A4 portrait;   /* Change to landscape if needed */
+            margin: 10mm;
+        }
+
+        .table {
+            font-size: 11px !important;
+            color: black !important;
+            border-collapse: collapse !important;
+            width: 100%;
+        }
+
+        .table thead th, 
+        .table td, 
+        .table th {
+            padding: 3px 5px !important;
+            border: 1px solid #000 !important;
+            background: #f9f9f9 !important;
+            color: black !important;
+        }
+
+        .total-row {
+            background: #eee !important;
+            color: black !important;
+            font-weight: bold !important;
+        }
+
+        /* White background for print */
+        .card {
+            background: white !important;
+            color: black !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+    }
+</style>
+
+<div class="container-fluid py-4 printable-area">
     <div class="card shadow-sm mb-4">
         <div class="card-header text-center" style="background-color: #004d00 !important;">
             <div class="report-title-bar">
-                <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
+               @php
+    $companyName = \App\Models\Setting::value('CompanyName');
+@endphp
+
+<h2 class="company-name">{{ $companyName ?? 'Default Company' }}</h2>
+
                 <h4 class="fw-bold text-white">📦 ඉතිරි වාර්තාව</h4>
-                <span class="right-info">{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
+                @php
+                    $settingDate = \App\Models\Setting::value('value');
+                @endphp
+                <span class="right-info">
+                    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+                </span>
                 <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
             </div>
         </div>
@@ -23,76 +105,87 @@
                             <th colspan="2">ඉතිරි</th>
                         </tr>
                         <tr>
-                            <th>මලු</th>
                             <th>බර</th>
                             <th>මලු</th>
                             <th>බර</th>
                             <th>මලු</th>
                             <th>බර</th>
+                            <th>මලු</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            $grandTotalOriginalPacks = 0;
-                            $grandTotalOriginalWeight = 0;
-                            $grandTotalSoldPacks = 0;
-                            $grandTotalSoldWeight = 0;
-                            $grandTotalSalesValue = 0;
-                            $grandTotalRemainingPacks = 0;
-                            $grandTotalRemainingWeight = 0;
-                        @endphp
+    @php
+        $grandTotalOriginalPacks = 0;
+        $grandTotalOriginalWeight = 0;
+        $grandTotalSoldPacks = 0;
+        $grandTotalSoldWeight = 0;
+        $grandTotalRemainingPacks = 0;
+        $grandTotalRemainingWeight = 0;
+        $grandTotalSalesValue = 0;
+    @endphp
 
-                        @forelse($reportData as $data)
-                            @php
-                                $originalPacks = floatval($data['original_packs'] ?? 0);
-                                $originalWeight = floatval($data['original_weight'] ?? 0);
-                                $soldPacks = floatval($data['sold_packs'] ?? 0);
-                                $soldWeight = floatval($data['sold_weight'] ?? 0);
-                                $remainingPacks = floatval($data['remaining_packs'] ?? 0);
-                                $remainingWeight = floatval(str_replace(',', '', $data['remaining_weight'] ?? 0));
+    @forelse($reportData as $data)
+        @php
+            $originalPacks = floatval($data['original_packs'] ?? 0);
+            $originalWeight = floatval($data['original_weight'] ?? 0);
+            $soldPacks = floatval($data['totalSoldpacks'] ?? 0);
+            $soldWeight = floatval($data['totalSoldWeight'] ?? 0);
+            $remainingPacks = floatval($data['remaining_packs'] ?? 0);
+            $remainingWeight = floatval($data['remaining_weight'] ?? 0);
+            $salesValue = floatval($data['total_sales_value'] ?? 0);
 
-                                $grandTotalOriginalPacks += $originalPacks;
-                                $grandTotalOriginalWeight += $originalWeight;
-                                $grandTotalSoldPacks += $soldPacks;
-                                $grandTotalSoldWeight += $soldWeight;
-                                $grandTotalRemainingPacks += $remainingPacks;
-                                $grandTotalRemainingWeight += $remainingWeight;
-                            @endphp
-                            <tr>
-                                <td>{{ $data['item_name'] }}</td>
-                                <td>{{ number_format($originalPacks) }}</td>
-                                <td>{{ number_format($originalWeight, 2) }}</td>
-                                <td>{{ number_format($soldPacks) }}</td>
-                                <td>{{ number_format($soldWeight, 2) }}</td>
-                                <td>{{ number_format($remainingPacks) }}</td>
-                                <td>{{ number_format($remainingWeight, 2) }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">දත්ත නොමැත.</td>
-                            </tr>
-                        @endforelse
+            $grandTotalOriginalPacks += $originalPacks;
+            $grandTotalOriginalWeight += $originalWeight;
+            $grandTotalSoldPacks += $soldPacks;
+            $grandTotalSoldWeight += $soldWeight;
+            $grandTotalRemainingPacks += $remainingPacks;
+            $grandTotalRemainingWeight += $remainingWeight;
+            $grandTotalSalesValue += $salesValue;
+        @endphp
+        <tr>
+            <td>{{ $data['item_name'] }}</td>
+            <td>{{ number_format($originalWeight, 2) }}</td>
+            <td>{{ number_format($originalPacks) }}</td>
+            <td>{{ number_format($soldWeight, 2) }}</td>
+            <td>{{ number_format($soldPacks) }}</td>
+            <td>{{ number_format($remainingWeight, 2) }}</td>
+            <td>{{ number_format($remainingPacks) }}</td>
+            
+        </tr>
+    @empty
+        <tr>
+            <td colspan="8" class="text-center text-muted py-4">දත්ත නොමැත.</td>
+        </tr>
+    @endforelse
 
-                        {{-- Totals Row --}}
-                        <tr class="total-row">
-                            <td class="text-end"><strong>සමස්ත එකතුව:</strong></td>
-                            <td><strong>{{ number_format($grandTotalOriginalPacks) }}</strong></td>
-                            <td><strong>{{ number_format($grandTotalOriginalWeight, 2) }}</strong></td>
-                            <td><strong>{{ number_format($grandTotalSoldPacks) }}</strong></td>
-                            <td><strong>{{ number_format($grandTotalSoldWeight, 2) }}</strong></td>
-                            <td><strong>{{ number_format($grandTotalRemainingPacks) }}</strong></td>
-                            <td><strong>{{ number_format($grandTotalRemainingWeight, 2) }}</strong></td>
-                        </tr>
-                    </tbody>
+    {{-- Totals Row --}}
+    <tr class="total-row">
+        <td class="text-end"><strong>සමස්ත එකතුව:</strong></td>
+        <td><strong>{{ number_format($grandTotalOriginalWeight, 2) }}</strong></td>
+        <td><strong>{{ number_format($grandTotalOriginalPacks) }}</strong></td>
+        <td><strong>{{ number_format($grandTotalSoldWeight, 2) }}</strong></td>
+        <td><strong>{{ number_format($grandTotalSoldPacks) }}</strong></td>
+        <td><strong>{{ number_format($grandTotalRemainingWeight, 2) }}</strong></td>
+        <td><strong>{{ number_format($grandTotalRemainingPacks) }}</strong></td>
+       
+    </tr>
+</tbody>
+
                 </table>
             </div>
         </div>
     </div>
-     <div>
-       
-        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" class="btn btn-success me-2">Download Excel</a>
-        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" class="btn btn-danger">Download PDF</a>
-    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ route('grn-overview.download2', ['format' => 'excel']) }}" class="btn btn-success me-2">Download Excel</a>
+    <a href="{{ route('grn-overview.download2', ['format' => 'pdf']) }}" class="btn btn-danger">Download PDF</a>
+
+    {{-- New form for the email button --}}
+    <form action="{{ route('report.email.overview-report') }}" method="POST" style="display:inline;">
+        @csrf
+        <button type="submit" class="btn btn-info">📧 Email Report</button>
+    </form>
 </div>
 
 {{-- Custom Styles --}}
@@ -110,8 +203,6 @@
         text-align: center;
         padding: 15px 0;
         position: relative;
-        background-color: #004d00;
-        color: white;
     }
 
     .report-title-bar .company-name {
@@ -180,62 +271,6 @@
 
     .text-muted {
         color: lightgray !important;
-    }
-
-    @media print {
-        body {
-            background-color: white !important;
-            color: black !important;
-        }
-
-        .container-fluid, .card, .card-header, .card-body,
-        .report-title-bar, .filter-summary.alert, .table,
-        .table thead th, .table tbody tr, .table tbody td,
-        .total-row {
-            background-color: white !important;
-            color: black !important;
-            border-color: #dee2e6 !important;
-        }
-
-        .card {
-            box-shadow: none !important;
-            border: none !important;
-        }
-
-        .report-title-bar {
-            text-align: center;
-            padding: 10px 0;
-            position: static;
-        }
-
-        .report-title-bar .print-btn {
-            display: none !important;
-        }
-
-        .report-title-bar .right-info {
-            position: static;
-            display: block;
-            margin-top: 5px;
-        }
-
-        .print-button, .btn-secondary {
-            display: none !important;
-        }
-
-        .table-striped tbody tr:nth-of-type(odd),
-        .table-striped tbody tr:nth-of-type(even),
-        .total-row {
-            background-color: #f8f9fa !important;
-            color: black !important;
-        }
-
-        .table-bordered th, .table-bordered td {
-            border: 1px solid #dee2e6 !important;
-        }
-
-        .text-end strong {
-            color: black !important;
-        }
     }
 </style>
 @endsection

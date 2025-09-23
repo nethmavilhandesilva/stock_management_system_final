@@ -19,17 +19,23 @@ class SupplierController extends Controller
         return view('dashboard.suppliers.create');
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'code' => 'required|unique:suppliers',
-            'name' => 'required',
-            'address' => 'required',
-        ]);
+   public function store(Request $request)
+{
+    $request->validate([
+        'code'    => 'required|unique:suppliers',
+        'name'    => 'required',
+        'address' => 'required',
+    ]);
 
-        Supplier::create($request->all());
-        return redirect()->route('suppliers.index')->with('success', 'Supplier added successfully!');
-    }
+    // Force 'code' to uppercase
+    $data = $request->all();
+    $data['code'] = strtoupper($data['code']);
+
+    Supplier::create($data);
+
+    return redirect()->route('suppliers.index')->with('success', 'Supplier added successfully!');
+}
+
 
     public function edit(Supplier $supplier)
     {

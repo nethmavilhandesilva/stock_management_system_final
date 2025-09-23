@@ -13,25 +13,25 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             padding: 30px 24px;
-            max-width: 600px;
+            max-width: 700px;
             margin: 40px auto;
         }
 
         h2 {
-            color: #4f46e5;
+            color: #fff;
             font-weight: 700;
             text-align: center;
             margin-bottom: 30px;
         }
 
         .form-label {
-            font-weight: 700;
-            color: #000000;
+            font-weight: 600;
+            color: #000;
         }
 
         .form-control {
             border-radius: 8px;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ced4da;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
@@ -46,7 +46,7 @@
             background-color: #198754;
             border-color: #198754;
             font-weight: 600;
-            padding: 10px 24px;
+            padding: 8px 24px;
         }
 
         .btn-success:hover {
@@ -58,7 +58,7 @@
             background-color: #6c757d;
             border-color: #6c757d;
             font-weight: 600;
-            padding: 10px 24px;
+            padding: 8px 24px;
             margin-left: 10px;
         }
 
@@ -74,32 +74,40 @@
         <form action="{{ route('customers.store') }}" method="POST">
             @csrf
 
-            <div class="mb-3">
-                <label for="short_name_field" class="form-label">කෙටි නම</label>
-                <input type="text" name="short_name" id="short_name_field"
-                    class="form-control @error('short_name') is-invalid @enderror"
-                    value="{{ old('short_name', $customer->short_name ?? '') }}" placeholder="කෙටි නම" required
-                    style="text-transform: uppercase;">
-            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="short_name_field" class="form-label">කෙටි නම</label>
+                    <input type="text" name="short_name" id="short_name_field"
+                        class="form-control @error('short_name') is-invalid @enderror"
+                        value="{{ old('short_name', $customer->short_name ?? '') }}" placeholder="කෙටි නම" required
+                        style="text-transform: uppercase;">
+                </div>
 
-            <div class="mb-3">
-                <label for="name_field" class="form-label">සම්පූර්ණ නම</label>
-                <input type="text" name="name" id="name_field" class="form-control" required>
-            </div>
+                <div class="col-md-6 mb-3">
+                    <label for="name_field" class="form-label">සම්පූර්ණ නම</label>
+                    <input type="text" name="name" id="name_field" class="form-control">
+                </div>
 
-            <div class="mb-3">
-                <label for="address_field" class="form-label">ලිපිනය</label>
-                <input type="text" name="address" id="address_field" class="form-control">
-            </div>
+                <div class="col-md-6 mb-3">
+                    <label for="ID_NO" class="form-label">ID_NO</label>
+                    <input type="text" name="ID_NO" id="ID_NO" class="form-control">
+                </div>
 
-            <div class="mb-3">
-                <label for="telephone_no_field" class="form-label">දුරකථන අංකය</label>
-                <input type="text" name="telephone_no" id="telephone_no_field" class="form-control">
-            </div>
+                <div class="col-md-6 mb-3">
+                    <label for="telephone_no_field" class="form-label">දුරකථන අංකය</label>
+                    <input type="text" name="telephone_no" id="telephone_no_field" class="form-control">
+                </div>
 
-            <div class="mb-3">
-                <label for="credit_limit_field" class="form-label">ණය සීමාව (Rs.)</label>
-                <input type="number" step="0.01" name="credit_limit" id="credit_limit_field" class="form-control" required>
+                <div class="col-md-12 mb-3">
+                    <label for="address_field" class="form-label">ලිපිනය</label>
+                    <input type="text" name="address" id="address_field" class="form-control">
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="credit_limit_field" class="form-label">ණය සීමාව (Rs.)</label>
+                    <input type="number" step="0.01" name="credit_limit" id="credit_limit_field" class="form-control"
+                        >
+                </div>
             </div>
 
             <div class="text-center mt-4">

@@ -282,7 +282,13 @@
             <div class="report-title-bar">
                 <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
                 <h4 class="fw-bold text-dark">🧾 සපයුම්කරුව මත වැඩළදම</h4>
-                <span class="right-info">{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span> {{-- Current Date and Time --}}
+                 @php
+                    $settingDate = \App\Models\Setting::value('value');
+                @endphp
+
+                <span class="right-info">
+                    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+                </span>
             </div>
 
             @php
@@ -362,7 +368,7 @@
             <th>බර</th>
             <th>මිල</th>
             <th>එකතුව</th>
-            <th>ගෙණුම්කරු</th> 
+            <th>ගෙණුම්කරු</th>
             <th>දිනය</th>
             <th>වැඩකලා</th>
         </tr>
@@ -419,29 +425,69 @@
                 <span>Total Weight (kg): <strong>{{ number_format($grandTotalWeight, 2) }}</strong></span>
                 <span>Total Amount: <strong>{{ number_format($grandTotalAmount, 2) }}</strong></span>
             </div>
+
+            {{-- WASTE DATA SECTION --}}
+            <div class="mt-4">
+                <h4 class="fw-bold text-dark mb-3">අපද්‍රව්‍ය පිළිබඳ වාර්තාව 🗑️</h4>
+                @php
+                    // Group GrnEntry records by supplier_code
+                    $grnGrouped = \App\Models\GrnEntry::select('supplier_code')
+                        ->selectRaw('SUM(wasted_packs) as total_wasted_packs')
+                        ->selectRaw('SUM(wasted_weight) as total_wasted_weight')
+                        ->selectRaw('SUM(wasted_weight * PerKGPrice) as total_wasted_cost')
+                        ->groupBy('supplier_code')
+                        ->get();
+                @endphp
+
+                @if($grnGrouped->isNotEmpty())
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>සැපයුම්කරුගේ කේතය</th>
+                                <th>අපතේ ගිය මලු (පැක්)</th>
+                                <th>අපතේ ගිය බර (kg)</th>
+                                <th>අපතේ ගිය මුදල (රු.)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($grnGrouped as $grnRecord)
+                                <tr>
+                                    <td>{{ $grnRecord->supplier_code }}</td>
+                                    <td>{{ $grnRecord->total_wasted_packs }}</td>
+                                    <td>{{ number_format($grnRecord->total_wasted_weight, 2) }}</td>
+                                    <td>{{ number_format($grnRecord->total_wasted_cost, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @else
+                    <p class="text-center text-muted">අපද්‍රව්‍ය පිළිබඳ වාර්තාවක් නොමැත.</p>
+                @endif
+            </div>
+            
         </div>
     </div>
-   <div class="page-utility-bar">
-    <span class="page-number">Page 1</span>
-    <div>
-        <form action="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" method="POST" class="d-inline">
-    @csrf
-    {{-- Add the hidden inputs here --}}
-    @foreach ($filters as $key => $value)
-        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-    @endforeach
-    <button type="submit" class="btn btn-success me-2">Download Excel</button>
-</form>
+    <div class="page-utility-bar">
+        <span class="page-number">Page 1</span>
+        <div>
+            <form action="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" method="POST" class="d-inline">
+                @csrf
+                {{-- Add the hidden inputs here --}}
+                @foreach ($filters as $key => $value)
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endforeach
+                <button type="submit" class="btn btn-success me-2">Download Excel</button>
+            </form>
 
-<form action="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" method="POST" class="d-inline">
-    @csrf
-    {{-- Add the hidden inputs here --}}
-    @foreach ($filters as $key => $value)
-        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-    @endforeach
-    <button type="submit" class="btn btn-danger">Download PDF</button>
-</form>
+            <form action="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" method="POST" class="d-inline">
+                @csrf
+                {{-- Add the hidden inputs here --}}
+                @foreach ($filters as $key => $value)
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endforeach
+                <button type="submit" class="btn btn-danger">Download PDF</button>
+            </form>
+        </div>
     </div>
-</div>
 
 @endsection

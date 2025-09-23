@@ -30,7 +30,14 @@ class Sale extends Model
         'CustomerBillEnteredOn',
         'FirstTimeBillPrintedOn',
         'BillChangedOn',
-        'UniqueCode'
+        'BillReprintAfterchanges',
+        'UniqueCode',
+        'PerKGPrice',
+        'PerKGTotal',
+        'SellingKGTotal',
+        'Date',
+        'ip_address',
+        'given_amount',
 
     ];
 
@@ -46,6 +53,11 @@ class Sale extends Model
     
     public function item()
 {
-    return $this->belongsTo(Item::class, 'item_code', 'id');
+    return $this->belongsTo(Item::class, 'item_code', 'no');
+}
+// In Sale.php model
+public function itemByNo()
+{
+    return $this->belongsTo(Item::class, 'item_code', 'no');
 }
 }

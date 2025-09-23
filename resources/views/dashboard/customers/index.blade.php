@@ -81,6 +81,7 @@
                     <tr>
                         <th>කෙටි නම</th>
                         <th>සම්පූර්ණ නම</th>
+                         <th>ID_NO</th>
                         <th>ලිපිනය</th>
                         <th>දුරකථන අංකය</th>
                         <th>ණය සීමාව (Rs.)</th>
@@ -92,6 +93,7 @@
                         <tr>
                             <td><span style="text-transform: uppercase;">{{ $customer->short_name }}</span></td>
                             <td>{{ $customer->name }}</td>
+                             <td>{{ $customer->ID_NO }}</td>
                             <td>{{ $customer->address }}</td>
                             <td>{{ $customer->telephone_no }}</td>
                             <td>Rs. {{ number_format($customer->credit_limit, 2) }}</td>

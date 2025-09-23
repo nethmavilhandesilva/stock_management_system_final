@@ -4,7 +4,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'POS-Sales')</title>
+   <title>@yield('title', 'POS-Sales')</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
@@ -29,10 +29,7 @@
         </div>
     </div>
 @endif
-<!-- Report Filter Modal Trigger (Button anywhere) -->
-<button class="btn btn-secondary position-fixed bottom-0 end-0 m-4 rounded-circle" data-bs-toggle="modal" data-bs-target="#reportFilterModal" title="Open Report Filter">
-    <i class="material-icons">assessment</i>
-</button>
+
 <!-- Bootstrap 5 JS Bundle (with Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -55,15 +52,17 @@
         </div>
     </div>
 
-    @include('layouts.partials.footer')
+   @include('layouts.partials.footer')
     @include('layouts.partials.report-modal')
     @include('layouts.partials.item-wisemodal')
     @include('layouts.partials.weight-modal')
     @include('layouts.partials.salecode-modal')
     @include('layouts.partials.sales-modal')
     @include('layouts.partials.salesadjustments-modal')
-     @include('layouts.partials.dayStartModal')
-     @include('layouts.partials.LoanReport-Modal')
+    @include('layouts.partials.dayStartModal')
+    @include('layouts.partials.LoanReport-Modal')
+    @include('layouts.partials.grn-modal')
+     @include('layouts.partials.filterModal')
 
 
 </div>

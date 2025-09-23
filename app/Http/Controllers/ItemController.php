@@ -19,18 +19,22 @@ class ItemController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'no' => 'required',
-            'type' => 'required',
-            'pack_cost' => 'required|numeric',
-            'pack_due' => 'required|numeric',
-        ]);
+{
+    $request->validate([
+        'no'        => 'required',
+        'type'      => 'required',
+        'pack_cost' => 'required|numeric',
+        'pack_due'  => 'required|numeric',
+    ]);
 
-        Item::create($request->all());
+    // Force 'no' to uppercase
+    $data = $request->all();
+    $data['no'] = strtoupper($data['no']);
 
-        return redirect()->route('items.index')->with('success', 'Item added successfully!');
-    }
+    Item::create($data);
+
+    return redirect()->route('items.index')->with('success', 'Item added successfully!');
+}
 
     public function edit(Item $item)
     {

@@ -4,7 +4,7 @@
       @csrf
       <div class="modal-content" style="background-color: #99ff99;">
         <div class="modal-header">
-          <h5 class="modal-title" id="reportLoanModalLabel">📄 සේවකයාගේ ණය වාර්තාව</h5>
+          <h5 class="modal-title" id="reportLoanModalLabel">📄 ගැනුම්කරු ණය වාර්තාව</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
@@ -15,9 +15,9 @@
           </div>
 
           <div class="mb-3">
-            <label for="loanReport_customer_select" class="form-label" style="font-weight: bold; color: black;">සේවකයා තෝරන්න</label>
+            <label for="loanReport_customer_select" class="form-label" style="font-weight: bold; color: black;">ගැනුම්කරු තෝරන්න</label>
             <select id="loanReport_customer_select" class="form-select form-select-sm select2" name="customer_short_name">
-              <option value="">-- සේවකයා තෝරන්න --</option>
+              <option value="">-- ගැනුම්කරු --</option>
               @foreach ($customers as $customer)
                 <option value="{{ $customer->short_name }}">
                   {{ $customer->short_name }} | {{ $customer->name }}
@@ -40,6 +40,9 @@
         </div>
 
         <div class="modal-footer">
+             <a href="{{ route('report.loans.email-simple') }}" class="print-btn" style="text-decoration: none;">
+        📧 Email Report
+    </a>
           <button type="submit" class="btn btn-primary w-100">ඉදිරිපත් කරන්න</button>
         </div>
       </div>

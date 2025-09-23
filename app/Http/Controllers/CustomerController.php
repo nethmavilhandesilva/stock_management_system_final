@@ -22,10 +22,11 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'short_name'=>'required',
-            'name' => 'required',
+            'short_name'=>'nullable',
+            'ID_NO' => 'nullable',
+            'name' => 'nullable',
             'telephone_no' => 'nullable',
-            'credit_limit' => 'required|numeric',
+            'credit_limit' => 'nullable',
         ]);
 
         Customer::create($request->all());
@@ -43,6 +44,7 @@ class CustomerController extends Controller
             'short_name'=>'required',
             'name' => 'required',
             'telephone_no' => 'nullable',
+             'ID_NO' => 'nullable',
             'credit_limit' => 'required|numeric',
         ]);
 
