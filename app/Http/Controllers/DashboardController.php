@@ -15,7 +15,8 @@ class DashboardController extends Controller
     $sales = \App\Models\Sale::whereNull('Processed')->orWhere('Processed','N')->get(); // or whatever selection you want
     $totalSum = $sales->sum(function($s){ return ($s->weight * $s->price_per_kg); });
     $printedSales = \App\Models\Sale::where('bill_printed', 'Y')->get();
-    $unprintedSales = \App\Models\Sale::where('bill_printed', 'N')->get();
+     $unprintedSales = \App\Models\Sale::where('bill_printed', 'N')->get();
+
     return view('reactdashboard.sales.entry', compact('customers','entries','sales','totalSum','printedSales','unprintedSales'));
 }                       
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useMemo } from "react";
 
 export default function SalesEntry() {
   const initialSales = window.__INITIAL_SALES__ || [];
@@ -39,12 +40,24 @@ export default function SalesEntry() {
   const printedCustomers = [...new Set(printedSales.map(s => s.customer_code))];
   const unprintedCustomers = [...new Set(unprintedSales.map(s => s.customer_code))];
 
-  const displayedSales = selectedPrintedCustomer
-    ? printedSales.filter(s => s.customer_code === selectedPrintedCustomer)
-    : selectedUnprintedCustomer
-    ? unprintedSales.filter(s => s.customer_code === selectedUnprintedCustomer)
-    : unprintedSales; // Default view is all unprinted sales
-  
+  // Compute displayed sales dynamically
+  const displayedSales = useMemo(() => {
+  if (selectedPrintedCustomer) {
+    return [...printedSales, ...sales].filter(
+      s => s.customer_code === selectedPrintedCustomer
+    );
+  }
+
+  if (selectedUnprintedCustomer) {
+    return [...unprintedSales, ...sales].filter(
+      s => s.customer_code === selectedUnprintedCustomer
+    );
+  }
+
+  // Only show new entries in the main table; unprinted panel stays intact
+  return [...sales];
+}, [printedSales, unprintedSales, sales, selectedPrintedCustomer, selectedUnprintedCustomer]);
+
   // --- Form handlers ---
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -149,7 +162,7 @@ export default function SalesEntry() {
 
       const newSale = data.data || {};
       setSales(prev => [...prev, newSale]);
-      setUnprintedSales(prev => [...prev, newSale]); // Add new sale to unprinted list
+
       setForm({
         customer_code: form.customer_code,
         customer_name: form.customer_name,
@@ -177,7 +190,7 @@ export default function SalesEntry() {
     const n = parseFloat(val);
     return Number.isFinite(n) ? n.toFixed(2) : "0.00";
   }
-  
+
   const mainTotal = displayedSales.reduce((acc, s) => {
     const t = parseFloat(s.total) || parseFloat(s.weight || 0) * parseFloat(s.price_per_kg || 0);
     return acc + (isNaN(t) ? 0 : t);
@@ -210,34 +223,59 @@ export default function SalesEntry() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [sales]); // <-- The key change: add 'sales' as a dependency
 
   async function markAllSalesAsProcessed() {
-    if (!window.confirm("Are you sure you want to mark all unprocessed sales as processed?")) return;
+  const salesToProcess = sales.map(s => s.id);
 
-    try {
-      const res = await fetch("/sales/mark-all-processed", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": CSRF_TOKEN,
-        },
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message || "All sales marked as processed successfully!");
-        setSales([]);
-        setUnprintedSales([]); // Clear the unprinted sales list
-        window.currentDisplayedSalesData = [];
-      } else {
-        alert(data.message || "Failed to mark sales as processed.");
-      }
-    } catch (err) {
-      console.error("Error marking sales as processed:", err);
-      alert("Failed to mark sales as processed. Check console for details.");
-    }
+  if (!salesToProcess.length) {
+    alert("No sales to process.");
+    return;
   }
+
+  if (!window.confirm("Are you sure you want to mark ALL sales as processed?")) return;
+
+  try {
+    const res = await fetch("/sales/mark-all-processed", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": CSRF_TOKEN,
+      },
+      body: JSON.stringify({ sales_ids: salesToProcess }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert(data.message || "All sales marked as processed successfully!");
+
+      // Update unprinted sales locally (keep middle section intact)
+      const updatedSales = sales.map(s => ({
+        ...s,
+        bill_printed: "N",
+      }));
+
+      // Only update unprintedSales if you want to track newly processed sales
+      setUnprintedSales(prev => [...prev, ...updatedSales.filter(s => s.bill_printed === "N")]);
+
+      // Clear the main table only
+      setSales([]);
+
+      // Do NOT clear selectedPrintedCustomer or selectedUnprintedCustomer
+      // So the left/middle panels remain visible
+      window.__UNPRINTED_SALES__ = [...unprintedSales];
+      window.currentDisplayedSalesData = [];
+    } else {
+      alert(data.message || "Failed to mark sales as processed.");
+    }
+  } catch (err) {
+    console.error("Error marking sales as processed:", err);
+    alert("Failed to mark sales as processed. Check console for details.");
+  }
+}
+
+
 
   async function handlePrintAndClear() {
     const salesData = window.currentDisplayedSalesData || [];
@@ -286,7 +324,7 @@ export default function SalesEntry() {
 
       // Clear table and update printed sales
       setSales(prev => prev.filter(s => !salesIds.includes(s.id)));
-      setUnprintedSales(prev => prev.filter(s => !salesIds.includes(s.id))); // Update unprinted list
+      setUnprintedSales(prev => [...prev, ...salesData.map(s => ({ ...s, bill_printed: 'N' }))]); // Update unprinted list
       setPrintedSales(prev => [...prev, ...salesData.map(s => ({ ...s, bill_printed: 'Y' }))]);
       window.currentDisplayedSalesData = [];
     } catch (err) {
@@ -413,11 +451,10 @@ export default function SalesEntry() {
                 <li key={customerCode}>
                   <button
                     onClick={() => handlePrintedCustomerClick(customerCode)}
-                    className={`w-full text-left p-3 mb-2 rounded-xl border ${
-                      selectedPrintedCustomer === customerCode 
-                        ? 'bg-blue-500 text-white border-blue-600' 
+                    className={`w-full text-left p-3 mb-2 rounded-xl border ${selectedPrintedCustomer === customerCode
+                        ? 'bg-blue-500 text-white border-blue-600'
                         : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                    }`}
+                      }`}
                   >
                     <div className="font-medium">
                       {customerCode}
@@ -449,11 +486,10 @@ export default function SalesEntry() {
                 <li key={customerCode}>
                   <button
                     onClick={() => handleUnprintedCustomerClick(customerCode)}
-                    className={`w-full text-left p-3 mb-2 rounded-xl border ${
-                      selectedUnprintedCustomer === customerCode 
-                        ? 'bg-blue-500 text-white border-blue-600' 
+                    className={`w-full text-left p-3 mb-2 rounded-xl border ${selectedUnprintedCustomer === customerCode
+                        ? 'bg-blue-500 text-white border-blue-600'
                         : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                    }`}
+                      }`}
                   >
                     <div className="font-medium">
                       {customerCode}
@@ -529,9 +565,8 @@ export default function SalesEntry() {
             {selectedPrintedCustomer
               ? `Sales for ${selectedPrintedCustomer}`
               : selectedUnprintedCustomer
-              ? `Unprinted Sales for ${selectedUnprintedCustomer}`
-              : "All Unprinted Sales"
-            }
+                ? `Unprinted Sales for ${selectedUnprintedCustomer}`
+                : "All Unprinted Sales"}
           </h3>
           <div className="overflow-x-auto">
             <table className="min-w-full border border-gray-200 rounded-xl text-sm">
