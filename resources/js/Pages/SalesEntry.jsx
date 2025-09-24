@@ -262,7 +262,6 @@ export default function SalesEntry() {
       }
 
       handleClearForm();
-      window.currentDisplayedSalesData = [...sales, data.data];
     } catch (err) {
       setErrors({ form: err.message || "Network or server error" });
     }
@@ -293,7 +292,7 @@ export default function SalesEntry() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [sales]);
+  }, [sales, selectedUnprintedCustomer, selectedPrintedCustomer]);
 
   // --- F5: Mark all processed ---
   useEffect(() => {
@@ -330,10 +329,16 @@ export default function SalesEntry() {
           ...s,
           bill_printed: "N",
         }));
-        setUnprintedSales(prev => [...prev, ...updatedSales.filter(s => s.bill_printed === "N")]);
+        
+        // Corrected State Update: Use a functional update to get the latest state
+        setUnprintedSales(prev => [...prev, ...updatedSales]);
+        
+        // Clear the new sales list
         setSales([]);
-        window.__UNPRINTED_SALES__ = [...unprintedSales];
-        window.currentDisplayedSalesData = [];
+        
+        // REMOVED: window.__UNPRINTED_SALES__ = [...unprintedSales];
+        // REMOVED: window.currentDisplayedSalesData = [];
+        
       } else {
         alert(data.message || "Failed to mark sales as processed.");
       }
@@ -344,81 +349,73 @@ export default function SalesEntry() {
   }
 
  async function handlePrintAndClear() {
-    // Determine the sales to print based on the current selection
-    const salesData = (() => {
-      if (selectedPrintedCustomer) {
-        return [...printedSales, ...sales].filter(
-          s => s.customer_code === selectedPrintedCustomer
-        );
-      }
-      if (selectedUnprintedCustomer) {
-        return [...unprintedSales, ...sales].filter(
-          s => s.customer_code === selectedUnprintedCustomer
-        );
-      }
-      return [...sales]; // fallback: all new sales
-    })();
+    const salesData = (() => {
+      if (selectedPrintedCustomer) {
+        return [...printedSales, ...sales].filter(
+          s => s.customer_code === selectedPrintedCustomer
+        );
+      }
+      if (selectedUnprintedCustomer) {
+        return [...unprintedSales, ...sales].filter(
+          s => s.customer_code === selectedUnprintedCustomer
+        );
+      }
+      return [...sales];
+    })();
 
-    if (!salesData.length) {
-      alert("No sales records to print!");
-      return;
-    }
+    if (!salesData.length) {
+      alert("No sales records to print!");
+      return;
+    }
 
-    const salesIds = salesData.map(s => s.id);
+    const salesIds = salesData.map(s => s.id);
 
-    try {
-      // 1️⃣ Mark as printed & get bill_no
-      const res = await fetch("/sales/mark-printed", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": CSRF_TOKEN,
-        },
-        body: JSON.stringify({ sales_ids: salesIds }),
-      });
+    try {
+      const res = await fetch("/sales/mark-printed", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": CSRF_TOKEN,
+        },
+        body: JSON.stringify({ sales_ids: salesIds }),
+      });
 
-      const text = await res.text();
-      let data = {};
-      try {
-        data = JSON.parse(text);
-      } catch {
-        console.error("Invalid JSON from backend:", text);
-        alert("Printing failed: Invalid server response.");
-        return;
-      }
+      const text = await res.text();
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.error("Invalid JSON from backend:", text);
+        alert("Printing failed: Invalid server response.");
+        return;
+      }
 
-      if (data.status !== "success") {
-        alert("Failed to process print request: " + (data.message || "Unknown error"));
-        return;
-      }
+      if (data.status !== "success") {
+        alert("Failed to process print request: " + (data.message || "Unknown error"));
+        return;
+      }
 
-      const customerName = salesData[0].customer_code || "N/A";
-      const billNo = data.bill_no || "";
+      const customerName = salesData[0].customer_code || "N/A";
+      const billNo = data.bill_no || "";
 
-      // Print main receipt
-      await printReceipt(buildFullReceiptHTML(salesData, billNo, customerName), customerName);
+      await printReceipt(buildFullReceiptHTML(salesData, billNo, customerName), customerName);
 
-      // Optional: Print COPY
-      const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>`
-        + buildFullReceiptHTML(salesData, billNo, customerName);
-      await printReceipt(copyHtml, customerName + " - Copy");
+      const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>`
+        + buildFullReceiptHTML(salesData, billNo, customerName);
+      await printReceipt(copyHtml, customerName + " - Copy");
 
-      // --- Update states to trigger re-render ---
-      setSales(prev => prev.filter(s => !salesIds.includes(s.id)));
-      setPrintedSales(prev => [...prev, ...salesData.map(s => ({ ...s, bill_printed: 'Y' }))]);
-      
-      // Remove printed sales from unprinted list
-      setUnprintedSales(prev => prev.filter(s => !salesIds.includes(s.id)));
+      setSales(prev => prev.filter(s => !salesIds.includes(s.id)));
+      setPrintedSales(prev => [...prev, ...salesData.map(s => ({ ...s, bill_printed: 'Y' }))]);
+      setUnprintedSales(prev => prev.filter(s => !salesIds.includes(s.id)));
 
-      // Optional: Clear selected customers if needed
-      setSelectedUnprintedCustomer(null);
-      setSelectedPrintedCustomer(null);
+      setSelectedUnprintedCustomer(null);
+      setSelectedPrintedCustomer(null);
 
-    } catch (err) {
-      console.error("Printing error:", err);
-      alert("Printing failed. Check console for details.");
-    }
-  }
+    } catch (err) {
+      console.error("Printing error:", err);
+      alert("Printing failed. Check console for details.");
+    }
+  }
   function buildFullReceiptHTML(salesData, billNo, customerName) {
     const date = new Date().toLocaleDateString();
     const time = new Date().toLocaleTimeString();
