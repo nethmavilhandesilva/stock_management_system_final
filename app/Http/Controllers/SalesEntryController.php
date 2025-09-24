@@ -359,105 +359,103 @@ private function generateNewBillNumber()
 }
 
     public function update(Request $request, Sale $sale)
-    {
-        $validatedData = $request->validate([
-            'customer_code' => 'required|string|max:255',
-            'customer_name' => 'nullable|string|max:255',
-            'code' => 'required|string|max:255',
-            'supplier_code' => 'nullable|string|max:255',
-            'item_code' => 'required|string|max:255',
-            'item_name' => 'required|string|max:255',
-            'weight' => 'required|numeric|min:0',
-            'price_per_kg' => 'required|numeric|min:0',
-            'total' => 'required|numeric|min:0',
-            'packs' => 'required|integer|min:0',
+{
+    $validatedData = $request->validate([
+        'customer_code' => 'required|string|max:255',
+        'customer_name' => 'nullable|string|max:255',
+        'code' => 'required|string|max:255',
+        'supplier_code' => 'nullable|string|max:255',
+        'item_code' => 'required|string|max:255',
+        'item_name' => 'required|string|max:255',
+        'weight' => 'required|numeric|min:0',
+        'price_per_kg' => 'required|numeric|min:0',
+        'total' => 'required|numeric|min:0',
+        'packs' => 'required|integer|min:0',
+    ]);
+
+    try {
+        // Get the setting date value
+        $settingDate = \App\Models\Setting::value('value');
+        $formattedDate = \Carbon\Carbon::parse($settingDate)->format('Y-m-d');
+
+        $oldPacks = $sale->packs;
+        $oldWeight = $sale->weight;
+
+        // --- Adjustment tracking for bill_printed ---
+        if ($sale->bill_printed === 'Y') {
+            $originalData = $sale->toArray();
+            Salesadjustment::create([
+                'customer_code' => $originalData['customer_code'],
+                'supplier_code' => $originalData['supplier_code'] ?? null,
+                'code' => $originalData['code'],
+                'item_code' => $originalData['item_code'],
+                'item_name' => $originalData['item_name'],
+                'weight' => $originalData['weight'],
+                'price_per_kg' => $originalData['price_per_kg'],
+                'total' => $originalData['total'],
+                'packs' => $originalData['packs'],
+                'bill_no' => $originalData['bill_no'],
+                'user_id' => 'c11',
+                'type' => 'original',
+                'original_created_at' => \Carbon\Carbon::parse($sale->Date)
+                    ->setTimeFrom(\Carbon\Carbon::parse($sale->created_at))
+                    ->format('Y-m-d H:i:s'),
+                'original_updated_at' => $sale->updated_at,
+                'Date' => $formattedDate,
+            ]);
+        }
+
+        // ✅ Update the sale safely with null coalescing
+        $sale->update([
+            'customer_code' => $validatedData['customer_code'],
+            'customer_name' => $validatedData['customer_name'] ?? $sale->customer_name,
+            'code' => $validatedData['code'],
+            'supplier_code' => $validatedData['supplier_code'] ?? $sale->supplier_code,
+            'item_code' => $validatedData['item_code'],
+            'item_name' => $validatedData['item_name'],
+            'weight' => $validatedData['weight'],
+            'packs' => $validatedData['packs'],
+            'price_per_kg' => $validatedData['price_per_kg'],
+            'total' => $validatedData['total'],
+            'updated' => 'Y',
+            'BillChangedOn' => now(),
         ]);
 
-        try {
-            // Get the setting date value
-            $settingDate = \App\Models\Setting::value('value');
-            $formattedDate = \Carbon\Carbon::parse($settingDate)->format('Y-m-d');
+        $this->updateGrnRemainingStock($validatedData['code']);
 
-            $oldPacks = $sale->packs;
-            $oldWeight = $sale->weight;
-
-            // --- Adjustment tracking for bill_printed ---
-            if ($sale->bill_printed === 'Y') {
-                $originalData = $sale->toArray();
-                Salesadjustment::create([
-                    'customer_code' => $originalData['customer_code'],
-                    'supplier_code' => $originalData['supplier_code'],
-                    'code' => $originalData['code'],
-                    'item_code' => $originalData['item_code'],
-                    'item_name' => $originalData['item_name'],
-                    'weight' => $originalData['weight'],
-                    'price_per_kg' => $originalData['price_per_kg'],
-                    'total' => $originalData['total'],
-                    'packs' => $originalData['packs'],
-                    'bill_no' => $originalData['bill_no'],
-                    'user_id' => 'c11',
-                    'type' => 'original',
-                     'original_created_at' => \Carbon\Carbon::parse($sale->Date)
-    ->setTimeFrom(\Carbon\Carbon::parse($sale->created_at))
-    ->format('Y-m-d H:i:s'),
-
-                    'original_updated_at' => $sale->updated_at,
-                    'Date' => $formattedDate, // ✅ Add Date
-                ]);
-            }
-
-            // Update the sale
-            $sale->update([
-                'customer_code' => $validatedData['customer_code'],
-                'customer_name' => $validatedData['customer_name'] ?? $sale->customer_name,
-                'code' => $validatedData['code'],
-                'supplier_code' => $validatedData['supplier_code'],
-                'item_code' => $validatedData['item_code'],
-                'item_name' => $validatedData['item_name'],
-                'weight' => $validatedData['weight'],
-                'packs' => $validatedData['packs'],
-                'price_per_kg' => $validatedData['price_per_kg'],
-                'total' => $validatedData['total'],
-                'updated' => 'Y',
-                'BillChangedOn' => now(),
+        // Save updated version as adjustment if needed
+        if ($sale->bill_printed === 'Y') {
+            $newData = $sale->fresh();
+            Salesadjustment::create([
+                'customer_code' => $newData->customer_code,
+                'supplier_code' => $newData->supplier_code ?? null,
+                'code' => $newData->code,
+                'item_code' => $newData->item_code,
+                'item_name' => $newData->item_name,
+                'weight' => $newData->weight,
+                'price_per_kg' => $newData->price_per_kg,
+                'total' => $newData->total,
+                'packs' => $newData->packs,
+                'bill_no' => $newData->bill_no,
+                'user_id' => 'c11',
+                'type' => 'updated',
+                'original_created_at' => $newData->created_at,
+                'original_updated_at' => $newData->updated_at,
+                'Date' => $formattedDate,
             ]);
-
-            $this->updateGrnRemainingStock($validatedData['code']);
-
-            // Save updated version as adjustment if needed
-            if ($sale->bill_printed === 'Y') {
-                $newData = $sale->fresh();
-                Salesadjustment::create([
-                    'customer_code' => $newData->customer_code,
-                    'supplier_code' => $newData->supplier_code,
-                    'code' => $newData->code,
-                    'item_code' => $newData->item_code,
-                    'item_name' => $newData->item_name,
-                    'weight' => $newData->weight,
-                    'price_per_kg' => $newData->price_per_kg,
-                    'total' => $newData->total,
-                    'packs' => $newData->packs,
-                    'bill_no' => $newData->bill_no,
-                    'user_id' => 'c11',
-                    'type' => 'updated',
-                    'original_created_at' => $newData->created_at,
-                    'original_updated_at' => $newData->updated_at,
-                    'Date' => $formattedDate, // ✅ Add Date
-                ]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'sale' => $sale->fresh(),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update sales record: ' . $e->getMessage(),
-            ], 500);
         }
-    }
 
+        return response()->json([
+            'success' => true,
+            'sale' => $sale->fresh(),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update sales record: ' . $e->getMessage(),
+        ], 500);
+    }
+}
 
 public function destroy(Sale $sale)
 {

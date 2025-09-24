@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
+import { useMemo } from "react";
 
 export default function SalesEntry() {
   const initialSales = window.__INITIAL_SALES__ || [];
   const customers = window.__CUSTOMERS__ || [];
   const entries = window.__ENTRIES__ || [];
-  const initialPrintedSales = window.__PRINTED_SALES__ || [];
-  const initialUnprintedSales = window.__UNPRINTED_SALES__ || [];
+  const initialPrintedSales = window.__PRINTED_SALES__ || []; // Get from backend
+  const initialUnprintedSales = window.__UNPRINTED_SALES__ || []; // New data from backend
   const STORE_URL = window.__STORE_URL__ || "/grn";
   const CSRF_TOKEN =
     document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
@@ -16,7 +17,6 @@ export default function SalesEntry() {
   const [unprintedSales, setUnprintedSales] = useState(initialUnprintedSales);
   const [selectedPrintedCustomer, setSelectedPrintedCustomer] = useState(null);
   const [selectedUnprintedCustomer, setSelectedUnprintedCustomer] = useState(null);
-  const [editingSaleId, setEditingSaleId] = useState(null);
   const [form, setForm] = useState({
     customer_code: "",
     customer_name: "",
@@ -40,17 +40,21 @@ export default function SalesEntry() {
   const printedCustomers = [...new Set(printedSales.map(s => s.customer_code))];
   const unprintedCustomers = [...new Set(unprintedSales.map(s => s.customer_code))];
 
+  // Compute displayed sales dynamically
   const displayedSales = useMemo(() => {
     if (selectedPrintedCustomer) {
       return [...printedSales, ...sales].filter(
         s => s.customer_code === selectedPrintedCustomer
       );
     }
+
     if (selectedUnprintedCustomer) {
       return [...unprintedSales, ...sales].filter(
         s => s.customer_code === selectedUnprintedCustomer
       );
     }
+
+    // Only show new entries in the main table; unprinted panel stays intact
     return [...sales];
   }, [printedSales, unprintedSales, sales, selectedPrintedCustomer, selectedUnprintedCustomer]);
 
@@ -84,7 +88,6 @@ export default function SalesEntry() {
         price_per_kg: entry.price_per_kg ?? entry.PerKGPrice ?? entry.SalesKGPrice ?? prev.price_per_kg ?? "",
         original_weight: entry.original_weight ?? prev.original_weight ?? "",
         original_packs: entry.original_packs ?? prev.original_packs ?? "",
-        given_amount: entry.given_amount ?? prev.given_amount ?? "",
       }));
       setGrnPriceDisplay(entry.price_per_kg ?? entry.PerKGPrice ?? entry.SalesKGPrice ?? "");
     } else {
@@ -97,91 +100,8 @@ export default function SalesEntry() {
         price_per_kg: "",
         original_weight: "",
         original_packs: "",
-        given_amount: "",
       }));
       setGrnPriceDisplay("");
-    }
-  }
-
-  function handleEditClick(sale) {
-    setForm({
-      customer_code: sale.customer_code,
-      customer_name: sale.customer_name,
-      supplier_code: sale.supplier_code,
-      code: sale.code,
-      item_code: sale.item_code,
-      item_name: sale.item_name,
-      weight: sale.weight,
-      price_per_kg: sale.price_per_kg,
-      total: sale.total,
-      packs: sale.packs,
-      grn_entry_code: sale.grn_entry_code,
-      original_weight: sale.original_weight,
-      original_packs: sale.original_packs,
-      given_amount: sale.given_amount,
-    });
-    setEditingSaleId(sale.id);
-  }
-  
-  // NEW: Function to clear the form
-  function handleClearForm() {
-    setForm({
-      customer_code: "",
-      customer_name: "",
-      supplier_code: "",
-      code: "",
-      item_code: "",
-      item_name: "",
-      weight: "",
-      price_per_kg: "",
-      total: "",
-      packs: "",
-      grn_entry_code: "",
-      original_weight: "",
-      original_packs: "",
-      given_amount: "",
-    });
-    setEditingSaleId(null);
-    setGrnPriceDisplay("");
-  }
-  
-  // NEW: Function to handle deletion
-  async function handleDeleteClick() {
-    if (!editingSaleId) return;
-
-    if (!window.confirm("Are you sure you want to delete this sales record?")) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/sales/${editingSaleId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": CSRF_TOKEN,
-        },
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setErrors({ form: data.error || "Failed to delete record." });
-        return;
-      }
-      
-      // Update state to remove the deleted sale
-      const removeDeletedSale = (prevSales) => prevSales.filter(s => s.id !== editingSaleId);
-      
-      setSales(removeDeletedSale);
-      setPrintedSales(removeDeletedSale);
-      setUnprintedSales(removeDeletedSale);
-      
-      handleClearForm(); // Clear the form after deletion
-      
-      alert(data.message || "Record deleted successfully.");
-      
-    } catch (err) {
-      setErrors({ form: err.message || "Network or server error" });
     }
   }
 
@@ -219,12 +139,8 @@ export default function SalesEntry() {
     };
 
     try {
-      const isEditing = editingSaleId !== null;
-      const url = isEditing ? `/sales/${editingSaleId}` : STORE_URL;
-      const method = isEditing ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method: method,
+      const res = await fetch(STORE_URL, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -244,25 +160,27 @@ export default function SalesEntry() {
         return;
       }
 
-      if (isEditing) {
-        const updatedSale = data.sale;
-        const updateSalesState = (prevSales) =>
-          prevSales.map((s) => (s.id === updatedSale.id ? updatedSale : s));
+      const newSale = data.data || {};
+      setSales(prev => [...prev, newSale]);
 
-        if (printedSales.find(s => s.id === updatedSale.id)) {
-          setPrintedSales(updateSalesState);
-        } else if (unprintedSales.find(s => s.id === updatedSale.id)) {
-          setUnprintedSales(updateSalesState);
-        } else {
-          setSales(updateSalesState);
-        }
-      } else {
-        const newSale = data.data || {};
-        setSales(prev => [...prev, newSale]);
-      }
-
-      handleClearForm();
-      window.currentDisplayedSalesData = [...sales, data.data];
+      setForm({
+        customer_code: form.customer_code,
+        customer_name: form.customer_name,
+        supplier_code: "",
+        code: "",
+        item_code: "",
+        item_name: "",
+        weight: "",
+        price_per_kg: "",
+        total: "",
+        packs: "",
+        grn_entry_code: "",
+        original_weight: "",
+        original_packs: "",
+        given_amount: "",
+      });
+      setGrnPriceDisplay("");
+      window.currentDisplayedSalesData = [...sales, newSale];
     } catch (err) {
       setErrors({ form: err.message || "Network or server error" });
     }
@@ -309,11 +227,14 @@ export default function SalesEntry() {
 
   async function markAllSalesAsProcessed() {
     const salesToProcess = sales.map(s => s.id);
+
     if (!salesToProcess.length) {
       alert("No sales to process.");
       return;
     }
+
     if (!window.confirm("Are you sure you want to mark ALL sales as processed?")) return;
+
     try {
       const res = await fetch("/sales/mark-all-processed", {
         method: "POST",
@@ -323,15 +244,26 @@ export default function SalesEntry() {
         },
         body: JSON.stringify({ sales_ids: salesToProcess }),
       });
+
       const data = await res.json();
+
       if (data.success) {
         alert(data.message || "All sales marked as processed successfully!");
+
+        // Update unprinted sales locally (keep middle section intact)
         const updatedSales = sales.map(s => ({
           ...s,
           bill_printed: "N",
         }));
+
+        // Only update unprintedSales if you want to track newly processed sales
         setUnprintedSales(prev => [...prev, ...updatedSales.filter(s => s.bill_printed === "N")]);
+
+        // Clear the main table only
         setSales([]);
+
+        // Do NOT clear selectedPrintedCustomer or selectedUnprintedCustomer
+        // So the left/middle panels remain visible
         window.__UNPRINTED_SALES__ = [...unprintedSales];
         window.currentDisplayedSalesData = [];
       } else {
@@ -343,89 +275,93 @@ export default function SalesEntry() {
     }
   }
 
- async function handlePrintAndClear() {
-    // Determine the sales to print based on the current selection
-    const salesData = (() => {
-      if (selectedPrintedCustomer) {
-        return [...printedSales, ...sales].filter(
-          s => s.customer_code === selectedPrintedCustomer
-        );
-      }
-      if (selectedUnprintedCustomer) {
-        return [...unprintedSales, ...sales].filter(
-          s => s.customer_code === selectedUnprintedCustomer
-        );
-      }
-      return [...sales]; // fallback: all new sales
-    })();
+  async function handlePrintAndClear() {
+    // Determine the sales to print based on the current selection
+    const salesData = (() => {
+      if (selectedPrintedCustomer) {
+        return [...printedSales, ...sales].filter(
+          s => s.customer_code === selectedPrintedCustomer
+        );
+      }
+      if (selectedUnprintedCustomer) {
+        return [...unprintedSales, ...sales].filter(
+          s => s.customer_code === selectedUnprintedCustomer
+        );
+      }
+      return [...sales]; // fallback: all new sales
+    })();
 
-    if (!salesData.length) {
-      alert("No sales records to print!");
-      return;
-    }
+    if (!salesData.length) {
+      alert("No sales records to print!");
+      return;
+    }
 
-    const salesIds = salesData.map(s => s.id);
+    const salesIds = salesData.map(s => s.id);
 
-    try {
-      // 1️⃣ Mark as printed & get bill_no
-      const res = await fetch("/sales/mark-printed", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": CSRF_TOKEN,
-        },
-        body: JSON.stringify({ sales_ids: salesIds }),
-      });
+    try {
+      // 1️⃣ Mark as printed & get bill_no
+      const res = await fetch("/sales/mark-printed", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": CSRF_TOKEN,
+        },
+        body: JSON.stringify({ sales_ids: salesIds }),
+      });
 
-      const text = await res.text();
-      let data = {};
-      try {
-        data = JSON.parse(text);
-      } catch {
-        console.error("Invalid JSON from backend:", text);
-        alert("Printing failed: Invalid server response.");
-        return;
-      }
+      const text = await res.text();
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.error("Invalid JSON from backend:", text);
+        alert("Printing failed: Invalid server response.");
+        return;
+      }
 
-      if (data.status !== "success") {
-        alert("Failed to process print request: " + (data.message || "Unknown error"));
-        return;
-      }
+      if (data.status !== "success") {
+        alert("Failed to process print request: " + (data.message || "Unknown error"));
+        return;
+      }
 
-      const customerName = salesData[0].customer_code || "N/A";
-      const billNo = data.bill_no || "";
+      const customerName = salesData[0].customer_code || "N/A";
+      const billNo = data.bill_no || "";
 
-      // Print main receipt
-      await printReceipt(buildFullReceiptHTML(salesData, billNo, customerName), customerName);
+      // Print main receipt
+      await printReceipt(buildFullReceiptHTML(salesData, billNo, customerName), customerName);
 
-      // Optional: Print COPY
-      const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>`
-        + buildFullReceiptHTML(salesData, billNo, customerName);
-      await printReceipt(copyHtml, customerName + " - Copy");
+      // Optional: Print COPY
+      const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>`
+        + buildFullReceiptHTML(salesData, billNo, customerName);
+      await printReceipt(copyHtml, customerName + " - Copy");
 
-      // --- Update states to trigger re-render ---
-      setSales(prev => prev.filter(s => !salesIds.includes(s.id)));
-      setPrintedSales(prev => [...prev, ...salesData.map(s => ({ ...s, bill_printed: 'Y' }))]);
-      
-      // Remove printed sales from unprinted list
-      setUnprintedSales(prev => prev.filter(s => !salesIds.includes(s.id)));
+      // --- Update states to trigger re-render ---
+      setSales(prev => prev.filter(s => !salesIds.includes(s.id)));
+      setPrintedSales(prev => [...prev, ...salesData.map(s => ({ ...s, bill_printed: 'Y' }))]);
+      
+      // Remove printed sales from unprinted list
+      setUnprintedSales(prev => prev.filter(s => !salesIds.includes(s.id)));
 
-      // Optional: Clear selected customers if needed
-      setSelectedUnprintedCustomer(null);
-      setSelectedPrintedCustomer(null);
+      // Optional: Clear selected customers if needed
+      setSelectedUnprintedCustomer(null);
+      setSelectedPrintedCustomer(null);
 
-    } catch (err) {
-      console.error("Printing error:", err);
-      alert("Printing failed. Check console for details.");
-    }
-  }
+    } catch (err) {
+      console.error("Printing error:", err);
+      alert("Printing failed. Check console for details.");
+    }
+  }
+
   function buildFullReceiptHTML(salesData, billNo, customerName) {
     const date = new Date().toLocaleDateString();
     const time = new Date().toLocaleTimeString();
+
     let totalAmountSum = 0;
     let totalPacksSum = 0;
     const itemGroups = {};
+
     const givenAmount = salesData.reduce((sum, s) => sum + (parseFloat(s.given_amount) || 0), 0);
+
     const itemsHtml = salesData
       .map((s) => {
         totalAmountSum += parseFloat(s.total) || 0;
@@ -436,6 +372,7 @@ export default function SalesEntry() {
         if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
         itemGroups[itemName].totalWeight += weight;
         itemGroups[itemName].totalPacks += packs;
+
         return `<tr style="font-size:1.2em;">
           <td style="text-align:left;">${itemName} <br>${packs}</td>
           <td style="text-align:right; padding-right:18px;">${weight.toFixed(2)}</td>
@@ -444,13 +381,20 @@ export default function SalesEntry() {
         </tr>`;
       })
       .join("");
+
     const packCostTotal = window.globalTotalPackCostValue || 0;
     const totalPrice = totalAmountSum;
     const remaining = givenAmount - (totalPrice + packCostTotal);
-    const givenAmountRow = givenAmount > 0 ? `<tr>
+
+    const givenAmountRow =
+      givenAmount > 0
+        ? `<tr>
         <td style="width:50%; text-align:left;">දුන් මුදල: <strong>${givenAmount.toFixed(2)}</strong></td>
         <td style="width:50%; text-align:right;">ඉතිරිය: <strong>${Math.abs(remaining).toFixed(2)}</strong></td>
-      </tr>` : "";
+      </tr>`
+        : "";
+
+    // Final receipt HTML
     return `<div style="width:100%; max-width:300px; margin:0 auto; padding:5px; font-family:sans-serif;">
       <div style="text-align:center;">
         <h3>B32 TAG ට්‍රේඩර්ස්</h3>
@@ -591,32 +535,15 @@ export default function SalesEntry() {
           </div>
 
           <input name="total" type="number" value={form.total} readOnly placeholder="Total" className="w-full px-4 py-2 border bg-gray-100 rounded-xl" />
-          
-          <div className="flex space-x-4">
-            <button type="submit" className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
-              {editingSaleId ? "Update Sales Entry" : "Add Sales Entry"}
-            </button>
-            {editingSaleId && (
-              <button 
-                type="button" 
-                onClick={handleDeleteClick} 
-                className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition"
-              >
-                Delete
-              </button>
-            )}
-            <button 
-              type="button" 
-              onClick={handleClearForm} 
-              className="py-3 px-6 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-xl shadow-lg transition"
-            >
-              Clear
-            </button>
-          </div>
+
+          <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
+            Add Sales Entry
+          </button>
         </form>
 
         {errors.form && <div className="mt-6 p-3 bg-red-100 text-red-700 rounded-xl">{errors.form}</div>}
 
+        {/* Main Sales Table (Dynamically displays Unprinted or Printed sales) */}
         <div className="mt-10">
           <h3 className="text-xl font-bold mb-4">
             {selectedPrintedCustomer
@@ -640,11 +567,7 @@ export default function SalesEntry() {
               </thead>
               <tbody>
                 {displayedSales.map((s, idx) => (
-                  <tr 
-                    key={s.id || idx} 
-                    className="text-center hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleEditClick(s)}
-                  >
+                  <tr key={idx} className="text-center hover:bg-gray-50">
                     <td className="px-4 py-2 border">{s.code}</td>
                     <td className="px-4 py-2 border">{s.customer_code}</td>
                     <td className="px-4 py-2 border">{s.item_name}</td>
@@ -696,4 +619,4 @@ export default function SalesEntry() {
       </div>
     </div>
   );
-}
+} 

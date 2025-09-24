@@ -58,6 +58,7 @@ Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.sto
 Route::put('/sales/update/{sale}', [SalesEntryController::class, 'update'])->name('sales.update');
 Route::put('/sales/{sale}', [SalesEntryController::class, 'update']);
 Route::delete('/sales/delete/{sale}', [SalesEntryController::class, 'destroy'])->name('sales.delete');
+Route::delete('/sales/{sale}', [SalesEntryController::class, 'destroy']);
 
 Route::post('/sales/mark-all-processed', [SalesEntryController::class, 'markAllAsProcessed'])->name('sales.markAllAsProcessed');
 Route::get('api/sales/unprinted/{customer_code}', [SalesEntryController::class, 'getUnprintedSales']);
