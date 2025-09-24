@@ -56,6 +56,7 @@ Route::post('/grn-damages', [GrnEntryController::class, 'Damagestore'])->name('g
 Route::get('/dashboard', [SalesEntryController::class, 'create'])->name('dashboard');
 Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.store');
 Route::put('/sales/update/{sale}', [SalesEntryController::class, 'update'])->name('sales.update');
+Route::put('/sales/{sale}', [SalesEntryController::class, 'update']);
 Route::delete('/sales/delete/{sale}', [SalesEntryController::class, 'destroy'])->name('sales.delete');
 
 Route::post('/sales/mark-all-processed', [SalesEntryController::class, 'markAllAsProcessed'])->name('sales.markAllAsProcessed');

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 export default function SalesEntry() {
   const initialSales = window.__INITIAL_SALES__ || [];
@@ -17,6 +16,7 @@ export default function SalesEntry() {
   const [unprintedSales, setUnprintedSales] = useState(initialUnprintedSales);
   const [selectedPrintedCustomer, setSelectedPrintedCustomer] = useState(null);
   const [selectedUnprintedCustomer, setSelectedUnprintedCustomer] = useState(null);
+  const [editingSaleId, setEditingSaleId] = useState(null); // NEW: State to track the sale being edited
   const [form, setForm] = useState({
     customer_code: "",
     customer_name: "",
@@ -88,6 +88,7 @@ export default function SalesEntry() {
         price_per_kg: entry.price_per_kg ?? entry.PerKGPrice ?? entry.SalesKGPrice ?? prev.price_per_kg ?? "",
         original_weight: entry.original_weight ?? prev.original_weight ?? "",
         original_packs: entry.original_packs ?? prev.original_packs ?? "",
+        given_amount: entry.given_amount ?? prev.given_amount ?? "",
       }));
       setGrnPriceDisplay(entry.price_per_kg ?? entry.PerKGPrice ?? entry.SalesKGPrice ?? "");
     } else {
@@ -100,9 +101,31 @@ export default function SalesEntry() {
         price_per_kg: "",
         original_weight: "",
         original_packs: "",
+        given_amount: "",
       }));
       setGrnPriceDisplay("");
     }
+  }
+
+  // NEW: Function to populate form fields for editing
+  function handleEditClick(sale) {
+    setForm({
+      customer_code: sale.customer_code,
+      customer_name: sale.customer_name,
+      supplier_code: sale.supplier_code,
+      code: sale.code,
+      item_code: sale.item_code,
+      item_name: sale.item_name,
+      weight: sale.weight,
+      price_per_kg: sale.price_per_kg,
+      total: sale.total,
+      packs: sale.packs,
+      grn_entry_code: sale.grn_entry_code,
+      original_weight: sale.original_weight,
+      original_packs: sale.original_packs,
+      given_amount: sale.given_amount,
+    });
+    setEditingSaleId(sale.id); // Set the ID of the sale being edited
   }
 
   // --- Calculate total ---
@@ -139,8 +162,13 @@ export default function SalesEntry() {
     };
 
     try {
-      const res = await fetch(STORE_URL, {
-        method: "POST",
+      // NEW: Determine if we are updating or creating
+      const isEditing = editingSaleId !== null;
+      const url = isEditing ? `/sales/${editingSaleId}` : STORE_URL;
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -160,12 +188,28 @@ export default function SalesEntry() {
         return;
       }
 
-      const newSale = data.data || {};
-      setSales(prev => [...prev, newSale]);
+      if (isEditing) {
+        // NEW: Update the correct sales array (printed, unprinted, or new)
+        const updatedSale = data.sale;
+        const updateSalesState = (prevSales) =>
+          prevSales.map((s) => (s.id === updatedSale.id ? updatedSale : s));
 
+        if (printedSales.find(s => s.id === updatedSale.id)) {
+          setPrintedSales(updateSalesState);
+        } else if (unprintedSales.find(s => s.id === updatedSale.id)) {
+          setUnprintedSales(updateSalesState);
+        } else {
+          setSales(updateSalesState);
+        }
+      } else {
+        const newSale = data.data || {};
+        setSales(prev => [...prev, newSale]);
+      }
+
+      // Clear the form and editing state
       setForm({
-        customer_code: form.customer_code,
-        customer_name: form.customer_name,
+        customer_code: "",
+        customer_name: "",
         supplier_code: "",
         code: "",
         item_code: "",
@@ -179,8 +223,9 @@ export default function SalesEntry() {
         original_packs: "",
         given_amount: "",
       });
+      setEditingSaleId(null);
       setGrnPriceDisplay("");
-      window.currentDisplayedSalesData = [...sales, newSale];
+      window.currentDisplayedSalesData = [...sales, data.data];
     } catch (err) {
       setErrors({ form: err.message || "Network or server error" });
     }
@@ -536,8 +581,9 @@ export default function SalesEntry() {
 
           <input name="total" type="number" value={form.total} readOnly placeholder="Total" className="w-full px-4 py-2 border bg-gray-100 rounded-xl" />
 
+          {/* NEW: Conditional button text */}
           <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
-            Add Sales Entry
+            {editingSaleId ? "Update Sales Entry" : "Add Sales Entry"}
           </button>
         </form>
 
@@ -567,7 +613,12 @@ export default function SalesEntry() {
               </thead>
               <tbody>
                 {displayedSales.map((s, idx) => (
-                  <tr key={idx} className="text-center hover:bg-gray-50">
+                  // NEW: Add a key with s.id and the onClick handler
+                  <tr 
+                    key={s.id || idx} 
+                    className="text-center hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleEditClick(s)}
+                  >
                     <td className="px-4 py-2 border">{s.code}</td>
                     <td className="px-4 py-2 border">{s.customer_code}</td>
                     <td className="px-4 py-2 border">{s.item_name}</td>

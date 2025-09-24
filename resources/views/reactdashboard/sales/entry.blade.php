@@ -3,6 +3,7 @@
 <head>
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Sales Entry</title>
+ @vite(['resources/css/app.css', 'resources/js/app.js'])
   @viteReactRefresh
   @vite(['resources/js/app.jsx'])
 </head>
