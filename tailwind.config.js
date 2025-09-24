@@ -7,6 +7,8 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        './resources/js/**/*.jsx', // <-- Add this line
+        './resources/js/**/*.js',  // <-- Add this line for any .js files
     ],
 
     theme: {
