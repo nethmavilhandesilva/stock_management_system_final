@@ -123,7 +123,6 @@ export default function SalesEntry() {
     setEditingSaleId(sale.id);
   }
   
-  // NEW: Function to clear the form
   function handleClearForm() {
     setForm({
       customer_code: "",
@@ -145,7 +144,6 @@ export default function SalesEntry() {
     setGrnPriceDisplay("");
   }
   
-  // NEW: Function to handle deletion
   async function handleDeleteClick() {
     if (!editingSaleId) return;
 
@@ -169,14 +167,13 @@ export default function SalesEntry() {
         return;
       }
       
-      // Update state to remove the deleted sale
       const removeDeletedSale = (prevSales) => prevSales.filter(s => s.id !== editingSaleId);
       
       setSales(removeDeletedSale);
       setPrintedSales(removeDeletedSale);
       setUnprintedSales(removeDeletedSale);
       
-      handleClearForm(); // Clear the form after deletion
+      handleClearForm();
       
       alert(data.message || "Record deleted successfully.");
       
@@ -292,7 +289,7 @@ export default function SalesEntry() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [sales, selectedUnprintedCustomer, selectedPrintedCustomer]);
+  }, [sales, selectedUnprintedCustomer, selectedPrintedCustomer, unprintedSales]);
 
   // --- F5: Mark all processed ---
   useEffect(() => {
@@ -330,14 +327,9 @@ export default function SalesEntry() {
           bill_printed: "N",
         }));
         
-        // Corrected State Update: Use a functional update to get the latest state
         setUnprintedSales(prev => [...prev, ...updatedSales]);
         
-        // Clear the new sales list
         setSales([]);
-        
-        // REMOVED: window.__UNPRINTED_SALES__ = [...unprintedSales];
-        // REMOVED: window.currentDisplayedSalesData = [];
         
       } else {
         alert(data.message || "Failed to mark sales as processed.");
@@ -348,20 +340,25 @@ export default function SalesEntry() {
     }
   }
 
- async function handlePrintAndClear() {
+async function handlePrintAndClear() {
     const salesData = (() => {
-      if (selectedPrintedCustomer) {
-        return [...printedSales, ...sales].filter(
-          s => s.customer_code === selectedPrintedCustomer
-        );
-      }
+      // Combine both new sales and previously unprinted sales for processing
+      const allUnprintedAndNewSales = [...sales, ...unprintedSales];
+
       if (selectedUnprintedCustomer) {
-        return [...unprintedSales, ...sales].filter(
+        return allUnprintedAndNewSales.filter(
           s => s.customer_code === selectedUnprintedCustomer
         );
       }
+      if (selectedPrintedCustomer) {
+        return printedSales.filter(
+          s => s.customer_code === selectedPrintedCustomer
+        );
+      }
+      // Default case: return all new sales if no customer is selected
       return [...sales];
     })();
+
 
     if (!salesData.length) {
       alert("No sales records to print!");
