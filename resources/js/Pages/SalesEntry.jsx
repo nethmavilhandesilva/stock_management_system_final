@@ -39,33 +39,68 @@ export default function SalesEntry() {
   });
   const [errors, setErrors] = useState({});
   const [grnPriceDisplay, setGrnPriceDisplay] = useState("");
+  // --- New state for the search query ---
+  const [unprintedSearchQuery, setUnprintedSearchQuery] = useState("");
+  const [printedSearchQuery, setPrintedSearchQuery] = useState("");
+
 
   // --- Derived State using useMemo for efficient filtering ---
-  const printedSales = useMemo(() => allSales.filter((s) => s.bill_printed === 'Y'), [allSales]);
-  const unprintedSales = useMemo(() => allSales.filter((s) => s.bill_printed !== 'Y'), [allSales]);
   const newSales = useMemo(() => allSales.filter((s) => s.id && !s.bill_printed), [allSales]);
-  
-  const printedCustomers = useMemo(() => {
-    return [...new Set(printedSales.map((s) => s.customer_code))];
-  }, [printedSales]);
+  const printedSales = useMemo(() => allSales.filter((s) => s.bill_printed === 'Y'), [allSales]);
+  // MODIFIED: Filter for sales explicitly marked as 'N', not just anything that isn't 'Y'.
+  const unprintedSales = useMemo(() => allSales.filter((s) => s.bill_printed === 'N'), [allSales]);
 
-  const unprintedCustomers = useMemo(() => {
-    return [...new Set(unprintedSales.map((s) => s.customer_code))];
-  }, [unprintedSales]);
-  
-  const displayedSales = useMemo(() => {
-    if (selectedPrintedCustomer) {
-      return printedSales.filter(
-        (s) => s.customer_code === selectedPrintedCustomer
-      );
+  const printedCustomers = useMemo(() => {
+    const allPrinted = [...new Set(printedSales.map((s) => s.customer_code))];
+    if (!printedSearchQuery) {
+      return allPrinted;
     }
+    const lowerCaseQuery = printedSearchQuery.toLowerCase();
+    const filteredByBillNo = printedSales.filter((s) =>
+      (s.bill_no?.toString() || '').toLowerCase().includes(lowerCaseQuery)
+    ).map((s) => s.customer_code);
+    
+    const filteredByCustomerCode = allPrinted.filter((code) =>
+      code.toLowerCase().includes(lowerCaseQuery)
+    );
+    
+    // Combine and get unique customer codes
+    return [...new Set([...filteredByBillNo, ...filteredByCustomerCode])];
+  }, [printedSales, printedSearchQuery]);
+
+
+  // --- Updated useMemo to filter customers based on search query ---
+  const unprintedCustomers = useMemo(() => {
+    const allUnprinted = [...new Set(unprintedSales.map((s) => s.customer_code))];
+    if (!unprintedSearchQuery) {
+      return allUnprinted;
+    }
+    const lowerCaseQuery = unprintedSearchQuery.toLowerCase();
+    return allUnprinted.filter((code) =>
+      code.toLowerCase().includes(lowerCaseQuery)
+    );
+  }, [unprintedSales, unprintedSearchQuery]);
+
+  // MODIFIED: Change the display logic to prioritize unprinted customers, then new sales, and finally printed.
+  const displayedSales = useMemo(() => {
+    let salesToShow = newSales;
+
     if (selectedUnprintedCustomer) {
-      return unprintedSales.filter(
+      const selectedSales = unprintedSales.filter(
         (s) => s.customer_code === selectedUnprintedCustomer
       );
+      // Combine new sales with the selected unprinted sales
+      salesToShow = [...salesToShow, ...selectedSales];
+    } else if (selectedPrintedCustomer) {
+      const selectedSales = printedSales.filter(
+        (s) => s.customer_code === selectedPrintedCustomer
+      );
+      // Combine new sales with the selected printed sales
+      salesToShow = [...salesToShow, ...selectedSales];
     }
-    return newSales;
-  }, [printedSales, unprintedSales, newSales, selectedPrintedCustomer, selectedUnprintedCustomer]);
+
+    return salesToShow;
+  }, [newSales, unprintedSales, printedSales, selectedUnprintedCustomer, selectedPrintedCustomer]);
 
   // --- Derived State for Bill No ---
   const currentBillNo = useMemo(() => {
@@ -570,7 +605,18 @@ export default function SalesEntry() {
       {/* Left section: Printed Customers */}
       <div className="w-1/4 bg-white shadow-xl rounded-xl p-4 mr-6 overflow-y-auto max-h-screen">
         <h2 className="text-xl font-bold mb-4">Printed Customers</h2>
-        {printedSales.length === 0 ? (
+        {/* --- New Search Bar for Printed Customers --- */}
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search by Bill No or Code..."
+            value={printedSearchQuery}
+            onChange={(e) => setPrintedSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300"
+          />
+        </div>
+        {/* --- End of New Search Bar --- */}
+        {printedCustomers.length === 0 ? (
           <p className="text-gray-500">No printed sales yet.</p>
         ) : (
           <div className="mb-6">
@@ -581,8 +627,8 @@ export default function SalesEntry() {
                   <button
                     onClick={() => handlePrintedCustomerClick(customerCode)}
                     className={`w-full text-left p-3 mb-2 rounded-xl border ${selectedPrintedCustomer === customerCode
-                      ? "bg-blue-500 text-white border-blue-600"
-                      : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                        ? "bg-blue-500 text-white border-blue-600"
+                        : "bg-gray-50 hover:bg-gray-100 border-gray-200"
                       }`}
                   >
                     <div className="font-medium">{customerCode}</div>
@@ -789,8 +835,19 @@ export default function SalesEntry() {
             </span>
           </h3>
         </div>
-        {unprintedSales.length === 0 ? (
-          <p className="text-gray-500">No unprinted sales.</p>
+        {/* --- New Search Bar --- */}
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search by Customer Code..."
+            value={unprintedSearchQuery}
+            onChange={(e) => setUnprintedSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300"
+          />
+        </div>
+        {/* --- End of New Search Bar --- */}
+        {unprintedCustomers.length === 0 ? (
+          <p className="text-gray-500">No unprinted sales found.</p>
         ) : (
           <div className="mb-6">
             <h3 className="font-semibold text-gray-700 mb-2">Customers</h3>
@@ -800,8 +857,8 @@ export default function SalesEntry() {
                   <button
                     onClick={() => handleUnprintedCustomerClick(customerCode)}
                     className={`w-full text-left p-3 mb-2 rounded-xl border ${selectedUnprintedCustomer === customerCode
-                      ? "bg-blue-500 text-white border-blue-600"
-                      : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                        ? "bg-blue-500 text-white border-blue-600"
+                        : "bg-gray-50 hover:bg-gray-100 border-gray-200"
                       }`}
                   >
                     <div className="font-medium">{customerCode}</div>
@@ -812,7 +869,7 @@ export default function SalesEntry() {
                           (s) => s.customer_code === customerCode
                         ).length
                       }
-                  </div>
+                    </div>
                   </button>
                 </li>
               ))}
