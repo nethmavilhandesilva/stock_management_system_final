@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import Select from "react-select";
 
 export default function SalesEntry() {
   const initialSales = window.__INITIAL_SALES__ || [];
@@ -52,6 +53,9 @@ export default function SalesEntry() {
   // --- New state for the search query ---
   const [unprintedSearchQuery, setUnprintedSearchQuery] = useState("");
   const [printedSearchQuery, setPrintedSearchQuery] = useState("");
+  
+  // --- ADD THIS MISSING STATE ---
+  const [grnSearchInput, setGrnSearchInput] = useState("");
 
   // --- Field order for navigation ---
   const fieldOrder = [
@@ -69,13 +73,13 @@ export default function SalesEntry() {
   const handleKeyDown = (e, currentFieldIndex) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      
+
       // If we're on the last field (price_per_kg), submit the form
       if (currentFieldIndex === 6) { // price_per_kg is index 6
         handleSubmit(e);
         return;
       }
-      
+
       // Move to next field
       const nextFieldIndex = currentFieldIndex + 1;
       if (nextFieldIndex < fieldOrder.length) {
@@ -195,46 +199,6 @@ export default function SalesEntry() {
     }));
   }
 
-  function handleGrnSelect(e) {
-    const code = e.target.value;
-    const entry = entries.find((x) => String(x.code) === String(code));
-    if (entry) {
-      setForm((prev) => ({
-        ...prev,
-        grn_entry_code: code,
-        supplier_code: entry.supplier_code || prev.supplier_code || "",
-        code: entry.code || prev.code || "",
-        item_code: entry.item_code || entry.itemCode || prev.item_code || "",
-        item_name: entry.item_name || entry.itemName || prev.item_name || "",
-        price_per_kg:
-          entry.price_per_kg ??
-          entry.PerKGPrice ??
-          entry.SalesKGPrice ??
-          prev.price_per_kg ??
-          "",
-        original_weight: entry.original_weight ?? prev.original_weight ?? "",
-        original_packs: entry.original_packs ?? prev.original_packs ?? "",
-        given_amount: entry.given_amount ?? prev.given_amount ?? "",
-      }));
-      setGrnPriceDisplay(
-        entry.price_per_kg ?? entry.PerKGPrice ?? entry.SalesKGPrice ?? ""
-      );
-    } else {
-      setForm((prev) => ({
-        ...prev,
-        grn_entry_code: "",
-        code: "",
-        item_code: "",
-        item_name: "",
-        price_per_kg: "",
-        original_weight: "",
-        original_packs: "",
-        given_amount: "",
-      }));
-      setGrnPriceDisplay("");
-    }
-  }
-
   function handleEditClick(sale) {
     setForm({
       customer_code: sale.customer_code,
@@ -274,6 +238,7 @@ export default function SalesEntry() {
     });
     setEditingSaleId(null);
     setGrnPriceDisplay("");
+    setGrnSearchInput(""); // Clear search input when form is cleared
   }
 
   // --- Updated Delete handler to use single state ---
@@ -322,6 +287,10 @@ export default function SalesEntry() {
       total: tot ? Number(tot.toFixed(2)) : "",
     }));
   }, [form.weight, form.price_per_kg]);
+  
+  useEffect(() => {
+    customerCodeRef.current?.focus();
+  }, []);
 
   // --- Updated Submit handler to use single state ---
   async function handleSubmit(e) {
@@ -564,8 +533,8 @@ export default function SalesEntry() {
             parseFloat(s.price_per_kg) || 0
           ).toFixed(2)}</td>
           <td style="text-align:right;">${(parseFloat(s.total) || 0).toFixed(
-          2
-        )}</td>
+            2
+          )}</td>
         </tr>`;
       })
       .join("");
@@ -741,23 +710,77 @@ export default function SalesEntry() {
                 </option>
               ))}
             </select>
-            <select
-              ref={grnSelectRef}
-              value={form.grn_entry_code}
-              onChange={handleGrnSelect}
-              onKeyDown={(e) => handleKeyDown(e, 2)}
-              className="px-4 py-2 border rounded-xl"
-            >
-              <option value="">-- Select GRN Entry --</option>
-              {entries.map((en) => (
-                <option key={en.code} value={en.code}>
-                  {en.code} | {en.item_name}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {/* GRN Select - FIXED VERSION */}
+            <Select
+              ref={grnSelectRef}
+              value={
+                form.grn_entry_code
+                  ? { value: form.grn_entry_code, label: `${form.grn_entry_code} - ${form.item_name}` }
+                  : null
+              }
+              onChange={(selected) => {
+                if (selected) {
+                  const entry = entries.find((en) => en.code === selected.value);
+                  setForm((prev) => ({
+                    ...prev,
+                    grn_entry_code: selected.value,
+                    item_name: entry?.item_name || "",
+                    supplier_code: entry?.supplier_code || "",
+                    item_code: entry?.item_code || "",
+                    price_per_kg: entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice || "",
+                  }));
+                  setGrnSearchInput(""); // Clear search input
+                  setTimeout(() => itemNameRef.current?.focus(), 100);
+                }
+              }}
+              onInputChange={(inputValue, actionMeta) => {
+                if (actionMeta.action === "input-change") {
+                  setGrnSearchInput(inputValue);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  
+                  if (grnSearchInput.trim() === "") {
+                    setTimeout(() => itemNameRef.current?.focus(), 100);
+                    return;
+                  }
+
+                  // Find matching entry using our tracked input value
+                  const matchingEntry = entries.find((en) =>
+                    en.code.toLowerCase().includes(grnSearchInput.toLowerCase()) ||
+                    en.item_name.toLowerCase().includes(grnSearchInput.toLowerCase())
+                  );
+
+                  if (matchingEntry) {
+                    setForm((prev) => ({
+                      ...prev,
+                      grn_entry_code: matchingEntry.code,
+                      item_name: matchingEntry.item_name || "",
+                      supplier_code: matchingEntry.supplier_code || "",
+                      item_code: matchingEntry.item_code || "",
+                      price_per_kg: matchingEntry.price_per_kg || matchingEntry.PerKGPrice || matchingEntry.SalesKGPrice || "",
+                    }));
+                    setGrnSearchInput(""); // Clear search input
+                    
+                    setTimeout(() => itemNameRef.current?.focus(), 100);
+                  } else {
+                    setTimeout(() => itemNameRef.current?.focus(), 100);
+                  }
+                }
+              }}
+              options={entries.map((en) => ({
+                value: en.code,
+                label: `${en.code} - ${en.item_name}`,
+              }))}
+              placeholder="Select GRN Entry"
+              isSearchable={true}
+              noOptionsMessage={() => "No GRN entries found"}
+            />
+
+            {/* Item Name */}
             <input
               ref={itemNameRef}
               type="text"
@@ -765,8 +788,9 @@ export default function SalesEntry() {
               readOnly
               placeholder="Item Name"
               onKeyDown={(e) => handleKeyDown(e, 3)}
-              className="col-span-2 px-4 py-2 border bg-gray-100 rounded-xl"
+              className="px-4 py-2 border rounded-xl"
             />
+
             <input
               ref={weightRef}
               name="weight"
