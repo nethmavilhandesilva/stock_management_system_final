@@ -58,35 +58,51 @@ export default function SalesEntry() {
   const [grnSearchInput, setGrnSearchInput] = useState("");
 
   // --- Field order for navigation ---
-  const fieldOrder = [
-    { ref: customerCodeRef, name: 'customer_code' },
-    { ref: customerSelectRef, name: 'customer_code' },
-    { ref: grnSelectRef, name: 'grn_entry_code' },
-    { ref: itemNameRef, name: 'item_name' },
-    { ref: weightRef, name: 'weight' },
-    { ref: packsRef, name: 'packs' },
-    { ref: pricePerKgRef, name: 'price_per_kg' },
-    { ref: totalRef, name: 'total' },
-  ];
+ const fieldOrder = [
+  { ref: customerCodeRef, name: "customer_code_input" },
+  { ref: customerSelectRef, name: "customer_code_select" },
+  { ref: grnSelectRef, name: "grn_entry_code" },
+  { ref: itemNameRef, name: "item_name" },
+  { ref: weightRef, name: "weight" },
+  { ref: packsRef, name: "packs" },
+  { ref: pricePerKgRef, name: "price_per_kg" },
+  { ref: totalRef, name: "total" },
+];
 
-  // --- Handle Enter key navigation ---
-  const handleKeyDown = (e, currentFieldIndex) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
+// --- Skip Map (configure skips here) ---
+const skipMap = {
+  customer_code_input: "grn_entry_code", // skip select and go to grn
+  grn_entry_code: "weight", // skip item_name and go directly to weight
+};
 
-      // If we're on the last field (price_per_kg), submit the form
-      if (currentFieldIndex === 6) { // price_per_kg is index 6
-        handleSubmit(e);
-        return;
-      }
+// --- Handle Enter key navigation ---
+const handleKeyDown = (e, currentFieldIndex) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
 
-      // Move to next field
-      const nextFieldIndex = currentFieldIndex + 1;
-      if (nextFieldIndex < fieldOrder.length) {
-        fieldOrder[nextFieldIndex].ref.current?.focus();
-      }
+    // If we're on the last field (price_per_kg), submit the form
+    if (fieldOrder[currentFieldIndex].name === "price_per_kg") {
+      handleSubmit(e);
+      return;
     }
-  };
+
+    let nextFieldIndex = currentFieldIndex + 1;
+    const currentName = fieldOrder[currentFieldIndex].name;
+
+    // Apply skip map if defined
+    if (skipMap[currentName]) {
+      nextFieldIndex = fieldOrder.findIndex(
+        (f) => f.name === skipMap[currentName]
+      );
+    }
+
+    if (nextFieldIndex < fieldOrder.length) {
+      fieldOrder[nextFieldIndex].ref.current?.focus();
+    }
+  }
+};
+
+
 
   // --- Modified handleInputChange to include field index ---
   function handleInputChange(e, fieldIndex = null) {
@@ -731,7 +747,7 @@ export default function SalesEntry() {
                     price_per_kg: entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice || "",
                   }));
                   setGrnSearchInput("");
-                  setTimeout(() => itemNameRef.current?.focus(), 100);
+                  setTimeout(() =>  weightRef.current?.focus(), 100);
                 }
               }}
               onInputChange={(inputValue, actionMeta) => {
@@ -751,7 +767,7 @@ export default function SalesEntry() {
                   e.stopPropagation();
 
                   if (grnSearchInput.trim() === "") {
-                    setTimeout(() => itemNameRef.current?.focus(), 100);
+                    setTimeout(() =>  weightRef.current?.focus(), 100);
                     return;
                   }
 
@@ -776,7 +792,7 @@ export default function SalesEntry() {
                     }));
                     setGrnSearchInput("");
                   }
-                  setTimeout(() => itemNameRef.current?.focus(), 100);
+                  setTimeout(() =>  weightRef.current?.focus(), 100);
                 }
               }}
               options={entries.map((en) => ({
