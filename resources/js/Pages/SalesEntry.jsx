@@ -53,7 +53,7 @@ export default function SalesEntry() {
   // --- New state for the search query ---
   const [unprintedSearchQuery, setUnprintedSearchQuery] = useState("");
   const [printedSearchQuery, setPrintedSearchQuery] = useState("");
-  
+
   // --- ADD THIS MISSING STATE ---
   const [grnSearchInput, setGrnSearchInput] = useState("");
 
@@ -287,7 +287,7 @@ export default function SalesEntry() {
       total: tot ? Number(tot.toFixed(2)) : "",
     }));
   }, [form.weight, form.price_per_kg]);
-  
+
   useEffect(() => {
     customerCodeRef.current?.focus();
   }, []);
@@ -730,7 +730,7 @@ export default function SalesEntry() {
                     item_code: entry?.item_code || "",
                     price_per_kg: entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice || "",
                   }));
-                  setGrnSearchInput(""); // Clear search input
+                  setGrnSearchInput("");
                   setTimeout(() => itemNameRef.current?.focus(), 100);
                 }
               }}
@@ -741,17 +741,24 @@ export default function SalesEntry() {
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
+                  // Case 1: if something is highlighted in dropdown -> let React-Select handle it
+                  if (e.target.getAttribute("aria-activedescendant")) {
+                    return; // don't block
+                  }
+
+                  // Case 2: otherwise -> run custom search logic
                   e.preventDefault();
-                  
+                  e.stopPropagation();
+
                   if (grnSearchInput.trim() === "") {
                     setTimeout(() => itemNameRef.current?.focus(), 100);
                     return;
                   }
 
-                  // Find matching entry using our tracked input value
-                  const matchingEntry = entries.find((en) =>
-                    en.code.toLowerCase().includes(grnSearchInput.toLowerCase()) ||
-                    en.item_name.toLowerCase().includes(grnSearchInput.toLowerCase())
+                  const matchingEntry = entries.find(
+                    (en) =>
+                      en.code.toLowerCase().includes(grnSearchInput.toLowerCase()) ||
+                      en.item_name.toLowerCase().includes(grnSearchInput.toLowerCase())
                   );
 
                   if (matchingEntry) {
@@ -761,14 +768,15 @@ export default function SalesEntry() {
                       item_name: matchingEntry.item_name || "",
                       supplier_code: matchingEntry.supplier_code || "",
                       item_code: matchingEntry.item_code || "",
-                      price_per_kg: matchingEntry.price_per_kg || matchingEntry.PerKGPrice || matchingEntry.SalesKGPrice || "",
+                      price_per_kg:
+                        matchingEntry.price_per_kg ||
+                        matchingEntry.PerKGPrice ||
+                        matchingEntry.SalesKGPrice ||
+                        "",
                     }));
-                    setGrnSearchInput(""); // Clear search input
-                    
-                    setTimeout(() => itemNameRef.current?.focus(), 100);
-                  } else {
-                    setTimeout(() => itemNameRef.current?.focus(), 100);
+                    setGrnSearchInput("");
                   }
+                  setTimeout(() => itemNameRef.current?.focus(), 100);
                 }
               }}
               options={entries.map((en) => ({
@@ -779,6 +787,7 @@ export default function SalesEntry() {
               isSearchable={true}
               noOptionsMessage={() => "No GRN entries found"}
             />
+
 
             {/* Item Name */}
             <input
