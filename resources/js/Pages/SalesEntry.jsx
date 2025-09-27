@@ -37,7 +37,15 @@ export default function SalesEntry() {
   };
 
   // State
-  const [allSales, setAllSales] = useState([...initialData.sales, ...initialData.printed, ...initialData.unprinted]);
+  // FIX: Filter out any records without an ID during initialization to prevent "ghost" records.
+  const [allSales, setAllSales] = useState(
+    [
+        ...initialData.sales, 
+        ...initialData.printed, 
+        ...initialData.unprinted
+    ].filter(s => s.id) 
+  );
+  
   const [selectedPrintedCustomer, setSelectedPrintedCustomer] = useState(null);
   const [selectedUnprintedCustomer, setSelectedUnprintedCustomer] = useState(null);
   const [editingSaleId, setEditingSaleId] = useState(null);
@@ -53,7 +61,8 @@ export default function SalesEntry() {
 
   // Derived data
   const { newSales, printedSales, unprintedSales } = useMemo(() => ({
-    newSales: allSales.filter(s => s.id && !s.bill_printed),
+    // Use a stricter definition for newSales (not 'Y' and not 'N')
+    newSales: allSales.filter(s => s.id && s.bill_printed !== 'Y' && s.bill_printed !== 'N'), 
     printedSales: allSales.filter(s => s.bill_printed === 'Y'),
     unprintedSales: allSales.filter(s => s.bill_printed === 'N')
   }), [allSales]);
@@ -86,7 +95,7 @@ export default function SalesEntry() {
     return sales;
   }, [newSales, unprintedSales, printedSales, selectedUnprintedCustomer, selectedPrintedCustomer]);
 
-  const currentBillNo = useMemo(() => 
+  const currentBillNo = useMemo(() =>
     selectedPrintedCustomer ? printedSales.find(s => s.customer_code === selectedPrintedCustomer)?.bill_no || "N/A" : "",
     [selectedPrintedCustomer, printedSales]
   );
@@ -113,7 +122,7 @@ export default function SalesEntry() {
         handleSubmit(e);
         return;
       }
-      
+
       let nextIndex = currentFieldIndex + 1;
       const currentName = fieldOrder[currentFieldIndex].name;
       if (skipMap[currentName]) {
@@ -128,8 +137,6 @@ export default function SalesEntry() {
     }
   };
 
-  // 🐛 START OF FIX: Corrected handleInputChange logic
- // --- Modified handleInputChange to include field index ---
   function handleInputChange(e, fieldIndex = null) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -159,20 +166,19 @@ export default function SalesEntry() {
       }
     }
   }
-  // 🔚 END OF FIX
 
   const handleCustomerSelect = (e) => {
     const short = e.target.value;
     const customer = initialData.customers.find(x => String(x.short_name) === String(short));
-    
+
     // Auto-select unprinted sales when customer is selected from dropdown
     if (short) {
-        const hasUnprintedSales = unprintedCustomers.includes(short);
-        setSelectedUnprintedCustomer(hasUnprintedSales ? short : null);
-        setSelectedPrintedCustomer(null);
+      const hasUnprintedSales = unprintedCustomers.includes(short);
+      setSelectedUnprintedCustomer(hasUnprintedSales ? short : null);
+      setSelectedPrintedCustomer(null);
     } else {
-        setSelectedUnprintedCustomer(null);
-        setSelectedPrintedCustomer(null);
+      setSelectedUnprintedCustomer(null);
+      setSelectedPrintedCustomer(null);
     }
 
     setForm(prev => ({
@@ -211,7 +217,11 @@ export default function SalesEntry() {
       });
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Server error");
+      if (!res.ok) {
+        // Log the full error to the console for easier debugging
+        console.error('API Error Response:', data); 
+        throw new Error(data.error || "Server error: " + res.statusText);
+      }
       return data;
     } catch (error) {
       throw error;
@@ -235,6 +245,21 @@ export default function SalesEntry() {
     e.preventDefault();
     setErrors({});
 
+    const isEditing = editingSaleId !== null;
+    
+    // Determine the bill_printed status for a new record (if applicable)
+    let billPrintedStatus = undefined;
+    if (!isEditing) {
+      if (selectedPrintedCustomer) {
+        // <--- NEW LOGIC: Set to 'Y' if a printed customer is selected.
+        billPrintedStatus = 'Y';
+      } else if (selectedUnprintedCustomer) {
+        // Existing logic: Set to 'N' if an unprinted customer is selected.
+        billPrintedStatus = 'N';
+      }
+    }
+
+
     const payload = {
       supplier_code: form.supplier_code,
       customer_code: (form.customer_code || "").toString().toUpperCase(),
@@ -250,20 +275,38 @@ export default function SalesEntry() {
       original_weight: form.original_weight,
       original_packs: form.original_packs,
       given_amount: form.given_amount ? parseFloat(form.given_amount) : null,
+      
+      // Conditionally add the bill_printed status to the payload
+      ...(billPrintedStatus && { bill_printed: billPrintedStatus }),
     };
 
     try {
-      const isEditing = editingSaleId !== null;
       const url = isEditing ? `/sales/${editingSaleId}` : initialData.storeUrl;
       const method = isEditing ? "PUT" : "POST";
 
+      // Await the API call. This will throw an error on failure.
       const data = await apiCall(url, method, payload);
-      const newSale = isEditing ? data.sale : data.data || {};
+      
+      // --- START SUCCESS BLOCK ---
+      let newSale = isEditing ? data.sale : data.data || {};
 
-      setAllSales(prev => isEditing ? prev.map(s => s.id === newSale.id ? newSale : s) : [...prev, newSale]);
+      // Client-side correction for the 'Y' or 'N' status if server returns NULL
+      if (!isEditing && billPrintedStatus && !newSale.bill_printed) {
+          newSale = { ...newSale, bill_printed: billPrintedStatus };
+      }
+
+      // ONLY update state if the API call was successful (no error was thrown)
+      setAllSales(prev => isEditing 
+          ? prev.map(s => s.id === newSale.id ? newSale : s) 
+          : [...prev, newSale]
+      );
+      
       handleClearForm();
       refs.customerCode.current?.focus();
+      // --- END SUCCESS BLOCK ---
+
     } catch (error) {
+      // Handle the error and prevent state update on failure
       setErrors({ form: error.message });
     }
   };
@@ -406,19 +449,35 @@ export default function SalesEntry() {
 
   const handleCustomerClick = (type, customerCode) => {
     if (type === 'printed') {
-      setSelectedPrintedCustomer(customerCode === selectedPrintedCustomer ? null : customerCode);
+      // Logic for Printed Customers
+      const isCurrentlySelected = selectedPrintedCustomer === customerCode;
+      setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
       setSelectedUnprintedCustomer(null);
+      
+      if (!isCurrentlySelected) {
+          const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
+          setForm(prev => ({
+              ...prev,
+              customer_code: customerCode,
+              customer_name: customer?.name || ""
+          }));
+      } else {
+          setForm(prev => ({ ...prev, customer_code: "", customer_name: "" }));
+      }
+
     } else {
-      setSelectedUnprintedCustomer(customerCode === selectedUnprintedCustomer ? null : customerCode);
+      // Logic for Unprinted Customers
+      const isCurrentlySelected = selectedUnprintedCustomer === customerCode;
+      setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
       setSelectedPrintedCustomer(null);
-    }
-    // Update the form code to the selected customer's code
-    const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
-    setForm(prev => ({
+
+      const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
+      setForm(prev => ({
         ...prev,
-        customer_code: customerCode,
-        customer_name: customer?.name || ""
-    }));
+        customer_code: isCurrentlySelected ? "" : customerCode,
+        customer_name: isCurrentlySelected ? "" : customer?.name || ""
+      }));
+    }
   };
 
   // Components
@@ -453,8 +512,8 @@ export default function SalesEntry() {
               <button
                 onClick={() => handleCustomerClick(type, customerCode)}
                 className={`w-full text-left p-3 mb-2 rounded-xl border ${(type === 'printed' ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode
-                    ? "bg-blue-500 text-white border-blue-600"
-                    : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                  ? "bg-blue-500 text-white border-blue-600"
+                  : "bg-gray-50 hover:bg-gray-100 border-gray-200"
                   }`}
               >
                 <div className="font-medium">{customerCode}</div>
@@ -519,22 +578,29 @@ export default function SalesEntry() {
 
             <Select
               ref={refs.grnSelect}
-              value={form.grn_entry_code ? {
-                value: form.grn_entry_code,
-                label: `${form.grn_entry_code} - ${form.item_name}`,
-                data: initialData.entries.find(en => en.code === form.grn_entry_code)
-              } : null}
+              value={
+                form.grn_entry_code
+                  ? {
+                    value: form.grn_entry_code,
+                    label: `${form.grn_entry_code} - ${form.item_name}`,
+                    data: initialData.entries.find((en) => en.code === form.grn_entry_code),
+                  }
+                  : null
+              }
               onChange={(selected) => {
                 if (selected && selected.data) {
                   const entry = selected.data;
-                  setForm(prev => ({
+                  setForm((prev) => ({
                     ...prev,
                     grn_entry_code: selected.value,
                     item_name: entry.item_name || "",
                     supplier_code: entry.supplier_code || "",
                     item_code: entry.item_code || "",
-                    price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
-                    weight: "", packs: "", total: ""
+                    price_per_kg:
+                      entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
+                    weight: "",
+                    packs: "",
+                    total: "",
                   }));
                   setGrnSearchInput("");
                   requestAnimationFrame(() => {
@@ -549,35 +615,73 @@ export default function SalesEntry() {
                   setTimeout(() => refs.weight.current?.focus(), 0);
                 }
               }}
-              onMenuClose={() => setTimeout(() => form.grn_entry_code ? refs.weight.current?.focus() : refs.grnSelect.current?.focus(), 0)}
-              getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || 'Unknown Item'}`}
+              onMenuClose={() =>
+                setTimeout(
+                  () =>
+                    form.grn_entry_code
+                      ? refs.weight.current?.focus()
+                      : refs.grnSelect.current?.focus(),
+                  0
+                )
+              }
+              getOptionLabel={(option) =>
+                `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`
+              }
               getOptionValue={(option) => option.value}
               options={initialData.entries.map((en, index) => ({
-                value: en.code, label: en.code, data: en, index
+                value: en.code,
+                label: en.code,
+                data: en,
+                index,
               }))}
               placeholder="Select GRN Entry"
               isSearchable={true}
               noOptionsMessage={() => "No GRN entries found"}
               formatOptionLabel={(option, { context }) => {
-                if (context === "value" || !option.data) return <span>{option.label} - {option.data?.item_name || "Unknown Item"}</span>;
-                
+                if (context === "value" || !option.data) {
+                  const entry = option.data;
+                  return (
+                    <span>
+                      {option.label}
+                      (
+                      <strong>Price:</strong>{" "}
+                      Rs.{formatDecimal(
+                        entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice
+                      )}{" "}
+                      / <strong>BW:</strong> {formatDecimal(entry?.weight)} /{" "}
+                      <strong>BP:</strong> {entry?.packs || 0})
+                    </span>
+                  );
+                }
+
                 const entry = option.data;
                 return (
                   <div className="w-full">
                     {option.index === 0 && (
                       <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300">
-                        <div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div>
-                        <div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div>
+                        <div className="text-left">Code</div>
+                        <div className="text-center">OP</div>
+                        <div className="text-center">OW</div>
+                        <div className="text-center">BP</div>
+                        <div className="text-center">BW</div>
+                        <div className="text-right">PRICE</div>
                       </div>
                     )}
                     <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-                      <div className="text-left font-medium text-blue-700">{entry.code || "-"}</div>
+                      <div className="text-left font-medium text-blue-700">
+                        {entry.code || "-"}
+                      </div>
                       <div className="text-center">{entry.original_packs || "0"}</div>
-                      <div className="text-center">{formatDecimal(entry.original_weight)}</div>
+                      <div className="text-center">
+                        {formatDecimal(entry.original_weight)}
+                      </div>
                       <div className="text-center">{entry.packs || "0"}</div>
                       <div className="text-center">{formatDecimal(entry.weight)}</div>
                       <div className="text-right font-semibold text-green-600">
-                        Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}
+                        Rs.{" "}
+                        {formatDecimal(
+                          entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice
+                        )}
                       </div>
                     </div>
                   </div>
@@ -585,35 +689,54 @@ export default function SalesEntry() {
               }}
               components={{
                 Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
-                  <div ref={innerRef} {...innerProps} className={`${isFocused ? 'bg-blue-50' : ''} ${isSelected ? 'bg-blue-100' : ''} cursor-pointer`}>
+                  <div
+                    ref={innerRef}
+                    {...innerProps}
+                    className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""
+                      } cursor-pointer`}
+                  >
                     <div className="w-full">
                       {data.index === 0 && (
                         <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300">
-                          <div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div>
-                          <div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div>
+                          <div className="text-left">Code</div>
+                          <div className="text-center">OP</div>
+                          <div className="text-center">OW</div>
+                          <div className="text-center">BP</div>
+                          <div className="text-center">BW</div>
+                          <div className="text-right">PRICE</div>
                         </div>
                       )}
                       <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-                        <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div>
+                        <div className="text-left font-medium text-blue-700">
+                          {data.data.code || "-"}
+                        </div>
                         <div className="text-center">{data.data.original_packs || "0"}</div>
-                        <div className="text-center">{formatDecimal(data.data.original_weight)}</div>
+                        <div className="text-center">
+                          {formatDecimal(data.data.original_weight)}
+                        </div>
                         <div className="text-center">{data.data.packs || "0"}</div>
                         <div className="text-center">{formatDecimal(data.data.weight)}</div>
                         <div className="text-right font-semibold text-green-600">
-                          Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}
+                          Rs.{" "}
+                          {formatDecimal(
+                            data.data.price_per_kg ||
+                            data.data.PerKGPrice ||
+                            data.data.SalesKGPrice
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
-                )
+                ),
               }}
               styles={{
                 option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }),
                 menu: (base) => ({ ...base, width: "650px", maxWidth: "85vw" }),
                 menuList: (base) => ({ ...base, padding: 0, maxHeight: "300px" }),
-                control: (base) => ({ ...base, minHeight: "44px" })
+                control: (base) => ({ ...base, minHeight: "44px" }),
               }}
             />
+
 
             <div className="grid grid-cols-5 gap-4">
               <input ref={refs.itemName} type="text" value={form.item_name} readOnly placeholder="Item Name" onKeyDown={(e) => handleKeyDown(e, 3)} className="px-4 py-2 border rounded-xl" />

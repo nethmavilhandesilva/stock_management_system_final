@@ -135,7 +135,7 @@ class SalesEntryController extends Controller
 }
 public function store(Request $request)
 {
-    // Add grn_entry_code to validation
+    // 1. Add bill_printed to validation (it's optional, 'N' or 'Y')
     $validated = $request->validate([
         'supplier_code' => 'required',
         'customer_code' => 'required|string|max:255',
@@ -150,7 +150,9 @@ public function store(Request $request)
         'grn_entry_code' => 'required|string|exists:grn_entries,code',
         'original_weight' => 'nullable',
         'original_packs' => 'nullable',
-         'given_amount' => 'nullable|numeric', // ✅ Added
+        'given_amount' => 'nullable|numeric',
+        // ✅ ADDED: Allow 'bill_printed' to be passed from the client
+        'bill_printed' => 'nullable|string|in:N,Y', 
     ]);
 
     try {
@@ -169,15 +171,17 @@ public function store(Request $request)
         $perKgPrice = $grnEntry->PerKGPrice;
         $perKgTotal = $perKgPrice * $validated['weight'];
 
-        // 3. Generate the bill number
-        $lastBillNoSale = (int) Sale::max('bill_no');
-        $lastBillNoHistory = (int) SalesHistory::max('bill_no');
+        // 3. Generate the bill number (NOTE: Only assign bill_no on actual printing, not here)
+        // This section is generally okay, but bill_no should typically be NULL until printed.
+        // We can safely leave this logic out of the sale creation.
+        // $lastBillNoSale = (int) Sale::max('bill_no');
+        // $lastBillNoHistory = (int) SalesHistory::max('bill_no');
+        // $lastBillNo = max($lastBillNoSale, $lastBillNoHistory);
+        // $newBillNo = $lastBillNo ? $lastBillNo + 1 : 1000;
 
-        $lastBillNo = max($lastBillNoSale, $lastBillNoHistory);
-        $newBillNo = $lastBillNo ? $lastBillNo + 1 : 1000;
 
         // 4. Get the date value from settings
-        $settingDate = Setting::value('value'); // gets "value" column from first row
+        $settingDate = Setting::value('value'); 
 
         if (!$settingDate) {
             $settingDate = now()->toDateString(); // fallback if null
@@ -188,6 +192,11 @@ public function store(Request $request)
         $uniqueCode = $validated['customer_code'] . '-' . $loggedInUserId;
         $sellingKGTotal = $validated['total'] - $perKgTotal;
         $saleCode = $grnEntry->code;
+        
+        // **KEY FIX:** Determine the final bill_printed status
+        // If the client sent 'N', use 'N'. Otherwise, default to NULL (new sales)
+        $billPrintedStatus = $validated['bill_printed'] ?? null;
+
 
         $sale = Sale::create([
             'supplier_code' => $validated['supplier_code'],
@@ -212,30 +221,23 @@ public function store(Request $request)
             'SellingKGTotal' => $sellingKGTotal,
             'Date' => $settingDate,
             'ip_address' => $request->ip(),
-             'given_amount' => $validated['given_amount'], // ✅ Added
+            'given_amount' => $validated['given_amount'],
+            
+            // ✅ CRITICAL FIX: Add the bill_printed status to the creation
+            'bill_printed' => $billPrintedStatus, 
         ]);
         
         $this->updateGrnRemainingStock($validated['grn_entry_code']);
 
         DB::commit(); // Commit the transaction
 
-        // Return JSON response with only the data
+        // 6. Return the status in the response data so the client state updates correctly
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $sale->id,
-                 'code' => $validated['code'],
-                'customer_code' => $validated['customer_code'],
-                'customer_name' => $validated['customer_name'],
-                'item_name' => $validated['item_name'],
-                 'item_code' => $validated['item_code'],
-                'weight' => $validated['weight'],
-                'price_per_kg' => $validated['price_per_kg'],
-                'total' => $validated['total'],
-                'packs' => $validated['packs'],
-                'given_amount'  => $validated['given_amount'] ?? 0,  
-               
-            ]
+            'data' => $sale->toArray() 
+            // Better to return $sale->toArray() to include all created fields 
+            // like id, timestamps, and crucially, bill_printed, 
+            // instead of manually listing fields.
         ]);
 
     } catch (\Exception | \Illuminate\Database\QueryException $e) {
