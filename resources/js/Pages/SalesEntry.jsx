@@ -469,54 +469,69 @@ export default function SalesEntry() {
           }
         });
       }
-      else if (e.key === "F5") {
-        e.preventDefault();
-        if (newSales.length === 0) return alert("No new sales to process.");
-        if (window.confirm("Are you sure you want to mark ALL sales as processed?")) {
-          apiCall("/sales/mark-all-processed", "POST", { sales_ids: newSales.map(s => s.id) })
-            .then(data => {
-              if (data.success) {
-                alert(data.message || "All sales marked as processed successfully!");
-                setAllSales(prev => prev.map(s => newSales.map(ns => ns.id).includes(s.id) ? { ...s, bill_printed: "N" } : s));
+     else if (e.key === "F5") {
+  e.preventDefault();
+  
+  // Combine newSales and unprintedSales
+  const salesToProcess = [...newSales, ...unprintedSales];
+  
+  if (salesToProcess.length === 0) return alert("No sales to process.");
+  
+  if (window.confirm(`Are you sure you want to mark ALL sales as processed?`)) {
+    apiCall("/sales/mark-all-processed", "POST", { sales_ids: salesToProcess.map(s => s.id) })
+      .then(data => {
+        if (data.success) {
+          alert(data.message || `All ${salesToProcess.length} sales marked as processed successfully!`);
+          
+          // Update all processed sales to have bill_printed: "N"
+          setAllSales(prev => prev.map(s => 
+            salesToProcess.map(ps => ps.id).includes(s.id) 
+              ? { ...s, bill_printed: "N" } 
+              : s
+          ));
 
-                // Clear form
-                handleClearForm();
+          // Clear form and selections
+          handleClearForm();
+          setSelectedUnprintedCustomer(null);
+          setSelectedPrintedCustomer(null);
 
-                // Aggressive focus locking
-                const lockFocus = () => {
-                  if (refs.customerCode.current) {
-                    refs.customerCode.current.focus();
-                    refs.customerCode.current.style.zIndex = '9999';
-                  }
-                };
+          // Aggressive focus locking
+          const lockFocus = () => {
+            if (refs.customerCode.current) {
+              refs.customerCode.current.focus();
+              refs.customerCode.current.style.zIndex = '9999';
+            }
+          };
 
-                // Multiple focus attempts
-                setTimeout(lockFocus, 100);
-                setTimeout(lockFocus, 200);
-                setTimeout(lockFocus, 300);
-                setTimeout(lockFocus, 400);
-                setTimeout(lockFocus, 500);
+          // Multiple focus attempts
+          setTimeout(lockFocus, 100);
+          setTimeout(lockFocus, 200);
+          setTimeout(lockFocus, 300);
+          setTimeout(lockFocus, 400);
+          setTimeout(lockFocus, 500);
 
-                // Prevent any other focus changes for 1 second
-                const originalFocus = HTMLElement.prototype.focus;
-                HTMLElement.prototype.focus = function () {
-                  if (this !== refs.customerCode.current) {
-                    return; // Block all other focus attempts
-                  }
-                  originalFocus.call(this);
-                };
+          // Prevent any other focus changes for 1 second
+          const originalFocus = HTMLElement.prototype.focus;
+          HTMLElement.prototype.focus = function () {
+            if (this !== refs.customerCode.current) {
+              return; // Block all other focus attempts
+            }
+            originalFocus.call(this);
+          };
 
-                setTimeout(() => {
-                  HTMLElement.prototype.focus = originalFocus;
-                  if (refs.customerCode.current) {
-                    refs.customerCode.current.style.zIndex = '';
-                  }
-                }, 1000);
-              } else alert(data.message || "Failed to mark sales as processed.");
-            })
-            .catch(err => alert("Failed to mark sales as processed."));
+          setTimeout(() => {
+            HTMLElement.prototype.focus = originalFocus;
+            if (refs.customerCode.current) {
+              refs.customerCode.current.style.zIndex = '';
+            }
+          }, 1000);
+        } else {
+          alert(data.message || "Failed to mark sales as processed.");
         }
-      }
+      })
+      .catch(err => alert("Failed to mark sales as processed: " + err.message));
+  }
+}
     };
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
