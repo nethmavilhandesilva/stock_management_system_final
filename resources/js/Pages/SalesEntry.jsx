@@ -20,6 +20,9 @@ export default function SalesEntry() {
     pricePerKg: useRef(null), total: useRef(null)
   };
 
+  // New ref for the sales table body
+  const salesTableBodyRef = useRef(null);
+
   const fieldOrder = ["customer_code_input", "customer_code_select", "grn_entry_code", "item_name", "weight", "packs", "price_per_kg", "total"];
   const skipMap = { customer_code_input: "grn_entry_code", grn_entry_code: "weight" };
 
@@ -36,6 +39,13 @@ export default function SalesEntry() {
     item_name: "", weight: "", price_per_kg: "", total: "", packs: "", grn_entry_code: "",
     original_weight: "", original_packs: "", given_amount: ""
   });
+
+  // Debug useEffect
+  useEffect(() => {
+    console.log('Form updated:', form);
+    console.log('grn_entry_code:', form.grn_entry_code);
+    console.log('Matching entry:', initialData.entries.find((en) => en.code === form.grn_entry_code));
+  }, [form]);
 
   // Derived data
   const { newSales, printedSales, unprintedSales } = useMemo(() => ({
@@ -77,13 +87,22 @@ export default function SalesEntry() {
     if (e.key === "Enter") {
       e.preventDefault();
       if (fieldOrder[currentFieldIndex] === "price_per_kg") return handleSubmit(e);
-      
+
       let nextIndex = currentFieldIndex + 1;
       if (skipMap[fieldOrder[currentFieldIndex]]) {
         const targetIndex = fieldOrder.findIndex(f => f === skipMap[fieldOrder[currentFieldIndex]]);
         if (targetIndex !== -1) nextIndex = targetIndex;
       }
-      if (nextIndex < fieldOrder.length) Object.values(refs)[nextIndex].current?.focus();
+      requestAnimationFrame(() => setTimeout(() => {
+        const nextRef = Object.values(refs)[nextIndex];
+        if (nextRef && nextRef.current) {
+          if (nextRef.current.focus) {
+            nextRef.current.focus();
+          } else if (nextRef.current.select) {
+            nextRef.current.select.focus();
+          }
+        }
+      }, 0));
     }
   };
 
@@ -100,7 +119,22 @@ export default function SalesEntry() {
       } else if (selectedUnprintedCustomer) setSelectedUnprintedCustomer(null);
 
       if (value.length === 10 && fieldIndex !== null && fieldIndex + 1 < fieldOrder.length) {
-        Object.values(refs)[fieldIndex + 1].current?.focus();
+        let nextIndex = fieldIndex + 1;
+        if (skipMap[fieldOrder[fieldIndex + 1]]) {
+          const targetIndex = fieldOrder.findIndex(f => f === skipMap[fieldOrder[fieldIndex + 1]]);
+          if (targetIndex !== -1) nextIndex = targetIndex;
+        }
+
+        requestAnimationFrame(() => setTimeout(() => {
+          const nextRef = Object.values(refs)[nextIndex];
+          if (nextRef && nextRef.current) {
+            if (nextRef.current.focus) {
+              nextRef.current.focus();
+            } else if (nextRef.current.select) {
+              nextRef.current.select.focus();
+            }
+          }
+        }, 0));
       }
     }
   };
@@ -109,15 +143,37 @@ export default function SalesEntry() {
     const short = e.target.value;
     const customer = initialData.customers.find(x => String(x.short_name) === String(short));
     const hasUnprintedSales = unprintedCustomers.includes(short);
-    
+
     setSelectedUnprintedCustomer(hasUnprintedSales ? short : null);
     setSelectedPrintedCustomer(null);
     setForm(prev => ({ ...prev, customer_code: short || prev.customer_code, customer_name: customer?.name || "" }));
   };
 
   const handleEditClick = (sale) => {
-    setForm({ ...sale });
+    setForm({
+      ...sale,
+      grn_entry_code: sale.grn_entry_code || sale.code || "",
+      item_name: sale.item_name || "",
+      customer_code: sale.customer_code || "",
+      customer_name: sale.customer_name || "",
+      supplier_code: sale.supplier_code || "",
+      item_code: sale.item_code || "",
+      weight: sale.weight || "",
+      price_per_kg: sale.price_per_kg || "",
+      total: sale.total || "",
+      packs: sale.packs || "",
+      original_weight: sale.original_weight || "",
+      original_packs: sale.original_packs || "",
+      given_amount: sale.given_amount || ""
+    });
     setEditingSaleId(sale.id);
+  };
+
+  const handleTableRowKeyDown = (e, sale) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleEditClick(sale);
+    }
   };
 
   const handleClearForm = () => {
@@ -163,7 +219,7 @@ export default function SalesEntry() {
     setErrors({});
     const isEditing = editingSaleId !== null;
     let billPrintedStatus = undefined;
-    
+
     if (!isEditing) {
       if (selectedPrintedCustomer) billPrintedStatus = 'Y';
       else if (selectedUnprintedCustomer) billPrintedStatus = 'N';
@@ -191,10 +247,10 @@ export default function SalesEntry() {
       const url = isEditing ? `/sales/${editingSaleId}` : initialData.storeUrl;
       const method = isEditing ? "PUT" : "POST";
       const data = await apiCall(url, method, payload);
-      
+
       let newSale = isEditing ? data.sale : data.data || {};
       if (!isEditing && billPrintedStatus && !newSale.bill_printed) newSale = { ...newSale, bill_printed: billPrintedStatus };
-      
+
       setAllSales(prev => isEditing ? prev.map(s => s.id === newSale.id ? newSale : s) : [...prev, newSale]);
       handleClearForm();
       refs.customerCode.current?.focus();
@@ -303,7 +359,7 @@ export default function SalesEntry() {
   const handleCustomerClick = (type, customerCode) => {
     const isPrinted = type === 'printed';
     const isCurrentlySelected = isPrinted ? selectedPrintedCustomer === customerCode : selectedUnprintedCustomer === customerCode;
-    
+
     if (isPrinted) {
       setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
       setSelectedUnprintedCustomer(null);
@@ -359,26 +415,69 @@ export default function SalesEntry() {
 
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-2 gap-4">
-              <input ref={refs.customerCode} name="customer_code" value={form.customer_code} onChange={(e) => handleInputChange(e, 0)} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10} placeholder="Customer Code" className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" />
-              <select ref={refs.customerSelect} value={form.customer_code} onChange={handleCustomerSelect} onKeyDown={(e) => handleKeyDown(e, 1)} className="px-4 py-2 border rounded-xl">
+              <input id="customer_code_input" ref={refs.customerCode} name="customer_code" value={form.customer_code} onChange={(e) => handleInputChange(e, 0)} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10} placeholder="Customer Code" className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" />
+              <select id="customer_code_select" ref={refs.customerSelect} value={form.customer_code} onChange={handleCustomerSelect} onKeyDown={(e) => handleKeyDown(e, 1)} className="px-4 py-2 border rounded-xl">
                 <option value="">-- Select Customer --</option>
                 {initialData.customers.map(c => <option key={c.short_name} value={c.short_name}>{c.name} ({c.short_name})</option>)}
               </select>
             </div>
 
-            <Select ref={refs.grnSelect} value={form.grn_entry_code ? { value: form.grn_entry_code, label: `${form.grn_entry_code} - ${form.item_name}`, data: initialData.entries.find((en) => en.code === form.grn_entry_code) } : null}
+            <Select
+              id="grn_entry_code"
+              ref={refs.grnSelect}
+              value={(() => {
+                if (!form.grn_entry_code) return null;
+
+                const matchingEntry = initialData.entries.find((en) => en.code === form.grn_entry_code);
+                if (!matchingEntry) return null;
+
+                return {
+                  value: form.grn_entry_code,
+                  label: `${form.grn_entry_code} - ${matchingEntry.item_name || form.item_name || ''}`,
+                  data: matchingEntry
+                };
+              })()}
               onChange={(selected) => {
                 if (selected?.data) {
                   const entry = selected.data;
-                  setForm(prev => ({ ...prev, grn_entry_code: selected.value, item_name: entry.item_name || "", supplier_code: entry.supplier_code || "", item_code: entry.item_code || "", price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "", weight: "", packs: "", total: "" }));
+                  setForm(prev => ({
+                    ...prev,
+                    grn_entry_code: selected.value,
+                    item_name: entry.item_name || "",
+                    supplier_code: entry.supplier_code || "",
+                    item_code: entry.item_code || "",
+                    price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
+                    // Only clear weight and packs if NOT editing
+                    weight: editingSaleId ? prev.weight : "",
+                    packs: editingSaleId ? prev.packs : "",
+                    total: editingSaleId ? prev.total : ""
+                  }));
                   setGrnSearchInput("");
                   requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
                 }
-              }} onInputChange={setGrnSearchInput} onKeyDown={(e) => { if (e.key === "Enter" && form.grn_entry_code && !e.isPropagationStopped()) { e.preventDefault(); setTimeout(() => refs.weight.current?.focus(), 0); } }} onMenuClose={() => setTimeout(() => form.grn_entry_code ? refs.weight.current?.focus() : refs.grnSelect.current?.focus(), 0)}
-              getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`} getOptionValue={(option) => option.value} options={initialData.entries.map((en, index) => ({ value: en.code, label: en.code, data: en, index }))} placeholder="Select GRN Entry" isSearchable={true} noOptionsMessage={() => "No GRN entries found"}
+              }}
+              onInputChange={setGrnSearchInput}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && form.grn_entry_code && !e.isPropagationStopped()) {
+                  e.preventDefault();
+                  setTimeout(() => refs.weight.current?.focus(), 0);
+                }
+              }}
+              onMenuClose={() => setTimeout(() => form.grn_entry_code ? refs.weight.current?.focus() : refs.grnSelect.current?.focus(), 0)}
+              getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
+              getOptionValue={(option) => option.value}
+              options={initialData.entries.map((en, index) => ({
+                value: en.code,
+                label: en.code,
+                data: en,
+                index
+              }))}
+              placeholder="Select GRN Entry"
+              isSearchable={true}
+              noOptionsMessage={() => "No GRN entries found"}
               formatOptionLabel={(option, { context }) => {
                 if (context === "value" || !option.data) {
-                  const entry = option.data;
+                  const entry = option.data || initialData.entries.find((en) => en.code === option.value);
                   return <span>{option.label}(<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
                 }
                 const entry = option.data;
@@ -388,23 +487,28 @@ export default function SalesEntry() {
                     <div className="text-left font-medium text-blue-700">{entry.code || "-"}</div><div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div><div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
                   </div>
                 </div>;
-              }} components={{ Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
-                <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
-                  <div className="w-full">
-                    {data.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
-                    <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-                      <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div><div className="text-center">{data.data.original_packs || "0"}</div><div className="text-center">{formatDecimal(data.data.original_weight)}</div><div className="text-center">{data.data.packs || "0"}</div><div className="text-center">{formatDecimal(data.data.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
+              }}
+              components={{
+                Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
+                  <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
+                    <div className="w-full">
+                      {data.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
+                      <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
+                        <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div><div className="text-center">{data.data.original_packs || "0"}</div><div className="text-center">{formatDecimal(data.data.original_weight)}</div><div className="text-center">{data.data.packs || "0"}</div><div className="text-center">{formatDecimal(data.data.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}} styles={{ option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }), menu: (base) => ({ ...base, width: "650px", maxWidth: "85vw" }), menuList: (base) => ({ ...base, padding: 0, maxHeight: "300px" }), control: (base) => ({ ...base, minHeight: "44px" }) }} />
+                )
+              }}
+              styles={{ option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }), menu: (base) => ({ ...base, width: "650px", maxWidth: "85vw" }), menuList: (base) => ({ ...base, padding: 0, maxHeight: "300px" }), control: (base) => ({ ...base, minHeight: "44px" }) }}
+            />
 
             <div className="grid grid-cols-5 gap-4">
-              <input ref={refs.itemName} type="text" value={form.item_name} readOnly placeholder="Item Name" onKeyDown={(e) => handleKeyDown(e, 3)} className="px-4 py-2 border rounded-xl" />
-              <input ref={refs.weight} name="weight" type="number" step="0.01" value={form.weight} onChange={(e) => handleInputChange(e, 4)} onKeyDown={(e) => handleKeyDown(e, 4)} placeholder="Weight (kg)" className="px-4 py-2 border rounded-xl" />
-              <input ref={refs.packs} name="packs" type="number" value={form.packs} onChange={(e) => handleInputChange(e, 5)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Packs" className="px-4 py-2 border rounded-xl" />
-              <input ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={form.price_per_kg} onChange={(e) => handleInputChange(e, 6)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Price/kg" className="px-4 py-2 border rounded-xl" />
-              <input ref={refs.total} name="total" type="number" value={form.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 7)} className="px-4 py-2 border bg-gray-100 rounded-xl" />
+              <input id="item_name" ref={refs.itemName} type="text" value={form.item_name} readOnly placeholder="Item Name" onKeyDown={(e) => handleKeyDown(e, 3)} className="px-4 py-2 border rounded-xl" />
+              <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={form.weight} onChange={(e) => handleInputChange(e, 4)} onKeyDown={(e) => handleKeyDown(e, 4)} placeholder="Weight (kg)" className="px-4 py-2 border rounded-xl" />
+              <input id="packs" ref={refs.packs} name="packs" type="number" value={form.packs} onChange={(e) => handleInputChange(e, 5)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Packs" className="px-4 py-2 border rounded-xl" />
+              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={form.price_per_kg} onChange={(e) => handleInputChange(e, 6)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Price/kg" className="px-4 py-2 border rounded-xl" />
+              <input id="total" ref={refs.total} name="total" type="number" value={form.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 7)} className="px-4 py-2 border bg-gray-100 rounded-xl" />
             </div>
           </div>
 
@@ -422,8 +526,14 @@ export default function SalesEntry() {
           <div className="overflow-x-auto">
             <table className="min-w-full border border-gray-200 rounded-xl text-sm">
               <thead className="bg-gray-100"><tr><th className="px-4 py-2 border">Code</th><th className="px-4 py-2 border">Customer</th><th className="px-4 py-2 border">Item</th><th className="px-4 py-2 border">Weight (kg)</th><th className="px-4 py-2 border">Price</th><th className="px-4 py-2 border">Total</th><th className="px-4 py-2 border">Packs</th></tr></thead>
-              <tbody>{displayedSales.map((s, idx) => (
-                <tr key={s.id || idx} className="text-center hover:bg-gray-50 cursor-pointer" onClick={() => handleEditClick(s)}>
+              <tbody ref={salesTableBodyRef}>{displayedSales.map((s, idx) => (
+                <tr
+                  key={s.id || idx}
+                  tabIndex={0}
+                  className="text-center hover:bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100"
+                  onClick={() => handleEditClick(s)}
+                  onKeyDown={(e) => handleTableRowKeyDown(e, s)}
+                >
                   <td className="px-4 py-2 border">{s.code}</td><td className="px-4 py-2 border">{s.customer_code}</td><td className="px-4 py-2 border">{s.item_name}</td><td className="px-4 py-2 border">{formatDecimal(s.weight)}</td><td className="px-4 py-2 border">{formatDecimal(s.price_per_kg)}</td><td className="px-4 py-2 border">{formatDecimal(s.total)}</td><td className="px-4 py-2 border">{s.packs}</td>
                 </tr>
               ))}</tbody>
