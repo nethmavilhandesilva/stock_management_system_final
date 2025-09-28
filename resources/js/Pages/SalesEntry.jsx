@@ -16,7 +16,7 @@ export default function SalesEntry() {
   // Refs
   const refs = {
     customerCode: useRef(null), customerSelect: useRef(null), givenAmount: useRef(null),
-    grnSelect: useRef(null), itemName: useRef(null), weight: useRef(null), 
+    grnSelect: useRef(null), itemName: useRef(null), weight: useRef(null),
     packs: useRef(null), pricePerKg: useRef(null), total: useRef(null)
   };
 
@@ -39,7 +39,7 @@ export default function SalesEntry() {
     item_name: "", weight: "", price_per_kg: "", total: "", packs: "", grn_entry_code: "",
     original_weight: "", original_packs: "", given_amount: ""
   });
-  
+
   // New state for balance information
   const [balanceInfo, setBalanceInfo] = useState({
     balancePacks: 0,
@@ -110,13 +110,13 @@ export default function SalesEntry() {
   const handleKeyDown = (e, currentFieldIndex) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      
+
       // If we're in the given_amount field and it has a value, submit only the given amount
       if (fieldOrder[currentFieldIndex] === "given_amount" && form.given_amount) {
         handleSubmitGivenAmount(e);
         return; // IMPORTANT: Return here to prevent further processing
       }
-      
+
       if (fieldOrder[currentFieldIndex] === "price_per_kg") return handleSubmit(e);
 
       let nextIndex = currentFieldIndex + 1;
@@ -250,7 +250,7 @@ export default function SalesEntry() {
   const handleSubmitGivenAmount = async (e) => {
     e.preventDefault();
     setErrors({});
-    
+
     if (!form.customer_code) {
       setErrors({ form: "Please enter a customer code first" });
       refs.customerCode.current?.focus();
@@ -281,14 +281,14 @@ export default function SalesEntry() {
       const updatedSale = data.sale;
 
       setAllSales(prev => prev.map(s => s.id === updatedSale.id ? updatedSale : s));
-      
+
       // Clear only the given_amount field and move to next field
       setForm(prev => ({ ...prev, given_amount: "" }));
       refs.grnSelect.current?.focus();
-      
+
       alert("Given amount updated successfully for customer: " + form.customer_code);
-    } catch (error) { 
-      setErrors({ form: error.message }); 
+    } catch (error) {
+      setErrors({ form: error.message });
     }
   };
 
@@ -309,7 +309,7 @@ export default function SalesEntry() {
 
     const payload = {
       supplier_code: form.supplier_code,
-      customer_code: (form.customer_code || "").toString().toUpperCase(),
+      customer_code: (form.customer_code || "").toUpperCase(),
       customer_name: form.customer_name,
       code: form.code || form.grn_entry_code,
       item_code: form.item_code,
@@ -322,7 +322,7 @@ export default function SalesEntry() {
       original_weight: form.original_weight,
       original_packs: form.original_packs,
       // Only set given_amount for the first record of a customer or when editing the first record
-      given_amount: (isFirstRecordForCustomer || (isEditing && customerSales[0]?.id === editingSaleId)) 
+      given_amount: (isFirstRecordForCustomer || (isEditing && customerSales[0]?.id === editingSaleId))
         ? (form.given_amount ? parseFloat(form.given_amount) : null)
         : null,
       ...(billPrintedStatus && { bill_printed: billPrintedStatus }),
@@ -334,13 +334,42 @@ export default function SalesEntry() {
       const data = await apiCall(url, method, payload);
 
       let newSale = isEditing ? data.sale : data.data || {};
-      if (!isEditing && billPrintedStatus && !newSale.bill_printed) newSale = { ...newSale, bill_printed: billPrintedStatus };
+      if (!isEditing && billPrintedStatus && !newSale.bill_printed)
+        newSale = { ...newSale, bill_printed: billPrintedStatus };
 
-      setAllSales(prev => isEditing ? prev.map(s => s.id === newSale.id ? newSale : s) : [...prev, newSale]);
-      handleClearForm();
-      refs.customerCode.current?.focus();
-    } catch (error) { setErrors({ form: error.message }); }
+      setAllSales(prev => isEditing
+        ? prev.map(s => s.id === newSale.id ? newSale : s)
+        : [...prev, newSale]
+      );
+
+      // Clear form but preserve customer_code and customer_name
+      setForm(prevForm => ({
+        customer_code: prevForm.customer_code,
+        customer_name: prevForm.customer_name,
+        supplier_code: "",
+        code: "",
+        item_code: "",
+        item_name: "",
+        weight: "",
+        price_per_kg: "",
+        total: "",
+        packs: "",
+        grn_entry_code: "",
+        original_weight: "",
+        original_packs: "",
+        given_amount: ""
+      }));
+
+      setEditingSaleId(null);
+      setGrnSearchInput("");
+      setBalanceInfo({ balancePacks: 0, balanceWeight: 0 });
+
+      refs.grnSelect.current?.focus();
+    } catch (error) {
+      setErrors({ form: error.message });
+    }
   };
+
 
   // Print functions
   const buildFullReceiptHTML = (salesData, billNo, customerName) => {
@@ -413,7 +442,33 @@ export default function SalesEntry() {
   // Effects
   useEffect(() => {
     const handleShortcut = (e) => {
-      if (e.key === "F1") { e.preventDefault(); handlePrintAndClear(); }
+      if (e.key === "F1") {
+        e.preventDefault();
+
+        // Store the focus intent
+        const shouldFocusOnCustomerCode = true;
+
+        handlePrintAndClear().finally(() => {
+          // This will run after print process completes (success or failure)
+          if (shouldFocusOnCustomerCode) {
+            handleClearForm();
+
+            // Very aggressive focus with multiple attempts
+            const focusCustomerCode = () => {
+              if (refs.customerCode.current) {
+                refs.customerCode.current.focus();
+              }
+            };
+
+            // Multiple focus attempts over time
+            setTimeout(focusCustomerCode, 100);
+            setTimeout(focusCustomerCode, 200);
+            setTimeout(focusCustomerCode, 300);
+            setTimeout(focusCustomerCode, 500);
+            setTimeout(focusCustomerCode, 800);
+          }
+        });
+      }
       else if (e.key === "F5") {
         e.preventDefault();
         if (newSales.length === 0) return alert("No new sales to process.");
@@ -423,6 +478,40 @@ export default function SalesEntry() {
               if (data.success) {
                 alert(data.message || "All sales marked as processed successfully!");
                 setAllSales(prev => prev.map(s => newSales.map(ns => ns.id).includes(s.id) ? { ...s, bill_printed: "N" } : s));
+
+                // Clear form
+                handleClearForm();
+
+                // Aggressive focus locking
+                const lockFocus = () => {
+                  if (refs.customerCode.current) {
+                    refs.customerCode.current.focus();
+                    refs.customerCode.current.style.zIndex = '9999';
+                  }
+                };
+
+                // Multiple focus attempts
+                setTimeout(lockFocus, 100);
+                setTimeout(lockFocus, 200);
+                setTimeout(lockFocus, 300);
+                setTimeout(lockFocus, 400);
+                setTimeout(lockFocus, 500);
+
+                // Prevent any other focus changes for 1 second
+                const originalFocus = HTMLElement.prototype.focus;
+                HTMLElement.prototype.focus = function () {
+                  if (this !== refs.customerCode.current) {
+                    return; // Block all other focus attempts
+                  }
+                  originalFocus.call(this);
+                };
+
+                setTimeout(() => {
+                  HTMLElement.prototype.focus = originalFocus;
+                  if (refs.customerCode.current) {
+                    refs.customerCode.current.style.zIndex = '';
+                  }
+                }, 1000);
               } else alert(data.message || "Failed to mark sales as processed.");
             })
             .catch(err => alert("Failed to mark sales as processed."));
@@ -505,7 +594,7 @@ export default function SalesEntry() {
                 <option value="">-- Select Customer --</option>
                 {initialData.customers.map(c => <option key={c.short_name} value={c.short_name}>{c.name} ({c.short_name})</option>)}
               </select>
-             
+
             </div>
 
             <Select
@@ -598,9 +687,9 @@ export default function SalesEntry() {
                   </div>
                 )}
               </div>
-              
+
               <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={form.weight} onChange={(e) => handleInputChange(e, 5)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Weight (kg)" className="px-4 py-2 border rounded-xl" />
-              
+
               <div className="relative">
                 <input id="packs" ref={refs.packs} name="packs" type="number" value={form.packs} onChange={(e) => handleInputChange(e, 6)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Packs" className="px-4 py-2 border rounded-xl w-full" />
                 {balanceInfo.balancePacks > 0 && (
@@ -609,7 +698,7 @@ export default function SalesEntry() {
                   </div>
                 )}
               </div>
-              
+
               <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={form.price_per_kg} onChange={(e) => handleInputChange(e, 7)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="Price/kg" className="px-4 py-2 border rounded-xl" />
               <input id="total" ref={refs.total} name="total" type="number" value={form.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} className="px-4 py-2 border bg-gray-100 rounded-xl" />
             </div>
@@ -659,20 +748,20 @@ export default function SalesEntry() {
                 ))}
               </tbody>
             </table>
-           <div className="flex justify-end">
-  <input 
-    id="given_amount"
-    ref={refs.givenAmount}
-    name="given_amount" 
-    type="number" 
-    step="0.01"
-    value={form.given_amount} 
-    onChange={(e) => handleInputChange(e, 2)} 
-    onKeyDown={(e) => handleKeyDown(e, 2)} 
-    placeholder="Given Amount" 
-    className="px-4 py-2 border rounded-xl mt-4"
-  />
-</div>
+            <div className="flex justify-end">
+              <input
+                id="given_amount"
+                ref={refs.givenAmount}
+                name="given_amount"
+                type="number"
+                step="0.01"
+                value={form.given_amount}
+                onChange={(e) => handleInputChange(e, 2)}
+                onKeyDown={(e) => handleKeyDown(e, 2)}
+                placeholder="Given Amount"
+                className="px-4 py-2 border rounded-xl mt-4"
+              />
+            </div>
 
 
           </div>
