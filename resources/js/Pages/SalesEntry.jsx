@@ -15,15 +15,15 @@ export default function SalesEntry() {
 
   // Refs
   const refs = {
-    customerCode: useRef(null), customerSelect: useRef(null), grnSelect: useRef(null),
-    itemName: useRef(null), weight: useRef(null), packs: useRef(null),
-    pricePerKg: useRef(null), total: useRef(null)
+    customerCode: useRef(null), customerSelect: useRef(null), givenAmount: useRef(null),
+    grnSelect: useRef(null), itemName: useRef(null), weight: useRef(null), 
+    packs: useRef(null), pricePerKg: useRef(null), total: useRef(null)
   };
 
   // New ref for the sales table body
   const salesTableBodyRef = useRef(null);
 
-  const fieldOrder = ["customer_code_input", "customer_code_select", "grn_entry_code", "item_name", "weight", "packs", "price_per_kg", "total"];
+  const fieldOrder = ["customer_code_input", "customer_code_select", "given_amount", "grn_entry_code", "item_name", "weight", "packs", "price_per_kg", "total"];
   const skipMap = { customer_code_input: "grn_entry_code", grn_entry_code: "weight" };
 
   // State
@@ -38,6 +38,12 @@ export default function SalesEntry() {
     customer_code: "", customer_name: "", supplier_code: "", code: "", item_code: "",
     item_name: "", weight: "", price_per_kg: "", total: "", packs: "", grn_entry_code: "",
     original_weight: "", original_packs: "", given_amount: ""
+  });
+  
+  // New state for balance information
+  const [balanceInfo, setBalanceInfo] = useState({
+    balancePacks: 0,
+    balanceWeight: 0
   });
 
   // Debug useEffect
@@ -82,10 +88,35 @@ export default function SalesEntry() {
   const unprintedTotal = calculateTotal(unprintedSales);
   const formatDecimal = (val) => (Number.isFinite(parseFloat(val)) ? parseFloat(val).toFixed(2) : "0.00");
 
+  // Update balance info when GRN entry changes
+  useEffect(() => {
+    if (form.grn_entry_code) {
+      const matchingEntry = initialData.entries.find((en) => en.code === form.grn_entry_code);
+      if (matchingEntry) {
+        setBalanceInfo({
+          balancePacks: matchingEntry.packs || 0,
+          balanceWeight: matchingEntry.weight || 0
+        });
+      }
+    } else {
+      setBalanceInfo({
+        balancePacks: 0,
+        balanceWeight: 0
+      });
+    }
+  }, [form.grn_entry_code, initialData.entries]);
+
   // Event handlers
   const handleKeyDown = (e, currentFieldIndex) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      
+      // If we're in the given_amount field and it has a value, submit only the given amount
+      if (fieldOrder[currentFieldIndex] === "given_amount" && form.given_amount) {
+        handleSubmitGivenAmount(e);
+        return; // IMPORTANT: Return here to prevent further processing
+      }
+      
       if (fieldOrder[currentFieldIndex] === "price_per_kg") return handleSubmit(e);
 
       let nextIndex = currentFieldIndex + 1;
@@ -184,6 +215,7 @@ export default function SalesEntry() {
     });
     setEditingSaleId(null);
     setGrnSearchInput("");
+    setBalanceInfo({ balancePacks: 0, balanceWeight: 0 });
   };
 
   // API functions
@@ -214,6 +246,52 @@ export default function SalesEntry() {
     } catch (error) { setErrors({ form: error.message }); }
   };
 
+  // New function to handle given amount submission
+  const handleSubmitGivenAmount = async (e) => {
+    e.preventDefault();
+    setErrors({});
+    
+    if (!form.customer_code) {
+      setErrors({ form: "Please enter a customer code first" });
+      refs.customerCode.current?.focus();
+      return;
+    }
+
+    if (!form.given_amount) {
+      setErrors({ form: "Please enter a given amount" });
+      return;
+    }
+
+    // Find the first sales record for this customer
+    const customerSales = allSales.filter(s => s.customer_code === form.customer_code);
+    const firstSale = customerSales[0];
+
+    if (!firstSale) {
+      setErrors({ form: "No sales records found for this customer. Please add a sales record first." });
+      return;
+    }
+
+    const payload = {
+      given_amount: parseFloat(form.given_amount) || 0
+    };
+
+    try {
+      // Use the specific endpoint for given_amount
+      const data = await apiCall(`/sales/${firstSale.id}/given-amount`, "PUT", payload);
+      const updatedSale = data.sale;
+
+      setAllSales(prev => prev.map(s => s.id === updatedSale.id ? updatedSale : s));
+      
+      // Clear only the given_amount field and move to next field
+      setForm(prev => ({ ...prev, given_amount: "" }));
+      refs.grnSelect.current?.focus();
+      
+      alert("Given amount updated successfully for customer: " + form.customer_code);
+    } catch (error) { 
+      setErrors({ form: error.message }); 
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
@@ -224,6 +302,10 @@ export default function SalesEntry() {
       if (selectedPrintedCustomer) billPrintedStatus = 'Y';
       else if (selectedUnprintedCustomer) billPrintedStatus = 'N';
     }
+
+    // Check if this is the first record for this customer
+    const customerSales = allSales.filter(s => s.customer_code === form.customer_code);
+    const isFirstRecordForCustomer = customerSales.length === 0 && !isEditing;
 
     const payload = {
       supplier_code: form.supplier_code,
@@ -239,7 +321,10 @@ export default function SalesEntry() {
       grn_entry_code: form.grn_entry_code,
       original_weight: form.original_weight,
       original_packs: form.original_packs,
-      given_amount: form.given_amount ? parseFloat(form.given_amount) : null,
+      // Only set given_amount for the first record of a customer or when editing the first record
+      given_amount: (isFirstRecordForCustomer || (isEditing && customerSales[0]?.id === editingSaleId)) 
+        ? (form.given_amount ? parseFloat(form.given_amount) : null)
+        : null,
       ...(billPrintedStatus && { bill_printed: billPrintedStatus }),
     };
 
@@ -414,12 +499,13 @@ export default function SalesEntry() {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <input id="customer_code_input" ref={refs.customerCode} name="customer_code" value={form.customer_code} onChange={(e) => handleInputChange(e, 0)} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10} placeholder="Customer Code" className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" />
               <select id="customer_code_select" ref={refs.customerSelect} value={form.customer_code} onChange={handleCustomerSelect} onKeyDown={(e) => handleKeyDown(e, 1)} className="px-4 py-2 border rounded-xl">
                 <option value="">-- Select Customer --</option>
                 {initialData.customers.map(c => <option key={c.short_name} value={c.short_name}>{c.name} ({c.short_name})</option>)}
               </select>
+             
             </div>
 
             <Select
@@ -504,11 +590,28 @@ export default function SalesEntry() {
             />
 
             <div className="grid grid-cols-5 gap-4">
-              <input id="item_name" ref={refs.itemName} type="text" value={form.item_name} readOnly placeholder="Item Name" onKeyDown={(e) => handleKeyDown(e, 3)} className="px-4 py-2 border rounded-xl" />
-              <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={form.weight} onChange={(e) => handleInputChange(e, 4)} onKeyDown={(e) => handleKeyDown(e, 4)} placeholder="Weight (kg)" className="px-4 py-2 border rounded-xl" />
-              <input id="packs" ref={refs.packs} name="packs" type="number" value={form.packs} onChange={(e) => handleInputChange(e, 5)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Packs" className="px-4 py-2 border rounded-xl" />
-              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={form.price_per_kg} onChange={(e) => handleInputChange(e, 6)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Price/kg" className="px-4 py-2 border rounded-xl" />
-              <input id="total" ref={refs.total} name="total" type="number" value={form.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 7)} className="px-4 py-2 border bg-gray-100 rounded-xl" />
+              <div className="relative">
+                <input id="item_name" ref={refs.itemName} type="text" value={form.item_name} readOnly placeholder="Item Name" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-2 border rounded-xl w-full" />
+                {balanceInfo.balanceWeight > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
+                    Balance Weight: {formatDecimal(balanceInfo.balanceWeight)} kg
+                  </div>
+                )}
+              </div>
+              
+              <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={form.weight} onChange={(e) => handleInputChange(e, 5)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Weight (kg)" className="px-4 py-2 border rounded-xl" />
+              
+              <div className="relative">
+                <input id="packs" ref={refs.packs} name="packs" type="number" value={form.packs} onChange={(e) => handleInputChange(e, 6)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Packs" className="px-4 py-2 border rounded-xl w-full" />
+                {balanceInfo.balancePacks > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
+                    Balance Packs: {balanceInfo.balancePacks}
+                  </div>
+                )}
+              </div>
+              
+              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={form.price_per_kg} onChange={(e) => handleInputChange(e, 7)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="Price/kg" className="px-4 py-2 border rounded-xl" />
+              <input id="total" ref={refs.total} name="total" type="number" value={form.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} className="px-4 py-2 border bg-gray-100 rounded-xl" />
             </div>
           </div>
 
@@ -525,19 +628,53 @@ export default function SalesEntry() {
           <h3 className="text-xl font-bold mb-4">{selectedPrintedCustomer ? `Sales for ${selectedPrintedCustomer}` : selectedUnprintedCustomer ? `Unprinted Sales for ${selectedUnprintedCustomer}` : "All New Sales"}</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full border border-gray-200 rounded-xl text-sm">
-              <thead className="bg-gray-100"><tr><th className="px-4 py-2 border">Code</th><th className="px-4 py-2 border">Customer</th><th className="px-4 py-2 border">Item</th><th className="px-4 py-2 border">Weight (kg)</th><th className="px-4 py-2 border">Price</th><th className="px-4 py-2 border">Total</th><th className="px-4 py-2 border">Packs</th></tr></thead>
-              <tbody ref={salesTableBodyRef}>{displayedSales.map((s, idx) => (
-                <tr
-                  key={s.id || idx}
-                  tabIndex={0}
-                  className="text-center hover:bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100"
-                  onClick={() => handleEditClick(s)}
-                  onKeyDown={(e) => handleTableRowKeyDown(e, s)}
-                >
-                  <td className="px-4 py-2 border">{s.code}</td><td className="px-4 py-2 border">{s.customer_code}</td><td className="px-4 py-2 border">{s.item_name}</td><td className="px-4 py-2 border">{formatDecimal(s.weight)}</td><td className="px-4 py-2 border">{formatDecimal(s.price_per_kg)}</td><td className="px-4 py-2 border">{formatDecimal(s.total)}</td><td className="px-4 py-2 border">{s.packs}</td>
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2 border">Code</th>
+                  <th className="px-4 py-2 border">Customer</th>
+                  <th className="px-4 py-2 border">Item</th>
+                  <th className="px-4 py-2 border">Weight (kg)</th>
+                  <th className="px-4 py-2 border">Price</th>
+                  <th className="px-4 py-2 border">Total</th>
+                  <th className="px-4 py-2 border">Packs</th>
                 </tr>
-              ))}</tbody>
+              </thead>
+              <tbody ref={salesTableBodyRef}>
+                {displayedSales.map((s, idx) => (
+                  <tr
+                    key={s.id || idx}
+                    tabIndex={0}
+                    className="text-center hover:bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100"
+                    onClick={() => handleEditClick(s)}
+                    onKeyDown={(e) => handleTableRowKeyDown(e, s)}
+                  >
+                    <td className="px-4 py-2 border">{s.code}</td>
+                    <td className="px-4 py-2 border">{s.customer_code}</td>
+                    <td className="px-4 py-2 border">{s.item_name}</td>
+                    <td className="px-4 py-2 border">{formatDecimal(s.weight)}</td>
+                    <td className="px-4 py-2 border">{formatDecimal(s.price_per_kg)}</td>
+                    <td className="px-4 py-2 border">{formatDecimal(s.total)}</td>
+                    <td className="px-4 py-2 border">{s.packs}</td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
+           <div className="flex justify-end">
+  <input 
+    id="given_amount"
+    ref={refs.givenAmount}
+    name="given_amount" 
+    type="number" 
+    step="0.01"
+    value={form.given_amount} 
+    onChange={(e) => handleInputChange(e, 2)} 
+    onKeyDown={(e) => handleKeyDown(e, 2)} 
+    placeholder="Given Amount" 
+    className="px-4 py-2 border rounded-xl mt-4"
+  />
+</div>
+
+
           </div>
         </div>
       </div>

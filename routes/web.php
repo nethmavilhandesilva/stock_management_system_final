@@ -184,6 +184,7 @@ Route::get('/grn/balance/{code}', [GrnEntryController::class, 'getBalance'])->na
 //new react dashboard
 Route::get('/sales-entry/react', [DashboardController::class, 'index'])->name('dasboard.index'); // page that shows React app
 Route::post('/grn/react', [GrnEntryController::class, 'store'])->name('grn.store2'); // existing store handler (JSON)
-
+//given amount
+Route::put('/sales/{sale}/given-amount', [SalesEntryController::class, 'updateGivenAmount'])->name('sales.update-given-amount');
 
 require __DIR__.'/auth.php';

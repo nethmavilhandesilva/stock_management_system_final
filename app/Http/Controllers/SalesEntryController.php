@@ -1159,6 +1159,22 @@ public function dayStart(Request $request)
 
     return redirect()->back()->with('success', 'Balance updated successfully!');
 }
+public function updateGivenAmount(Request $request, Sale $sale)
+{
+    $validated = $request->validate([
+        'given_amount' => 'required|numeric|min:0',
+    ]);
+
+    $sale->update([
+        'given_amount' => $validated['given_amount']
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Given amount updated successfully',
+        'sale' => $sale
+    ]);
+}
 }
 
 
