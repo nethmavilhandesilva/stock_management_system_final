@@ -1,6 +1,43 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Select from "react-select";
 
+// =======================================================================
+// 1. Memoized CustomerList Component (Moved outside SalesEntry)
+// =======================================================================
+const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange, selectedPrintedCustomer, selectedUnprintedCustomer, handleCustomerClick, unprintedTotal, formatDecimal }) => (
+    <div className="w-1/5 bg-white shadow-xl rounded-xl p-4 overflow-y-auto max-h-screen">
+      <h2 className="text-xl font-bold mb-4">{type === 'printed' ? 'Printed Customers' : 'Unprinted Sales'}</h2>
+      {type === 'unprinted' && (
+        <div className="bg-gray-50 p-3 rounded-xl shadow-sm mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Total Unprinted: <span className="text-red-600 font-bold">Rs. {formatDecimal(unprintedTotal)}</span></h3>
+        </div>
+      )}
+      <div className="mb-4">
+        {/* The input element is now stabilized by React.memo */}
+        <input 
+          type="text" 
+          placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`} 
+          value={searchQuery} 
+          onChange={e => onSearchChange(e.target.value)} 
+          className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" 
+        />
+      </div>
+      {customers.length === 0 ? <p className="text-gray-500">No {type === 'printed' ? 'printed sales' : 'unprinted sales'} found.</p> : (
+        <ul>{customers.map(customerCode => (
+          <li key={customerCode}>
+            <button 
+              onClick={() => handleCustomerClick(type, customerCode)} 
+              className={`w-full text-left p-3 mb-2 rounded-xl border ${(type === 'printed' ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
+            >
+              <div className="font-medium">{customerCode}</div>
+            </button>
+          </li>
+        ))}</ul>
+      )}
+    </div>
+));
+
+
 export default function SalesEntry() {
   // Initial data
   const initialData = {
@@ -606,39 +643,25 @@ export default function SalesEntry() {
     ...prev,
     customer_code: isCurrentlySelected ? "" : customerCode,
     customer_name: isCurrentlySelected ? "" : customer?.name || "",
-    given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "") // Fixed this line
+    given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "") 
   }));
 };
-
-  // Components
-  const CustomerList = ({ customers, sales, type, searchQuery, onSearchChange }) => (
-    <div className="w-1/5 bg-white shadow-xl rounded-xl p-4 overflow-y-auto max-h-screen">
-      <h2 className="text-xl font-bold mb-4">{type === 'printed' ? 'Printed Customers' : 'Unprinted Sales'}</h2>
-      {type === 'unprinted' && (
-        <div className="bg-gray-50 p-3 rounded-xl shadow-sm mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Total Unprinted: <span className="text-red-600 font-bold">Rs. {formatDecimal(unprintedTotal)}</span></h3>
-        </div>
-      )}
-      <div className="mb-4">
-        <input type="text" placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`} value={searchQuery} onChange={e => onSearchChange(e.target.value)} className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" />
-      </div>
-      {customers.length === 0 ? <p className="text-gray-500">No {type === 'printed' ? 'printed sales' : 'unprinted sales'} found.</p> : (
-        <ul>{customers.map(customerCode => (
-          <li key={customerCode}>
-            <button onClick={() => handleCustomerClick(type, customerCode)} className={`w-full text-left p-3 mb-2 rounded-xl border ${(type === 'printed' ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}>
-              <div className="font-medium">{customerCode}</div>
-              <div className="text-sm text-gray-600">Sales: {sales.filter(s => s.customer_code === customerCode).length}</div>
-            </button>
-          </li>
-        ))}</ul>
-      )}
-    </div>
-  );
 
   // Main render
   return (
     <div className="min-h-screen flex flex-row bg-gray-100 p-6">
-      <CustomerList customers={printedCustomers} sales={printedSales} type="printed" searchQuery={searchQueries.printed} onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, printed: value }))} />
+      {/* Updated CustomerList call */}
+      <CustomerList 
+        customers={printedCustomers} 
+        type="printed" 
+        searchQuery={searchQueries.printed} 
+        onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, printed: value }))} 
+        selectedPrintedCustomer={selectedPrintedCustomer}
+        selectedUnprintedCustomer={selectedUnprintedCustomer}
+        handleCustomerClick={handleCustomerClick}
+        unprintedTotal={unprintedTotal}
+        formatDecimal={formatDecimal}
+      />
 
       <div className="w-3/5 bg-white shadow-2xl rounded-3xl p-10 mx-6">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -834,7 +857,18 @@ export default function SalesEntry() {
         </div>
       </div>
 
-      <CustomerList customers={unprintedCustomers} sales={unprintedSales} type="unprinted" searchQuery={searchQueries.unprinted} onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, unprinted: value }))} />
+      {/* Updated CustomerList call */}
+      <CustomerList 
+        customers={unprintedCustomers} 
+        type="unprinted" 
+        searchQuery={searchQueries.unprinted} 
+        onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, unprinted: value }))} 
+        selectedPrintedCustomer={selectedPrintedCustomer}
+        selectedUnprintedCustomer={selectedUnprintedCustomer}
+        handleCustomerClick={handleCustomerClick}
+        unprintedTotal={unprintedTotal}
+        formatDecimal={formatDecimal}
+      />
     </div>
   );
 }
