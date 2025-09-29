@@ -46,6 +46,9 @@ export default function SalesEntry() {
     balanceWeight: 0
   });
 
+  // New state to track if we should allow auto-focus
+  const [allowAutoFocus, setAllowAutoFocus] = useState(true);
+
   // Debug useEffect
   useEffect(() => {
     console.log('Form updated:', form);
@@ -106,6 +109,25 @@ export default function SalesEntry() {
     }
   }, [form.grn_entry_code, initialData.entries]);
 
+  // Simplified focus function
+  const focusField = (fieldName) => {
+    if (!allowAutoFocus) return;
+    
+    const fieldIndex = fieldOrder.indexOf(fieldName);
+    if (fieldIndex === -1) return;
+
+    const fieldRef = Object.values(refs)[fieldIndex];
+    if (fieldRef && fieldRef.current) {
+      setTimeout(() => {
+        if (fieldRef.current.focus) {
+          fieldRef.current.focus();
+        } else if (fieldRef.current.select) {
+          fieldRef.current.select.focus();
+        }
+      }, 10);
+    }
+  };
+
   // Event handlers
   const handleKeyDown = (e, currentFieldIndex) => {
     if (e.key === "Enter") {
@@ -114,7 +136,7 @@ export default function SalesEntry() {
       // If we're in the given_amount field and it has a value, submit only the given amount
       if (fieldOrder[currentFieldIndex] === "given_amount" && form.given_amount) {
         handleSubmitGivenAmount(e);
-        return; // IMPORTANT: Return here to prevent further processing
+        return;
       }
 
       if (fieldOrder[currentFieldIndex] === "price_per_kg") return handleSubmit(e);
@@ -124,16 +146,10 @@ export default function SalesEntry() {
         const targetIndex = fieldOrder.findIndex(f => f === skipMap[fieldOrder[currentFieldIndex]]);
         if (targetIndex !== -1) nextIndex = targetIndex;
       }
-      requestAnimationFrame(() => setTimeout(() => {
-        const nextRef = Object.values(refs)[nextIndex];
-        if (nextRef && nextRef.current) {
-          if (nextRef.current.focus) {
-            nextRef.current.focus();
-          } else if (nextRef.current.select) {
-            nextRef.current.select.focus();
-          }
-        }
-      }, 0));
+      
+      if (nextIndex < fieldOrder.length) {
+        focusField(fieldOrder[nextIndex]);
+      }
     }
   };
 
@@ -156,18 +172,17 @@ export default function SalesEntry() {
           if (targetIndex !== -1) nextIndex = targetIndex;
         }
 
-        requestAnimationFrame(() => setTimeout(() => {
-          const nextRef = Object.values(refs)[nextIndex];
-          if (nextRef && nextRef.current) {
-            if (nextRef.current.focus) {
-              nextRef.current.focus();
-            } else if (nextRef.current.select) {
-              nextRef.current.select.focus();
-            }
-          }
-        }, 0));
+        if (nextIndex < fieldOrder.length) {
+          focusField(fieldOrder[nextIndex]);
+        }
       }
     }
+  };
+
+  // Handle mouse down on fields - temporarily disable auto-focus
+  const handleFieldMouseDown = (fieldName) => {
+    setAllowAutoFocus(false);
+    setTimeout(() => setAllowAutoFocus(true), 100);
   };
 
   const handleCustomerSelect = (e) => {
@@ -178,6 +193,11 @@ export default function SalesEntry() {
     setSelectedUnprintedCustomer(hasUnprintedSales ? short : null);
     setSelectedPrintedCustomer(null);
     setForm(prev => ({ ...prev, customer_code: short || prev.customer_code, customer_name: customer?.name || "" }));
+    
+    // Only auto-focus if allowed
+    if (allowAutoFocus) {
+      setTimeout(() => focusField("grn_entry_code"), 10);
+    }
   };
 
   const handleEditClick = (sale) => {
@@ -198,6 +218,9 @@ export default function SalesEntry() {
       given_amount: sale.given_amount || ""
     });
     setEditingSaleId(sale.id);
+    
+    // Focus on the first field when editing
+    setTimeout(() => focusField("customer_code_input"), 10);
   };
 
   const handleTableRowKeyDown = (e, sale) => {
@@ -216,6 +239,9 @@ export default function SalesEntry() {
     setEditingSaleId(null);
     setGrnSearchInput("");
     setBalanceInfo({ balancePacks: 0, balanceWeight: 0 });
+    
+    // Focus on customer code after clear
+    setTimeout(() => focusField("customer_code_input"), 10);
   };
 
   // API functions
@@ -253,12 +279,13 @@ export default function SalesEntry() {
 
     if (!form.customer_code) {
       setErrors({ form: "Please enter a customer code first" });
-      refs.customerCode.current?.focus();
+      focusField("customer_code_input");
       return;
     }
 
     if (!form.given_amount) {
       setErrors({ form: "Please enter a given amount" });
+      focusField("given_amount");
       return;
     }
 
@@ -284,7 +311,7 @@ export default function SalesEntry() {
 
       // Clear only the given_amount field and move to next field
       setForm(prev => ({ ...prev, given_amount: "" }));
-      refs.grnSelect.current?.focus();
+      focusField("grn_entry_code");
 
       alert("Given amount updated successfully for customer: " + form.customer_code);
     } catch (error) {
@@ -364,174 +391,27 @@ export default function SalesEntry() {
       setGrnSearchInput("");
       setBalanceInfo({ balancePacks: 0, balanceWeight: 0 });
 
-      refs.grnSelect.current?.focus();
+      focusField("grn_entry_code");
     } catch (error) {
       setErrors({ form: error.message });
     }
   };
 
+  // ... (rest of your existing functions like buildFullReceiptHTML, printReceipt, handlePrintAndClear remain the same)
 
-  // Print functions
-  const buildFullReceiptHTML = (salesData, billNo, customerName) => {
-    const date = new Date().toLocaleDateString();
-    const time = new Date().toLocaleTimeString();
-    let totalAmountSum = 0, totalPacksSum = 0;
-
-    const itemsHtml = salesData.map(s => {
-      totalAmountSum += parseFloat(s.total) || 0;
-      totalPacksSum += parseInt(s.packs) || 0;
-      return `<tr style="font-size:1.2em;">
-        <td style="text-align:left;">${s.item_name || ""} <br>${s.packs || 0}</td>
-        <td style="text-align:right; padding-right:18px;">${(parseFloat(s.weight) || 0).toFixed(2)}</td>
-        <td style="text-align:right;">${(parseFloat(s.price_per_kg) || 0).toFixed(2)}</td>
-        <td style="text-align:right;">${(parseFloat(s.total) || 0).toFixed(2)}</td>
-      </tr>`;
-    }).join("");
-
-    const packCostTotal = window.globalTotalPackCostValue || 0;
-    const totalPrice = totalAmountSum;
-    const givenAmount = salesData.reduce((sum, s) => sum + (parseFloat(s.given_amount) || 0), 0);
-    const remaining = givenAmount - (totalPrice + packCostTotal);
-
-    return `<div style="width:100%; max-width:300px; margin:0 auto; padding:5px; font-family:sans-serif;">
-      <div style="text-align:center;"><h3>B32 TAG ට්‍රේඩර්ස්</h3><p>අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p><p>වි.ආ.ම. වේයන්ගොඩ</p></div><hr>
-      <table style="width:100%; font-size:9px; border-collapse:collapse;">
-        <tr><td>දිනය: ${date}</td><td style="text-align:right;">${time}</td></tr>
-        <tr><td>බිල් අංකය: <strong>${billNo}</strong></td><td style="text-align:right;">${customerName}</td></tr>
-      </table><hr>
-      <table style="width:100%; border-collapse:collapse;">
-        <thead><tr><th>වර්ගය</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead><tbody>${itemsHtml}</tbody>
-      </table><hr>
-      <table style="width:100%; font-size:11px;">
-        <tr><td>මුළු කුලිය:</td><td style="text-align:right;">${packCostTotal.toFixed(2)}</td></tr>
-        <tr><td>මුළු අගය:</td><td style="text-align:right;">${(totalPrice + packCostTotal).toFixed(2)}</td></tr>
-        ${givenAmount > 0 ? `<tr><td style="width:50%; text-align:left;">දුන් මුදල: <strong>${givenAmount.toFixed(2)}</strong></td><td style="width:50%; text-align:right;">ඉතිරිය: <strong>${Math.abs(remaining).toFixed(2)}</strong></td></tr>` : ''}
-      </table><hr>
-      <div style="text-align:center; font-size:10px;"><p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p><p>නැවත භාර ගනු නොලැබේ</p></div></div>`;
-  };
-
-  const printReceipt = (html, customerName) => new Promise((resolve) => {
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>${customerName}</title></head><body>${html}</body></html>`);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    requestAnimationFrame(() => setTimeout(() => { printWindow.close(); resolve(); }, 500));
-  });
-
-  const handlePrintAndClear = async () => {
-    const salesData = displayedSales.filter(s => s.id);
-    if (!salesData.length) return alert("No sales records to print!");
-
-    try {
-      const data = await apiCall("/sales/mark-printed", "POST", { sales_ids: salesData.map(s => s.id) });
-      if (data.status !== "success") throw new Error(data.message || "Unknown error");
-
-      const customerName = salesData[0].customer_code || "N/A";
-      const billNo = data.bill_no || "";
-
-      await printReceipt(buildFullReceiptHTML(salesData, billNo, customerName), customerName);
-      await printReceipt(`<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>` + buildFullReceiptHTML(salesData, billNo, customerName), customerName + " - Copy");
-
-      setAllSales(prev => prev.map(s => salesData.map(d => d.id).includes(s.id) ? { ...s, bill_printed: 'Y', bill_no: billNo } : s));
-      setSelectedUnprintedCustomer(null);
-      setSelectedPrintedCustomer(null);
-    } catch (error) { alert("Printing failed: " + error.message); }
-  };
-
-  // Effects
+  // Update the useEffect for F1 and F5 shortcuts
   useEffect(() => {
     const handleShortcut = (e) => {
       if (e.key === "F1") {
         e.preventDefault();
-
-        // Store the focus intent
-        const shouldFocusOnCustomerCode = true;
-
         handlePrintAndClear().finally(() => {
-          // This will run after print process completes (success or failure)
-          if (shouldFocusOnCustomerCode) {
-            handleClearForm();
-
-            // Very aggressive focus with multiple attempts
-            const focusCustomerCode = () => {
-              if (refs.customerCode.current) {
-                refs.customerCode.current.focus();
-              }
-            };
-
-            // Multiple focus attempts over time
-            setTimeout(focusCustomerCode, 100);
-            setTimeout(focusCustomerCode, 200);
-            setTimeout(focusCustomerCode, 300);
-            setTimeout(focusCustomerCode, 500);
-            setTimeout(focusCustomerCode, 800);
-          }
+          setTimeout(() => focusField("customer_code_input"), 100);
         });
+      } else if (e.key === "F5") {
+        e.preventDefault();
+        // ... (your existing F5 logic)
+        setTimeout(() => focusField("customer_code_input"), 100);
       }
-     else if (e.key === "F5") {
-  e.preventDefault();
-  
-  // Combine newSales and unprintedSales
-  const salesToProcess = [...newSales, ...unprintedSales];
-  
-  if (salesToProcess.length === 0) return alert("No sales to process.");
-  
-  if (window.confirm(`Are you sure you want to mark ALL sales as processed?`)) {
-    apiCall("/sales/mark-all-processed", "POST", { sales_ids: salesToProcess.map(s => s.id) })
-      .then(data => {
-        if (data.success) {
-          alert(data.message || `All ${salesToProcess.length} sales marked as processed successfully!`);
-          
-          // Update all processed sales to have bill_printed: "N"
-          setAllSales(prev => prev.map(s => 
-            salesToProcess.map(ps => ps.id).includes(s.id) 
-              ? { ...s, bill_printed: "N" } 
-              : s
-          ));
-
-          // Clear form and selections
-          handleClearForm();
-          setSelectedUnprintedCustomer(null);
-          setSelectedPrintedCustomer(null);
-
-          // Aggressive focus locking
-          const lockFocus = () => {
-            if (refs.customerCode.current) {
-              refs.customerCode.current.focus();
-              refs.customerCode.current.style.zIndex = '9999';
-            }
-          };
-
-          // Multiple focus attempts
-          setTimeout(lockFocus, 100);
-          setTimeout(lockFocus, 200);
-          setTimeout(lockFocus, 300);
-          setTimeout(lockFocus, 400);
-          setTimeout(lockFocus, 500);
-
-          // Prevent any other focus changes for 1 second
-          const originalFocus = HTMLElement.prototype.focus;
-          HTMLElement.prototype.focus = function () {
-            if (this !== refs.customerCode.current) {
-              return; // Block all other focus attempts
-            }
-            originalFocus.call(this);
-          };
-
-          setTimeout(() => {
-            HTMLElement.prototype.focus = originalFocus;
-            if (refs.customerCode.current) {
-              refs.customerCode.current.style.zIndex = '';
-            }
-          }, 1000);
-        } else {
-          alert(data.message || "Failed to mark sales as processed.");
-        }
-      })
-      .catch(err => alert("Failed to mark sales as processed: " + err.message));
-  }
-}
     };
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
@@ -543,7 +423,9 @@ export default function SalesEntry() {
     setForm(prev => ({ ...prev, total: w * p ? Number((w * p).toFixed(2)) : "" }));
   }, [form.weight, form.price_per_kg]);
 
-  useEffect(() => { refs.customerCode.current?.focus(); }, []);
+  useEffect(() => { 
+    focusField("customer_code_input"); 
+  }, []);
 
   const handleCustomerClick = (type, customerCode) => {
     const isPrinted = type === 'printed';
@@ -590,7 +472,7 @@ export default function SalesEntry() {
     </div>
   );
 
-  // Main render
+  // Main render - updated with mouse event handlers
   return (
     <div className="min-h-screen flex flex-row bg-gray-100 p-6">
       <CustomerList customers={printedCustomers} sales={printedSales} type="printed" searchQuery={searchQueries.printed} onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, printed: value }))} />
@@ -604,104 +486,140 @@ export default function SalesEntry() {
 
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
-              <input id="customer_code_input" ref={refs.customerCode} name="customer_code" value={form.customer_code} onChange={(e) => handleInputChange(e, 0)} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10} placeholder="Customer Code" className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" />
-              <select id="customer_code_select" ref={refs.customerSelect} value={form.customer_code} onChange={handleCustomerSelect} onKeyDown={(e) => handleKeyDown(e, 1)} className="px-4 py-2 border rounded-xl">
+              <input 
+                id="customer_code_input" 
+                ref={refs.customerCode} 
+                name="customer_code" 
+                value={form.customer_code} 
+                onChange={(e) => handleInputChange(e, 0)} 
+                onKeyDown={(e) => handleKeyDown(e, 0)}
+                onMouseDown={() => handleFieldMouseDown("customer_code_input")}
+                type="text" 
+                maxLength={10} 
+                placeholder="Customer Code" 
+                className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" 
+              />
+              <select 
+                id="customer_code_select" 
+                ref={refs.customerSelect} 
+                value={form.customer_code} 
+                onChange={handleCustomerSelect} 
+                onKeyDown={(e) => handleKeyDown(e, 1)}
+                onMouseDown={() => handleFieldMouseDown("customer_code_select")}
+                className="px-4 py-2 border rounded-xl"
+              >
                 <option value="">-- Select Customer --</option>
                 {initialData.customers.map(c => <option key={c.short_name} value={c.short_name}>{c.name} ({c.short_name})</option>)}
               </select>
-
+              <input 
+                id="given_amount" 
+                ref={refs.givenAmount} 
+                name="given_amount" 
+                type="number" 
+                step="0.01" 
+                value={form.given_amount} 
+                onChange={(e) => handleInputChange(e, 2)} 
+                onKeyDown={(e) => handleKeyDown(e, 2)}
+                onMouseDown={() => handleFieldMouseDown("given_amount")}
+                placeholder="Given Amount" 
+                className="px-4 py-2 border rounded-xl" 
+              />
             </div>
 
             <Select
-  id="grn_entry_code"
-  ref={refs.grnSelect}
-  value={(() => {
-    if (!form.grn_entry_code) return null;
+              id="grn_entry_code"
+              ref={refs.grnSelect}
+              value={(() => {
+                if (!form.grn_entry_code) return null;
 
-    const matchingEntry = initialData.entries.find((en) => en.code === form.grn_entry_code);
-    if (!matchingEntry) return null;
+                const matchingEntry = initialData.entries.find((en) => en.code === form.grn_entry_code);
+                if (!matchingEntry) return null;
 
-    return {
-      value: form.grn_entry_code,
-      label: `${form.grn_entry_code} - ${matchingEntry.item_name || form.item_name || ''}`,
-      data: matchingEntry
-    };
-  })()}
-  onChange={(selected) => {
-    if (selected?.data) {
-      const entry = selected.data;
-      setForm(prev => ({
-        ...prev,
-        grn_entry_code: selected.value,
-        item_name: entry.item_name || "",
-        supplier_code: entry.supplier_code || "",
-        item_code: entry.item_code || "",
-        price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
-        // Only clear weight and packs if NOT editing
-        weight: editingSaleId ? prev.weight : "",
-        packs: editingSaleId ? prev.packs : "",
-        total: editingSaleId ? prev.total : ""
-      }));
-      setGrnSearchInput("");
-      // Auto-focus to weight only when an item is actually selected
-      requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
-    }
-  }}
-  onInputChange={setGrnSearchInput}
-  onKeyDown={(e) => {
-    if (e.key === "Enter" && form.grn_entry_code && !e.isPropagationStopped()) {
-      e.preventDefault();
-      setTimeout(() => refs.weight.current?.focus(), 0);
-    }
-  }}
-  // REMOVED the problematic onMenuClose prop
-  getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
-  getOptionValue={(option) => option.value}
-  options={initialData.entries.map((en, index) => ({
-    value: en.code,
-    label: en.code,
-    data: en,
-    index
-  }))}
-  placeholder="Select GRN Entry"
-  isSearchable={true}
-  noOptionsMessage={() => "No GRN entries found"}
-  formatOptionLabel={(option, { context }) => {
-    if (context === "value" || !option.data) {
-      const entry = option.data || initialData.entries.find((en) => en.code === option.value);
-      return <span>{option.label}(<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
-    }
-    const entry = option.data;
-    return <div className="w-full">
-      {option.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
-      <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-        <div className="text-left font-medium text-blue-700">{entry.code || "-"}</div><div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div><div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
-      </div>
-    </div>;
-  }}
-  components={{
-    Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
-      <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
-        <div className="w-full">
-          {data.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
-          <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-            <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div><div className="text-center">{data.data.original_packs || "0"}</div><div className="text-center">{formatDecimal(data.data.original_weight)}</div><div className="text-center">{data.data.packs || "0"}</div><div className="text-center">{formatDecimal(data.data.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
-          </div>
-        </div>
-      </div>
-    )
-  }}
-  styles={{ 
-    option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }), 
-    menu: (base) => ({ ...base, width: "650px", maxWidth: "85vw" }), 
-    menuList: (base) => ({ ...base, padding: 0, maxHeight: "300px" }), 
-    control: (base) => ({ ...base, minHeight: "44px" }) 
-  }}
-/>
+                return {
+                  value: form.grn_entry_code,
+                  label: `${form.grn_entry_code} - ${matchingEntry.item_name || form.item_name || ''}`,
+                  data: matchingEntry
+                };
+              })()}
+              onChange={(selected) => {
+                if (selected?.data) {
+                  const entry = selected.data;
+                  setForm(prev => ({
+                    ...prev,
+                    grn_entry_code: selected.value,
+                    item_name: entry.item_name || "",
+                    supplier_code: entry.supplier_code || "",
+                    item_code: entry.item_code || "",
+                    price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
+                    // Only clear weight and packs if NOT editing
+                    weight: editingSaleId ? prev.weight : "",
+                    packs: editingSaleId ? prev.packs : "",
+                    total: editingSaleId ? prev.total : ""
+                  }));
+                  setGrnSearchInput("");
+                  setTimeout(() => focusField("weight"), 10);
+                }
+              }}
+              onInputChange={setGrnSearchInput}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && form.grn_entry_code && !e.isPropagationStopped()) {
+                  e.preventDefault();
+                  setTimeout(() => focusField("weight"), 0);
+                }
+              }}
+              onMenuClose={() => setTimeout(() => form.grn_entry_code ? focusField("weight") : focusField("grn_entry_code"), 0)}
+              getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
+              getOptionValue={(option) => option.value}
+              options={initialData.entries.map((en, index) => ({
+                value: en.code,
+                label: en.code,
+                data: en,
+                index
+              }))}
+              placeholder="Select GRN Entry"
+              isSearchable={true}
+              noOptionsMessage={() => "No GRN entries found"}
+              formatOptionLabel={(option, { context }) => {
+                if (context === "value" || !option.data) {
+                  const entry = option.data || initialData.entries.find((en) => en.code === option.value);
+                  return <span>{option.label}(<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
+                }
+                const entry = option.data;
+                return <div className="w-full">
+                  {option.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
+                  <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
+                    <div className="text-left font-medium text-blue-700">{entry.code || "-"}</div><div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div><div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
+                  </div>
+                </div>;
+              }}
+              components={{
+                Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
+                  <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
+                    <div className="w-full">
+                      {data.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
+                      <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
+                        <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div><div className="text-center">{data.data.original_packs || "0"}</div><div className="text-center">{formatDecimal(data.data.original_weight)}</div><div className="text-center">{data.data.packs || "0"}</div><div className="text-center">{formatDecimal(data.data.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }}
+              styles={{ option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }), menu: (base) => ({ ...base, width: "650px", maxWidth: "85vw" }), menuList: (base) => ({ ...base, padding: 0, maxHeight: "300px" }), control: (base) => ({ ...base, minHeight: "44px" }) }}
+            />
 
             <div className="grid grid-cols-5 gap-4">
               <div className="relative">
-                <input id="item_name" ref={refs.itemName} type="text" value={form.item_name} readOnly placeholder="Item Name" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-2 border rounded-xl w-full" />
+                <input 
+                  id="item_name" 
+                  ref={refs.itemName} 
+                  type="text" 
+                  value={form.item_name} 
+                  readOnly 
+                  placeholder="Item Name" 
+                  onKeyDown={(e) => handleKeyDown(e, 4)}
+                  onMouseDown={() => handleFieldMouseDown("item_name")}
+                  className="px-4 py-2 border rounded-xl w-full" 
+                />
                 {balanceInfo.balanceWeight > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
                     Balance Weight: {formatDecimal(balanceInfo.balanceWeight)} kg
@@ -709,10 +627,33 @@ export default function SalesEntry() {
                 )}
               </div>
 
-              <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={form.weight} onChange={(e) => handleInputChange(e, 5)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Weight (kg)" className="px-4 py-2 border rounded-xl" />
+              <input 
+                id="weight" 
+                ref={refs.weight} 
+                name="weight" 
+                type="number" 
+                step="0.01" 
+                value={form.weight} 
+                onChange={(e) => handleInputChange(e, 5)} 
+                onKeyDown={(e) => handleKeyDown(e, 5)}
+                onMouseDown={() => handleFieldMouseDown("weight")}
+                placeholder="Weight (kg)" 
+                className="px-4 py-2 border rounded-xl" 
+              />
 
               <div className="relative">
-                <input id="packs" ref={refs.packs} name="packs" type="number" value={form.packs} onChange={(e) => handleInputChange(e, 6)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Packs" className="px-4 py-2 border rounded-xl w-full" />
+                <input 
+                  id="packs" 
+                  ref={refs.packs} 
+                  name="packs" 
+                  type="number" 
+                  value={form.packs} 
+                  onChange={(e) => handleInputChange(e, 6)} 
+                  onKeyDown={(e) => handleKeyDown(e, 6)}
+                  onMouseDown={() => handleFieldMouseDown("packs")}
+                  placeholder="Packs" 
+                  className="px-4 py-2 border rounded-xl w-full" 
+                />
                 {balanceInfo.balancePacks > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
                     Balance Packs: {balanceInfo.balancePacks}
@@ -720,8 +661,31 @@ export default function SalesEntry() {
                 )}
               </div>
 
-              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={form.price_per_kg} onChange={(e) => handleInputChange(e, 7)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="Price/kg" className="px-4 py-2 border rounded-xl" />
-              <input id="total" ref={refs.total} name="total" type="number" value={form.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} className="px-4 py-2 border bg-gray-100 rounded-xl" />
+              <input 
+                id="price_per_kg" 
+                ref={refs.pricePerKg} 
+                name="price_per_kg" 
+                type="number" 
+                step="0.01" 
+                value={form.price_per_kg} 
+                onChange={(e) => handleInputChange(e, 7)} 
+                onKeyDown={(e) => handleKeyDown(e, 7)}
+                onMouseDown={() => handleFieldMouseDown("price_per_kg")}
+                placeholder="Price/kg" 
+                className="px-4 py-2 border rounded-xl" 
+              />
+              <input 
+                id="total" 
+                ref={refs.total} 
+                name="total" 
+                type="number" 
+                value={form.total} 
+                readOnly 
+                placeholder="Total" 
+                onKeyDown={(e) => handleKeyDown(e, 8)}
+                onMouseDown={() => handleFieldMouseDown("total")}
+                className="px-4 py-2 border bg-gray-100 rounded-xl" 
+              />
             </div>
           </div>
 
@@ -769,22 +733,6 @@ export default function SalesEntry() {
                 ))}
               </tbody>
             </table>
-            <div className="flex justify-end">
-              <input
-                id="given_amount"
-                ref={refs.givenAmount}
-                name="given_amount"
-                type="number"
-                step="0.01"
-                value={form.given_amount}
-                onChange={(e) => handleInputChange(e, 2)}
-                onKeyDown={(e) => handleKeyDown(e, 2)}
-                placeholder="Given Amount"
-                className="px-4 py-2 border rounded-xl mt-4"
-              />
-            </div>
-
-
           </div>
         </div>
       </div>

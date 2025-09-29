@@ -239,17 +239,6 @@ const SalesEntryForm = ({ onSaleAdded, onSaleUpdated, editingSale, onCancelEdit 
         }
     };
 
-    // Handle keyboard navigation
-    const handleKeyDown = (e, nextField) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (nextField && nextField.current) {
-                nextField.current.focus();
-                nextField.current.select();
-            }
-        }
-    };
-
     // Show alert messages
     const showAlert = (message, type) => {
         // You can replace this with a proper alert component
