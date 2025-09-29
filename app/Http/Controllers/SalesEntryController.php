@@ -1165,8 +1165,9 @@ public function updateGivenAmount(Request $request, Sale $sale)
         'given_amount' => 'required|numeric|min:0',
     ]);
 
+    // 🔹 Add instead of replace
     $sale->update([
-        'given_amount' => $validated['given_amount']
+        'given_amount' => $sale->given_amount + $validated['given_amount']
     ]);
 
     return response()->json([
@@ -1175,6 +1176,7 @@ public function updateGivenAmount(Request $request, Sale $sale)
         'sale' => $sale
     ]);
 }
+
 }
 
 

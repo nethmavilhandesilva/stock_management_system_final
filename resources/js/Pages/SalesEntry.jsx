@@ -195,7 +195,6 @@ export default function SalesEntry() {
     packs: sale.packs || "",
     original_weight: sale.original_weight || "",
     original_packs: sale.original_packs || "",
-    given_amount: sale.given_amount || ""
   });
 
   setEditingSaleId(sale.id);
@@ -584,27 +583,32 @@ export default function SalesEntry() {
 
   useEffect(() => { refs.customerCode.current?.focus(); }, []);
 
-  const handleCustomerClick = (type, customerCode) => {
-    const isPrinted = type === 'printed';
-    const isCurrentlySelected = isPrinted ? selectedPrintedCustomer === customerCode : selectedUnprintedCustomer === customerCode;
+ const handleCustomerClick = (type, customerCode) => {
+  const isPrinted = type === 'printed';
+  const isCurrentlySelected = isPrinted ? selectedPrintedCustomer === customerCode : selectedUnprintedCustomer === customerCode;
 
-    if (isPrinted) {
-      setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
-      setSelectedUnprintedCustomer(null);
-      refs.grnSelect.current?.focus();
-    } else {
-      setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
-      setSelectedPrintedCustomer(null);
-      refs.grnSelect.current?.focus();
-    }
+  if (isPrinted) {
+    setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
+    setSelectedUnprintedCustomer(null);
+    refs.grnSelect.current?.focus();
+  } else {
+    setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
+    setSelectedPrintedCustomer(null);
+    refs.grnSelect.current?.focus();
+  }
 
-    const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
-    setForm(prev => ({
-      ...prev,
-      customer_code: isCurrentlySelected ? "" : customerCode,
-      customer_name: isCurrentlySelected ? "" : customer?.name || ""
-    }));
-  };
+  const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
+  
+  // Find the first sale for this customer to get the given_amount
+  const customerSale = allSales.find(s => s.customer_code === customerCode);
+  
+  setForm(prev => ({
+    ...prev,
+    customer_code: isCurrentlySelected ? "" : customerCode,
+    customer_name: isCurrentlySelected ? "" : customer?.name || "",
+    given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "") // Fixed this line
+  }));
+};
 
   // Components
   const CustomerList = ({ customers, sales, type, searchQuery, onSearchChange }) => (
