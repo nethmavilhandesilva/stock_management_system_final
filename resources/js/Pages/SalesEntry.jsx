@@ -180,25 +180,64 @@ export default function SalesEntry() {
     setForm(prev => ({ ...prev, customer_code: short || prev.customer_code, customer_name: customer?.name || "" }));
   };
 
-  const handleEditClick = (sale) => {
-    setForm({
-      ...sale,
-      grn_entry_code: sale.grn_entry_code || sale.code || "",
-      item_name: sale.item_name || "",
-      customer_code: sale.customer_code || "",
-      customer_name: sale.customer_name || "",
-      supplier_code: sale.supplier_code || "",
-      item_code: sale.item_code || "",
-      weight: sale.weight || "",
-      price_per_kg: sale.price_per_kg || "",
-      total: sale.total || "",
-      packs: sale.packs || "",
-      original_weight: sale.original_weight || "",
-      original_packs: sale.original_packs || "",
-      given_amount: sale.given_amount || ""
-    });
-    setEditingSaleId(sale.id);
-  };
+ const handleEditClick = (sale) => {
+  setForm({
+    ...sale,
+    grn_entry_code: sale.grn_entry_code || sale.code || "",
+    item_name: sale.item_name || "",
+    customer_code: sale.customer_code || "",
+    customer_name: sale.customer_name || "",
+    supplier_code: sale.supplier_code || "",
+    item_code: sale.item_code || "",
+    weight: sale.weight || "",
+    price_per_kg: sale.price_per_kg || "",
+    total: sale.total || "",
+    packs: sale.packs || "",
+    original_weight: sale.original_weight || "",
+    original_packs: sale.original_packs || "",
+    given_amount: sale.given_amount || ""
+  });
+
+  setEditingSaleId(sale.id);
+
+  // Start from weight
+  setTimeout(() => {
+    if (refs.weight.current) {
+      refs.weight.current.focus();
+      refs.weight.current.select();
+
+      // inline Enter key navigation
+      refs.weight.current.onkeydown = (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          
+          refs.packs.current?.select();
+        }
+      };
+    }
+
+    if (refs.packs.current) {
+      refs.packs.current.onkeydown = (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+       
+          refs.pricePerKg.current?.select();
+        }
+      };
+    }
+
+    if (refs.pricePerKg.current) {
+      refs.pricePerKg.current.onkeydown = (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          console.log("Finished editing three fields");
+          // you can move focus to next field or trigger submit here
+        }
+      };
+    }
+  }, 0);
+};
+
 
   const handleTableRowKeyDown = (e, sale) => {
     if (e.key === "Enter") {
@@ -469,69 +508,69 @@ export default function SalesEntry() {
           }
         });
       }
-     else if (e.key === "F5") {
-  e.preventDefault();
-  
-  // Combine newSales and unprintedSales
-  const salesToProcess = [...newSales, ...unprintedSales];
-  
-  if (salesToProcess.length === 0) return alert("No sales to process.");
-  
-  if (window.confirm(`Are you sure you want to mark ALL sales as processed?`)) {
-    apiCall("/sales/mark-all-processed", "POST", { sales_ids: salesToProcess.map(s => s.id) })
-      .then(data => {
-        if (data.success) {
-          alert(data.message || `All ${salesToProcess.length} sales marked as processed successfully!`);
-          
-          // Update all processed sales to have bill_printed: "N"
-          setAllSales(prev => prev.map(s => 
-            salesToProcess.map(ps => ps.id).includes(s.id) 
-              ? { ...s, bill_printed: "N" } 
-              : s
-          ));
+      else if (e.key === "F5") {
+        e.preventDefault();
 
-          // Clear form and selections
-          handleClearForm();
-          setSelectedUnprintedCustomer(null);
-          setSelectedPrintedCustomer(null);
+        // Combine newSales and unprintedSales
+        const salesToProcess = [...newSales, ...unprintedSales];
 
-          // Aggressive focus locking
-          const lockFocus = () => {
-            if (refs.customerCode.current) {
-              refs.customerCode.current.focus();
-              refs.customerCode.current.style.zIndex = '9999';
-            }
-          };
+        if (salesToProcess.length === 0) return alert("No sales to process.");
 
-          // Multiple focus attempts
-          setTimeout(lockFocus, 100);
-          setTimeout(lockFocus, 200);
-          setTimeout(lockFocus, 300);
-          setTimeout(lockFocus, 400);
-          setTimeout(lockFocus, 500);
+        if (window.confirm(`Are you sure you want to mark ALL sales as processed?`)) {
+          apiCall("/sales/mark-all-processed", "POST", { sales_ids: salesToProcess.map(s => s.id) })
+            .then(data => {
+              if (data.success) {
+                alert(data.message || `All ${salesToProcess.length} sales marked as processed successfully!`);
 
-          // Prevent any other focus changes for 1 second
-          const originalFocus = HTMLElement.prototype.focus;
-          HTMLElement.prototype.focus = function () {
-            if (this !== refs.customerCode.current) {
-              return; // Block all other focus attempts
-            }
-            originalFocus.call(this);
-          };
+                // Update all processed sales to have bill_printed: "N"
+                setAllSales(prev => prev.map(s =>
+                  salesToProcess.map(ps => ps.id).includes(s.id)
+                    ? { ...s, bill_printed: "N" }
+                    : s
+                ));
 
-          setTimeout(() => {
-            HTMLElement.prototype.focus = originalFocus;
-            if (refs.customerCode.current) {
-              refs.customerCode.current.style.zIndex = '';
-            }
-          }, 1000);
-        } else {
-          alert(data.message || "Failed to mark sales as processed.");
+                // Clear form and selections
+                handleClearForm();
+                setSelectedUnprintedCustomer(null);
+                setSelectedPrintedCustomer(null);
+
+                // Aggressive focus locking
+                const lockFocus = () => {
+                  if (refs.customerCode.current) {
+                    refs.customerCode.current.focus();
+                    refs.customerCode.current.style.zIndex = '9999';
+                  }
+                };
+
+                // Multiple focus attempts
+                setTimeout(lockFocus, 100);
+                setTimeout(lockFocus, 200);
+                setTimeout(lockFocus, 300);
+                setTimeout(lockFocus, 400);
+                setTimeout(lockFocus, 500);
+
+                // Prevent any other focus changes for 1 second
+                const originalFocus = HTMLElement.prototype.focus;
+                HTMLElement.prototype.focus = function () {
+                  if (this !== refs.customerCode.current) {
+                    return; // Block all other focus attempts
+                  }
+                  originalFocus.call(this);
+                };
+
+                setTimeout(() => {
+                  HTMLElement.prototype.focus = originalFocus;
+                  if (refs.customerCode.current) {
+                    refs.customerCode.current.style.zIndex = '';
+                  }
+                }, 1000);
+              } else {
+                alert(data.message || "Failed to mark sales as processed.");
+              }
+            })
+            .catch(err => alert("Failed to mark sales as processed: " + err.message));
         }
-      })
-      .catch(err => alert("Failed to mark sales as processed: " + err.message));
-  }
-}
+      }
     };
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
@@ -552,9 +591,11 @@ export default function SalesEntry() {
     if (isPrinted) {
       setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
       setSelectedUnprintedCustomer(null);
+      refs.grnSelect.current?.focus();
     } else {
       setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
       setSelectedPrintedCustomer(null);
+      refs.grnSelect.current?.focus();
     }
 
     const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
@@ -613,91 +654,91 @@ export default function SalesEntry() {
             </div>
 
             <Select
-  id="grn_entry_code"
-  ref={refs.grnSelect}
-  value={(() => {
-    if (!form.grn_entry_code) return null;
+              id="grn_entry_code"
+              ref={refs.grnSelect}
+              value={(() => {
+                if (!form.grn_entry_code) return null;
 
-    const matchingEntry = initialData.entries.find((en) => en.code === form.grn_entry_code);
-    if (!matchingEntry) return null;
+                const matchingEntry = initialData.entries.find((en) => en.code === form.grn_entry_code);
+                if (!matchingEntry) return null;
 
-    return {
-      value: form.grn_entry_code,
-      label: `${form.grn_entry_code} - ${matchingEntry.item_name || form.item_name || ''}`,
-      data: matchingEntry
-    };
-  })()}
-  onChange={(selected) => {
-    if (selected?.data) {
-      const entry = selected.data;
-      setForm(prev => ({
-        ...prev,
-        grn_entry_code: selected.value,
-        item_name: entry.item_name || "",
-        supplier_code: entry.supplier_code || "",
-        item_code: entry.item_code || "",
-        price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
-        // Only clear weight and packs if NOT editing
-        weight: editingSaleId ? prev.weight : "",
-        packs: editingSaleId ? prev.packs : "",
-        total: editingSaleId ? prev.total : ""
-      }));
-      setGrnSearchInput("");
-      // Auto-focus to weight only when an item is actually selected
-      requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
-    }
-  }}
-  onInputChange={setGrnSearchInput}
-  onKeyDown={(e) => {
-    if (e.key === "Enter" && form.grn_entry_code && !e.isPropagationStopped()) {
-      e.preventDefault();
-      setTimeout(() => refs.weight.current?.focus(), 0);
-    }
-  }}
-  // REMOVED the problematic onMenuClose prop
-  getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
-  getOptionValue={(option) => option.value}
-  options={initialData.entries.map((en, index) => ({
-    value: en.code,
-    label: en.code,
-    data: en,
-    index
-  }))}
-  placeholder="Select GRN Entry"
-  isSearchable={true}
-  noOptionsMessage={() => "No GRN entries found"}
-  formatOptionLabel={(option, { context }) => {
-    if (context === "value" || !option.data) {
-      const entry = option.data || initialData.entries.find((en) => en.code === option.value);
-      return <span>{option.label}(<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
-    }
-    const entry = option.data;
-    return <div className="w-full">
-      {option.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
-      <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-        <div className="text-left font-medium text-blue-700">{entry.code || "-"}</div><div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div><div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
-      </div>
-    </div>;
-  }}
-  components={{
-    Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
-      <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
-        <div className="w-full">
-          {data.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
-          <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-            <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div><div className="text-center">{data.data.original_packs || "0"}</div><div className="text-center">{formatDecimal(data.data.original_weight)}</div><div className="text-center">{data.data.packs || "0"}</div><div className="text-center">{formatDecimal(data.data.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
-          </div>
-        </div>
-      </div>
-    )
-  }}
-  styles={{ 
-    option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }), 
-    menu: (base) => ({ ...base, width: "650px", maxWidth: "85vw" }), 
-    menuList: (base) => ({ ...base, padding: 0, maxHeight: "300px" }), 
-    control: (base) => ({ ...base, minHeight: "44px" }) 
-  }}
-/>
+                return {
+                  value: form.grn_entry_code,
+                  label: `${form.grn_entry_code} - ${matchingEntry.item_name || form.item_name || ''}`,
+                  data: matchingEntry
+                };
+              })()}
+              onChange={(selected) => {
+                if (selected?.data) {
+                  const entry = selected.data;
+                  setForm(prev => ({
+                    ...prev,
+                    grn_entry_code: selected.value,
+                    item_name: entry.item_name || "",
+                    supplier_code: entry.supplier_code || "",
+                    item_code: entry.item_code || "",
+                    price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
+                    // Only clear weight and packs if NOT editing
+                    weight: editingSaleId ? prev.weight : "",
+                    packs: editingSaleId ? prev.packs : "",
+                    total: editingSaleId ? prev.total : ""
+                  }));
+                  setGrnSearchInput("");
+                  // Auto-focus to weight only when an item is actually selected
+                  requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
+                }
+              }}
+              onInputChange={setGrnSearchInput}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && form.grn_entry_code && !e.isPropagationStopped()) {
+                  e.preventDefault();
+                  setTimeout(() => refs.weight.current?.focus(), 0);
+                }
+              }}
+              // REMOVED the problematic onMenuClose prop
+              getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
+              getOptionValue={(option) => option.value}
+              options={initialData.entries.map((en, index) => ({
+                value: en.code,
+                label: en.code,
+                data: en,
+                index
+              }))}
+              placeholder="Select GRN Entry"
+              isSearchable={true}
+              noOptionsMessage={() => "No GRN entries found"}
+              formatOptionLabel={(option, { context }) => {
+                if (context === "value" || !option.data) {
+                  const entry = option.data || initialData.entries.find((en) => en.code === option.value);
+                  return <span>{option.label}(<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
+                }
+                const entry = option.data;
+                return <div className="w-full">
+                  {option.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
+                  <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
+                    <div className="text-left font-medium text-blue-700">{entry.code || "-"}</div><div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div><div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
+                  </div>
+                </div>;
+              }}
+              components={{
+                Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
+                  <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
+                    <div className="w-full">
+                      {data.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300"><div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>}
+                      <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
+                        <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div><div className="text-center">{data.data.original_packs || "0"}</div><div className="text-center">{formatDecimal(data.data.original_weight)}</div><div className="text-center">{data.data.packs || "0"}</div><div className="text-center">{formatDecimal(data.data.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }}
+              styles={{
+                option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }),
+                menu: (base) => ({ ...base, width: "650px", maxWidth: "85vw" }),
+                menuList: (base) => ({ ...base, padding: 0, maxHeight: "300px" }),
+                control: (base) => ({ ...base, minHeight: "44px" })
+              }}
+            />
 
             <div className="grid grid-cols-5 gap-4">
               <div className="relative">
