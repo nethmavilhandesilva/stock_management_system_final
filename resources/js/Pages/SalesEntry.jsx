@@ -493,101 +493,101 @@ export default function SalesEntry() {
     </div>`;
   };
 
- // Print a single HTML content in the same window safely
-const printSingleContent = async (html, customerName) => {
-  return new Promise((resolve) => {
-    // Save original page content
-    const originalContent = document.body.innerHTML;
-    document.title = customerName;
+  // Print a single HTML content in the same window safely
+  const printSingleContent = async (html, customerName) => {
+    return new Promise((resolve) => {
+      // Save original page content
+      const originalContent = document.body.innerHTML;
+      document.title = customerName;
 
-    const cleanup = () => {
-      document.body.innerHTML = originalContent;
-      resolve();
-    };
-
-    const tryPrint = () => {
-      try {
-        window.focus();
-        window.print();
-      } catch (err) {
-        console.error("Print failed:", err);
-      } finally {
+      const cleanup = () => {
+        document.body.innerHTML = originalContent;
         resolve();
+      };
+
+      const tryPrint = () => {
+        try {
+          window.focus();
+          window.print();
+        } catch (err) {
+          console.error("Print failed:", err);
+        } finally {
+          resolve();
+        }
+      };
+
+      // Listen for afterprint event to handle cancel
+      const afterPrintHandler = () => {
+        window.removeEventListener("afterprint", afterPrintHandler);
+        cleanup();
+      };
+      window.addEventListener("afterprint", afterPrintHandler);
+
+      // Set the content and trigger print
+      document.body.innerHTML = html;
+      if (document.readyState === "complete") {
+        tryPrint();
+      } else {
+        window.onload = tryPrint;
       }
-    };
+      setTimeout(cleanup, 3000);
+    });
+  };
+  // Main print and clear function
+  const handlePrintAndClear = async () => {
+    const salesData = displayedSales.filter(s => s.id);
+    if (!salesData.length) return alert("No sales records to print!");
 
-    // Listen for afterprint event to handle cancel
-    const afterPrintHandler = () => {
-      window.removeEventListener("afterprint", afterPrintHandler);
-      cleanup();
-    };
-    window.addEventListener("afterprint", afterPrintHandler);
-
-    // Set the content and trigger print
-    document.body.innerHTML = html;
-    if (document.readyState === "complete") {
-      tryPrint();
-    } else {
-      window.onload = tryPrint;
-    }
-    setTimeout(cleanup, 3000);
-  });
-};
-// Main print and clear function
-const handlePrintAndClear = async () => {
-  const salesData = displayedSales.filter(s => s.id);
-  if (!salesData.length) return alert("No sales records to print!");
-
-  try {
-    // Mark sales as printed in backend
-    const data = await apiCall(initialData.routes.markPrinted, "POST", { sales_ids: salesData.map(s => s.id) });
-    if (data.status !== "success") throw new Error(data.message || "Unknown error");
-
-    const customerCode = salesData[0].customer_code || "N/A";
-    const customerName = customerCode;
-    const mobile = salesData[0].mobile || '0773358518';
-    const billNo = data.bill_no || "";
-
-    let globalLoanAmount = 0;
     try {
-      const loanResponse = await fetch(initialData.routes.getLoanAmount, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': initialData.csrf },
-        body: JSON.stringify({ customer_short_name: customerCode })
-      });
-      const loanData = await loanResponse.json();
-      globalLoanAmount = parseFloat(loanData.total_loan_amount) || 0;
-    } catch (loanError) {
-      console.error('Error fetching loan amount:', loanError);
+      // Mark sales as printed in backend
+      const data = await apiCall(initialData.routes.markPrinted, "POST", { sales_ids: salesData.map(s => s.id) });
+      if (data.status !== "success") throw new Error(data.message || "Unknown error");
+
+      const customerCode = salesData[0].customer_code || "N/A";
+      const customerName = customerCode;
+      const mobile = salesData[0].mobile || '0773358518';
+      const billNo = data.bill_no || "";
+
+      let globalLoanAmount = 0;
+      try {
+        const loanResponse = await fetch(initialData.routes.getLoanAmount, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': initialData.csrf },
+          body: JSON.stringify({ customer_short_name: customerCode })
+        });
+        const loanData = await loanResponse.json();
+        globalLoanAmount = parseFloat(loanData.total_loan_amount) || 0;
+      } catch (loanError) {
+        console.error('Error fetching loan amount:', loanError);
+      }
+
+      // Build receipts
+      const receiptHtml = buildFullReceiptHTML(salesData, billNo, customerName, mobile, globalLoanAmount);
+      const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>${receiptHtml}`;
+
+      // Print main receipt first
+      await printSingleContent(receiptHtml, customerName);
+
+      // Then print the copy immediately after
+      await printSingleContent(copyHtml, customerName);
+
+      // Update local state
+      setAllSales(prev => prev.map(s => salesData.map(d => d.id).includes(s.id)
+        ? { ...s, bill_printed: 'Y', bill_no: billNo }
+        : s
+      ));
+      setSelectedUnprintedCustomer(null);
+      setSelectedPrintedCustomer(null);
+      handleClearForm();
+
+      // Optional: reload page to ensure no stuck state
+      window.location.reload();
+
+    } catch (error) {
+      alert("Printing failed: " + error.message);
+      window.location.reload();
     }
-
-    // Build receipts
-    const receiptHtml = buildFullReceiptHTML(salesData, billNo, customerName, mobile, globalLoanAmount);
-    const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>${receiptHtml}`;
-
-    // Print main receipt first
-    await printSingleContent(receiptHtml, customerName);
-
-    // Then print the copy immediately after
-    await printSingleContent(copyHtml, customerName);
-
-    // Update local state
-    setAllSales(prev => prev.map(s => salesData.map(d => d.id).includes(s.id)
-      ? { ...s, bill_printed: 'Y', bill_no: billNo }
-      : s
-    ));
-    setSelectedUnprintedCustomer(null);
-    setSelectedPrintedCustomer(null);
-    handleClearForm();
-
-    // Optional: reload page to ensure no stuck state
-    window.location.reload();
-
-  } catch (error) {
-    alert("Printing failed: " + error.message);
-    window.location.reload();
-  }
-};
+  };
 
   const handleCustomerCodeChange = (e) => {
     const code = e.target.value; const customer = initialData.customers.find(x => String(x.short_name) === String(code));
@@ -630,11 +630,13 @@ const handlePrintAndClear = async () => {
 
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
-              <input id="customer_code_input" ref={refs.customerCode} name="customer_code" 
+              <input id="customer_code_input" ref={refs.customerCode} name="customer_code"
                 value={formData.customer_code || autoCustomerCode} onChange={(e) => {
                   const value = e.target.value.toUpperCase(); handleInputChange("customer_code", value);
-                  if (value.trim() === "") { setFormData(prev => ({ ...prev, customer_code: "", customer_name: "", given_amount: "" }));
-                    setSelectedPrintedCustomer(null); setSelectedUnprintedCustomer(null); }
+                  if (value.trim() === "") {
+                    setFormData(prev => ({ ...prev, customer_code: "", customer_name: "", given_amount: "" }));
+                    setSelectedPrintedCustomer(null); setSelectedUnprintedCustomer(null);
+                  }
                 }} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10} placeholder="Customer Code"
                 className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase" />
 
@@ -648,63 +650,103 @@ const handlePrintAndClear = async () => {
                 className="px-4 py-2 border rounded-xl bg-yellow-100 text-red-600 font-bold" />
             </div>
 
-            <Select id="grn_entry_code" ref={refs.grnSelect} value={formData.grn_entry_code ? {
-                value: formData.grn_entry_code, label: formData.grn_entry_code,
+            <Select
+              id="grn_entry_code"
+              ref={refs.grnSelect}
+              value={formData.grn_entry_code ? {
+                value: formData.grn_entry_code,
+                label: formData.grn_entry_code,
                 data: initialData.entries.find((en) => en.code === formData.grn_entry_code)
-              } : null} onChange={(selected) => {
+              } : null}
+              onChange={(selected) => {
                 if (selected?.data) {
-                  const entry = selected.data; const itemCodeToMatch = entry.item_code;
-                  const matchingItem = initialData.items.find(i => String(i.no) === String(itemCodeToMatch));
+                  const entry = selected.data;
+                  const matchingItem = initialData.items.find(i => String(i.no) === String(entry.item_code));
                   const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
                   setFormData(prev => ({
-                    ...prev, grn_entry_code: selected.value, item_name: entry.item_name || "", supplier_code: entry.supplier_code || "",
-                    item_code: entry.item_code || "", price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
-                    pack_due: fetchedPackDue, weight: editingSaleId ? prev.weight : "", packs: editingSaleId ? prev.packs : "",
+                    ...prev,
+                    grn_entry_code: selected.value,
+                    item_name: entry.item_name || "",
+                    supplier_code: entry.supplier_code || "",
+                    item_code: entry.item_code || "",
+                    price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
+                    pack_due: fetchedPackDue,
+                    weight: editingSaleId ? prev.weight : "",
+                    packs: editingSaleId ? prev.packs : "",
                     total: editingSaleId ? prev.total : ""
                   }));
-                  setGrnSearchInput(""); requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
+                  setGrnSearchInput("");
+                  requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
                 }
-              }} onInputChange={setGrnSearchInput} onKeyDown={(e) => {
+              }}
+              onInputChange={setGrnSearchInput}
+              onKeyDown={(e) => {
                 if (e.key === "Enter" && formData.grn_entry_code && !e.isPropagationStopped()) {
-                  e.preventDefault(); setTimeout(() => refs.weight.current?.focus(), 0); }
-              }} getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
-              getOptionValue={(option) => option.value} options={initialData.entries.map((en, index) => ({ value: en.code, label: en.code, data: en, index }))}
-              placeholder="Select GRN Entry" isSearchable={true} noOptionsMessage={() => "No GRN entries found"}
+                  e.preventDefault(); setTimeout(() => refs.weight.current?.focus(), 0);
+                }
+              }}
+              getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
+              getOptionValue={(option) => option.value}
+              options={initialData.entries.map((en, index) => ({ value: en.code, label: en.code, data: en, index }))}
+              placeholder="Select GRN Entry"
+              isSearchable={true}
+              noOptionsMessage={() => "No GRN entries found"}
               formatOptionLabel={(option, { context }) => {
                 if (context === "value" || !option.data) {
                   const entry = option.data || initialData.entries.find((en) => en.code === option.value);
-                  return <span>{option.label}(<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
+                  return <span>{option.label} - {entry?.item_name || "Unknown Item"} (<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
                 }
-                const entry = option.data; return <div className="w-full">
-                  {option.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300">
-                    <div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div>
-                  </div>}
-                  <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-                    <div className="text-left font-medium text-blue-700">{entry.code || "-"}</div>
-                    <div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div>
-                    <div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div>
-                    <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
+                const entry = option.data;
+                const HeaderRow = () => (
+                  <div className="grid grid-cols-7 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300">
+                    <div className="text-left col-span-2">Code - Item Name</div>
+                    <div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div>
+                    <div className="text-center">BW</div><div className="text-right">PRICE</div>
                   </div>
-                </div>;
-              }} components={{ Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
-                <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
-                  {data.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300">
-                    <div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div>
-                  </div>}
-                  <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-                    <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div>
-                    <div className="text-center">{data.data.original_packs || "0"}</div><div className="text-center">{formatDecimal(data.data.original_weight)}</div>
-                    <div className="text-center">{data.data.packs || "0"}</div><div className="text-center">{formatDecimal(data.data.weight)}</div>
-                    <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
+                );
+                const DataRow = ({ entry, showHeader = false }) => (
+                  <div className="w-full">
+                    {showHeader && <HeaderRow />}
+                    <div className="grid grid-cols-7 gap-1 px-3 py-2 text-sm border-b border-gray-100">
+                      <div className="text-left font-medium text-blue-700 col-span-2">{entry.code || "-"} - {entry.item_name || "Unknown Item"}</div>
+                      <div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div>
+                      <div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div>
+                      <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
+                    </div>
                   </div>
-                </div>
-              )}} styles={{
+                );
+                return <DataRow entry={entry} showHeader={option.index === 0} />;
+              }}
+              components={{
+                Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => {
+                  const HeaderRow = () => (
+                    <div className="grid grid-cols-7 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300">
+                      <div className="text-left col-span-2">Code - Item Name</div>
+                      <div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div>
+                      <div className="text-center">BW</div><div className="text-right">PRICE</div>
+                    </div>
+                  );
+                  const DataRow = ({ data, showHeader = false }) => (
+                    <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
+                      {showHeader && <HeaderRow />}
+                      <div className="grid grid-cols-7 gap-1 px-3 py-2 text-sm border-b border-gray-100">
+                        <div className="text-left font-medium text-blue-700 col-span-2">{data.data.code || "-"} - {data.data.item_name || "Unknown Item"}</div>
+                        <div className="text-center">{data.data.original_packs || "0"}</div><div className="text-center">{formatDecimal(data.data.original_weight)}</div>
+                        <div className="text-center">{data.data.packs || "0"}</div><div className="text-center">{formatDecimal(data.data.weight)}</div>
+                        <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
+                      </div>
+                    </div>
+                  );
+                  return <DataRow data={data} showHeader={data.index === 0} />;
+                }
+              }}
+              styles={{
                 option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }),
-                menu: (base) => ({ ...base, width: "650px", maxWidth: "85vw" }),
+                menu: (base) => ({ ...base, width: "750px", maxWidth: "90vw" }),
                 menuList: (base) => ({ ...base, padding: 0, maxHeight: "300px" }),
                 control: (base) => ({ ...base, minHeight: "44px" })
-              }} />
-
+              }}
+            />
             <div className="grid grid-cols-12 gap-4 items-start">
               <div className="col-span-4 relative">
                 <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="Item Name"
@@ -769,7 +811,7 @@ const handlePrintAndClear = async () => {
             </div>
           </div>
         </div>
-        
+
         <div className="flex justify-between items-center mt-6">
           <div className="flex space-x-3">
             <button type="button" onClick={handleMarkPrinted} className="px-4 py-1 text-sm bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow transition">
