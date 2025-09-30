@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import Select from "react-select";
 
 const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange, selectedPrintedCustomer, selectedUnprintedCustomer, handleCustomerClick, unprintedTotal, formatDecimal, allSales }) => (
-  <div className="w-1/5 bg-white shadow-xl rounded-xl p-4 overflow-y-auto max-h-screen">
+ <div className="w-1/5 shadow-xl rounded-xl p-4 overflow-y-auto max-h-screen"style={{ backgroundColor: "#99ff99" }}>
     <h2 className="text-xl font-bold mb-4">{type === 'printed' ? 'Printed Customers' : 'Unprinted Sales'}</h2>
     <input
       type="text"
@@ -473,7 +473,7 @@ export default function SalesEntry() {
           <tr><th style="text-align:left;padding:2px;">වර්ගය<br>මලු</th><th style="padding:2px;">කිලෝ</th><th style="padding:2px;">මිල</th><th style="text-align:right;padding:2px;">අගය</th></tr>
         </thead>
         <tbody>
-          <tr><td colspan="4"><hr style="height:1px;background-color:#000;margin:2px 0;"></td></tr>
+          <tr><td colspan="4"> <hr style="border:0.5px solid #000;margin:5px 0;"></td></tr>
           ${itemsHtml}
           <tr><td colspan="4"><hr style="border:0.5px solid #000;margin:5px 0;"></td></tr>
           <tr><td colspan="2" style="text-align:left;font-weight:bold;font-size:1.2em;">${totalPacksSum}</td><td colspan="2" style="text-align:right;font-weight:bold;font-size:1.2em;">${totalSalesExcludingPackDue.toFixed(2)}</td></tr>
@@ -615,13 +615,13 @@ export default function SalesEntry() {
 
   // Main render
   return (
-    <div className="min-h-screen flex flex-row bg-gray-100 p-6">
+   <div className="min-h-screen flex flex-row p-6" style={{backgroundColor:"#99ff99"}}>
       <CustomerList customers={printedCustomers} type="printed" searchQuery={searchQueries.printed}
         onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, printed: value }))}
         selectedPrintedCustomer={selectedPrintedCustomer} selectedUnprintedCustomer={selectedUnprintedCustomer}
         handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
 
-      <div className="w-3/5 bg-white shadow-2xl rounded-3xl p-10 mx-6">
+    <div className="w-3/5 shadow-2xl rounded-3xl p-10 mx-6" style={{backgroundColor:"#99ff99"}}>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl shadow-sm">
             <span className="text-gray-600 font-medium">Bill No: {currentBillNo}</span>
@@ -793,8 +793,8 @@ export default function SalesEntry() {
                 <th className="px-4 py-2 border">Code</th><th className="px-4 py-2 border">Customer</th><th className="px-4 py-2 border">Item</th>
                 <th className="px-4 py-2 border">Weight (kg)</th><th className="px-4 py-2 border">Price</th><th className="px-4 py-2 border">Total</th><th className="px-4 py-2 border">Packs</th>
               </tr></thead>
-              <tbody>{displayedSales.map((s, idx) => (
-                <tr key={s.id || idx} tabIndex={0} className="text-center hover:bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100"
+              <tbody className="bg-black text-white">{displayedSales.map((s, idx) => (
+                <tr key={s.id || idx} tabIndex={0} className="text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100"
                   onClick={() => handleEditClick(s)} onKeyDown={(e) => handleTableRowKeyDown(e, s)}>
                   <td className="px-4 py-2 border">{s.code}</td><td className="px-4 py-2 border">{s.customer_code}</td><td className="px-4 py-2 border">{s.item_name}</td>
                   <td className="px-4 py-2 border">{formatDecimal(s.weight)}</td><td className="px-4 py-2 border">{formatDecimal(s.price_per_kg)}</td>
@@ -811,7 +811,6 @@ export default function SalesEntry() {
             </div>
           </div>
         </div>
-
         <div className="flex justify-between items-center mt-6">
           <div className="flex space-x-3">
             <button type="button" onClick={handleMarkPrinted} className="px-4 py-1 text-sm bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow transition">
@@ -823,7 +822,6 @@ export default function SalesEntry() {
           </div>
         </div>
       </div>
-
       <CustomerList customers={unprintedCustomers} type="unprinted" searchQuery={searchQueries.unprinted}
         onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, unprinted: value }))}
         selectedPrintedCustomer={selectedPrintedCustomer} selectedUnprintedCustomer={selectedUnprintedCustomer}
