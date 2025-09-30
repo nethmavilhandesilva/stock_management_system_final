@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Select from "react-select";
 
-const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange, selectedPrintedCustomer, selectedUnprintedCustomer, handleCustomerClick, unprintedTotal, formatDecimal }) => (
+const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange, selectedPrintedCustomer, selectedUnprintedCustomer, handleCustomerClick, unprintedTotal, formatDecimal, allSales }) => (
   <div className="w-1/5 bg-white shadow-xl rounded-xl p-4 overflow-y-auto max-h-screen">
     <h2 className="text-xl font-bold mb-4">{type === 'printed' ? 'Printed Customers' : 'Unprinted Sales'}</h2>
     {type === 'unprinted' && (
@@ -10,29 +10,35 @@ const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange,
       </div>
     )}
     <div className="mb-4">
-      <input 
-        type="text" 
-        placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`} 
-        value={searchQuery} 
-        onChange={e => onSearchChange(e.target.value)} 
-        className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" 
+      <input
+        type="text"
+        placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`}
+        value={searchQuery}
+        onChange={e => onSearchChange(e.target.value)}
+        className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300"
       />
     </div>
     {customers.length === 0 ? <p className="text-gray-500">No {type === 'printed' ? 'printed sales' : 'unprinted sales'} found.</p> : (
-      <ul>{customers.map(customerCode => (
-        <li key={customerCode}>
-          <button 
-            onClick={() => handleCustomerClick(type, customerCode)} 
-            className={`w-full text-left p-3 mb-2 rounded-xl border ${(type === 'printed' ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
-          >
-            <div className="font-medium">{customerCode}</div>
-          </button>
-        </li>
-      ))}</ul>
+      <ul>{customers.map(customerCode => {
+        // Calculate total sales for this customer
+        const customerSales = allSales.filter(s => s.customer_code === customerCode);
+        const customerTotal = customerSales.reduce((sum, sale) => sum + (parseFloat(sale.total) || 0), 0);
+
+        return (
+          <li key={customerCode}>
+            <button
+              onClick={() => handleCustomerClick(type, customerCode)}
+              className={`w-full text-left p-3 mb-2 rounded-xl border ${(type === 'printed' ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
+            >
+              <div className="font-medium">{customerCode}</div>
+              <div className="text-sm text-gray-600 mt-1">Rs. {formatDecimal(customerTotal)}</div>
+            </button>
+          </li>
+        )
+      })}</ul>
     )}
   </div>
 ));
-
 export default function SalesEntry() {
   // Initial data
   const initialData = {
@@ -41,6 +47,7 @@ export default function SalesEntry() {
     unprinted: (window.__UNPRINTED_SALES__ || []).filter(s => s.id),
     customers: window.__CUSTOMERS__ || [],
     entries: window.__ENTRIES__ || [],
+    items: window.__ITEMS__ || [], // ADDED: Item list for pack_due lookup
     storeUrl: window.__STORE_URL__ || "/grn",
     csrf: document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
     routes: window.__ROUTES__ || {
@@ -57,11 +64,11 @@ export default function SalesEntry() {
     packs: useRef(null), pricePerKg: useRef(null), total: useRef(null)
   };
 
- const fieldOrder = ["customer_code_input", "customer_code_select", "given_amount", "grn_entry_code", "item_name", "weight", "packs", "price_per_kg", "total"];
- const skipMap = { 
-  customer_code_input: "grn_entry_code", 
-  grn_entry_code: "weight" 
-};
+  const fieldOrder = ["customer_code_input", "customer_code_select", "given_amount", "grn_entry_code", "item_name", "weight", "packs", "price_per_kg", "total"];
+  const skipMap = {
+    customer_code_input: "grn_entry_code",
+    grn_entry_code: "weight"
+  };
 
   // State
   const [allSales, setAllSales] = useState([...initialData.sales, ...initialData.printed, ...initialData.unprinted]);
@@ -75,7 +82,7 @@ export default function SalesEntry() {
   const [loanAmount, setLoanAmount] = useState(0);
   const [form, setForm] = useState({
     customer_code: "", customer_name: "", supplier_code: "", code: "", item_code: "",
-    item_name: "", weight: "", price_per_kg: "", total: "", packs: "", grn_entry_code: "",
+    item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", grn_entry_code: "", // ADDED pack_due
     original_weight: "", original_packs: "", given_amount: ""
   });
 
@@ -107,6 +114,21 @@ export default function SalesEntry() {
     else if (selectedPrintedCustomer) sales = [...sales, ...printedSales.filter(s => s.customer_code === selectedPrintedCustomer)];
     return sales;
   }, [newSales, unprintedSales, printedSales, selectedUnprintedCustomer, selectedPrintedCustomer]);
+  // Total calculation includes (packs * pack_due) - UPDATED
+  useEffect(() => {
+    const w = parseFloat(form.weight) || 0;
+    const p = parseFloat(form.price_per_kg) || 0;
+    const packs = parseInt(form.packs) || 0;
+    const packDue = parseFloat(form.pack_due) || 0;
+
+    const salesTotal = w * p;
+    const packCost = packs * packDue;
+    const newTotal = salesTotal + packCost;
+
+    setForm(prev => ({ ...prev, total: newTotal ? Number(newTotal.toFixed(2)) : "" }));
+  }, [form.weight, form.price_per_kg, form.packs, form.pack_due]);
+
+  useEffect(() => { refs.customerCode.current?.focus(); }, []);
 
   const currentBillNo = useMemo(() => selectedPrintedCustomer ? printedSales.find(s => s.customer_code === selectedPrintedCustomer)?.bill_no || "N/A" : "", [selectedPrintedCustomer, printedSales]);
   const calculateTotal = (sales) => sales.reduce((acc, s) => acc + (parseFloat(s.total) || parseFloat(s.weight || 0) * parseFloat(s.price_per_kg || 0) || 0), 0);
@@ -124,13 +146,7 @@ export default function SalesEntry() {
     }
   }, [form.grn_entry_code, initialData.entries]);
 
-  useEffect(() => {
-    const w = parseFloat(form.weight) || 0;
-    const p = parseFloat(form.price_per_kg) || 0;
-    setForm(prev => ({ ...prev, total: w * p ? Number((w * p).toFixed(2)) : "" }));
-  }, [form.weight, form.price_per_kg]);
 
-  useEffect(() => { refs.customerCode.current?.focus(); }, []);
 
   // API functions
   const apiCall = async (url, method, body) => {
@@ -168,38 +184,38 @@ export default function SalesEntry() {
 
   // Event handlers
   const handleKeyDown = (e, currentFieldIndex) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    
-    // Handle given_amount submission
-    if (fieldOrder[currentFieldIndex] === "given_amount" && form.given_amount) {
-      return handleSubmitGivenAmount(e);
-    }
-    
-    // Handle price_per_kg submission - only submit if we're actually in price_per_kg field
-    if (fieldOrder[currentFieldIndex] === "price_per_kg") {
-      return handleSubmit(e);
-    }
+    if (e.key === "Enter") {
+      e.preventDefault();
 
-    // For all other fields, move to next field
-    let nextIndex = currentFieldIndex + 1;
-    if (skipMap[fieldOrder[currentFieldIndex]]) {
-      const targetIndex = fieldOrder.findIndex(f => f === skipMap[fieldOrder[currentFieldIndex]]);
-      if (targetIndex !== -1) nextIndex = targetIndex;
-    }
-    
-    requestAnimationFrame(() => setTimeout(() => {
-      const nextRef = Object.values(refs)[nextIndex];
-      if (nextRef?.current) {
-        if (nextRef.current.focus) {
-          nextRef.current.focus();
-        } else if (nextRef.current.select) {
-          nextRef.current.select.focus();
-        }
+      // Handle given_amount submission
+      if (fieldOrder[currentFieldIndex] === "given_amount" && form.given_amount) {
+        return handleSubmitGivenAmount(e);
       }
-    }, 0));
-  }
-};
+
+      // Handle price_per_kg submission - only submit if we're actually in price_per_kg field
+      if (fieldOrder[currentFieldIndex] === "price_per_kg") {
+        return handleSubmit(e);
+      }
+
+      // For all other fields, move to next field
+      let nextIndex = currentFieldIndex + 1;
+      if (skipMap[fieldOrder[currentFieldIndex]]) {
+        const targetIndex = fieldOrder.findIndex(f => f === skipMap[fieldOrder[currentFieldIndex]]);
+        if (targetIndex !== -1) nextIndex = targetIndex;
+      }
+
+      requestAnimationFrame(() => setTimeout(() => {
+        const nextRef = Object.values(refs)[nextIndex];
+        if (nextRef?.current) {
+          if (nextRef.current.focus) {
+            nextRef.current.focus();
+          } else if (nextRef.current.select) {
+            nextRef.current.select.focus();
+          }
+        }
+      }, 0));
+    }
+  };
 
   const handleInputChange = (e, fieldIndex = null) => {
     const { name, value } = e.target;
@@ -250,6 +266,7 @@ export default function SalesEntry() {
       item_code: sale.item_code || "",
       weight: sale.weight || "",
       price_per_kg: sale.price_per_kg || "",
+      pack_due: sale.pack_due || "", // ADDED pack_due
       total: sale.total || "",
       packs: sale.packs || "",
       original_weight: sale.original_weight || "",
@@ -273,7 +290,7 @@ export default function SalesEntry() {
   const handleClearForm = () => {
     setForm({
       customer_code: "", customer_name: "", supplier_code: "", code: "", item_code: "",
-      item_name: "", weight: "", price_per_kg: "", total: "", packs: "", grn_entry_code: "",
+      item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", grn_entry_code: "", // ADDED pack_due
       original_weight: "", original_packs: "", given_amount: ""
     });
     setEditingSaleId(null);
@@ -348,6 +365,7 @@ export default function SalesEntry() {
       item_name: form.item_name,
       weight: parseFloat(form.weight) || 0,
       price_per_kg: parseFloat(form.price_per_kg) || 0,
+      pack_due: parseFloat(form.pack_due) || 0, // ADDED pack_due to payload
       total: parseFloat(form.total) || 0,
       packs: parseInt(form.packs) || 0,
       grn_entry_code: form.grn_entry_code,
@@ -368,11 +386,11 @@ export default function SalesEntry() {
       if (!isEditing && billPrintedStatus && !newSale.bill_printed) newSale = { ...newSale, bill_printed: billPrintedStatus };
 
       setAllSales(prev => isEditing ? prev.map(s => s.id === newSale.id ? newSale : s) : [...prev, newSale]);
-      
+
       setForm(prevForm => ({
         customer_code: prevForm.customer_code,
         customer_name: prevForm.customer_name,
-        supplier_code: "", code: "", item_code: "", item_name: "", weight: "", price_per_kg: "", total: "", packs: "", 
+        supplier_code: "", code: "", item_code: "", item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", // ADDED pack_due clear
         grn_entry_code: "", original_weight: "", original_packs: "", given_amount: ""
       }));
 
@@ -400,19 +418,19 @@ export default function SalesEntry() {
     const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
     const customerSale = allSales.find(s => s.customer_code === customerCode);
     const newCustomerCode = isCurrentlySelected ? "" : customerCode;
-    
+
     setForm(prev => ({
       ...prev,
       customer_code: newCustomerCode,
       customer_name: isCurrentlySelected ? "" : customer?.name || "",
-      given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "") 
+      given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "")
     }));
-    
+
     fetchLoanAmount(newCustomerCode);
     refs.grnSelect.current?.focus();
   };
 
-  // Receipt functions
+  // Receipt functions - UPDATED TO USE CALCULATED PACK COST
   const buildFullReceiptHTML = (salesData, billNo, customerName, mobile, globalLoanAmount = 0) => {
     const date = new Date().toLocaleDateString();
     const time = new Date().toLocaleTimeString();
@@ -420,6 +438,7 @@ export default function SalesEntry() {
     const itemGroups = {};
 
     const itemsHtml = salesData.map(s => {
+      // NOTE: s.total now includes pack_due * packs for new sales
       totalAmountSum += parseFloat(s.total) || 0;
       const packs = parseInt(s.packs) || 0;
       totalPacksSum += packs;
@@ -432,14 +451,24 @@ export default function SalesEntry() {
         <td style="text-align:left;">${s.item_name || ""} <br>${packs}</td>
         <td style="text-align:right; padding-right:18px;">${(parseFloat(s.weight) || 0).toFixed(2)}</td>
         <td style="text-align:right;">${(parseFloat(s.price_per_kg) || 0).toFixed(2)}</td>
-        <td style="text-align:right;">${(parseFloat(s.total) || 0).toFixed(2)}</td>
+       <td style="text-align:right;">${((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0)).toFixed(2)}</td>
       </tr>`;
     }).join("");
 
-    const packCostTotal = window.globalTotalPackCostValue || 0;
     const totalPrice = totalAmountSum;
+    const totalPrice2 = salesData.reduce((sum, s) => {
+      const weight = parseFloat(s.weight) || 0;
+      const price = parseFloat(s.price_per_kg) || 0;
+      return sum + (weight * price);
+    }, 0);
+
+
+    // Calculate Total Pack Due by subtracting sales price from total price
+    const totalSalesExcludingPackDue = salesData.reduce((sum, s) => sum + ((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0)), 0);
+    const totalPackDueCost = totalPrice - totalSalesExcludingPackDue;
+
     const givenAmount = salesData.reduce((sum, s) => sum + (parseFloat(s.given_amount) || 0), 0);
-    const remaining = givenAmount - (totalPrice + packCostTotal);
+    const remaining = givenAmount - totalPrice;
 
     let itemSummaryHtml = '';
     const entries = Object.entries(itemGroups);
@@ -460,7 +489,7 @@ export default function SalesEntry() {
 
     const loanRow = globalLoanAmount > 0 ? `<tr>
       <td style="font-weight:normal;font-size:0.9rem;text-align:left;">පෙර ණය: Rs. <span>${globalLoanAmount.toFixed(2)}</span></td>
-      <td style="font-weight:bold;text-align:right;font-size:1.5em;">Rs. ${(globalLoanAmount + totalPrice + packCostTotal).toFixed(2)}</td>
+      <td style="font-weight:bold;text-align:right;font-size:1.5em;">Rs. ${(globalLoanAmount + totalPrice).toFixed(2)}</td>
     </tr>` : '';
 
     return `<div class="receipt-container" style="width:100%;max-width:300px;margin:0 auto;padding:5px;">
@@ -485,13 +514,13 @@ export default function SalesEntry() {
           <tr><td colspan="4"><hr style="height:1px;background-color:#000;margin:2px 0;"></td></tr>
           ${itemsHtml}
           <tr><td colspan="4"><hr style="border:0.5px solid #000;margin:5px 0;"></td></tr>
-          <tr><td colspan="2" style="text-align:left;font-weight:bold;font-size:1.2em;">${totalPacksSum}</td><td colspan="2" style="text-align:right;font-weight:bold;font-size:1.2em;">${totalPrice.toFixed(2)}</td></tr>
+          <tr><td colspan="2" style="text-align:left;font-weight:bold;font-size:1.2em;">${totalPacksSum}</td><td colspan="2" style="text-align:right;font-weight:bold;font-size:1.2em;">${totalPrice2.toFixed(2)}</td></tr>
         </tbody>
       </table>
       <table style="width:100%;font-size:11px;border-collapse:collapse;">
         <tr><td>ප්‍රවාහන ගාස්තු:</td><td style="text-align:right;font-weight:bold;">00</td></tr>
-        <tr><td>කුලිය:</td><td style="text-align:right;font-weight:bold;">${packCostTotal.toFixed(2)}</td></tr>
-        <tr><td>අගය:</td><td style="text-align:right;font-weight:bold;"><span style="display:inline-block;border-top:1px solid #000;border-bottom:3px double #000;padding:2px 4px;min-width:80px;text-align:right;">${(totalPrice + packCostTotal).toFixed(2)}</span></td></tr>
+        <tr><td>කුලිය:</td><td style="text-align:right;font-weight:bold;">${totalPackDueCost.toFixed(2)}</td></tr>
+        <tr><td>අගය:</td><td style="text-align:right;font-weight:bold;"><span style="display:inline-block;border-top:1px solid #000;border-bottom:3px double #000;padding:2px 4px;min-width:80px;text-align:right;">${(totalPrice).toFixed(2)}</span></td></tr>
         ${givenAmountRow}${loanRow}
       </table>
       <hr style="border:0.5px solid #000;margin:5px 0;">
@@ -545,8 +574,8 @@ export default function SalesEntry() {
       setSelectedUnprintedCustomer(null);
       setSelectedPrintedCustomer(null);
       handleClearForm();
-    } catch (error) { 
-      alert("Printing failed: " + error.message); 
+    } catch (error) {
+      alert("Printing failed: " + error.message);
     }
   };
 
@@ -588,10 +617,10 @@ export default function SalesEntry() {
   // Main render
   return (
     <div className="min-h-screen flex flex-row bg-gray-100 p-6">
-      <CustomerList customers={printedCustomers} type="printed" searchQuery={searchQueries.printed} 
-        onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, printed: value }))} 
+      <CustomerList customers={printedCustomers} type="printed" searchQuery={searchQueries.printed}
+        onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, printed: value }))}
         selectedPrintedCustomer={selectedPrintedCustomer} selectedUnprintedCustomer={selectedUnprintedCustomer}
-        handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} />
+        handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
 
       <div className="w-3/5 bg-white shadow-2xl rounded-3xl p-10 mx-6">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -602,28 +631,36 @@ export default function SalesEntry() {
 
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
-              <input id="customer_code_input" ref={refs.customerCode} name="customer_code" value={form.customer_code} 
-                onChange={(e) => handleInputChange(e, 0)} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10} 
+              <input id="customer_code_input" ref={refs.customerCode} name="customer_code" value={form.customer_code}
+                onChange={(e) => handleInputChange(e, 0)} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10}
                 placeholder="Customer Code" className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" />
-              
-              <select id="customer_code_select" ref={refs.customerSelect} value={form.customer_code} 
+
+              <select id="customer_code_select" ref={refs.customerSelect} value={form.customer_code}
                 onChange={handleCustomerSelect} onKeyDown={(e) => handleKeyDown(e, 1)} className="px-4 py-2 border rounded-xl">
                 <option value="">-- Select Customer --</option>
                 {initialData.customers.map(c => <option key={c.short_name} value={c.short_name}>{c.name} ({c.short_name})</option>)}
               </select>
 
-              <input type="text" readOnly value={`Loan: Rs. ${formatDecimal(loanAmount)}`} placeholder="Loan Amount" 
+              <input type="text" readOnly value={`Loan: Rs. ${formatDecimal(loanAmount)}`} placeholder="Loan Amount"
                 className="px-4 py-2 border rounded-xl bg-yellow-100 text-red-600 font-bold" />
             </div>
 
             <Select
               id="grn_entry_code"
               ref={refs.grnSelect}
-              value={form.grn_entry_code ? { value: form.grn_entry_code, label: form.grn_entry_code, 
-                data: initialData.entries.find((en) => en.code === form.grn_entry_code) } : null}
+              value={form.grn_entry_code ? {
+                value: form.grn_entry_code, label: form.grn_entry_code,
+                data: initialData.entries.find((en) => en.code === form.grn_entry_code)
+              } : null}
               onChange={(selected) => {
                 if (selected?.data) {
                   const entry = selected.data;
+
+                  // NEW LOGIC: Fetch pack_due from the global items list
+                  const itemCodeToMatch = entry.item_code;
+                  const matchingItem = initialData.items.find(i => String(i.no) === String(itemCodeToMatch));
+                  const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
+
                   setForm(prev => ({
                     ...prev,
                     grn_entry_code: selected.value,
@@ -631,6 +668,7 @@ export default function SalesEntry() {
                     supplier_code: entry.supplier_code || "",
                     item_code: entry.item_code || "",
                     price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
+                    pack_due: fetchedPackDue, // Set fetched pack_due
                     weight: editingSaleId ? prev.weight : "",
                     packs: editingSaleId ? prev.packs : "",
                     total: editingSaleId ? prev.total : ""
@@ -672,21 +710,23 @@ export default function SalesEntry() {
                   </div>
                 </div>;
               }}
-              components={{ Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
-                <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
-                  {data.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300">
-                    <div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div>
-                  </div>}
-                  <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
-                    <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div>
-                    <div className="text-center">{data.data.original_packs || "0"}</div>
-                    <div className="text-center">{formatDecimal(data.data.original_weight)}</div>
-                    <div className="text-center">{data.data.packs || "0"}</div>
-                    <div className="text-center">{formatDecimal(data.data.weight)}</div>
-                    <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
+              components={{
+                Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => (
+                  <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
+                    {data.index === 0 && <div className="grid grid-cols-6 gap-1 px-3 py-2 bg-gray-100 font-bold text-xs border-b border-gray-300">
+                      <div className="text-left">Code</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div>
+                    </div>}
+                    <div className="grid grid-cols-6 gap-1 px-3 py-2 text-sm border-b border-gray-100">
+                      <div className="text-left font-medium text-blue-700">{data.data.code || "-"}</div>
+                      <div className="text-center">{data.data.original_packs || "0"}</div>
+                      <div className="text-center">{formatDecimal(data.data.original_weight)}</div>
+                      <div className="text-center">{data.data.packs || "0"}</div>
+                      <div className="text-center">{formatDecimal(data.data.weight)}</div>
+                      <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
+                    </div>
                   </div>
-                </div>
-              )}}
+                )
+              }}
               styles={{
                 option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }),
                 menu: (base) => ({ ...base, width: "650px", maxWidth: "85vw" }),
@@ -697,30 +737,32 @@ export default function SalesEntry() {
 
             <div className="grid grid-cols-5 gap-4">
               <div className="relative">
-                <input id="item_name" ref={refs.itemName} type="text" value={form.item_name} readOnly placeholder="Item Name" 
+                <input id="item_name" ref={refs.itemName} type="text" value={form.item_name} readOnly placeholder="Item Name"
                   onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-2 border rounded-xl w-full" />
                 {balanceInfo.balanceWeight > 0 && <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
                   Balance Weight: {formatDecimal(balanceInfo.balanceWeight)} kg</div>}
               </div>
 
-              <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={form.weight} 
-                onChange={(e) => handleInputChange(e, 5)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Weight (kg)" 
+              <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={form.weight}
+                onChange={(e) => handleInputChange(e, 5)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Weight (kg)"
                 className="px-4 py-2 border rounded-xl" />
 
               <div className="relative">
-                <input id="packs" ref={refs.packs} name="packs" type="number" value={form.packs} 
-                  onChange={(e) => handleInputChange(e, 6)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Packs" 
+                <input id="packs" ref={refs.packs} name="packs" type="number" value={form.packs}
+                  onChange={(e) => handleInputChange(e, 6)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Packs"
                   className="px-4 py-2 border rounded-xl w-full" />
                 {balanceInfo.balancePacks > 0 && <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
                   Balance Packs: {balanceInfo.balancePacks}</div>}
               </div>
 
-              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={form.price_per_kg} 
-                onChange={(e) => handleInputChange(e, 7)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="Price/kg" 
+              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={form.price_per_kg}
+                onChange={(e) => handleInputChange(e, 7)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="Price/kg"
                 className="px-4 py-2 border rounded-xl" />
-              <input id="total" ref={refs.total} name="total" type="number" value={form.total} readOnly placeholder="Total" 
+              <input id="total" ref={refs.total} name="total" type="number" value={form.total} readOnly placeholder="Total"
                 onKeyDown={(e) => handleKeyDown(e, 8)} className="px-4 py-2 border bg-gray-100 rounded-xl" />
             </div>
+            {/* Note: The pack_due input is intentionally hidden as it's set from GRN but required for the calculation */}
+            <input type="hidden" name="pack_due" value={form.pack_due} />
           </div>
 
           <div className="flex space-x-4">
@@ -750,24 +792,27 @@ export default function SalesEntry() {
                     onClick={() => handleEditClick(s)} onKeyDown={(e) => handleTableRowKeyDown(e, s)}>
                     <td className="px-4 py-2 border">{s.code}</td><td className="px-4 py-2 border">{s.customer_code}</td><td className="px-4 py-2 border">{s.item_name}</td>
                     <td className="px-4 py-2 border">{formatDecimal(s.weight)}</td><td className="px-4 py-2 border">{formatDecimal(s.price_per_kg)}</td>
-                    <td className="px-4 py-2 border">{formatDecimal(s.total)}</td><td className="px-4 py-2 border">{s.packs}</td>
+                    <td className="px-4 py-2 border">
+                      {formatDecimal((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0))}
+                    </td><td className="px-4 py-2 border">{s.packs}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             <div className="flex justify-end">
-              <input id="given_amount" ref={refs.givenAmount} name="given_amount" type="number" step="0.01" value={form.given_amount} 
-                onChange={(e) => handleInputChange(e, 2)} onKeyDown={(e) => handleKeyDown(e, 2)} placeholder="Given Amount" 
+              <input id="given_amount" ref={refs.givenAmount} name="given_amount" type="number" step="0.01" value={form.given_amount}
+                onChange={(e) => handleInputChange(e, 2)} onKeyDown={(e) => handleKeyDown(e, 2)} placeholder="Given Amount"
                 className="px-4 py-2 border rounded-xl mt-4" />
             </div>
+               <h2 className="text-2xl font-bold text-red-600">Total Sales: Rs. {formatDecimal(mainTotal)}</h2>
           </div>
         </div>
       </div>
 
-      <CustomerList customers={unprintedCustomers} type="unprinted" searchQuery={searchQueries.unprinted} 
-        onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, unprinted: value }))} 
+      <CustomerList customers={unprintedCustomers} type="unprinted" searchQuery={searchQueries.unprinted}
+        onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, unprinted: value }))}
         selectedPrintedCustomer={selectedPrintedCustomer} selectedUnprintedCustomer={selectedUnprintedCustomer}
-        handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} />
+        handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
     </div>
   );
 }
