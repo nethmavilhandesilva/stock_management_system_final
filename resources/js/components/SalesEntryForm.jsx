@@ -139,37 +139,46 @@ const SalesEntryForm = ({ onSaleAdded, onSaleUpdated, editingSale, onCancelEdit 
     };
 
     // Handle form input changes
-    const handleInputChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
 
-        // Special handling for customer code
-        if (field === 'customer_code') {
-            fetchLoanAmount(value);
-            
-            // Find customer name
-            const customer = customers.find(c => c.short_name === value);
-            if (customer) {
-                setFormData(prev => ({ ...prev, customer_name: customer.name }));
-            }
+    // Special handling for customer code
+    if (field === 'customer_code') {
+        // Reset manual clear flag if user starts typing
+        if (value !== '') {
+            setIsManualClear(false);
+        }
+        
+        // Set manual clear flag if user completely clears the field
+        if (value === '') {
+            setIsManualClear(true);
         }
 
-        // Special handling for GRN entry
-        if (field === 'grn_entry_code') {
-            fetchGRNData(value);
-            
-            // Find GRN entry details
-            const grnEntry = grnEntries.find(entry => entry.code === value);
-            if (grnEntry) {
-                setFormData(prev => ({
-                    ...prev,
-                    supplier_code: grnEntry.supplier_code,
-                    item_code: grnEntry.item_code,
-                    item_name: grnEntry.item_name
-                }));
-            }
+        fetchLoanAmount(value);
+        
+        // Find customer name
+        const customer = customers.find(c => c.short_name === value);
+        if (customer) {
+            setFormData(prev => ({ ...prev, customer_name: customer.name }));
         }
-    };
+    }
 
+    // Special handling for GRN entry
+    if (field === 'grn_entry_code') {
+        fetchGRNData(value);
+        
+        // Find GRN entry details
+        const grnEntry = grnEntries.find(entry => entry.code === value);
+        if (grnEntry) {
+            setFormData(prev => ({
+                ...prev,
+                supplier_code: grnEntry.supplier_code,
+                item_code: grnEntry.item_code,
+                item_name: grnEntry.item_name
+            }));
+        }
+    }
+};
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();

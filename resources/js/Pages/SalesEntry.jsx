@@ -4,11 +4,6 @@ import Select from "react-select";
 const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange, selectedPrintedCustomer, selectedUnprintedCustomer, handleCustomerClick, unprintedTotal, formatDecimal, allSales }) => (
   <div className="w-1/5 bg-white shadow-xl rounded-xl p-4 overflow-y-auto max-h-screen">
     <h2 className="text-xl font-bold mb-4">{type === 'printed' ? 'Printed Customers' : 'Unprinted Sales'}</h2>
-    {type === 'unprinted' && (
-      <div className="bg-gray-50 p-3 rounded-xl shadow-sm mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Total Unprinted: <span className="text-red-600 font-bold">Rs. {formatDecimal(unprintedTotal)}</span></h3>
-      </div>
-    )}
     <div className="mb-4">
       <input
         type="text"
@@ -30,8 +25,11 @@ const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange,
               onClick={() => handleCustomerClick(type, customerCode)}
               className={`w-full text-left p-3 mb-2 rounded-xl border ${(type === 'printed' ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
             >
-              <div className="font-medium">{customerCode}</div>
-              <div className="text-sm text-gray-600 mt-1">Rs. {formatDecimal(customerTotal)}</div>
+              <div className="flex items-center space-x-2 font-medium">
+                <span>{customerCode}</span>
+                <span className="text-sm text-gray-600">Rs. {formatDecimal(customerTotal)}</span>
+              </div>
+
             </button>
           </li>
         )
@@ -39,6 +37,7 @@ const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange,
     )}
   </div>
 ));
+
 export default function SalesEntry() {
   // Initial data
   const initialData = {
@@ -47,7 +46,7 @@ export default function SalesEntry() {
     unprinted: (window.__UNPRINTED_SALES__ || []).filter(s => s.id),
     customers: window.__CUSTOMERS__ || [],
     entries: window.__ENTRIES__ || [],
-    items: window.__ITEMS__ || [], // ADDED: Item list for pack_due lookup
+    items: window.__ITEMS__ || [],
     storeUrl: window.__STORE_URL__ || "/grn",
     csrf: document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
     routes: window.__ROUTES__ || {
@@ -80,9 +79,11 @@ export default function SalesEntry() {
   const [errors, setErrors] = useState({});
   const [balanceInfo, setBalanceInfo] = useState({ balancePacks: 0, balanceWeight: 0 });
   const [loanAmount, setLoanAmount] = useState(0);
-  const [form, setForm] = useState({
+  const [isManualClear, setIsManualClear] = useState(false);
+
+  const [formData, setFormData] = useState({
     customer_code: "", customer_name: "", supplier_code: "", code: "", item_code: "",
-    item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", grn_entry_code: "", // ADDED pack_due
+    item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", grn_entry_code: "",
     original_weight: "", original_packs: "", given_amount: ""
   });
 
@@ -114,19 +115,27 @@ export default function SalesEntry() {
     else if (selectedPrintedCustomer) sales = [...sales, ...printedSales.filter(s => s.customer_code === selectedPrintedCustomer)];
     return sales;
   }, [newSales, unprintedSales, printedSales, selectedUnprintedCustomer, selectedPrintedCustomer]);
-  // Total calculation includes (packs * pack_due) - UPDATED
+
+  const autoCustomerCode = useMemo(() => {
+    if (displayedSales.length > 0 && !isManualClear) {
+      return displayedSales[0].customer_code || "";
+    }
+    return "";
+  }, [displayedSales, isManualClear]);
+
+  // Total calculation includes (packs * pack_due)
   useEffect(() => {
-    const w = parseFloat(form.weight) || 0;
-    const p = parseFloat(form.price_per_kg) || 0;
-    const packs = parseInt(form.packs) || 0;
-    const packDue = parseFloat(form.pack_due) || 0;
+    const w = parseFloat(formData.weight) || 0;
+    const p = parseFloat(formData.price_per_kg) || 0;
+    const packs = parseInt(formData.packs) || 0;
+    const packDue = parseFloat(formData.pack_due) || 0;
 
     const salesTotal = w * p;
     const packCost = packs * packDue;
     const newTotal = salesTotal + packCost;
 
-    setForm(prev => ({ ...prev, total: newTotal ? Number(newTotal.toFixed(2)) : "" }));
-  }, [form.weight, form.price_per_kg, form.packs, form.pack_due]);
+    setFormData(prev => ({ ...prev, total: newTotal ? Number(newTotal.toFixed(2)) : "" }));
+  }, [formData.weight, formData.price_per_kg, formData.packs, formData.pack_due]);
 
   useEffect(() => { refs.customerCode.current?.focus(); }, []);
 
@@ -138,15 +147,13 @@ export default function SalesEntry() {
 
   // Effects
   useEffect(() => {
-    if (form.grn_entry_code) {
-      const matchingEntry = initialData.entries.find((en) => en.code === form.grn_entry_code);
+    if (formData.grn_entry_code) {
+      const matchingEntry = initialData.entries.find((en) => en.code === formData.grn_entry_code);
       setBalanceInfo(matchingEntry ? { balancePacks: matchingEntry.packs || 0, balanceWeight: matchingEntry.weight || 0 } : { balancePacks: 0, balanceWeight: 0 });
     } else {
       setBalanceInfo({ balancePacks: 0, balanceWeight: 0 });
     }
-  }, [form.grn_entry_code, initialData.entries]);
-
-
+  }, [formData.grn_entry_code, initialData.entries]);
 
   // API functions
   const apiCall = async (url, method, body) => {
@@ -188,11 +195,11 @@ export default function SalesEntry() {
       e.preventDefault();
 
       // Handle given_amount submission
-      if (fieldOrder[currentFieldIndex] === "given_amount" && form.given_amount) {
+      if (fieldOrder[currentFieldIndex] === "given_amount" && formData.given_amount) {
         return handleSubmitGivenAmount(e);
       }
 
-      // Handle price_per_kg submission - only submit if we're actually in price_per_kg field
+      // Handle price_per_kg submission
       if (fieldOrder[currentFieldIndex] === "price_per_kg") {
         return handleSubmit(e);
       }
@@ -217,29 +224,61 @@ export default function SalesEntry() {
     }
   };
 
-  const handleInputChange = (e, fieldIndex = null) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
 
-    if (name === 'customer_code') {
+    // Special handling for customer code
+    if (field === 'customer_code') {
       const trimmedValue = value.trim();
+
+      // Reset manual clear flag if user starts typing
+      if (value !== '') {
+        setIsManualClear(false);
+      }
+
+      // Set manual clear flag if user completely clears the field
+      if (value === '') {
+        setIsManualClear(true);
+      }
+
       const matchingCustomer = unprintedCustomers.find(code => code.toLowerCase() === trimmedValue.toLowerCase());
+
       if (matchingCustomer) {
         setSelectedUnprintedCustomer(matchingCustomer);
         setSelectedPrintedCustomer(null);
-      } else if (selectedUnprintedCustomer) setSelectedUnprintedCustomer(null);
+      } else if (selectedUnprintedCustomer) {
+        setSelectedUnprintedCustomer(null);
+      }
 
-      if (value.length === 10 && fieldIndex !== null && fieldIndex + 1 < fieldOrder.length) {
-        let nextIndex = fieldIndex + 1;
-        if (skipMap[fieldOrder[fieldIndex + 1]]) {
-          const targetIndex = fieldOrder.findIndex(f => f === skipMap[fieldOrder[fieldIndex + 1]]);
-          if (targetIndex !== -1) nextIndex = targetIndex;
-        }
+      // Clear loan amount when customer code is cleared
+      if (!trimmedValue) {
+        setLoanAmount(0);
+      }
 
-        requestAnimationFrame(() => setTimeout(() => {
-          const nextRef = Object.values(refs)[nextIndex];
-          if (nextRef?.current) nextRef.current.focus?.() || nextRef.current.select?.();
-        }, 0));
+      // Find customer name
+      const customer = initialData.customers.find(c => c.short_name === value);
+      if (customer) {
+        setFormData(prev => ({ ...prev, customer_name: customer.name }));
+      }
+    }
+
+    // Special handling for GRN entry
+    if (field === 'grn_entry_code') {
+      // Find GRN entry details
+      const grnEntry = initialData.entries.find(entry => entry.code === value);
+      if (grnEntry) {
+        // Fetch pack_due from the global items list
+        const itemCodeToMatch = grnEntry.item_code;
+        const matchingItem = initialData.items.find(i => String(i.no) === String(itemCodeToMatch));
+        const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
+
+        setFormData(prev => ({
+          ...prev,
+          supplier_code: grnEntry.supplier_code,
+          item_code: grnEntry.item_code,
+          item_name: grnEntry.item_name || "",
+          pack_due: fetchedPackDue
+        }));
       }
     }
   };
@@ -251,12 +290,13 @@ export default function SalesEntry() {
 
     setSelectedUnprintedCustomer(hasUnprintedSales ? short : null);
     setSelectedPrintedCustomer(null);
-    setForm(prev => ({ ...prev, customer_code: short || prev.customer_code, customer_name: customer?.name || "" }));
+    setFormData(prev => ({ ...prev, customer_code: short || prev.customer_code, customer_name: customer?.name || "" }));
     fetchLoanAmount(short);
+    setIsManualClear(false);
   };
 
   const handleEditClick = (sale) => {
-    setForm({
+    setFormData({
       ...sale,
       grn_entry_code: sale.grn_entry_code || sale.code || "",
       item_name: sale.item_name || "",
@@ -266,13 +306,14 @@ export default function SalesEntry() {
       item_code: sale.item_code || "",
       weight: sale.weight || "",
       price_per_kg: sale.price_per_kg || "",
-      pack_due: sale.pack_due || "", // ADDED pack_due
+      pack_due: sale.pack_due || "",
       total: sale.total || "",
       packs: sale.packs || "",
       original_weight: sale.original_weight || "",
       original_packs: sale.original_packs || "",
     });
     setEditingSaleId(sale.id);
+    setIsManualClear(false);
 
     setTimeout(() => {
       refs.weight.current?.focus();
@@ -288,15 +329,16 @@ export default function SalesEntry() {
   };
 
   const handleClearForm = () => {
-    setForm({
+    setFormData({
       customer_code: "", customer_name: "", supplier_code: "", code: "", item_code: "",
-      item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", grn_entry_code: "", // ADDED pack_due
+      item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", grn_entry_code: "",
       original_weight: "", original_packs: "", given_amount: ""
     });
     setEditingSaleId(null);
     setGrnSearchInput("");
     setBalanceInfo({ balancePacks: 0, balanceWeight: 0 });
     setLoanAmount(0);
+    setIsManualClear(false);
   };
 
   const handleDeleteClick = async () => {
@@ -313,18 +355,18 @@ export default function SalesEntry() {
     e.preventDefault();
     setErrors({});
 
-    if (!form.customer_code) {
+    if (!formData.customer_code) {
       setErrors({ form: "Please enter a customer code first" });
       refs.customerCode.current?.focus();
       return;
     }
 
-    if (!form.given_amount) {
+    if (!formData.given_amount) {
       setErrors({ form: "Please enter a given amount" });
       return;
     }
 
-    const customerSales = allSales.filter(s => s.customer_code === form.customer_code);
+    const customerSales = allSales.filter(s => s.customer_code === formData.customer_code);
     const firstSale = customerSales[0];
     if (!firstSale) {
       setErrors({ form: "No sales records found for this customer. Please add a sales record first." });
@@ -332,11 +374,11 @@ export default function SalesEntry() {
     }
 
     try {
-      const data = await apiCall(`/sales/${firstSale.id}/given-amount`, "PUT", { given_amount: parseFloat(form.given_amount) || 0 });
+      const data = await apiCall(`/sales/${firstSale.id}/given-amount`, "PUT", { given_amount: parseFloat(formData.given_amount) || 0 });
       setAllSales(prev => prev.map(s => s.id === data.sale.id ? data.sale : s));
-      setForm(prev => ({ ...prev, given_amount: "" }));
+      setFormData(prev => ({ ...prev, given_amount: "" }));
       refs.grnSelect.current?.focus();
-      alert("Given amount updated successfully for customer: " + form.customer_code);
+      alert("Given amount updated successfully for customer: " + formData.customer_code);
     } catch (error) {
       setErrors({ form: error.message });
     }
@@ -353,26 +395,26 @@ export default function SalesEntry() {
       else if (selectedUnprintedCustomer) billPrintedStatus = 'N';
     }
 
-    const customerSales = allSales.filter(s => s.customer_code === form.customer_code);
+    const customerSales = allSales.filter(s => s.customer_code === formData.customer_code);
     const isFirstRecordForCustomer = customerSales.length === 0 && !isEditing;
 
     const payload = {
-      supplier_code: form.supplier_code,
-      customer_code: (form.customer_code || "").toUpperCase(),
-      customer_name: form.customer_name,
-      code: form.code || form.grn_entry_code,
-      item_code: form.item_code,
-      item_name: form.item_name,
-      weight: parseFloat(form.weight) || 0,
-      price_per_kg: parseFloat(form.price_per_kg) || 0,
-      pack_due: parseFloat(form.pack_due) || 0, // ADDED pack_due to payload
-      total: parseFloat(form.total) || 0,
-      packs: parseInt(form.packs) || 0,
-      grn_entry_code: form.grn_entry_code,
-      original_weight: form.original_weight,
-      original_packs: form.original_packs,
+      supplier_code: formData.supplier_code,
+      customer_code: (formData.customer_code || "").toUpperCase(),
+      customer_name: formData.customer_name,
+      code: formData.code || formData.grn_entry_code,
+      item_code: formData.item_code,
+      item_name: formData.item_name,
+      weight: parseFloat(formData.weight) || 0,
+      price_per_kg: parseFloat(formData.price_per_kg) || 0,
+      pack_due: parseFloat(formData.pack_due) || 0,
+      total: parseFloat(formData.total) || 0,
+      packs: parseInt(formData.packs) || 0,
+      grn_entry_code: formData.grn_entry_code,
+      original_weight: formData.original_weight,
+      original_packs: formData.original_packs,
       given_amount: (isFirstRecordForCustomer || (isEditing && customerSales[0]?.id === editingSaleId))
-        ? (form.given_amount ? parseFloat(form.given_amount) : null)
+        ? (formData.given_amount ? parseFloat(formData.given_amount) : null)
         : null,
       ...(billPrintedStatus && { bill_printed: billPrintedStatus }),
     };
@@ -387,16 +429,17 @@ export default function SalesEntry() {
 
       setAllSales(prev => isEditing ? prev.map(s => s.id === newSale.id ? newSale : s) : [...prev, newSale]);
 
-      setForm(prevForm => ({
+      setFormData(prevForm => ({
         customer_code: prevForm.customer_code,
         customer_name: prevForm.customer_name,
-        supplier_code: "", code: "", item_code: "", item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", // ADDED pack_due clear
+        supplier_code: "", code: "", item_code: "", item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "",
         grn_entry_code: "", original_weight: "", original_packs: "", given_amount: ""
       }));
 
       setEditingSaleId(null);
       setGrnSearchInput("");
       setBalanceInfo({ balancePacks: 0, balanceWeight: 0 });
+      setIsManualClear(false);
       refs.grnSelect.current?.focus();
     } catch (error) {
       setErrors({ form: error.message });
@@ -419,18 +462,19 @@ export default function SalesEntry() {
     const customerSale = allSales.find(s => s.customer_code === customerCode);
     const newCustomerCode = isCurrentlySelected ? "" : customerCode;
 
-    setForm(prev => ({
+    setFormData(prev => ({
       ...prev,
       customer_code: newCustomerCode,
       customer_name: isCurrentlySelected ? "" : customer?.name || "",
       given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "")
     }));
 
+    setIsManualClear(false);
     fetchLoanAmount(newCustomerCode);
     refs.grnSelect.current?.focus();
   };
 
-  // Receipt functions - UPDATED TO USE CALCULATED PACK COST
+  // Receipt functions
   const buildFullReceiptHTML = (salesData, billNo, customerName, mobile, globalLoanAmount = 0) => {
     const date = new Date().toLocaleDateString();
     const time = new Date().toLocaleTimeString();
@@ -438,7 +482,6 @@ export default function SalesEntry() {
     const itemGroups = {};
 
     const itemsHtml = salesData.map(s => {
-      // NOTE: s.total now includes pack_due * packs for new sales
       totalAmountSum += parseFloat(s.total) || 0;
       const packs = parseInt(s.packs) || 0;
       totalPacksSum += packs;
@@ -461,7 +504,6 @@ export default function SalesEntry() {
       const price = parseFloat(s.price_per_kg) || 0;
       return sum + (weight * price);
     }, 0);
-
 
     // Calculate Total Pack Due by subtracting sales price from total price
     const totalSalesExcludingPackDue = salesData.reduce((sum, s) => sum + ((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0)), 0);
@@ -578,6 +620,36 @@ export default function SalesEntry() {
       alert("Printing failed: " + error.message);
     }
   };
+  const handleCustomerCodeChange = (e) => {
+    const code = e.target.value;
+
+    // Find customer
+    const customer = initialData.customers.find(x => String(x.short_name) === String(code));
+    const customerSale = allSales.find(s => s.customer_code === code);
+
+    if (!code) {
+      // If erased, clear related fields
+      setFormData(prev => ({
+        ...prev,
+        customer_code: "",
+        customer_name: "",
+        given_amount: ""
+      }));
+      setSelectedPrintedCustomer(null);
+      setSelectedUnprintedCustomer(null);
+      fetchLoanAmount(""); // clear loan amount too
+    } else {
+      // Populate if valid
+      setFormData(prev => ({
+        ...prev,
+        customer_code: code,
+        customer_name: customer?.name || "",
+        given_amount: customerSale?.given_amount || ""
+      }));
+      fetchLoanAmount(code);
+    }
+  };
+
 
   // Shortcut effects
   useEffect(() => {
@@ -631,11 +703,37 @@ export default function SalesEntry() {
 
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
-              <input id="customer_code_input" ref={refs.customerCode} name="customer_code" value={form.customer_code}
-                onChange={(e) => handleInputChange(e, 0)} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10}
-                placeholder="Customer Code" className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300" />
+              <input
+                id="customer_code_input"
+                ref={refs.customerCode}
+                name="customer_code"
+                value={formData.customer_code || autoCustomerCode}
+                onChange={(e) => {
+                  const value = e.target.value.toUpperCase(); // ✅ force uppercase always
 
-              <select id="customer_code_select" ref={refs.customerSelect} value={form.customer_code}
+                  // Update the form field directly
+                  handleInputChange("customer_code", value);
+
+                  // If user clears the field, also clear dependent fields
+                  if (value.trim() === "") {
+                    setFormData(prev => ({
+                      ...prev,
+                      customer_code: "",
+                      customer_name: "",
+                      given_amount: ""
+                    }));
+                    setSelectedPrintedCustomer(null);
+                    setSelectedUnprintedCustomer(null);
+                  }
+                }}
+                onKeyDown={(e) => handleKeyDown(e, 0)}
+                type="text"
+                maxLength={10}
+                placeholder="Customer Code"
+                className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase"
+              />
+
+              <select id="customer_code_select" ref={refs.customerSelect} value={formData.customer_code}
                 onChange={handleCustomerSelect} onKeyDown={(e) => handleKeyDown(e, 1)} className="px-4 py-2 border rounded-xl">
                 <option value="">-- Select Customer --</option>
                 {initialData.customers.map(c => <option key={c.short_name} value={c.short_name}>{c.name} ({c.short_name})</option>)}
@@ -648,27 +746,27 @@ export default function SalesEntry() {
             <Select
               id="grn_entry_code"
               ref={refs.grnSelect}
-              value={form.grn_entry_code ? {
-                value: form.grn_entry_code, label: form.grn_entry_code,
-                data: initialData.entries.find((en) => en.code === form.grn_entry_code)
+              value={formData.grn_entry_code ? {
+                value: formData.grn_entry_code, label: formData.grn_entry_code,
+                data: initialData.entries.find((en) => en.code === formData.grn_entry_code)
               } : null}
               onChange={(selected) => {
                 if (selected?.data) {
                   const entry = selected.data;
 
-                  // NEW LOGIC: Fetch pack_due from the global items list
+                  // Fetch pack_due from the global items list
                   const itemCodeToMatch = entry.item_code;
                   const matchingItem = initialData.items.find(i => String(i.no) === String(itemCodeToMatch));
                   const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
 
-                  setForm(prev => ({
+                  setFormData(prev => ({
                     ...prev,
                     grn_entry_code: selected.value,
                     item_name: entry.item_name || "",
                     supplier_code: entry.supplier_code || "",
                     item_code: entry.item_code || "",
                     price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
-                    pack_due: fetchedPackDue, // Set fetched pack_due
+                    pack_due: fetchedPackDue,
                     weight: editingSaleId ? prev.weight : "",
                     packs: editingSaleId ? prev.packs : "",
                     total: editingSaleId ? prev.total : ""
@@ -679,7 +777,7 @@ export default function SalesEntry() {
               }}
               onInputChange={setGrnSearchInput}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && form.grn_entry_code && !e.isPropagationStopped()) {
+                if (e.key === "Enter" && formData.grn_entry_code && !e.isPropagationStopped()) {
                   e.preventDefault();
                   setTimeout(() => refs.weight.current?.focus(), 0);
                 }
@@ -735,49 +833,122 @@ export default function SalesEntry() {
               }}
             />
 
-            <div className="grid grid-cols-5 gap-4">
-              <div className="relative">
-                <input id="item_name" ref={refs.itemName} type="text" value={form.item_name} readOnly placeholder="Item Name"
-                  onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-2 border rounded-xl w-full" />
-                {balanceInfo.balanceWeight > 0 && <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
-                  Balance Weight: {formatDecimal(balanceInfo.balanceWeight)} kg</div>}
+            <div className="grid grid-cols-12 gap-4 items-start">
+              {/* Item Name - Larger column */}
+              <div className="col-span-4 relative">
+                <input
+                  id="item_name"
+                  ref={refs.itemName}
+                  type="text"
+                  value={formData.item_name}
+                  readOnly
+                  placeholder="Item Name"
+                  onKeyDown={(e) => handleKeyDown(e, 4)}
+                  className="px-4 py-2 border rounded-xl w-full text-base"
+                />
+                {balanceInfo.balanceWeight > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
+                    Balance Weight: {formatDecimal(balanceInfo.balanceWeight)} kg
+                  </div>
+                )}
               </div>
 
-              <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={form.weight}
-                onChange={(e) => handleInputChange(e, 5)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Weight (kg)"
-                className="px-4 py-2 border rounded-xl" />
-
-              <div className="relative">
-                <input id="packs" ref={refs.packs} name="packs" type="number" value={form.packs}
-                  onChange={(e) => handleInputChange(e, 6)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Packs"
-                  className="px-4 py-2 border rounded-xl w-full" />
-                {balanceInfo.balancePacks > 0 && <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
-                  Balance Packs: {balanceInfo.balancePacks}</div>}
+              {/* Weight */}
+              <div className="col-span-2">
+                <input
+                  id="weight"
+                  ref={refs.weight}
+                  name="weight"
+                  type="number"
+                  step="0.01"
+                  value={formData.weight}
+                  onChange={(e) => handleInputChange('weight', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 5)}
+                  placeholder="Weight (kg)"
+                  className="px-4 py-2 border rounded-xl w-full"
+                />
               </div>
 
-              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={form.price_per_kg}
-                onChange={(e) => handleInputChange(e, 7)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="Price/kg"
-                className="px-4 py-2 border rounded-xl" />
-              <input id="total" ref={refs.total} name="total" type="number" value={form.total} readOnly placeholder="Total"
-                onKeyDown={(e) => handleKeyDown(e, 8)} className="px-4 py-2 border bg-gray-100 rounded-xl" />
+              {/* Packs */}
+              <div className="col-span-2 relative">
+                <input
+                  id="packs"
+                  ref={refs.packs}
+                  name="packs"
+                  type="number"
+                  value={formData.packs}
+                  onChange={(e) => handleInputChange('packs', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 6)}
+                  placeholder="Packs"
+                  className="px-4 py-2 border rounded-xl w-full"
+                />
+                {balanceInfo.balancePacks > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
+                    Balance Packs: {balanceInfo.balancePacks}
+                  </div>
+                )}
+              </div>
+
+              {/* Price/kg */}
+              <div className="col-span-2">
+                <input
+                  id="price_per_kg"
+                  ref={refs.pricePerKg}
+                  name="price_per_kg"
+                  type="number"
+                  step="0.01"
+                  value={formData.price_per_kg}
+                  onChange={(e) => handleInputChange('price_per_kg', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 7)}
+                  placeholder="Price/kg"
+                  className="px-4 py-2 border rounded-xl w-full"
+                />
+              </div>
+
+              {/* Total */}
+              <div className="col-span-2">
+                <input
+                  id="total"
+                  ref={refs.total}
+                  name="total"
+                  type="number"
+                  value={formData.total}
+                  readOnly
+                  placeholder="Total"
+                  onKeyDown={(e) => handleKeyDown(e, 8)}
+                  className="px-4 py-2 border bg-gray-100 rounded-xl w-full"
+                />
+              </div>
             </div>
+
             {/* Note: The pack_due input is intentionally hidden as it's set from GRN but required for the calculation */}
-            <input type="hidden" name="pack_due" value={form.pack_due} />
+            <input type="hidden" name="pack_due" value={formData.pack_due} />
           </div>
 
           <div className="flex space-x-4">
-            <button type="submit" className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
+            <button
+              type="submit"
+              style={{ display: "none" }}
+              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition"
+            >
               {editingSaleId ? "Update Sales Entry" : "Add Sales Entry"}
             </button>
+
             {editingSaleId && <button type="button" onClick={handleDeleteClick} className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">Delete</button>}
-            <button type="button" onClick={handleClearForm} className="py-3 px-6 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-xl shadow-lg transition">Clear</button>
+            <button
+              type="button"
+              onClick={handleClearForm}
+              className="hidden py-3 px-6 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-xl shadow-lg transition"
+            >
+              Clear
+            </button>
+
           </div>
         </form>
 
         {errors.form && <div className="mt-6 p-3 bg-red-100 text-red-700 rounded-xl">{errors.form}</div>}
 
         <div className="mt-10">
-          <h3 className="text-xl font-bold mb-4">{selectedPrintedCustomer ? `Sales for ${selectedPrintedCustomer}` : selectedUnprintedCustomer ? `Unprinted Sales for ${selectedUnprintedCustomer}` : "All New Sales"}</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full border border-gray-200 rounded-xl text-sm">
               <thead className="bg-gray-100">
@@ -800,11 +971,11 @@ export default function SalesEntry() {
               </tbody>
             </table>
             <div className="flex justify-end">
-              <input id="given_amount" ref={refs.givenAmount} name="given_amount" type="number" step="0.01" value={form.given_amount}
-                onChange={(e) => handleInputChange(e, 2)} onKeyDown={(e) => handleKeyDown(e, 2)} placeholder="Given Amount"
+              <input id="given_amount" ref={refs.givenAmount} name="given_amount" type="number" step="0.01" value={formData.given_amount}
+                onChange={(e) => handleInputChange('given_amount', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 2)} placeholder="Given Amount"
                 className="px-4 py-2 border rounded-xl mt-4" />
             </div>
-               <h2 className="text-2xl font-bold text-red-600">Total Sales: Rs. {formatDecimal(mainTotal)}</h2>
+            <h2 className="text-2xl font-bold text-red-600">Total Sales: Rs. {formatDecimal(mainTotal)}</h2>
           </div>
         </div>
       </div>
