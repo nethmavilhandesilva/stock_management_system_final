@@ -3,19 +3,19 @@ import Select from "react-select";
 
 const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange, selectedPrintedCustomer, selectedUnprintedCustomer, handleCustomerClick, unprintedTotal, formatDecimal, allSales }) => (
   <div className="w-full shadow-xl rounded-xl overflow-y-auto max-h-screen border border-black" style={{ backgroundColor: "#1ec139ff" }} >
-   <div style={{ backgroundColor: "#006400" }} className="p-1 rounded-t-xl">
-  <h2 className="text-xl font-bold text-white mb-1 whitespace-nowrap text-center">
-    {type === 'printed' ? 'Printed Sales' : 'Unprinted Sales'}
-  </h2>
+    <div style={{ backgroundColor: "#006400" }} className="p-1 rounded-t-xl">
+      <h2 className="text-base font-bold text-white mb-1 whitespace-nowrap text-center">
+        {type === 'printed' ? 'මුද්‍රිත විකුණුම් වාර්තා ' : 'මුද්‍රණය නොකළ වාර්තා '}
+      </h2>
 
-  <input
-    type="text"
-    placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`}
-    value={searchQuery}
-    onChange={e => onSearchChange(e.target.value)}
-    className="w-full px-4 py-0.5 border rounded-xl focus:ring-2 focus:ring-blue-300"
-  />
-</div>
+      <input
+        type="text"
+        placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`}
+        value={searchQuery}
+        onChange={e => onSearchChange(e.target.value.toUpperCase())} // force uppercase in state
+        className="w-full px-4 py-0.5 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase" // optional CSS
+      />
+    </div>
     {/* Customer list area */}
     <div className="p-1">
       {customers.length === 0 ? (
@@ -381,44 +381,44 @@ export default function SalesEntry() {
   };
 
   const handleCustomerClick = (type, customerCode) => {
-  const isPrinted = type === 'printed';
-  const isCurrentlySelected = isPrinted
-    ? selectedPrintedCustomer === customerCode
-    : selectedUnprintedCustomer === customerCode;
+    const isPrinted = type === 'printed';
+    const isCurrentlySelected = isPrinted
+      ? selectedPrintedCustomer === customerCode
+      : selectedUnprintedCustomer === customerCode;
 
-  if (isPrinted) {
-    setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
-    setSelectedUnprintedCustomer(null);
-  } else {
-    setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
-    setSelectedPrintedCustomer(null);
-  }
+    if (isPrinted) {
+      setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
+      setSelectedUnprintedCustomer(null);
+    } else {
+      setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
+      setSelectedPrintedCustomer(null);
+    }
 
-  const customer = initialData.customers.find(
-    x => String(x.short_name) === String(customerCode)
-  );
-  const customerSale = allSales.find(s => s.customer_code === customerCode);
-  const newCustomerCode = isCurrentlySelected ? "" : customerCode;
+    const customer = initialData.customers.find(
+      x => String(x.short_name) === String(customerCode)
+    );
+    const customerSale = allSales.find(s => s.customer_code === customerCode);
+    const newCustomerCode = isCurrentlySelected ? "" : customerCode;
 
-  setFormData(prev => ({
-    ...prev,
-    customer_code: newCustomerCode,
-    customer_name: isCurrentlySelected ? "" : customer?.name || "",
-    given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "")
-  }));
+    setFormData(prev => ({
+      ...prev,
+      customer_code: newCustomerCode,
+      customer_name: isCurrentlySelected ? "" : customer?.name || "",
+      given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "")
+    }));
 
-  setIsManualClear(false);
-  fetchLoanAmount(newCustomerCode);
+    setIsManualClear(false);
+    fetchLoanAmount(newCustomerCode);
 
-  // Focus logic
-  if (isCurrentlySelected) {
-    // If we unselect, focus customerCode
-    refs.customerCode.current?.focus();
-  } else {
-    // If we select, focus grnSelect
-    refs.grnSelect.current?.focus();
-  }
-};
+    // Focus logic
+    if (isCurrentlySelected) {
+      // If we unselect, focus customerCode
+      refs.customerCode.current?.focus();
+    } else {
+      // If we select, focus grnSelect
+      refs.grnSelect.current?.focus();
+    }
+  };
 
 
   // Button handlers (omitted for brevity but assumed to be here)
@@ -692,7 +692,6 @@ export default function SalesEntry() {
             <h2 className="text-2xl font-bold text-red-600">Total Sales: Rs. {formatDecimal(mainTotal)}</h2>
           </div>
           {/* ... (rest of the form content) */}
-
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
               <input id="customer_code_input" ref={refs.customerCode} name="customer_code"
@@ -715,137 +714,137 @@ export default function SalesEntry() {
                 className="px-4 py-2 border rounded-xl bg-yellow-100 text-red-600 font-bold" />
             </div>
 
-          <Select
-  id="grn_entry_code"
-  ref={refs.grnSelect}
-  value={formData.grn_entry_code ? {
-    value: formData.grn_entry_code,
-    label: formData.grn_entry_code,
-    data: initialData.entries.find((en) => en.code === formData.grn_entry_code)
-  } : null}
-  onChange={(selected) => {
-    if (selected?.data) {
-      const entry = selected.data;
-      const matchingItem = initialData.items.find(i => String(i.no) === String(entry.item_code));
-      const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
-      setFormData(prev => ({
-        ...prev,
-        grn_entry_code: selected.value,
-        item_name: entry.item_name || "",
-        supplier_code: entry.supplier_code || "",
-        item_code: entry.item_code || "",
-        price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
-        pack_due: fetchedPackDue,
-        weight: editingSaleId ? prev.weight : "",
-        packs: editingSaleId ? prev.packs : "",
-        total: editingSaleId ? prev.total : ""
-      }));
-      setGrnSearchInput("");
-      requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
-    }
-  }}
-  onInputChange={(inputValue, { action }) => {
-  if (action === "input-change") {
-    const upperValue = inputValue.toUpperCase();
-    setGrnSearchInput(upperValue); // update your state
-    return upperValue;              // ensures the input displays in uppercase
-  }
-  return inputValue;
-}}
+            <Select
+              id="grn_entry_code"
+              ref={refs.grnSelect}
+              value={formData.grn_entry_code ? {
+                value: formData.grn_entry_code,
+                label: formData.grn_entry_code,
+                data: initialData.entries.find((en) => en.code === formData.grn_entry_code)
+              } : null}
+              onChange={(selected) => {
+                if (selected?.data) {
+                  const entry = selected.data;
+                  const matchingItem = initialData.items.find(i => String(i.no) === String(entry.item_code));
+                  const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    grn_entry_code: selected.value,
+                    item_name: entry.item_name || "",
+                    supplier_code: entry.supplier_code || "",
+                    item_code: entry.item_code || "",
+                    price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
+                    pack_due: fetchedPackDue,
+                    weight: editingSaleId ? prev.weight : "",
+                    packs: editingSaleId ? prev.packs : "",
+                    total: editingSaleId ? prev.total : ""
+                  }));
+                  setGrnSearchInput("");
+                  requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
+                }
+              }}
+              onInputChange={(inputValue, { action }) => {
+                if (action === "input-change") {
+                  const upperValue = inputValue.toUpperCase();
+                  setGrnSearchInput(upperValue);
+                  return upperValue;
+                }
+                return inputValue;
+              }}
 
-  onKeyDown={(e) => {
-    if (e.key === "Enter" && formData.grn_entry_code && !e.isPropagationStopped()) {
-      e.preventDefault(); setTimeout(() => refs.weight.current?.focus(), 0);
-    }
-  }}
-  getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
-  getOptionValue={(option) => option.value}
-  options={initialData.entries.map((en, index) => ({ value: en.code, label: en.code, data: en, index }))}
-  placeholder="Select GRN Entry"
-  isSearchable={true}
-  noOptionsMessage={() => "No GRN entries found"}
-  formatOptionLabel={(option, { context }) => {
-    if (context === "value" || !option.data) {
-      const entry = option.data || initialData.entries.find((en) => en.code === option.value);
-      return <span>{option.label} - {entry?.item_name || "Unknown Item"} (<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
-    }
-    const entry = option.data;
-    const HeaderRow = () => (
-      <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center">
-        <div className="text-left">Code</div>
-        <div className="text-left">Item Name</div>
-        <div className="text-center">OP</div>
-        <div className="text-center">OW</div>
-        <div className="text-center">BP</div>
-        <div className="text-center">BW</div>
-        <div className="text-right">PRICE</div>
-      </div>
-    );
-    const DataRow = ({ entry, showHeader = false }) => (
-      <div className="w-full">
-        {showHeader && <HeaderRow />}
-        <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-gray-50 items-center">
-          <div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>
-            {entry.code || "-"}
-          </div>
-          <div className="text-left truncate" title={entry.item_name || "Unknown Item"}>
-            {entry.item_name || "Unknown Item"}
-          </div>
-          <div className="text-center">{entry.original_packs || "0"}</div>
-          <div className="text-center">{formatDecimal(entry.original_weight)}</div>
-          <div className="text-center">{entry.packs || "0"}</div>
-          <div className="text-center">{formatDecimal(entry.weight)}</div>
-          <div className="text-right font-semibold text-green-600">
-            Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}
-          </div>
-        </div>
-      </div>
-    );
-    return <DataRow entry={entry} showHeader={option.index === 0} />;
-  }}
-  components={{
-    Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => {
-      const HeaderRow = () => (
-        <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center">
-          <div className="text-left">Code</div>
-          <div className="text-left">Item Name</div>
-          <div className="text-center">OP</div>
-          <div className="text-center">OW</div>
-          <div className="text-center">BP</div>
-          <div className="text-center">BW</div>
-          <div className="text-right">PRICE</div>
-        </div>
-      );
-      const DataRow = ({ data, showHeader = false }) => (
-        <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
-          {showHeader && <HeaderRow />}
-          <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-gray-50 items-center">
-            <div className="text-left font-medium text-blue-700 truncate" title={data.data.code || "-"}>
-              {data.data.code || "-"}
-            </div>
-            <div className="text-left truncate" title={data.data.item_name || "Unknown Item"}>
-              {data.data.item_name || "Unknown Item"}
-            </div>
-            <div className="text-center">{data.data.original_packs || "0"}</div>
-            <div className="text-center">{formatDecimal(data.data.original_weight)}</div>
-            <div className="text-center">{data.data.packs || "0"}</div>
-            <div className="text-center">{formatDecimal(data.data.weight)}</div>
-            <div className="text-right font-semibold text-green-600">
-              Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}
-            </div>
-          </div>
-        </div>
-      );
-      return <DataRow data={data} showHeader={data.index === 0} />;
-    }
-  }}
-  styles={{
-    option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }),
-    menu: (base) => ({ ...base, width: "680px", maxWidth: "95vw" }),
-    menuList: (base) => ({ ...base, padding: 0, maxHeight: "400px" }),
-    control: (base) => ({ ...base, minHeight: "44px" })
-  }}
-/>
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && formData.grn_entry_code && !e.isPropagationStopped()) {
+                  e.preventDefault(); setTimeout(() => refs.weight.current?.focus(), 0);
+                }
+              }}
+              getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
+              getOptionValue={(option) => option.value}
+              options={initialData.entries.map((en, index) => ({ value: en.code, label: en.code, data: en, index }))}
+              placeholder="Select GRN Entry"
+              isSearchable={true}
+              noOptionsMessage={() => "No GRN entries found"}
+              formatOptionLabel={(option, { context }) => {
+                if (context === "value" || !option.data) {
+                  const entry = option.data || initialData.entries.find((en) => en.code === option.value);
+                  return <span>{option.label} - {entry?.item_name || "Unknown Item"} (<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
+                }
+                const entry = option.data;
+                const HeaderRow = () => (
+                  <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center">
+                    <div className="text-left">Code</div>
+                    <div className="text-left">Item Name</div>
+                    <div className="text-center">OP</div>
+                    <div className="text-center">OW</div>
+                    <div className="text-center">BP</div>
+                    <div className="text-center">BW</div>
+                    <div className="text-right">PRICE</div>
+                  </div>
+                );
+                const DataRow = ({ entry, showHeader = false }) => (
+                  <div className="w-full">
+                    {showHeader && <HeaderRow />}
+                    <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-gray-50 items-center">
+                      <div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>
+                        {entry.code || "-"}
+                      </div>
+                      <div className="text-left truncate" title={entry.item_name || "Unknown Item"}>
+                        {entry.item_name || "Unknown Item"}
+                      </div>
+                      <div className="text-center">{entry.original_packs || "0"}</div>
+                      <div className="text-center">{formatDecimal(entry.original_weight)}</div>
+                      <div className="text-center">{entry.packs || "0"}</div>
+                      <div className="text-center">{formatDecimal(entry.weight)}</div>
+                      <div className="text-right font-semibold text-green-600">
+                        Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}
+                      </div>
+                    </div>
+                  </div>
+                );
+                return <DataRow entry={entry} showHeader={option.index === 0} />;
+              }}
+              components={{
+                Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => {
+                  const HeaderRow = () => (
+                    <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center">
+                      <div className="text-left">Code</div>
+                      <div className="text-left">Item Name</div>
+                      <div className="text-center">OP</div>
+                      <div className="text-center">OW</div>
+                      <div className="text-center">BP</div>
+                      <div className="text-center">BW</div>
+                      <div className="text-right">PRICE</div>
+                    </div>
+                  );
+                  const DataRow = ({ data, showHeader = false }) => (
+                    <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
+                      {showHeader && <HeaderRow />}
+                      <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-gray-50 items-center">
+                        <div className="text-left font-medium text-blue-700 truncate" title={data.data.code || "-"}>
+                          {data.data.code || "-"}
+                        </div>
+                        <div className="text-left truncate" title={data.data.item_name || "Unknown Item"}>
+                          {data.data.item_name || "Unknown Item"}
+                        </div>
+                        <div className="text-center">{data.data.original_packs || "0"}</div>
+                        <div className="text-center">{formatDecimal(data.data.original_weight)}</div>
+                        <div className="text-center">{data.data.packs || "0"}</div>
+                        <div className="text-center">{formatDecimal(data.data.weight)}</div>
+                        <div className="text-right font-semibold text-green-600">
+                          Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                  return <DataRow data={data} showHeader={data.index === 0} />;
+                }
+              }}
+              styles={{
+                option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }),
+                menu: (base) => ({ ...base, width: "680px", maxWidth: "95vw" }),
+                menuList: (base) => ({ ...base, padding: 0, maxHeight: "400px" }),
+                control: (base) => ({ ...base, minHeight: "44px" })
+              }}
+            />
             <div className="grid grid-cols-12 gap-4 items-start">
               <div className="col-span-4 relative">
                 <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="Item Name"
