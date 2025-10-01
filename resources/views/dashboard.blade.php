@@ -188,25 +188,7 @@
     </div>
 </nav>
 
-{{-- Removed the Password Modal from here --}}
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // The script now simply adds the modal attributes back, 
-        // effectively disabling the password protection.
-        const protectedLinks = document.querySelectorAll(".protected-link");
-        
-        protectedLinks.forEach(link => {
-            const target = link.getAttribute("data-bs-target") || link.getAttribute("href");
-            if (target && target.startsWith("#")) {
-                link.setAttribute("data-bs-toggle", "modal");
-            }
-            // Remove the custom class and any opacity changes
-            link.classList.remove("protected-link");
-            link.style.opacity = ""; 
-        });
-    });
-</script>
 
     <style>
         /* Custom CSS to push content up if fixed-bottom nav bar covers it */

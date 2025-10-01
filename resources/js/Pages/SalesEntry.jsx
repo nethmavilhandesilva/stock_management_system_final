@@ -2,36 +2,49 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import Select from "react-select";
 
 const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange, selectedPrintedCustomer, selectedUnprintedCustomer, handleCustomerClick, unprintedTotal, formatDecimal, allSales }) => (
- <div className="w-1/5 shadow-xl rounded-xl p-4 overflow-y-auto max-h-screen"style={{ backgroundColor: "#99ff99" }}>
-    <h2 className="text-xl font-bold mb-4">{type === 'printed' ? 'Printed Customers' : 'Unprinted Sales'}</h2>
-    <input
-      type="text"
-      placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`}
-      value={searchQuery}
-      onChange={e => onSearchChange(e.target.value)}
-      className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300 mb-4"
-    />
-    {customers.length === 0 ? <p className="text-gray-500">No {type === 'printed' ? 'printed sales' : 'unprinted sales'} found.</p> : (
-      <ul>{customers.map(customerCode => {
-        const customerSales = allSales.filter(s => s.customer_code === customerCode);
-        const customerTotal = customerSales.reduce((sum, sale) => sum + (parseFloat(sale.total) || 0), 0);
-        const isSelected = (type === 'printed' ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode;
+  <div  className="w-full shadow-xl rounded-xl overflow-y-auto max-h-screen border border-black" style={{ backgroundColor: "#1ec139ff" }} >
+    <div style={{ backgroundColor: "#006400" }} className="p-4 rounded-t-xl">
+      <h2 className="text-xl font-bold text-white mb-3 whitespace-nowrap text-center">
+        {type === 'printed' ? 'Printed Sales' : 'Unprinted Sales'}
+      </h2>
 
-        return (
-          <li key={customerCode}>
-            <button
-              onClick={() => handleCustomerClick(type, customerCode)}
-              className={`w-full text-left p-3 mb-2 rounded-xl border ${isSelected ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
-            >
-              <div className="flex items-center space-x-2 font-medium">
-                <span>{customerCode}</span>
-                <span className="text-sm text-gray-600">Rs. {formatDecimal(customerTotal)}</span>
-              </div>
-            </button>
-          </li>
-        );
-      })}</ul>
-    )}
+      <input
+        type="text"
+        placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`}
+        value={searchQuery}
+        onChange={e => onSearchChange(e.target.value)}
+        className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300"
+      />
+    </div>
+
+    {/* Customer list area */}
+    <div className="p-4">
+      {customers.length === 0 ? (
+        <p className="text-gray-700">No {type === 'printed' ? 'printed sales' : 'unprinted sales'} found.</p>
+      ) : (
+        <ul className="flex flex-col items-center">
+          {customers.map(customerCode => {
+            const customerSales = allSales.filter(s => s.customer_code === customerCode);
+            const customerTotal = customerSales.reduce((sum, sale) => sum + (parseFloat(sale.total) || 0), 0);
+            const isSelected = (type === 'printed' ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode;
+
+            return (
+              <li key={customerCode} className="w-full flex justify-center">
+                <button
+                  onClick={() => handleCustomerClick(type, customerCode)}
+                  className={`px-6 py-2 mb-2 rounded-xl border w-48 ${isSelected ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
+                >
+                  {/* Keep fixed width but use wider button */}
+                  <div className="flex items-center justify-between w-full font-medium">
+                    <span className="font-semibold w-32 text-left truncate">{customerCode}-{formatDecimal(customerTotal)}</span>
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   </div>
 ));
 
@@ -145,23 +158,7 @@ export default function SalesEntry() {
   const unprintedTotal = calculateTotal(unprintedSales);
   const formatDecimal = (val) => (Number.isFinite(parseFloat(val)) ? parseFloat(val).toFixed(2) : "0.00");
 
-  // API functions
-  const apiCall = async (url, method, body) => {
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": initialData.csrf,
-          ...(method !== "DELETE" && { "Accept": "application/json" })
-        },
-        body: body ? JSON.stringify(body) : undefined
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Server error: " + res.statusText);
-      return data;
-    } catch (error) { throw error; }
-  };
+  // API functions (omitted for brevity but assumed to be here)
 
   const fetchLoanAmount = async (customerCode) => {
     if (!customerCode) return setLoanAmount(0);
@@ -179,7 +176,25 @@ export default function SalesEntry() {
     }
   };
 
-  // Event handlers
+  const apiCall = async (url, method, body) => {
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": initialData.csrf,
+          ...(method !== "DELETE" && { "Accept": "application/json" })
+        },
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Server error: " + res.statusText);
+      return data;
+    } catch (error) { throw error; }
+  };
+
+
+  // Event handlers (omitted for brevity but assumed to be here)
   const handleKeyDown = (e, currentFieldIndex) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -386,7 +401,7 @@ export default function SalesEntry() {
     setIsManualClear(false); fetchLoanAmount(newCustomerCode); refs.grnSelect.current?.focus();
   };
 
-  // Button handlers
+  // Button handlers (omitted for brevity but assumed to be here)
   const handleMarkPrinted = async () => {
     try { await handlePrintAndClear(); } catch (error) { alert("Mark printed failed: " + error.message); }
   };
@@ -409,7 +424,48 @@ export default function SalesEntry() {
 
   const handleFullRefresh = () => { window.location.reload(); };
 
-  // Receipt functions
+  // Receipt functions (omitted for brevity but assumed to be here)
+
+  const printSingleContent = async (html, customerName) => {
+    return new Promise((resolve) => {
+      // Save original page content
+      const originalContent = document.body.innerHTML;
+      document.title = customerName;
+
+      const cleanup = () => {
+        document.body.innerHTML = originalContent;
+        resolve();
+      };
+
+      const tryPrint = () => {
+        try {
+          window.focus();
+          window.print();
+        } catch (err) {
+          console.error("Print failed:", err);
+        } finally {
+          resolve();
+        }
+      };
+
+      // Listen for afterprint event to handle cancel
+      const afterPrintHandler = () => {
+        window.removeEventListener("afterprint", afterPrintHandler);
+        cleanup();
+      };
+      window.addEventListener("afterprint", afterPrintHandler);
+
+      // Set the content and trigger print
+      document.body.innerHTML = html;
+      if (document.readyState === "complete") {
+        tryPrint();
+      } else {
+        window.onload = tryPrint;
+      }
+      setTimeout(cleanup, 3000);
+    });
+  };
+
   const buildFullReceiptHTML = (salesData, billNo, customerName, mobile, globalLoanAmount = 0) => {
     const date = new Date().toLocaleDateString(); const time = new Date().toLocaleTimeString();
     let totalAmountSum = 0, totalPacksSum = 0; const itemGroups = {};
@@ -493,47 +549,6 @@ export default function SalesEntry() {
     </div>`;
   };
 
-  // Print a single HTML content in the same window safely
-  const printSingleContent = async (html, customerName) => {
-    return new Promise((resolve) => {
-      // Save original page content
-      const originalContent = document.body.innerHTML;
-      document.title = customerName;
-
-      const cleanup = () => {
-        document.body.innerHTML = originalContent;
-        resolve();
-      };
-
-      const tryPrint = () => {
-        try {
-          window.focus();
-          window.print();
-        } catch (err) {
-          console.error("Print failed:", err);
-        } finally {
-          resolve();
-        }
-      };
-
-      // Listen for afterprint event to handle cancel
-      const afterPrintHandler = () => {
-        window.removeEventListener("afterprint", afterPrintHandler);
-        cleanup();
-      };
-      window.addEventListener("afterprint", afterPrintHandler);
-
-      // Set the content and trigger print
-      document.body.innerHTML = html;
-      if (document.readyState === "complete") {
-        tryPrint();
-      } else {
-        window.onload = tryPrint;
-      }
-      setTimeout(cleanup, 3000);
-    });
-  };
-  // Main print and clear function
   const handlePrintAndClear = async () => {
     const salesData = displayedSales.filter(s => s.id);
     if (!salesData.length) return alert("No sales records to print!");
@@ -613,20 +628,28 @@ export default function SalesEntry() {
     window.addEventListener("keydown", handleShortcut); return () => window.removeEventListener("keydown", handleShortcut);
   }, [displayedSales, newSales]);
 
+
   // Main render
   return (
-   <div className="min-h-screen flex flex-row p-6" style={{backgroundColor:"#99ff99"}}>
-      <CustomerList customers={printedCustomers} type="printed" searchQuery={searchQueries.printed}
-        onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, printed: value }))}
-        selectedPrintedCustomer={selectedPrintedCustomer} selectedUnprintedCustomer={selectedUnprintedCustomer}
-        handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
+    // 1. UPDATED: Added p-4 for global padding/gap and removed -mt-10.
+    <div className="min-h-screen flex flex-row p-4 pt-0" style={{ backgroundColor: "#99ff99" }}>
 
-    <div className="w-3/5 shadow-2xl rounded-3xl p-10 mx-6" style={{backgroundColor:"#99ff99"}}>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl shadow-sm">
+      {/* 2. Sidebar 1 (Printed Sales) - UPDATED: Added 'pr-4' for gap on the right. */}
+       <div className="w-1/3 sticky top-0 h-screen overflow-y-auto pr-2 ml-[-30px]">
+        <CustomerList customers={printedCustomers} type="printed" searchQuery={searchQueries.printed}
+          onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, printed: value }))}
+          selectedPrintedCustomer={selectedPrintedCustomer} selectedUnprintedCustomer={selectedUnprintedCustomer}
+          handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
+      </div>
+
+      {/* 3. Center Section - UPDATED: Removed 'mx-6' to let sidebars define the gap. 'flex-grow' ensures max width. */}
+      <div className="flex-grow shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex justify-between items-center bg-gray-50 p-1 rounded-xl shadow-sm border border-black">
             <span className="text-gray-600 font-medium">Bill No: {currentBillNo}</span>
             <h2 className="text-2xl font-bold text-red-600">Total Sales: Rs. {formatDecimal(mainTotal)}</h2>
           </div>
+          {/* ... (rest of the form content) */}
 
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
@@ -786,17 +809,17 @@ export default function SalesEntry() {
 
         {errors.form && <div className="mt-6 p-3 bg-red-100 text-red-700 rounded-xl">{errors.form}</div>}
 
-        <div className="mt-10">
+        <div className="mt-6">
           <div className="overflow-x-auto">
             <table className="min-w-full border border-gray-200 rounded-xl text-sm">
               <thead className="bg-gray-100"><tr>
-                <th className="px-4 py-2 border">Code</th><th className="px-4 py-2 border">Customer</th><th className="px-4 py-2 border">Item</th>
+                <th className="px-4 py-2 border">Code</th><th className="px-4 py-2 border">Item</th>
                 <th className="px-4 py-2 border">Weight (kg)</th><th className="px-4 py-2 border">Price</th><th className="px-4 py-2 border">Total</th><th className="px-4 py-2 border">Packs</th>
               </tr></thead>
               <tbody className="bg-black text-white">{displayedSales.map((s, idx) => (
                 <tr key={s.id || idx} tabIndex={0} className="text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100"
                   onClick={() => handleEditClick(s)} onKeyDown={(e) => handleTableRowKeyDown(e, s)}>
-                  <td className="px-4 py-2 border">{s.code}</td><td className="px-4 py-2 border">{s.customer_code}</td><td className="px-4 py-2 border">{s.item_name}</td>
+                  <td className="px-4 py-2 border">{s.code}</td><td className="px-4 py-2 border">{s.item_name}</td>
                   <td className="px-4 py-2 border">{formatDecimal(s.weight)}</td><td className="px-4 py-2 border">{formatDecimal(s.price_per_kg)}</td>
                   <td className="px-4 py-2 border">{formatDecimal((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0))}</td>
                   <td className="px-4 py-2 border">{s.packs}</td>
@@ -822,10 +845,14 @@ export default function SalesEntry() {
           </div>
         </div>
       </div>
-      <CustomerList customers={unprintedCustomers} type="unprinted" searchQuery={searchQueries.unprinted}
-        onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, unprinted: value }))}
-        selectedPrintedCustomer={selectedPrintedCustomer} selectedUnprintedCustomer={selectedUnprintedCustomer}
-        handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
+
+      {/* 4. Sidebar 2 (Unprinted Sales) - UPDATED: Added 'pl-4' for gap on the left. */}
+      <div className="w-1/3 sticky top-0 h-screen overflow-y-auto pl-2 mr-[-30px]">
+        <CustomerList customers={unprintedCustomers} type="unprinted" searchQuery={searchQueries.unprinted}
+          onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, unprinted: value }))}
+          selectedPrintedCustomer={selectedPrintedCustomer} selectedUnprintedCustomer={selectedUnprintedCustomer}
+          handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
+      </div>
     </div>
   );
 }
