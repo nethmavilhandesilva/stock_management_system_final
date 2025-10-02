@@ -411,21 +411,35 @@ export default function SalesEntry() {
   };
 
   const handleMarkAllProcessed = async () => {
-    const salesToProcess = [...newSales, ...unprintedSales];
-    if (salesToProcess.length === 0) return alert("No sales to process.");
-    if (window.confirm(`Are you sure you want to mark ALL ${salesToProcess.length} sales as processed?`)) {
-      try {
-        const data = await apiCall(initialData.routes.markAllProcessed, "POST", { sales_ids: salesToProcess.map(s => s.id) });
-        if (data.success) {
-          alert(data.message || `All ${salesToProcess.length} sales marked as processed successfully!`);
-          setAllSales(prev => prev.map(s => salesToProcess.map(ps => ps.id).includes(s.id) ? { ...s, bill_printed: "N" } : s));
-          handleClearForm(); setSelectedUnprintedCustomer(null); setSelectedPrintedCustomer(null);
-          [100, 200, 300, 400, 500].forEach(timeout => setTimeout(() => refs.customerCode.current?.focus(), timeout));
-        } else alert(data.message || "Failed to mark sales as processed.");
-      } catch (err) { alert("Failed to mark sales as processed: " + err.message); }
-    }
-  };
+  const salesToProcess = [...newSales, ...unprintedSales];
+  if (salesToProcess.length === 0) return; // no alert
 
+  try {
+    const data = await apiCall(initialData.routes.markAllProcessed, "POST", {
+      sales_ids: salesToProcess.map(s => s.id)
+    });
+
+    if (data.success) {
+      setAllSales(prev =>
+        prev.map(s =>
+          salesToProcess.some(ps => ps.id === s.id)
+            ? { ...s, bill_printed: "N" }
+            : s
+        )
+      );
+      handleClearForm();
+      setSelectedUnprintedCustomer(null);
+      setSelectedPrintedCustomer(null);
+
+      // multiple delayed focus attempts
+      [50, 100, 150, 200, 250].forEach(timeout =>
+        setTimeout(() => refs.customerCode.current?.focus(), timeout)
+      );
+    }
+  } catch (err) {
+    console.error("Failed to mark sales as processed:", err.message);
+  }
+};
   const handleFullRefresh = () => { window.location.reload(); };
 
   // Receipt functions
@@ -591,7 +605,7 @@ export default function SalesEntry() {
       ];
 
       await Promise.all(printPromises);
-      setTimeout(() => { window.location.reload(); }, 100);
+     window.location.reload();
 
       setAllSales(prev => prev.map(s => {
         const isPrinted = salesData.some(d => d.id === s.id);
@@ -687,7 +701,7 @@ export default function SalesEntry() {
           handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
       </div>
 
-      <div className="w-[98%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
+      <div className="w-[100%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center bg-gray-50 p-0.5 rounded-xl shadow-sm border border-black">
             <span className="text-gray-600 font-medium">Bill No: {currentBillNo}</span>
