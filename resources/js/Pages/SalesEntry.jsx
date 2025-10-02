@@ -847,25 +847,25 @@ export default function SalesEntry() {
             />
             <div className="grid grid-cols-12 gap-4 items-start">
               <div className="col-span-4 relative">
-                <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="Item Name"
+                <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය"
                   onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-2 border rounded-xl w-full text-base" />
                 {balanceInfo.balanceWeight > 0 && (<div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
-                  Balance Weight: {formatDecimal(balanceInfo.balanceWeight)} kg</div>)}
+                  BW: {formatDecimal(balanceInfo.balanceWeight)} kg</div>)}
               </div>
 
               <div className="col-span-2"><input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={formData.weight}
-                onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="Weight (kg)"
+                onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර"
                 className="px-4 py-2 border rounded-xl w-full" /></div>
 
               <div className="col-span-2 relative"><input id="packs" ref={refs.packs} name="packs" type="number" value={formData.packs}
-                onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="Packs"
+                onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මලු"
                 className="px-4 py-2 border rounded-xl w-full" />
                 {balanceInfo.balancePacks > 0 && (<div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
-                  Balance Packs: {balanceInfo.balancePacks}</div>)}
+                  BP: {balanceInfo.balancePacks}</div>)}
               </div>
 
               <div className="col-span-2"><input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={formData.price_per_kg}
-                onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="Price/kg"
+                onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="මිල"
                 className="px-4 py-2 border rounded-xl w-full" /></div>
 
               <div className="col-span-2"><input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total"
