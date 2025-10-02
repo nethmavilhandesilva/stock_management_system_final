@@ -409,11 +409,14 @@ export default function SalesEntry() {
 
     setIsManualClear(false);
     fetchLoanAmount(newCustomerCode);
+    handleClearForm();
 
     // Focus logic
     if (isCurrentlySelected) {
       // If we unselect, focus customerCode
       refs.customerCode.current?.focus();
+      handleClearForm();
+
     } else {
       // If we select, focus grnSelect
       refs.grnSelect.current?.focus();
@@ -684,7 +687,7 @@ export default function SalesEntry() {
       </div>
 
       {/* 3. Center Section - UPDATED: Removed 'mx-6' to let sidebars define the gap. 'flex-grow' ensures max width. */}
-      <div className="w-[90%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
+      <div className="w-[98%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center bg-gray-50 p-0.5 rounded-xl shadow-sm border border-black">
@@ -845,35 +848,101 @@ export default function SalesEntry() {
                 control: (base) => ({ ...base, minHeight: "44px" })
               }}
             />
-            <div className="grid grid-cols-12 gap-4 items-start">
-              <div className="col-span-4 relative">
-                <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය"
-                  onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-2 border rounded-xl w-full text-base" />
-                {balanceInfo.balanceWeight > 0 && (<div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
-                  BW: {formatDecimal(balanceInfo.balanceWeight)} kg</div>)}
+            <div className="grid grid-cols-12 gap-4 items-center">
+              {/* Item Name (reduced) */}
+              <div className="col-span-3 relative">
+                <input
+                  id="item_name"
+                  ref={refs.itemName}
+                  type="text"
+                  value={formData.item_name}
+                  readOnly
+                  placeholder="අයිතමයේ නාමය"
+                  onKeyDown={(e) => handleKeyDown(e, 4)}
+                  className="px-4 py-2 border rounded-xl w-full text-base"
+                />
+                {balanceInfo.balanceWeight > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
+                    BW: {formatDecimal(balanceInfo.balanceWeight)} kg
+                  </div>
+                )}
               </div>
 
-              <div className="col-span-2"><input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={formData.weight}
-                onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර"
-                className="px-4 py-2 border rounded-xl w-full" /></div>
-
-              <div className="col-span-2 relative"><input id="packs" ref={refs.packs} name="packs" type="number" value={formData.packs}
-                onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මලු"
-                className="px-4 py-2 border rounded-xl w-full" />
-                {balanceInfo.balancePacks > 0 && (<div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
-                  BP: {balanceInfo.balancePacks}</div>)}
+              {/* Weight */}
+              <div className="col-span-2">
+                <input
+                  id="weight"
+                  ref={refs.weight}
+                  name="weight"
+                  type="number"
+                  step="0.01"
+                  value={formData.weight}
+                  onChange={(e) => handleInputChange('weight', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 5)}
+                  placeholder="බර"
+                  className="px-4 py-2 border rounded-xl w-full"
+                />
               </div>
 
-              <div className="col-span-2"><input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={formData.price_per_kg}
-                onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="මිල"
-                className="px-4 py-2 border rounded-xl w-full" /></div>
+              {/* Packs */}
+              <div className="col-span-2 relative">
+                <input
+                  id="packs"
+                  ref={refs.packs}
+                  name="packs"
+                  type="number"
+                  value={formData.packs}
+                  onChange={(e) => handleInputChange('packs', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 6)}
+                  placeholder="මලු"
+                  className="px-4 py-2 border rounded-xl w-full"
+                />
+                {balanceInfo.balancePacks > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
+                    BP: {balanceInfo.balancePacks}
+                  </div>
+                )}
+              </div>
 
-              <div className="col-span-2"><input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total"
-                onKeyDown={(e) => handleKeyDown(e, 8)} className="px-4 py-2 border bg-gray-100 rounded-xl w-full" /></div>
+              {/* Price per KG */}
+              <div className="col-span-2">
+                <input
+                  id="price_per_kg"
+                  ref={refs.pricePerKg}
+                  name="price_per_kg"
+                  type="number"
+                  step="0.01"
+                  value={formData.price_per_kg}
+                  onChange={(e) => handleInputChange('price_per_kg', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 7)}
+                  placeholder="මිල"
+                  className="px-4 py-2 border rounded-xl w-full"
+                />
+              </div>
+
+              {/* Total (wider, 6 digits max) */}
+              <div className="col-span-3">
+                <input
+                  id="total"
+                  ref={refs.total}
+                  name="total"
+                  type="number"
+                  value={formData.total}
+                  readOnly
+                  placeholder="Total"
+                  onKeyDown={(e) => handleKeyDown(e, 8)}
+                  onInput={(e) => {
+                    if (e.target.value.length > 6) {
+                      e.target.value = e.target.value.slice(0, 6);
+                    }
+                  }}
+                  className="px-4 py-2 border bg-gray-100 rounded-xl w-full font-semibold text-right"
+                />
+              </div>
             </div>
+
             <input type="hidden" name="pack_due" value={formData.pack_due} />
           </div>
-
           <div className="flex space-x-4">
             <button type="submit" style={{ display: "none" }} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
               {editingSaleId ? "Update Sales Entry" : "Add Sales Entry"}</button>
@@ -888,8 +957,8 @@ export default function SalesEntry() {
           <div className="overflow-x-auto">
             <table className="min-w-full border border-gray-200 rounded-xl text-sm">
               <thead className="bg-gray-100"><tr>
-                <th className="px-4 py-2 border">Code</th><th className="px-4 py-2 border">Item</th>
-                <th className="px-4 py-2 border">Weight (kg)</th><th className="px-4 py-2 border">Price</th><th className="px-4 py-2 border">Total</th><th className="px-4 py-2 border">Packs</th>
+                <th className="px-4 py-2 border">කේතය</th><th className="px-4 py-2 border">අයිතමය</th>
+                <th className="px-4 py-2 border">බර(kg)</th><th className="px-4 py-2 border">මිල</th><th className="px-4 py-2 border">සමස්ත</th><th className="px-4 py-2 border">මලු</th>
               </tr></thead>
               <tbody className="bg-black text-white">{displayedSales.map((s, idx) => (
                 <tr key={s.id || idx} tabIndex={0} className="text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100"
