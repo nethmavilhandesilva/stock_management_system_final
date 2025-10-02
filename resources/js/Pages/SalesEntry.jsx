@@ -2,21 +2,19 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import Select from "react-select";
 
 const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange, selectedPrintedCustomer, selectedUnprintedCustomer, handleCustomerClick, unprintedTotal, formatDecimal, allSales }) => (
-  <div className="w-full shadow-xl rounded-xl overflow-y-auto max-h-screen border border-black" style={{ backgroundColor: "#1ec139ff" }} >
+  <div className="w-full shadow-xl rounded-xl overflow-y-auto max-h-screen border border-black" style={{ backgroundColor: "#1ec139ff" }}>
     <div style={{ backgroundColor: "#006400" }} className="p-1 rounded-t-xl">
       <h2 className="text-base font-bold text-white mb-1 whitespace-nowrap text-center">
         {type === 'printed' ? 'මුද්‍රිත විකුණුම් වාර්තා ' : 'මුද්‍රණය නොකළ වාර්තා '}
       </h2>
-
       <input
         type="text"
         placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`}
         value={searchQuery}
-        onChange={e => onSearchChange(e.target.value.toUpperCase())} // force uppercase in state
-        className="w-full px-4 py-0.5 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase" // optional CSS
+        onChange={e => onSearchChange(e.target.value.toUpperCase())}
+        className="w-full px-4 py-0.5 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase"
       />
     </div>
-    {/* Customer list area */}
     <div className="p-1">
       {customers.length === 0 ? (
         <p className="text-gray-700">No {type === 'printed' ? 'printed sales' : 'unprinted sales'} found.</p>
@@ -29,17 +27,12 @@ const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange,
 
             return (
               <li key={customerCode} className="w-full flex justify-center">
-                <div className="flex flex-col items-start">  {/* container */}
-                  <button
-                    onClick={() => handleCustomerClick(type, customerCode)}
-                    className={`w-[250px] px-4 py-1 mb-2 rounded-xl border border-black text-left ${isSelected ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
-                  >
-                    {/* Keep fixed width but use wider button */}
-                    <div className="flex items-center justify-between w-full font-medium">
-                      <span className="font-semibold w-32 text-left truncate">{customerCode}-{formatDecimal(customerTotal)}</span>
-                    </div>
-                  </button>
-                </div>
+                <button
+                  onClick={() => handleCustomerClick(type, customerCode)}
+                  className={`w-[250px] px-4 py-1 mb-2 rounded-xl border border-black text-left ${isSelected ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
+                >
+                  <span className="font-semibold w-32 text-left truncate">{customerCode}-{formatDecimal(customerTotal)}</span>
+                </button>
               </li>
             );
           })}
@@ -51,7 +44,7 @@ const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange,
 
 export default function SalesEntry() {
   // Initial data
-  const initialData = {
+  const getInitialData = () => ({
     sales: (window.__INITIAL_SALES__ || []).filter(s => s.id),
     printed: (window.__PRINTED_SALES__ || []).filter(s => s.id),
     unprinted: (window.__UNPRINTED_SALES__ || []).filter(s => s.id),
@@ -65,9 +58,9 @@ export default function SalesEntry() {
       getLoanAmount: '/get-loan-amount',
       markAllProcessed: '/sales/mark-all-processed'
     }
-  };
+  });
 
-  // Refs
+  const initialData = getInitialData();
   const refs = {
     customerCode: useRef(null), customerSelect: useRef(null), givenAmount: useRef(null),
     grnSelect: useRef(null), itemName: useRef(null), weight: useRef(null),
@@ -89,11 +82,12 @@ export default function SalesEntry() {
   const [loanAmount, setLoanAmount] = useState(0);
   const [isManualClear, setIsManualClear] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     customer_code: "", customer_name: "", supplier_code: "", code: "", item_code: "",
     item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", grn_entry_code: "",
     original_weight: "", original_packs: "", given_amount: ""
-  });
+  };
+  const [formData, setFormData] = useState(initialFormData);
 
   // Derived data
   const { newSales, printedSales, unprintedSales } = useMemo(() => ({
@@ -139,6 +133,7 @@ export default function SalesEntry() {
   }, [formData.weight, formData.price_per_kg, formData.packs, formData.pack_due]);
 
   useEffect(() => { refs.customerCode.current?.focus(); }, []);
+
   useEffect(() => {
     if (formData.grn_entry_code) {
       const matchingEntry = initialData.entries.find((en) => en.code === formData.grn_entry_code);
@@ -159,8 +154,7 @@ export default function SalesEntry() {
   const unprintedTotal = calculateTotal(unprintedSales);
   const formatDecimal = (val) => (Number.isFinite(parseFloat(val)) ? parseFloat(val).toFixed(2) : "0.00");
 
-  // API functions (omitted for brevity but assumed to be here)
-
+  // API functions
   const fetchLoanAmount = async (customerCode) => {
     if (!customerCode) return setLoanAmount(0);
     try {
@@ -194,8 +188,7 @@ export default function SalesEntry() {
     } catch (error) { throw error; }
   };
 
-
-  // Event handlers (omitted for brevity but assumed to be here)
+  // Event handlers
   const handleKeyDown = (e, currentFieldIndex) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -229,6 +222,7 @@ export default function SalesEntry() {
       if (!trimmedValue) setLoanAmount(0);
       const customer = initialData.customers.find(c => c.short_name === value);
       if (customer) setFormData(prev => ({ ...prev, customer_name: customer.name }));
+      fetchLoanAmount(trimmedValue);
     }
 
     if (field === 'grn_entry_code') {
@@ -286,11 +280,7 @@ export default function SalesEntry() {
   };
 
   const handleClearForm = () => {
-    setFormData({
-      customer_code: "", customer_name: "", supplier_code: "", code: "", item_code: "",
-      item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "", grn_entry_code: "",
-      original_weight: "", original_packs: "", given_amount: ""
-    });
+    setFormData(initialFormData);
     setEditingSaleId(null);
     setGrnSearchInput("");
     setBalanceInfo({ balancePacks: 0, balanceWeight: 0 });
@@ -382,9 +372,7 @@ export default function SalesEntry() {
 
   const handleCustomerClick = (type, customerCode) => {
     const isPrinted = type === 'printed';
-    const isCurrentlySelected = isPrinted
-      ? selectedPrintedCustomer === customerCode
-      : selectedUnprintedCustomer === customerCode;
+    const isCurrentlySelected = isPrinted ? selectedPrintedCustomer === customerCode : selectedUnprintedCustomer === customerCode;
 
     if (isPrinted) {
       setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
@@ -394,9 +382,7 @@ export default function SalesEntry() {
       setSelectedPrintedCustomer(null);
     }
 
-    const customer = initialData.customers.find(
-      x => String(x.short_name) === String(customerCode)
-    );
+    const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
     const customerSale = allSales.find(s => s.customer_code === customerCode);
     const newCustomerCode = isCurrentlySelected ? "" : customerCode;
 
@@ -411,20 +397,15 @@ export default function SalesEntry() {
     fetchLoanAmount(newCustomerCode);
     handleClearForm();
 
-    // Focus logic
     if (isCurrentlySelected) {
-      // If we unselect, focus customerCode
       refs.customerCode.current?.focus();
       handleClearForm();
-
     } else {
-      // If we select, focus grnSelect
       refs.grnSelect.current?.focus();
     }
   };
 
-
-  // Button handlers (omitted for brevity but assumed to be here)
+  // Button handlers
   const handleMarkPrinted = async () => {
     try { await handlePrintAndClear(); } catch (error) { alert("Mark printed failed: " + error.message); }
   };
@@ -447,11 +428,9 @@ export default function SalesEntry() {
 
   const handleFullRefresh = () => { window.location.reload(); };
 
-  // Receipt functions (omitted for brevity but assumed to be here)
-
+  // Receipt functions
   const printSingleContent = async (html, customerName) => {
     return new Promise((resolve) => {
-      // Save original page content
       const originalContent = document.body.innerHTML;
       document.title = customerName;
 
@@ -471,14 +450,12 @@ export default function SalesEntry() {
         }
       };
 
-      // Listen for afterprint event to handle cancel
       const afterPrintHandler = () => {
         window.removeEventListener("afterprint", afterPrintHandler);
         cleanup();
       };
       window.addEventListener("afterprint", afterPrintHandler);
 
-      // Set the content and trigger print
       document.body.innerHTML = html;
       if (document.readyState === "complete") {
         tryPrint();
@@ -490,13 +467,18 @@ export default function SalesEntry() {
   };
 
   const buildFullReceiptHTML = (salesData, billNo, customerName, mobile, globalLoanAmount = 0) => {
-    const date = new Date().toLocaleDateString(); const time = new Date().toLocaleTimeString();
-    let totalAmountSum = 0, totalPacksSum = 0; const itemGroups = {};
+    const date = new Date().toLocaleDateString();
+    const time = new Date().toLocaleTimeString();
+    let totalAmountSum = 0, totalPacksSum = 0;
+    const itemGroups = {};
 
     const itemsHtml = salesData.map(s => {
-      totalAmountSum += parseFloat(s.total) || 0; const packs = parseInt(s.packs) || 0; totalPacksSum += packs;
+      totalAmountSum += parseFloat(s.total) || 0;
+      const packs = parseInt(s.packs) || 0;
+      totalPacksSum += packs;
       if (!itemGroups[s.item_name]) itemGroups[s.item_name] = { totalWeight: 0, totalPacks: 0 };
-      itemGroups[s.item_name].totalWeight += parseFloat(s.weight) || 0; itemGroups[s.item_name].totalPacks += packs;
+      itemGroups[s.item_name].totalWeight += parseFloat(s.weight) || 0;
+      itemGroups[s.item_name].totalPacks += packs;
       return `<tr style="font-size:1.2em;">
         <td style="text-align:left;">${s.item_name || ""} <br>${packs}</td>
         <td style="text-align:right; padding-right:18px;">${(parseFloat(s.weight) || 0).toFixed(2)}</td>
@@ -577,28 +559,16 @@ export default function SalesEntry() {
     if (!salesData.length) return alert("No sales records to print!");
 
     try {
-      // Parallelize API calls
       const [printResponse, loanResponse] = await Promise.allSettled([
-        // Mark sales as printed
-        apiCall(initialData.routes.markPrinted, "POST", {
-          sales_ids: salesData.map(s => s.id)
-        }),
-        // Fetch loan amount
+        apiCall(initialData.routes.markPrinted, "POST", { sales_ids: salesData.map(s => s.id) }),
         fetch(initialData.routes.getLoanAmount, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': initialData.csrf
-          },
-          body: JSON.stringify({
-            customer_short_name: salesData[0].customer_code || "N/A"
-          })
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': initialData.csrf },
+          body: JSON.stringify({ customer_short_name: salesData[0].customer_code || "N/A" })
         }).then(res => res.json())
       ]);
 
-      // Handle print response
-      if (printResponse.status === 'rejected' ||
-        printResponse.value.status !== "success") {
+      if (printResponse.status === 'rejected' || printResponse.value.status !== "success") {
         throw new Error(printResponse.value?.message || "Printing failed");
       }
 
@@ -607,28 +577,22 @@ export default function SalesEntry() {
       const mobile = salesData[0].mobile || '0773358518';
       const billNo = printResponse.value.bill_no || "";
 
-      // Handle loan amount
       let globalLoanAmount = 0;
       if (loanResponse.status === 'fulfilled') {
         globalLoanAmount = parseFloat(loanResponse.value.total_loan_amount) || 0;
       }
 
-      // Build receipts
       const receiptHtml = buildFullReceiptHTML(salesData, billNo, customerName, mobile, globalLoanAmount);
       const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>${receiptHtml}`;
 
-      // Print both receipts without waiting between them
       const printPromises = [
         printSingleContent(receiptHtml, customerName),
         printSingleContent(copyHtml, customerName)
       ];
 
       await Promise.all(printPromises);
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+      setTimeout(() => { window.location.reload(); }, 100);
 
-      // Batch state updates
       setAllSales(prev => prev.map(s => {
         const isPrinted = salesData.some(d => d.id === s.id);
         return isPrinted ? { ...s, bill_printed: 'Y', bill_no: billNo } : s;
@@ -636,22 +600,16 @@ export default function SalesEntry() {
 
       setSelectedUnprintedCustomer(null);
       setSelectedPrintedCustomer(null);
-
-
       handleClearForm();
-
-      // Use setTimeout to allow UI to update before reload
-
     } catch (error) {
       alert("Printing failed: " + error.message);
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+      setTimeout(() => { window.location.reload(); }, 100);
     }
   };
 
   const handleCustomerCodeChange = (e) => {
-    const code = e.target.value; const customer = initialData.customers.find(x => String(x.short_name) === String(code));
+    const code = e.target.value;
+    const customer = initialData.customers.find(x => String(x.short_name) === String(code));
     const customerSale = allSales.find(s => s.customer_code === code);
     if (!code) {
       setFormData(prev => ({ ...prev, customer_code: "", customer_name: "", given_amount: "" }));
@@ -671,14 +629,57 @@ export default function SalesEntry() {
         });
       } else if (e.key === "F5") { e.preventDefault(); handleMarkAllProcessed(); }
     };
-    window.addEventListener("keydown", handleShortcut); return () => window.removeEventListener("keydown", handleShortcut);
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
   }, [displayedSales, newSales]);
+  //item summary in sales table
+  const calculateItemSummary = (sales) => {
+    const summary = {};
+
+    sales.forEach(sale => {
+      const itemName = sale.item_name || 'Unknown';
+      if (!summary[itemName]) {
+        summary[itemName] = {
+          totalWeight: 0,
+          totalPacks: 0
+        };
+      }
+      summary[itemName].totalWeight += parseFloat(sale.weight) || 0;
+      summary[itemName].totalPacks += parseInt(sale.packs) || 0;
+    });
+
+    return summary;
+  };
+
+  // Then add this component after the table but before the total sales display
+  const ItemSummary = ({ sales, formatDecimal }) => {
+    const summary = calculateItemSummary(sales);
+
+    if (Object.keys(summary).length === 0) return null;
+
+    return (
+      <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 className="text-sm font-bold text-gray-700 mb-2 text-center">Item Summary</h3>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {Object.entries(summary).map(([itemName, data]) => (
+            <div
+              key={itemName}
+              className="px-3 py-1 bg-white border border-gray-300 rounded-full text-xs font-medium"
+            >
+              <span className="font-semibold">{itemName}:</span>
+              <span className="ml-1 text-blue-600">{formatDecimal(data.totalWeight)}kg</span>
+              <span className="mx-1 text-gray-400">/</span>
+              <span className="text-green-600">{data.totalPacks}p</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   // Main render
   return (
-    // 1. UPDATED: Added p-4 for global padding/gap and removed -mt-10.
     <div className="min-h-screen flex flex-row p-4 pt-0 -mt-4" style={{ backgroundColor: "#99ff99" }}>
-      {/* 2. Sidebar 1 (Printed Sales) - UPDATED: Added 'pr-4' for gap on the right. */}
       <div className="w-1/3 sticky top-0 h-screen overflow-y-auto pr-2 ml-[-30px]">
         <CustomerList customers={printedCustomers} type="printed" searchQuery={searchQueries.printed}
           onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, printed: value }))}
@@ -686,15 +687,13 @@ export default function SalesEntry() {
           handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
       </div>
 
-      {/* 3. Center Section - UPDATED: Removed 'mx-6' to let sidebars define the gap. 'flex-grow' ensures max width. */}
       <div className="w-[98%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center bg-gray-50 p-0.5 rounded-xl shadow-sm border border-black">
             <span className="text-gray-600 font-medium">Bill No: {currentBillNo}</span>
             <h2 className="text-2xl font-bold text-red-600">Total Sales: Rs. {formatDecimal(mainTotal)}</h2>
           </div>
-          {/* ... (rest of the form content) */}
+
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
               <input id="customer_code_input" ref={refs.customerCode} name="customer_code"
@@ -754,7 +753,6 @@ export default function SalesEntry() {
                 }
                 return inputValue;
               }}
-
               onKeyDown={(e) => {
                 if (e.key === "Enter" && formData.grn_entry_code && !e.isPropagationStopped()) {
                   e.preventDefault(); setTimeout(() => refs.weight.current?.focus(), 0);
@@ -787,19 +785,13 @@ export default function SalesEntry() {
                   <div className="w-full">
                     {showHeader && <HeaderRow />}
                     <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-gray-50 items-center">
-                      <div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>
-                        {entry.code || "-"}
-                      </div>
-                      <div className="text-left truncate" title={entry.item_name || "Unknown Item"}>
-                        {entry.item_name || "Unknown Item"}
-                      </div>
+                      <div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>{entry.code || "-"}</div>
+                      <div className="text-left truncate" title={entry.item_name || "Unknown Item"}>{entry.item_name || "Unknown Item"}</div>
                       <div className="text-center">{entry.original_packs || "0"}</div>
                       <div className="text-center">{formatDecimal(entry.original_weight)}</div>
                       <div className="text-center">{entry.packs || "0"}</div>
                       <div className="text-center">{formatDecimal(entry.weight)}</div>
-                      <div className="text-right font-semibold text-green-600">
-                        Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}
-                      </div>
+                      <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
                     </div>
                   </div>
                 );
@@ -809,32 +801,21 @@ export default function SalesEntry() {
                 Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => {
                   const HeaderRow = () => (
                     <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center">
-                      <div className="text-left">Code</div>
-                      <div className="text-left">Item Name</div>
-                      <div className="text-center">OP</div>
-                      <div className="text-center">OW</div>
-                      <div className="text-center">BP</div>
-                      <div className="text-center">BW</div>
-                      <div className="text-right">PRICE</div>
+                      <div className="text-left">Code</div><div className="text-left">Item Name</div><div className="text-center">OP</div>
+                      <div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div>
                     </div>
                   );
                   const DataRow = ({ data, showHeader = false }) => (
                     <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
                       {showHeader && <HeaderRow />}
                       <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-gray-50 items-center">
-                        <div className="text-left font-medium text-blue-700 truncate" title={data.data.code || "-"}>
-                          {data.data.code || "-"}
-                        </div>
-                        <div className="text-left truncate" title={data.data.item_name || "Unknown Item"}>
-                          {data.data.item_name || "Unknown Item"}
-                        </div>
+                        <div className="text-left font-medium text-blue-700 truncate" title={data.data.code || "-"}>{data.data.code || "-"}</div>
+                        <div className="text-left truncate" title={data.data.item_name || "Unknown Item"}>{data.data.item_name || "Unknown Item"}</div>
                         <div className="text-center">{data.data.original_packs || "0"}</div>
                         <div className="text-center">{formatDecimal(data.data.original_weight)}</div>
                         <div className="text-center">{data.data.packs || "0"}</div>
                         <div className="text-center">{formatDecimal(data.data.weight)}</div>
-                        <div className="text-right font-semibold text-green-600">
-                          Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}
-                        </div>
+                        <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
                       </div>
                     </div>
                   );
@@ -848,107 +829,31 @@ export default function SalesEntry() {
                 control: (base) => ({ ...base, minHeight: "44px" })
               }}
             />
-            <div className="grid grid-cols-12 gap-4 items-center">
-              {/* Item Name (reduced) */}
-              <div className="col-span-3 relative">
-                <input
-                  id="item_name"
-                  ref={refs.itemName}
-                  type="text"
-                  value={formData.item_name}
-                  readOnly
-                  placeholder="අයිතමයේ නාමය"
-                  onKeyDown={(e) => handleKeyDown(e, 4)}
-                  className="px-4 py-2 border rounded-xl w-full text-base"
-                />
-                {balanceInfo.balanceWeight > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
-                    BW: {formatDecimal(balanceInfo.balanceWeight)} kg
-                  </div>
-                )}
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-2 border rounded-xl text-base w-40" />
+                {balanceInfo.balanceWeight > 0 && <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">BW: {formatDecimal(balanceInfo.balanceWeight)} kg</div>}
               </div>
 
-              {/* Weight */}
-              <div className="col-span-2">
-                <input
-                  id="weight"
-                  ref={refs.weight}
-                  name="weight"
-                  type="number"
-                  step="0.01"
-                  value={formData.weight}
-                  onChange={(e) => handleInputChange('weight', e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, 5)}
-                  placeholder="බර"
-                  className="px-4 py-2 border rounded-xl w-full"
-                />
+              <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={formData.weight} onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-4 py-2 border rounded-xl text-right w-24" />
+
+              <div className="relative">
+                <input id="packs" ref={refs.packs} name="packs" type="number" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මලු" className="px-4 py-2 border rounded-xl text-right w-24" />
+                {balanceInfo.balancePacks > 0 && <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">BP: {balanceInfo.balancePacks}</div>}
               </div>
 
-              {/* Packs */}
-              <div className="col-span-2 relative">
-                <input
-                  id="packs"
-                  ref={refs.packs}
-                  name="packs"
-                  type="number"
-                  value={formData.packs}
-                  onChange={(e) => handleInputChange('packs', e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, 6)}
-                  placeholder="මලු"
-                  className="px-4 py-2 border rounded-xl w-full"
-                />
-                {balanceInfo.balancePacks > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">
-                    BP: {balanceInfo.balancePacks}
-                  </div>
-                )}
-              </div>
+              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={formData.price_per_kg} onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="මිල" className="px-4 py-2 border rounded-xl text-right w-28" />
 
-              {/* Price per KG */}
-              <div className="col-span-2">
-                <input
-                  id="price_per_kg"
-                  ref={refs.pricePerKg}
-                  name="price_per_kg"
-                  type="number"
-                  step="0.01"
-                  value={formData.price_per_kg}
-                  onChange={(e) => handleInputChange('price_per_kg', e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, 7)}
-                  placeholder="මිල"
-                  className="px-4 py-2 border rounded-xl w-full"
-                />
-              </div>
-
-              {/* Total (wider, 6 digits max) */}
-              <div className="col-span-3">
-                <input
-                  id="total"
-                  ref={refs.total}
-                  name="total"
-                  type="number"
-                  value={formData.total}
-                  readOnly
-                  placeholder="Total"
-                  onKeyDown={(e) => handleKeyDown(e, 8)}
-                  onInput={(e) => {
-                    if (e.target.value.length > 6) {
-                      e.target.value = e.target.value.slice(0, 6);
-                    }
-                  }}
-                  className="px-4 py-2 border bg-gray-100 rounded-xl w-full font-semibold text-right"
-                />
-              </div>
+              <input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} onInput={(e) => e.target.value.length > 6 && (e.target.value = e.target.value.slice(0, 6))} className="px-4 py-2 border bg-gray-100 rounded-xl font-semibold text-right w-32" />
+            </div>
             </div>
 
-            <input type="hidden" name="pack_due" value={formData.pack_due} />
-          </div>
-          <div className="flex space-x-4">
-            <button type="submit" style={{ display: "none" }} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
-              {editingSaleId ? "Update Sales Entry" : "Add Sales Entry"}</button>
-            {editingSaleId && <button type="button" onClick={handleDeleteClick} className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">Delete</button>}
-            <button type="button" onClick={handleClearForm} className="hidden py-3 px-6 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-xl shadow-lg transition">Clear</button>
-          </div>
+            <div className="flex space-x-4">
+              <button type="submit" style={{ display: "none" }} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
+                {editingSaleId ? "Update Sales Entry" : "Add Sales Entry"}</button>
+              {editingSaleId && <button type="button" onClick={handleDeleteClick} className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">Delete</button>}
+              <button type="button" onClick={handleClearForm} className="hidden py-3 px-6 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-xl shadow-lg transition">Clear</button>
+            </div>
         </form>
 
         {errors.form && <div className="mt-6 p-3 bg-red-100 text-red-700 rounded-xl">{errors.form}</div>}
@@ -958,7 +863,7 @@ export default function SalesEntry() {
             <table className="min-w-full border border-gray-200 rounded-xl text-sm">
               <thead className="bg-gray-100"><tr>
                 <th className="px-4 py-2 border">කේතය</th><th className="px-4 py-2 border">අයිතමය</th>
-                <th className="px-4 py-2 border">බර(kg)</th><th className="px-4 py-2 border">මිල</th><th className="px-4 py-2 border">සමස්ත</th><th className="px-4 py-2 border">මලු</th>
+                <th className="px-4 py-2 border">බර(kg)</th><th className="px-4 py-2 border min-w-24">මිල</th><th className="px-4 py-2 border">සමස්ත</th><th className="px-4 py-2 border">මලු</th>
               </tr></thead>
               <tbody className="bg-black text-white">{displayedSales.map((s, idx) => (
                 <tr key={s.id || idx} tabIndex={0} className="text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100"
@@ -970,6 +875,8 @@ export default function SalesEntry() {
                 </tr>
               ))}</tbody>
             </table>
+            {/* Add the Item Summary here */}
+            <ItemSummary sales={displayedSales} formatDecimal={formatDecimal} />
             <div className="flex items-center justify-between mt-6 mb-4">
               <h2 className="text-2xl font-bold text-red-600">Total Sales: Rs. {formatDecimal(mainTotal)}</h2>
               <input id="given_amount" ref={refs.givenAmount} name="given_amount" type="number" step="0.01" value={formData.given_amount}
@@ -978,6 +885,7 @@ export default function SalesEntry() {
             </div>
           </div>
         </div>
+
         <div className="flex justify-between items-center mt-6">
           <div className="flex space-x-3">
             <button type="button" onClick={handleMarkPrinted} className="px-4 py-1 text-sm bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow transition">
@@ -990,7 +898,6 @@ export default function SalesEntry() {
         </div>
       </div>
 
-      {/* 4. Sidebar 2 (Unprinted Sales) - UPDATED: Added 'pl-4' for gap on the left. */}
       <div className="w-1/3 sticky top-0 h-screen overflow-y-auto pl-2 mr-[-30px]">
         <CustomerList customers={unprintedCustomers} type="unprinted" searchQuery={searchQueries.unprinted}
           onSearchChange={(value) => setSearchQueries(prev => ({ ...prev, unprinted: value }))}

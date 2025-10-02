@@ -57,4 +57,54 @@ class DashboardController extends Controller
         )
     );
 }
+ public function getAllSalesData()
+    {
+        // 1. Fetch all sales from the database
+        // It's best practice to select only the columns the frontend needs (id, bill_printed, total, customer_code, etc.)
+        $allSales = Sale::select([
+            'id', 
+            'bill_printed', 
+            'customer_code', 
+            'customer_name', 
+            'supplier_code', 
+            'code', 
+            'item_code', 
+            'item_name', 
+            'weight', 
+            'price_per_kg', 
+            'pack_due', 
+            'total', 
+            'packs', 
+            'grn_entry_code', 
+            'original_weight', 
+            'original_packs', 
+            'given_amount', 
+            'bill_no'
+            // Add any other required fields
+        ])->get();
+
+        // 2. Separate them into the three required arrays based on 'bill_printed' status
+        $response = [
+            'sales' => [], // Corresponds to new/initial sales (bill_printed is NULL or not 'Y'/'N')
+            'printed' => [], // Corresponds to printed sales ('Y')
+            'unprinted' => [], // Corresponds to unprinted sales ('N')
+        ];
+
+        foreach ($allSales as $sale) {
+            // Note: In your SalesEntry.jsx, 'newSales' is defined as: 
+            // allSales.filter(s => s.id && s.bill_printed !== 'Y' && s.bill_printed !== 'N')
+            
+            if ($sale->bill_printed === 'Y') {
+                $response['printed'][] = $sale;
+            } elseif ($sale->bill_printed === 'N') {
+                $response['unprinted'][] = $sale;
+            } else {
+                // This captures records where bill_printed is NULL or any other value
+                $response['sales'][] = $sale; 
+            }
+        }
+
+        // 3. Return the data structure that the frontend's fetchAllSales function expects
+        return response()->json($response);
+    }
 }
