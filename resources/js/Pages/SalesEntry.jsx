@@ -315,7 +315,6 @@ export default function SalesEntry() {
       setAllSales(prev => prev.map(s => s.id === data.sale.id ? data.sale : s));
       setFormData(prev => ({ ...prev, given_amount: "" }));
       refs.grnSelect.current?.focus();
-      alert("Given amount updated successfully for customer: " + formData.customer_code);
     } catch (error) { setErrors({ form: error.message }); }
   };
 
@@ -391,40 +390,59 @@ export default function SalesEntry() {
     } catch (error) { setErrors({ form: error.message }); }
   };
 
-  const handleCustomerClick = (type, customerCode) => {
-    const isPrinted = type === 'printed';
-    const isCurrentlySelected = isPrinted ? selectedPrintedCustomer === customerCode : selectedUnprintedCustomer === customerCode;
+ const handleCustomerClick = async (type, customerCode) => {
+  const isPrinted = type === 'printed';
+  const isCurrentlySelected = isPrinted ? selectedPrintedCustomer === customerCode : selectedUnprintedCustomer === customerCode;
 
-    if (isPrinted) {
-      setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
-      setSelectedUnprintedCustomer(null);
-    } else {
-      setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
-      setSelectedPrintedCustomer(null);
-    }
+  if (isPrinted) {
+    setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
+    setSelectedUnprintedCustomer(null);
+  } else {
+    setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
+    setSelectedPrintedCustomer(null);
+  }
 
-    const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
-    const customerSale = allSales.find(s => s.customer_code === customerCode);
-    const newCustomerCode = isCurrentlySelected ? "" : customerCode;
+  const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
+  const customerSale = allSales.find(s => s.customer_code === customerCode);
+  const newCustomerCode = isCurrentlySelected ? "" : customerCode;
 
-    setFormData(prev => ({
-      ...prev,
-      customer_code: newCustomerCode,
-      customer_name: isCurrentlySelected ? "" : customer?.name || "",
-      given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "")
-    }));
+  setFormData(prev => ({
+    ...prev,
+    customer_code: newCustomerCode,
+    customer_name: isCurrentlySelected ? "" : customer?.name || "",
+    given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "")
+  }));
 
-    setIsManualClear(false);
-    fetchLoanAmount(newCustomerCode);
+  setIsManualClear(false);
+  fetchLoanAmount(newCustomerCode);
+
+  // If selecting a customer (not deselecting), automatically submit the given amount if it exists
+  if (!isCurrentlySelected && newCustomerCode && customerSale?.given_amount) {
+    // Set a timeout to ensure the formData is updated before making the API call
+    setTimeout(async () => {
+      try {
+        const customerSales = allSales.filter(s => s.customer_code === newCustomerCode);
+        const firstSale = customerSales[0];
+        if (firstSale) {
+          const data = await apiCall(`/sales/${firstSale.id}/given-amount`, "PUT", { 
+            given_amount: parseFloat(customerSale.given_amount) || 0 
+          });
+          setAllSales(prev => prev.map(s => s.id === data.sale.id ? data.sale : s));     
+        }
+      } catch (error) {
+        console.error("Error updating given amount:", error);
+        setErrors({ form: error.message });
+      }
+    }, 100);
+  }
+
+  if (isCurrentlySelected) {
+    refs.customerCode.current?.focus();
     handleClearForm();
-
-    if (isCurrentlySelected) {
-      refs.customerCode.current?.focus();
-      handleClearForm();
-    } else {
-      refs.grnSelect.current?.focus();
-    }
-  };
+  } else {
+    refs.grnSelect.current?.focus();
+  }
+};
 
   // Button handlers
   const handleMarkPrinted = async () => {
@@ -534,9 +552,9 @@ export default function SalesEntry() {
       const first = entries[i], second = entries[i + 1];
       itemSummaryHtml += '<div style="display:flex; gap:0.5rem; margin-bottom:0.2rem;">';
       itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;">
-        <strong>${first[0]}</strong>:${first[1].totalWeight.toFixed(2)}/${first[1].totalPacks}</span>`;
+        <strong>${first[0]}</strong>:${first[1].totalWeight}/${first[1].totalPacks}</span>`;
       if (second) itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;">
-        <strong>${second[0]}</strong>:${second[1].totalWeight.toFixed(2)}/${second[1].totalPacks}</span>`;
+        <strong>${second[0]}</strong>:${second[1].totalWeight}/${second[1].totalPacks}</span>`;
       itemSummaryHtml += '</div>';
     }
 
@@ -702,7 +720,7 @@ export default function SalesEntry() {
               className="px-3 py-1 bg-white border border-gray-300 rounded-full text-xs font-medium"
             >
               <span className="font-semibold">{itemName}:</span>
-              <span className="ml-1 text-blue-600">{formatDecimal(data.totalWeight)}kg</span>
+              <span className="ml-1 text-blue-600">{(data.totalWeight)}kg</span>
               <span className="mx-1 text-gray-400">/</span>
               <span className="text-green-600">{data.totalPacks}p</span>
             </div>
