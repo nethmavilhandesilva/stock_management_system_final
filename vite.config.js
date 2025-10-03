@@ -8,7 +8,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css', // <-- add your CSS here
                 'resources/js/app.js',   // your main JS
-                'resources/js/dashboard.js' // optional, if you use dashboard
+              
             ],
             refresh: true,
         }),

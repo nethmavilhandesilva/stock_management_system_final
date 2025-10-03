@@ -358,13 +358,34 @@ export default function SalesEntry() {
       const method = isEditing ? "PUT" : "POST";
       const data = await apiCall(url, method, payload);
       let newSale = isEditing ? data.sale : data.data || {};
+
+      // FIX: Preserve grn_entry_code if API doesn't return it
+      if (!newSale.grn_entry_code && formData.grn_entry_code) {
+        newSale = { ...newSale, grn_entry_code: formData.grn_entry_code };
+      }
+
+      // Also preserve code if needed
+      if (!newSale.code && formData.code) {
+        newSale = { ...newSale, code: formData.code };
+      }
+
+      console.log('🔍 DEBUG - After fixing grn_entry_code:', {
+        newSale: {
+          code: newSale.code,
+          grn_entry_code: newSale.grn_entry_code
+        }
+      });
+
       if (!isEditing && billPrintedStatus && !newSale.bill_printed) newSale = { ...newSale, bill_printed: billPrintedStatus };
+
       setAllSales(prev => isEditing ? prev.map(s => s.id === newSale.id ? newSale : s) : [...prev, newSale]);
+
       setFormData(prevForm => ({
         customer_code: prevForm.customer_code, customer_name: prevForm.customer_name,
         supplier_code: "", code: "", item_code: "", item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "",
         grn_entry_code: "", original_weight: "", original_packs: "", given_amount: ""
       }));
+
       setEditingSaleId(null); setGrnSearchInput(""); setBalanceInfo({ balancePacks: 0, balanceWeight: 0 }); setIsManualClear(false);
       refs.grnSelect.current?.focus();
     } catch (error) { setErrors({ form: error.message }); }
@@ -411,35 +432,35 @@ export default function SalesEntry() {
   };
 
   const handleMarkAllProcessed = async () => {
-  const salesToProcess = [...newSales, ...unprintedSales];
-  if (salesToProcess.length === 0) return; // no alert
+    const salesToProcess = [...newSales, ...unprintedSales];
+    if (salesToProcess.length === 0) return; // no alert
 
-  try {
-    const data = await apiCall(initialData.routes.markAllProcessed, "POST", {
-      sales_ids: salesToProcess.map(s => s.id)
-    });
+    try {
+      const data = await apiCall(initialData.routes.markAllProcessed, "POST", {
+        sales_ids: salesToProcess.map(s => s.id)
+      });
 
-    if (data.success) {
-      setAllSales(prev =>
-        prev.map(s =>
-          salesToProcess.some(ps => ps.id === s.id)
-            ? { ...s, bill_printed: "N" }
-            : s
-        )
-      );
-      handleClearForm();
-      setSelectedUnprintedCustomer(null);
-      setSelectedPrintedCustomer(null);
+      if (data.success) {
+        setAllSales(prev =>
+          prev.map(s =>
+            salesToProcess.some(ps => ps.id === s.id)
+              ? { ...s, bill_printed: "N" }
+              : s
+          )
+        );
+        handleClearForm();
+        setSelectedUnprintedCustomer(null);
+        setSelectedPrintedCustomer(null);
 
-      // multiple delayed focus attempts
-      [50, 100, 150, 200, 250].forEach(timeout =>
-        setTimeout(() => refs.customerCode.current?.focus(), timeout)
-      );
+        // multiple delayed focus attempts
+        [50, 100, 150, 200, 250].forEach(timeout =>
+          setTimeout(() => refs.customerCode.current?.focus(), timeout)
+        );
+      }
+    } catch (err) {
+      console.error("Failed to mark sales as processed:", err.message);
     }
-  } catch (err) {
-    console.error("Failed to mark sales as processed:", err.message);
-  }
-};
+  };
   const handleFullRefresh = () => { window.location.reload(); };
 
   // Receipt functions
@@ -605,7 +626,7 @@ export default function SalesEntry() {
       ];
 
       await Promise.all(printPromises);
-     window.location.reload();
+      window.location.reload();
 
       setAllSales(prev => prev.map(s => {
         const isPrinted = salesData.some(d => d.id === s.id);
@@ -860,14 +881,14 @@ export default function SalesEntry() {
 
               <input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} onInput={(e) => e.target.value.length > 6 && (e.target.value = e.target.value.slice(0, 6))} className="px-4 py-2 border bg-gray-100 rounded-xl font-semibold text-right w-32" />
             </div>
-            </div>
+          </div>
 
-            <div className="flex space-x-4">
-              <button type="submit" style={{ display: "none" }} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
-                {editingSaleId ? "Update Sales Entry" : "Add Sales Entry"}</button>
-              {editingSaleId && <button type="button" onClick={handleDeleteClick} className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">Delete</button>}
-              <button type="button" onClick={handleClearForm} className="hidden py-3 px-6 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-xl shadow-lg transition">Clear</button>
-            </div>
+          <div className="flex space-x-4">
+            <button type="submit" style={{ display: "none" }} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
+              {editingSaleId ? "Update Sales Entry" : "Add Sales Entry"}</button>
+            {editingSaleId && <button type="button" onClick={handleDeleteClick} className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">Delete</button>}
+            <button type="button" onClick={handleClearForm} className="hidden py-3 px-6 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-xl shadow-lg transition">Clear</button>
+          </div>
         </form>
 
         {errors.form && <div className="mt-6 p-3 bg-red-100 text-red-700 rounded-xl">{errors.form}</div>}

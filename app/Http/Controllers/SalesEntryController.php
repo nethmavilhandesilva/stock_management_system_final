@@ -171,15 +171,6 @@ public function store(Request $request)
         $perKgPrice = $grnEntry->PerKGPrice;
         $perKgTotal = $perKgPrice * $validated['weight'];
 
-        // 3. Generate the bill number (NOTE: Only assign bill_no on actual printing, not here)
-        // This section is generally okay, but bill_no should typically be NULL until printed.
-        // We can safely leave this logic out of the sale creation.
-        // $lastBillNoSale = (int) Sale::max('bill_no');
-        // $lastBillNoHistory = (int) SalesHistory::max('bill_no');
-        // $lastBillNo = max($lastBillNoSale, $lastBillNoHistory);
-        // $newBillNo = $lastBillNo ? $lastBillNo + 1 : 1000;
-
-
         // 4. Get the date value from settings
         $settingDate = Setting::value('value'); 
 
