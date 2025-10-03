@@ -3,7 +3,7 @@
 <head>
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Sales Entry</title>
-  @vite(['resources/css/app.css', 'resources/js/app.js'])
+  @vite(['resources/css/app.css'])
   @viteReactRefresh
   @vite(['resources/js/app.jsx'])
   
@@ -302,6 +302,14 @@
     
     console.log('Navigation bars loaded - always visible');
   </script>
+  <script>
+    window.__ROUTES__ = {
+      markPrinted: '/sales/mark-printed',
+      getLoanAmount: '/get-loan-amount',
+      markAllProcessed: '/sales/mark-all-processed',
+      givenAmount: '/sales/:id/given-amount',
+    };
+</script>
    @include('layouts.partials.footer')
     @include('layouts.partials.report-modal')
     @include('layouts.partials.item-wisemodal')

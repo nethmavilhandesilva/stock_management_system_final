@@ -6,9 +6,8 @@ export default defineConfig({
     plugins: [
         laravel({
             input: [
-                'resources/css/app.css', // <-- add your CSS here
-                'resources/js/app.js',   // your main JS
-              
+                'resources/css/app.css',
+                'resources/js/app.jsx'  // ONLY this for React
             ],
             refresh: true,
         }),

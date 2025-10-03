@@ -53,11 +53,8 @@ export default function SalesEntry() {
     items: window.__ITEMS__ || [],
     storeUrl: window.__STORE_URL__ || "/grn",
     csrf: document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
-    routes: window.__ROUTES__ || {
-      markPrinted: '/sales/mark-printed',
-      getLoanAmount: '/get-loan-amount',
-      markAllProcessed: '/sales/mark-all-processed'
-    }
+    routes: window.__ROUTES__ || {}
+
   });
 
   const initialData = getInitialData();
@@ -311,11 +308,22 @@ export default function SalesEntry() {
     if (!firstSale) { setErrors({ form: "No sales records found for this customer. Please add a sales record first." }); return; }
 
     try {
-      const data = await apiCall(`/sales/${firstSale.id}/given-amount`, "PUT", { given_amount: parseFloat(formData.given_amount) || 0 });
-      setAllSales(prev => prev.map(s => s.id === data.sale.id ? data.sale : s));
+      // Use the full route from window.__ROUTES__
+      const url = window.__ROUTES__.givenAmount.replace(':id', firstSale.id);
+
+      const data = await apiCall(url, "PUT", {
+        given_amount: parseFloat(formData.given_amount) || 0
+      });
+
+      setAllSales(prev =>
+        prev.map(s => s.id === data.sale.id ? data.sale : s)
+      );
+
       setFormData(prev => ({ ...prev, given_amount: "" }));
       refs.grnSelect.current?.focus();
-    } catch (error) { setErrors({ form: error.message }); }
+    } catch (error) {
+      setErrors({ form: error.message });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -390,59 +398,69 @@ export default function SalesEntry() {
     } catch (error) { setErrors({ form: error.message }); }
   };
 
- const handleCustomerClick = async (type, customerCode) => {
-  const isPrinted = type === 'printed';
-  const isCurrentlySelected = isPrinted ? selectedPrintedCustomer === customerCode : selectedUnprintedCustomer === customerCode;
+  const handleCustomerClick = async (type, customerCode) => {
+    const isPrinted = type === 'printed';
+    const isCurrentlySelected = isPrinted ? selectedPrintedCustomer === customerCode : selectedUnprintedCustomer === customerCode;
 
-  if (isPrinted) {
-    setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
-    setSelectedUnprintedCustomer(null);
-  } else {
-    setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
-    setSelectedPrintedCustomer(null);
-  }
+    if (isPrinted) {
+      setSelectedPrintedCustomer(isCurrentlySelected ? null : customerCode);
+      setSelectedUnprintedCustomer(null);
+    } else {
+      setSelectedUnprintedCustomer(isCurrentlySelected ? null : customerCode);
+      setSelectedPrintedCustomer(null);
+    }
 
-  const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
-  const customerSale = allSales.find(s => s.customer_code === customerCode);
-  const newCustomerCode = isCurrentlySelected ? "" : customerCode;
+    const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
+    const customerSale = allSales.find(s => s.customer_code === customerCode);
+    const newCustomerCode = isCurrentlySelected ? "" : customerCode;
 
-  setFormData(prev => ({
-    ...prev,
-    customer_code: newCustomerCode,
-    customer_name: isCurrentlySelected ? "" : customer?.name || "",
-    given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "")
-  }));
+    setFormData(prev => ({
+      ...prev,
+      customer_code: newCustomerCode,
+      customer_name: isCurrentlySelected ? "" : customer?.name || "",
+      given_amount: isCurrentlySelected ? "" : (customerSale?.given_amount || "")
+    }));
 
-  setIsManualClear(false);
-  fetchLoanAmount(newCustomerCode);
+    setIsManualClear(false);
+    fetchLoanAmount(newCustomerCode);
 
-  // If selecting a customer (not deselecting), automatically submit the given amount if it exists
-  if (!isCurrentlySelected && newCustomerCode && customerSale?.given_amount) {
-    // Set a timeout to ensure the formData is updated before making the API call
-    setTimeout(async () => {
-      try {
-        const customerSales = allSales.filter(s => s.customer_code === newCustomerCode);
-        const firstSale = customerSales[0];
-        if (firstSale) {
-          const data = await apiCall(`/sales/${firstSale.id}/given-amount`, "PUT", { 
-            given_amount: parseFloat(customerSale.given_amount) || 0 
-          });
-          setAllSales(prev => prev.map(s => s.id === data.sale.id ? data.sale : s));     
+    // If selecting a customer (not deselecting), automatically submit the given amount if it exists
+    // If selecting a customer (not deselecting), automatically submit the given amount if it exists
+    if (!isCurrentlySelected && newCustomerCode && customerSale?.given_amount) {
+      setTimeout(async () => {
+        try {
+          // Filter all sales for the selected customer
+          const customerSales = allSales.filter(s => s.customer_code === newCustomerCode);
+          const firstSale = customerSales[0];
+
+          if (firstSale) {
+            // Replace :id with actual sale ID
+            const url = window.__ROUTES__.givenAmount.replace(':id', firstSale.id);
+
+            // Make PUT request to update given_amount
+            const data = await apiCall(url, "PUT", {
+              given_amount: parseFloat(customerSale.given_amount) || 0
+            });
+
+            // Update local state with returned sale
+            setAllSales(prev =>
+              prev.map(s => s.id === data.sale.id ? data.sale : s)
+            );
+          }
+        } catch (error) {
+          console.error("Error updating given amount:", error);
+          setErrors({ form: error.message });
         }
-      } catch (error) {
-        console.error("Error updating given amount:", error);
-        setErrors({ form: error.message });
-      }
-    }, 100);
-  }
+      }, 100);
+    }
 
-  if (isCurrentlySelected) {
-    refs.customerCode.current?.focus();
-    handleClearForm();
-  } else {
-    refs.grnSelect.current?.focus();
-  }
-};
+    if (isCurrentlySelected) {
+      refs.customerCode.current?.focus();
+      handleClearForm();
+    } else {
+      refs.grnSelect.current?.focus();
+    }
+  };
 
   // Button handlers
   const handleMarkPrinted = async () => {
