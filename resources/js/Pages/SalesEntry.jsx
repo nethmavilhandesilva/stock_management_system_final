@@ -1,46 +1,84 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Select from "react-select";
 
-const CustomerList = React.memo(({ customers, type, searchQuery, onSearchChange, selectedPrintedCustomer, selectedUnprintedCustomer, handleCustomerClick, unprintedTotal, formatDecimal, allSales }) => (
-  <div className="w-full shadow-xl rounded-xl overflow-y-auto max-h-screen border border-black" style={{ backgroundColor: "#1ec139ff" }}>
-    <div style={{ backgroundColor: "#006400" }} className="p-1 rounded-t-xl">
-      <h2 className="text-base font-bold text-white mb-1 whitespace-nowrap text-center">
-        {type === 'printed' ? 'මුද්‍රිත විකුණුම් වාර්තා ' : 'මුද්‍රණය නොකළ වාර්තා '}
-      </h2>
-      <input
-        type="text"
-        placeholder={`Search by ${type === 'printed' ? 'Bill No or Code...' : 'Customer Code...'}`}
-        value={searchQuery}
-        onChange={e => onSearchChange(e.target.value.toUpperCase())}
-        className="w-full px-4 py-0.5 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase"
-      />
-    </div>
-    <div className="p-1">
-      {customers.length === 0 ? (
-        <p className="text-gray-700">No {type === 'printed' ? 'printed sales' : 'unprinted sales'} found.</p>
-      ) : (
-        <ul className="flex flex-col items-center">
-          {customers.map(customerCode => {
-            const customerSales = allSales.filter(s => s.customer_code === customerCode);
-            const customerTotal = customerSales.reduce((sum, sale) => sum + (parseFloat(sale.total) || 0), 0);
-            const isSelected = (type === 'printed' ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode;
+const CustomerList = React.memo(
+  ({
+    customers,
+    type,
+    searchQuery,
+    onSearchChange,
+    selectedPrintedCustomer,
+    selectedUnprintedCustomer,
+    handleCustomerClick,
+    unprintedTotal,
+    formatDecimal,
+    allSales,
+  }) => (
+    <div
+      className="w-full shadow-xl rounded-xl overflow-y-auto max-h-screen border border-black"
+      style={{ backgroundColor: "#1ec139ff" }}
+    >
+      <div style={{ backgroundColor: "#006400" }} className="p-1 rounded-t-xl">
+        <h2 className="text-base font-bold text-white mb-1 whitespace-nowrap text-center">
+          {type === "printed" ? "මුද්‍රණය කළ" : "මුද්‍රණය නොකළ"}
+        </h2>
 
-            return (
-              <li key={customerCode} className="w-full flex justify-center">
-                <button
-                  onClick={() => handleCustomerClick(type, customerCode)}
-                  className={`w-[250px] px-4 py-1 mb-2 rounded-xl border border-black text-left ${isSelected ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
-                >
-                  <span className="font-semibold w-32 text-left truncate">{customerCode}-{formatDecimal(customerTotal)}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+        <input
+          type="text"
+          placeholder={`Search by ${type === "printed" ? "Bill No or Code..." : "Customer Code..."
+            }`}
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value.toUpperCase())}
+          className="w-full px-4 py-0.5 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase"
+        />
+      </div>
+
+      {/* ✅ Changed 'p-1' to 'py-1' to remove side gaps */}
+      <div className="py-1">
+        {customers.length === 0 ? (
+          <p className="text-gray-700">
+            No {type === "printed" ? "printed sales" : "unprinted sales"} found.
+          </p>
+        ) : (
+          // ✅ Added 'px-1' padding to ul for slight right spacing
+          <ul className="flex flex-col px-1">
+            {customers.map((customerCode) => {
+              const customerSales = allSales.filter(
+                (s) => s.customer_code === customerCode
+              );
+              const customerTotal = customerSales.reduce(
+                (sum, sale) => sum + (parseFloat(sale.total) || 0),
+                0
+              );
+              const isSelected =
+                (type === "printed"
+                  ? selectedPrintedCustomer
+                  : selectedUnprintedCustomer) === customerCode;
+
+              return (
+                // ✅ Removed 'w-full' from li to let button handle width
+                <li key={customerCode} className="flex">
+                  <button
+                    onClick={() => handleCustomerClick(type, customerCode)}
+                    // ✅ Removed 'px-4' and added 'pl-4' to span for proper alignment
+                    className={`w-full py-1 mb-2 rounded-xl border border-black text-left ${isSelected
+                        ? "bg-blue-500 text-white border-blue-600"
+                        : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                      }`}
+                  >
+                    <span className="font-semibold truncate pl-4">
+                      {customerCode} - {formatDecimal(customerTotal)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
-  </div>
-));
+  )
+);
 
 const ItemSummary = ({ sales, formatDecimal }) => {
   const summary = useMemo(() => {
@@ -90,10 +128,10 @@ export default function SalesEntry() {
   const refs = {
     customerCode: useRef(null), customerSelect: useRef(null), givenAmount: useRef(null),
     grnSelect: useRef(null), itemName: useRef(null), weight: useRef(null),
-    packs: useRef(null), pricePerKg: useRef(null), total: useRef(null)
+    pricePerKg: useRef(null), packs: useRef(null), total: useRef(null)
   };
 
-  const fieldOrder = ["customer_code_input", "customer_code_select", "given_amount", "grn_entry_code", "item_name", "weight", "packs", "price_per_kg", "total"];
+  const fieldOrder = ["customer_code_input", "customer_code_select", "given_amount", "grn_entry_code", "item_name", "weight", "price_per_kg", "packs", "total"];
   const skipMap = { customer_code_input: "grn_entry_code", grn_entry_code: "weight" };
 
   const initialFormData = {
@@ -225,8 +263,26 @@ export default function SalesEntry() {
   const handleKeyDown = (e, currentFieldIndex) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (fieldOrder[currentFieldIndex] === "given_amount" && formData.given_amount) return handleSubmitGivenAmount(e);
-      if (fieldOrder[currentFieldIndex] === "price_per_kg") return handleSubmit(e);
+
+      // Handle given_amount submission
+      if (fieldOrder[currentFieldIndex] === "given_amount" && formData.given_amount) {
+        return handleSubmitGivenAmount(e);
+      }
+
+      // Submit form when Enter is pressed in packs field
+      if (fieldOrder[currentFieldIndex] === "packs") {
+        return handleSubmit(e);
+      }
+
+      // For price_per_kg, move to packs instead of submitting
+      if (fieldOrder[currentFieldIndex] === "price_per_kg") {
+        const packsIndex = fieldOrder.findIndex(f => f === "packs");
+        requestAnimationFrame(() => setTimeout(() => {
+          const packsRef = Object.values(refs)[packsIndex];
+          packsRef?.current?.focus?.() || packsRef?.current?.select?.();
+        }, 0));
+        return;
+      }
 
       let nextIndex = currentFieldIndex + 1;
       if (skipMap[fieldOrder[currentFieldIndex]]) {
@@ -240,7 +296,6 @@ export default function SalesEntry() {
       }, 0));
     }
   };
-
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -282,9 +337,16 @@ export default function SalesEntry() {
       selectedUnprintedCustomer: hasUnprintedSales ? short : null,
       selectedPrintedCustomer: null
     });
-    setFormData(prev => ({ ...prev, customer_code: short || prev.customer_code, customer_name: customer?.name || "" }));
+    setFormData(prev => ({
+      ...prev,
+      customer_code: short || prev.customer_code,
+      customer_name: customer?.name || ""
+    }));
     fetchLoanAmount(short);
     updateState({ isManualClear: false });
+    setTimeout(() => {
+      refs.grnSelect.current?.focus();
+    }, 100);
   };
 
   const handleEditClick = (sale) => {
@@ -532,6 +594,25 @@ export default function SalesEntry() {
       console.error("Failed to mark sales as processed:", err.message);
     }
   };
+  const handleDeleteRecord = async (saleId) => {
+    if (!saleId || !window.confirm("Are you sure you want to delete this sales record?")) return;
+
+    try {
+      const url = `/sales/${saleId}`;
+      await apiCall(url, "DELETE");
+
+      updateState({
+        allSales: allSales.filter(s => s.id !== saleId)
+      });
+
+      // Clear form if we were editing the deleted record
+      if (editingSaleId === saleId) {
+        handleClearForm();
+      }
+    } catch (error) {
+      updateState({ errors: { form: error.message } });
+    }
+  };
 
   const handleFullRefresh = () => { window.location.reload(); };
 
@@ -749,7 +830,7 @@ export default function SalesEntry() {
           handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
       </div>
 
-      <div className="w-[100%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
+      <div className="w-[120%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center bg-gray-50 p-0.5 rounded-xl shadow-sm border border-black">
             <span className="text-gray-600 font-medium">Bill No: {currentBillNo}</span>
@@ -791,6 +872,7 @@ export default function SalesEntry() {
                   const entry = selected.data;
                   const matchingItem = initialData.items.find(i => String(i.no) === String(entry.item_code));
                   const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
+
                   setFormData(prev => ({
                     ...prev,
                     grn_entry_code: selected.value,
@@ -803,6 +885,7 @@ export default function SalesEntry() {
                     packs: editingSaleId ? prev.packs : "",
                     total: editingSaleId ? prev.total : ""
                   }));
+
                   updateState({ grnSearchInput: "" });
                   requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
                 }
@@ -816,23 +899,20 @@ export default function SalesEntry() {
                 return inputValue;
               }}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && formData.grn_entry_code && !e.isPropagationStopped()) {
-                  e.preventDefault(); setTimeout(() => refs.weight.current?.focus(), 0);
+                if (e.key === "Enter" && !e.isPropagationStopped()) {
+                  // Allow React Select's default behavior to select the highlighted option
+                  // Then move focus to next field after a short delay to allow the selection to complete
+                  setTimeout(() => {
+                    refs.weight.current?.focus();
+                  }, 10);
                 }
               }}
-              getOptionLabel={(option) => `${option.data?.code} - ${option.data?.item_name || "Unknown Item"}`}
+              getOptionLabel={(option) => option.label}
               getOptionValue={(option) => option.value}
               options={initialData.entries
                 .filter(entry => {
-                  // If no search input or search input is empty, show no options
                   if (!state.grnSearchInput || state.grnSearchInput === '') return false;
-
-                  // Get the first character of search input and entry code
-                  const searchFirstChar = state.grnSearchInput.charAt(0);
-                  const codeFirstChar = entry.code ? entry.code.charAt(0) : '';
-
-                  // Return true only if first characters match
-                  return searchFirstChar === codeFirstChar;
+                  return state.grnSearchInput.charAt(0) === (entry.code ? entry.code.charAt(0) : '');
                 })
                 .map((en, index) => ({ value: en.code, label: en.code, data: en, index }))}
               placeholder="Select GRN Entry"
@@ -843,93 +923,95 @@ export default function SalesEntry() {
                   : "No GRN entries found matching the first letter"
               }
               formatOptionLabel={(option, { context }) => {
-                if (context === "value" || !option.data) {
-                  const entry = option.data || initialData.entries.find((en) => en.code === option.value);
-                  return <span>{option.label} - {entry?.item_name || "Unknown Item"} (<strong>Price:</strong> Rs.{formatDecimal(entry?.price_per_kg || entry?.PerKGPrice || entry?.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry?.weight)} / <strong>BP:</strong> {entry?.packs || 0})</span>;
-                }
-                const entry = option.data;
-                const HeaderRow = () => (
-                  <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center">
-                    <div className="text-left">Code</div>
-                    <div className="text-left">Item Name</div>
-                    <div className="text-center">OP</div>
-                    <div className="text-center">OW</div>
-                    <div className="text-center">BP</div>
-                    <div className="text-center">BW</div>
-                    <div className="text-right">PRICE</div>
-                  </div>
-                );
-                const DataRow = ({ entry, showHeader = false }) => (
+                const entry = option.data || initialData.entries.find(en => en.code === option.value);
+                if (!entry) return option.label;
+
+                const showHeader = option.index === 0;
+                return (
                   <div className="w-full">
-                    {showHeader && <HeaderRow />}
-                    <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-gray-50 items-center">
-                      <div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>{entry.code || "-"}</div>
-                      <div className="text-left truncate" title={entry.item_name || "Unknown Item"}>{entry.item_name || "Unknown Item"}</div>
-                      <div className="text-center">{entry.original_packs || "0"}</div>
-                      <div className="text-center">{formatDecimal(entry.original_weight)}</div>
-                      <div className="text-center">{entry.packs || "0"}</div>
-                      <div className="text-center">{formatDecimal(entry.weight)}</div>
-                      <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
-                    </div>
+                    {showHeader && (
+                      <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center"><div className="text-left">Code</div><div className="text-left">Item Name</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>
+                    )}
+                    <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-blue-200 items-center"><div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>{entry.code || "-"}</div><div className="text-left truncate" title={entry.item_name || "Unknown Item"}>{entry.item_name || "Unknown Item"}</div><div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div><div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div></div>
                   </div>
                 );
-                return <DataRow entry={entry} showHeader={option.index === 0} />;
               }}
               components={{
-                Option: ({ innerRef, innerProps, isFocused, isSelected, data }) => {
-                  const HeaderRow = () => (
-                    <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center">
-                      <div className="text-left">Code</div><div className="text-left">Item Name</div><div className="text-center">OP</div>
-                      <div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div>
-                    </div>
+                SingleValue: ({ data }) => {
+                  const entry = data.data;
+                  if (!entry) return data.label;
+                  return (
+                    <span>
+                      {data.label} - {entry.item_name || "Unknown Item"} (
+                      <strong>Price:</strong> Rs.{formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)} /
+                      <strong>BW:</strong> {formatDecimal(entry.weight)} /
+                      <strong>BP:</strong> {entry.packs || 0})
+                    </span>
                   );
-                  const DataRow = ({ data, showHeader = false }) => (
-                    <div ref={innerRef} {...innerProps} className={`${isFocused ? "bg-blue-50" : ""} ${isSelected ? "bg-blue-100" : ""} cursor-pointer`}>
-                      {showHeader && <HeaderRow />}
-                      <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-gray-50 items-center">
-                        <div className="text-left font-medium text-blue-700 truncate" title={data.data.code || "-"}>{data.data.code || "-"}</div>
-                        <div className="text-left truncate" title={data.data.item_name || "Unknown Item"}>{data.data.item_name || "Unknown Item"}</div>
-                        <div className="text-center">{data.data.original_packs || "0"}</div>
-                        <div className="text-center">{formatDecimal(data.data.original_weight)}</div>
-                        <div className="text-center">{data.data.packs || "0"}</div>
-                        <div className="text-center">{formatDecimal(data.data.weight)}</div>
-                        <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(data.data.price_per_kg || data.data.PerKGPrice || data.data.SalesKGPrice)}</div>
-                      </div>
-                    </div>
-                  );
-                  return <DataRow data={data} showHeader={data.index === 0} />;
                 }
               }}
               styles={{
-                option: (base) => ({ ...base, padding: 0, backgroundColor: "transparent" }),
+                // FIX: Corrects highlighting on hover
+                option: (base, { isFocused, isSelected }) => ({
+                  ...base,
+                  backgroundColor: isFocused
+                    ? "#bfdbfe"
+                    : (isSelected ? "#e5e5e5" : "transparent"),
+                  padding: 0,
+                }),
                 menu: (base) => ({ ...base, width: "680px", maxWidth: "95vw" }),
                 menuList: (base) => ({ ...base, padding: 0, maxHeight: "400px" }),
-                control: (base) => ({ ...base, minHeight: "44px" })
+
+                // FIXES: Alignment and Opacity
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: "44px",
+                  height: "44px",
+                  opacity: 1, // Redundant safety, but doesn't hurt
+                  display: 'flex', // Ensure control is a flex container for alignment
+                  alignItems: 'center',
+                  flexWrap: 'nowrap', // Prevent content wrapping if needed
+                }),
+                valueContainer: (base) => ({
+                  ...base,
+                  padding: '0 8px',
+                  height: '44px',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  overflow: 'hidden',
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  display: 'flex',
+                  alignItems: 'center',
+                  margin: 0,
+                  padding: 0,
+                  lineHeight: 'normal',
+                  opacity: 1, // CRITICAL FIX 1: Ensures selected text is full color
+                }),
+                input: (base) => ({
+                  ...base,
+                  opacity: 1, // CRITICAL FIX 2: Ensures the search input area (which contains singleValue) is full color
+                }),
+                indicatorsContainer: (base) => ({
+                  ...base,
+                  height: '44px',
+                  alignItems: 'center',
+                }),
               }}
             />
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-2 border rounded-xl text-base w-40" />
-                {balanceInfo.balanceWeight > 0 && <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">BW: {formatDecimal(balanceInfo.balanceWeight)} kg</div>}
-              </div>
-
-              <input id="weight" ref={refs.weight} name="weight" type="number" step="0.01" value={formData.weight} onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-4 py-2 border rounded-xl text-right w-24" />
-
-              <div className="relative">
-                <input id="packs" ref={refs.packs} name="packs" type="number" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මලු" className="px-4 py-2 border rounded-xl text-right w-24" />
-                {balanceInfo.balancePacks > 0 && <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-600 bg-yellow-50 px-2 py-1 rounded border">BP: {balanceInfo.balancePacks}</div>}
-              </div>
-
-              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="number" step="0.01" value={formData.price_per_kg} onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="මිල" className="px-4 py-2 border rounded-xl text-right w-28" />
-
-              <input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} onInput={(e) => e.target.value.length > 6 && (e.target.value = e.target.value.slice(0, 6))} className="px-4 py-2 border bg-gray-100 rounded-xl font-semibold text-right w-32" />
+            <div className="flex items-center gap-3">
+              <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-3 border border-gray-400 rounded-xl text-lg font-semibold text-black w-45 bg-gray-100 overflow-x-auto whitespace-nowrap" />
+              <input id="weight" ref={refs.weight} name="weight" type="text" value={formData.weight} onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" maxLength="6" />
+              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="text" value={formData.price_per_kg} onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මිල" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" maxLength="6" />
+              <input id="packs" ref={refs.packs} name="packs" type="text" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="අසුරුම්" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-20 overflow-x-auto whitespace-nowrap" maxLength="3" />
+              <input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} onInput={(e) => e.target.value.length > 6 && (e.target.value = e.target.value.slice(0, 6))} className="px-4 py-3 border border-gray-400 rounded-xl text-right text-lg font-semibold text-black bg-gray-100 w-25 overflow-x-auto whitespace-nowrap" maxLength="6" />
             </div>
           </div>
-
           <div className="flex space-x-4">
             <button type="submit" style={{ display: "none" }} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
               {editingSaleId ? "Update Sales Entry" : "Add Sales Entry"}</button>
-            {editingSaleId && <button type="button" onClick={handleDeleteClick} className="py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">Delete</button>}
             <button type="button" onClick={handleClearForm} className="hidden py-3 px-6 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-xl shadow-lg transition">Clear</button>
           </div>
         </form>
@@ -939,20 +1021,38 @@ export default function SalesEntry() {
         <div className="mt-6">
           <div className="overflow-x-auto">
             <table className="min-w-full border border-gray-200 rounded-xl text-sm">
-              <thead className="bg-gray-100"><tr>
-                <th className="px-4 py-2 border">කේතය</th><th className="px-4 py-2 border">අයිතමය</th>
-                <th className="px-4 py-2 border">බර(kg)</th><th className="px-4 py-2 border min-w-24">මිල</th><th className="px-4 py-2 border">සමස්ත</th><th className="px-4 py-2 border">මලු</th>
-              </tr></thead>
-              <tbody className="bg-black text-white">{displayedSales.map((s, idx) => (
-                <tr key={s.id || idx} tabIndex={0} className="text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100"
-                  onClick={() => handleEditClick(s)} onKeyDown={(e) => handleTableRowKeyDown(e, s)}>
-                  <td className="px-4 py-2 border">{s.code}</td><td className="px-4 py-2 border">{s.item_name}</td>
-                  <td className="px-4 py-2 border">{formatDecimal(s.weight)}</td><td className="px-4 py-2 border">{formatDecimal(s.price_per_kg)}</td>
-                  <td className="px-4 py-2 border">{formatDecimal((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0))}</td>
-                  <td className="px-4 py-2 border">{s.packs}</td>
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2 border">කේතය</th>
+                  <th className="px-4 py-2 border">අයිතමය</th>
+                  <th className="px-2 py-2 border w-20">බර(kg)</th>
+                  <th className="px-2 py-2 border w-20">මිල</th>
+                  <th className="px-2 py-2 border w-24">සමස්ත</th>
+                  <th className="px-2 py-2 border w-16">මලු</th>
+                  <th className="px-2 py-2 border w-16">Actions</th>
                 </tr>
-              ))}</tbody>
+              </thead>
+              <tbody className="bg-black text-white">
+                {displayedSales.map((s, idx) => (
+                  <tr key={s.id || idx} tabIndex={0} className="text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-100" onClick={() => handleEditClick(s)} onKeyDown={(e) => handleTableRowKeyDown(e, s)}>
+                    <td className="px-4 py-2 border">{s.code}</td>
+                    <td className="px-4 py-2 border">{s.item_name}</td>
+                    <td className="px-2 py-2 border w-20">{formatDecimal(s.weight)}</td>
+                    <td className="px-2 py-2 border w-20">{formatDecimal(s.price_per_kg)}</td>
+                    <td className="px-2 py-2 border w-24">{formatDecimal((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0))}</td>
+                    <td className="px-2 py-2 border w-16">{s.packs}</td>
+                    <td className="px-2 py-2 border w-16">
+                      <button onClick={(e) => { e.stopPropagation(); handleDeleteRecord(s.id); }} className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 transition-colors" title="Delete record">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
+
             <ItemSummary sales={displayedSales} formatDecimal={formatDecimal} />
             <div className="flex items-center justify-between mt-6 mb-4">
               <h2 className="text-2xl font-bold text-red-600">Total Sales: Rs. {formatDecimal(mainTotal)}</h2>
