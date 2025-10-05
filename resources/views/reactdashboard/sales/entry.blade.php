@@ -308,6 +308,7 @@
       getLoanAmount: '/get-loan-amount',
       markAllProcessed: '/sales/mark-all-processed',
       givenAmount: '/sales/:id/given-amount',
+     
     };
 </script>
    @include('layouts.partials.footer')
