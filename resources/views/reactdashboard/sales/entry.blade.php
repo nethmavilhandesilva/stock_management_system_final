@@ -155,7 +155,7 @@
             <div class="nav-left">
                 <!-- Dashboard -->
                 <div class="nav-item">
-                    <a href="{{ route('dashboard') }}" class="nav-link-custom">
+                    <a href="{{ route('dasboard.index') }}" class="nav-link-custom">
                         <span class="material-icons">dashboard</span>
                         <span>Dashboard</span>
                     </a>
