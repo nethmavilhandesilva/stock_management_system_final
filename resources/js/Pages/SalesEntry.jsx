@@ -121,7 +121,8 @@ export default function SalesEntry() {
     loanAmount: 0,
     isManualClear: false,
     isSubmitting: false,
-    formData: initialFormData
+    formData: initialFormData,
+    packCost: 0
   });
 
   const setFormData = (updater) => setState(prev => ({
@@ -131,7 +132,7 @@ export default function SalesEntry() {
 
   const updateState = (updates) => setState(prev => ({ ...prev, ...updates }));
 
-  const { allSales, selectedPrintedCustomer, selectedUnprintedCustomer, editingSaleId, searchQueries, errors, balanceInfo, loanAmount, isManualClear, formData } = state;
+  const { allSales, selectedPrintedCustomer, selectedUnprintedCustomer, editingSaleId, searchQueries, errors, balanceInfo, loanAmount, isManualClear, formData, packCost } = state;
 
   const { newSales, printedSales, unprintedSales } = useMemo(() => ({
     newSales: allSales.filter(s => s.id && s.bill_printed !== 'Y' && s.bill_printed !== 'N'),
@@ -310,13 +311,15 @@ export default function SalesEntry() {
         const itemCodeToMatch = grnEntry.item_code;
         const matchingItem = initialData.items.find(i => String(i.no) === String(itemCodeToMatch));
         const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
+        const fetchedPackCost = parseFloat(matchingItem?.pack_cost) || 0;
         setFormData(prev => ({
           ...prev,
           supplier_code: grnEntry.supplier_code,
           item_code: grnEntry.item_code,
           item_name: grnEntry.item_name || "",
-          pack_due: fetchedPackDue
+          pack_due: fetchedPackDue,
         }));
+        updateState({ packCost: fetchedPackCost });
       }
     }
   };
@@ -385,7 +388,8 @@ export default function SalesEntry() {
       grnSearchInput: "",
       balanceInfo: { balancePacks: 0, balanceWeight: 0 },
       loanAmount: 0,
-      isManualClear: false
+      isManualClear: false,
+      packCost: 0
     });
   };
 
@@ -534,7 +538,8 @@ export default function SalesEntry() {
         grnSearchInput: "",
         balanceInfo: { balancePacks: 0, balanceWeight: 0 },
         isManualClear: false,
-        isSubmitting: false
+        isSubmitting: false,
+        packCost: 0
       });
 
       refs.grnSelect.current?.focus();
@@ -893,6 +898,7 @@ export default function SalesEntry() {
                   const entry = selected.data;
                   const matchingItem = initialData.items.find(i => String(i.no) === String(entry.item_code));
                   const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
+                  const fetchedPackCost = parseFloat(matchingItem?.pack_cost) || 0;
 
                   setFormData(prev => ({
                     ...prev,
@@ -909,7 +915,10 @@ export default function SalesEntry() {
                     total: editingSaleId ? prev.total : ""
                   }));
 
-                  updateState({ grnSearchInput: "" });
+                  updateState({
+                    grnSearchInput: "",
+                    packCost: fetchedPackCost // Add this line
+                  });
                   requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
                 }
               }}
@@ -1033,9 +1042,22 @@ export default function SalesEntry() {
                 <span className="text-sm mt-1 text-center invisible">Placeholder</span>
               </div>
               <div className="flex flex-col">
-                <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="text" value={formData.price_per_kg} onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මිල" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" maxLength="6" />
-                <span className="text-sm mt-1 text-center invisible">Placeholder</span>
-              </div>
+  <input 
+    id="price_per_kg" 
+    ref={refs.pricePerKg} 
+    name="price_per_kg" 
+    type="text" 
+    value={formData.price_per_kg} 
+    onChange={(e) => handleInputChange('price_per_kg', e.target.value)} 
+    onKeyDown={(e) => handleKeyDown(e, 6)} 
+    placeholder="මිල" 
+    className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" 
+    maxLength="6" 
+  />
+ <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block">
+  {formatDecimal(packCost)}
+</span>
+</div>
               <div className="flex flex-col">
                 <input id="packs" ref={refs.packs} name="packs" type="text" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="අසුරුම්" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-20 overflow-x-auto whitespace-nowrap" maxLength="3" />
                 {formData.grn_entry_code && <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block"><strong>BP:</strong> {balanceInfo.balancePacks || 0}</span>}
