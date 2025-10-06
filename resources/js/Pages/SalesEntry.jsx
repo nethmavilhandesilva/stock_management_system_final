@@ -896,7 +896,9 @@ export default function SalesEntry() {
 
                   setFormData(prev => ({
                     ...prev,
+                    // Both grn_entry_code and code must be set to the new GRN code.
                     grn_entry_code: selected.value,
+                    code: selected.value, // <-- **THE FIX**
                     item_name: entry.item_name || "",
                     supplier_code: entry.supplier_code || "",
                     item_code: entry.item_code || "",
