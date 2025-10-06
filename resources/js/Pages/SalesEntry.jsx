@@ -860,7 +860,7 @@ export default function SalesEntry() {
           handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
       </div>
 
-      <div className="w-[120%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
+      <div className="w-[125%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center bg-gray-50 p-0.5 rounded-xl shadow-sm border border-black">
             <span className="text-gray-600 font-medium">Bill No: {currentBillNo}</span>
@@ -1023,12 +1023,26 @@ export default function SalesEntry() {
                 }),
               }}
             />
-            <div className="flex items-center gap-3">
-              <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-3 border border-gray-400 rounded-xl text-lg font-semibold text-black w-45 bg-gray-100 overflow-x-auto whitespace-nowrap" />
-              <input id="weight" ref={refs.weight} name="weight" type="text" value={formData.weight} onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" maxLength="6" />
-              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="text" value={formData.price_per_kg} onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මිල" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" maxLength="6" />
-              <input id="packs" ref={refs.packs} name="packs" type="text" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="අසුරුම්" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-20 overflow-x-auto whitespace-nowrap" maxLength="3" />
-              <input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} onInput={(e) => e.target.value.length > 6 && (e.target.value = e.target.value.slice(0, 6))} className="px-4 py-3 border border-gray-400 rounded-xl text-right text-lg font-semibold text-black bg-gray-100 w-25 overflow-x-auto whitespace-nowrap" maxLength="6" />
+            <div className="flex items-start gap-3">
+              <div className="flex flex-col">
+                <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-3 border border-gray-400 rounded-xl text-lg font-semibold text-black w-45 bg-gray-100 overflow-x-auto whitespace-nowrap" />
+                {formData.grn_entry_code && <span className="text-red-600 font-bold text-[19px] mt-1 text-center whitespace-nowrap inline-block"><strong>BW:</strong> {formatDecimal(balanceInfo.balanceWeight)}</span>}
+              </div>
+              <div className="flex flex-col">
+                <input id="weight" ref={refs.weight} name="weight" type="text" value={formData.weight} onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" maxLength="6" />
+                <span className="text-sm mt-1 text-center invisible">Placeholder</span>
+              </div>
+              <div className="flex flex-col">
+                <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="text" value={formData.price_per_kg} onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මිල" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" maxLength="6" />
+                <span className="text-sm mt-1 text-center invisible">Placeholder</span>
+              </div>
+              <div className="flex flex-col">
+                <input id="packs" ref={refs.packs} name="packs" type="text" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="අසුරුම්" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-20 overflow-x-auto whitespace-nowrap" maxLength="3" />
+                {formData.grn_entry_code && <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block"><strong>BP:</strong> {balanceInfo.balancePacks || 0}</span>}
+              </div>
+              <div className="flex flex-col">
+                <input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} onInput={(e) => e.target.value.length > 6 && (e.target.value = e.target.value.slice(0, 6))} className="px-4 py-3 border border-gray-400 rounded-xl text-right text-lg font-semibold text-black bg-gray-100 w-[9.0rem] overflow-x-auto whitespace-nowrap" maxLength="6" />
+              </div>
             </div>
           </div>
           <div className="flex space-x-4">
