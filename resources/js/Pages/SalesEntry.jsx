@@ -342,6 +342,18 @@ export default function SalesEntry() {
   };
 
   const handleEditClick = (sale) => {
+    // Find the GRN entry to get the item_code
+    const grnEntry = initialData.entries.find(entry => entry.code === (sale.grn_entry_code || sale.code));
+
+    let fetchedPackDue = sale.pack_due || ""; // Start with existing pack_due
+
+    // If we found a GRN entry, look up the latest pack_due from items
+    if (grnEntry && grnEntry.item_code) {
+      const itemCodeToMatch = grnEntry.item_code;
+      const matchingItem = initialData.items.find(i => String(i.no) === String(itemCodeToMatch));
+      fetchedPackDue = parseFloat(matchingItem?.pack_due) || sale.pack_due || "";
+    }
+
     setFormData({
       ...sale,
       grn_entry_code: sale.grn_entry_code || sale.code || "",
@@ -352,7 +364,7 @@ export default function SalesEntry() {
       item_code: sale.item_code || "",
       weight: sale.weight || "",
       price_per_kg: sale.price_per_kg || "",
-      pack_due: sale.pack_due || "",
+      pack_due: fetchedPackDue, // Use the fetched pack_due
       total: sale.total || "",
       packs: sale.packs || "",
       original_weight: sale.original_weight || "",
