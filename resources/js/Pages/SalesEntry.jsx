@@ -689,11 +689,12 @@ export default function SalesEntry() {
       updateState({
         allSales: allSales.filter(s => s.id !== saleId)
       });
+       fetchLatestGrnEntries();
 
       // Clear form if we were editing the deleted record
       if (editingSaleId === saleId) {
         handleClearForm();
-        fetchLatestGrnEntries();
+       
       }
     } catch (error) {
       updateState({ errors: { form: error.message } });
@@ -951,7 +952,7 @@ export default function SalesEntry() {
           handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
       </div>
 
-      <div className="w-[135%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
+      <div className="w-[138%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center bg-gray-50 p-0.5 rounded-xl shadow-sm border border-black">
             <span className="text-gray-600 font-medium">Bill No: {currentBillNo}</span>
@@ -1212,9 +1213,9 @@ export default function SalesEntry() {
         <div className="flex justify-between items-center mt-6">
           <div className="flex space-x-3">
             <button type="button" onClick={handleMarkPrinted} className="px-4 py-1 text-sm bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow transition">
-              Mark Printed</button>
+              PRINT</button>
             <button type="button" onClick={handleMarkAllProcessed} className="px-4 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition">
-              Mark All Processed</button>
+              HOLD</button>
             <button type="button" onClick={handleFullRefresh} className="px-4 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl shadow transition">
               Full Refresh</button>
           </div>
