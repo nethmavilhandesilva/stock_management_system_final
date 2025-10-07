@@ -693,9 +693,45 @@ export default function SalesEntry() {
       // Clear form if we were editing the deleted record
       if (editingSaleId === saleId) {
         handleClearForm();
+        fetchLatestGrnEntries();
       }
     } catch (error) {
       updateState({ errors: { form: error.message } });
+    }
+  };
+
+  const getAvailableBalance = () => {
+    if (!formData.grn_entry_code) {
+      return { availableWeight: 0, availablePacks: 0 };
+    }
+
+    const latestEntry = state.realTimeGrnEntries.find(en => en.code === formData.grn_entry_code);
+    if (!latestEntry) return { availableWeight: 0, availablePacks: 0 };
+
+    // Get the original GRN balance (always from the database)
+    const originalGrnWeight = latestEntry.weight || 0;
+    const originalGrnPacks = latestEntry.packs || 0;
+
+    // Get what's currently typed in the form
+    const newWeight = parseFloat(formData.weight) || 0;
+    const newPacks = parseInt(formData.packs) || 0;
+
+    // If editing, add back the old value and subtract the new value
+    if (editingSaleId) {
+      const originalSale = allSales.find(s => s.id === editingSaleId);
+      const oldWeight = parseFloat(originalSale?.weight) || 0;
+      const oldPacks = parseInt(originalSale?.packs) || 0;
+
+      return {
+        availableWeight: originalGrnWeight + oldWeight - newWeight,
+        availablePacks: originalGrnPacks + oldPacks - newPacks
+      };
+    } else {
+      // For new entries, just subtract the new value
+      return {
+        availableWeight: originalGrnWeight - newWeight,
+        availablePacks: originalGrnPacks - newPacks
+      };
     }
   };
 
@@ -1114,7 +1150,7 @@ export default function SalesEntry() {
                 <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-3 border border-gray-400 rounded-xl text-lg font-semibold text-black w-45 bg-gray-100 overflow-x-auto whitespace-nowrap" />
                 {formData.grn_entry_code && (
                   <span className="text-red-600 font-bold text-[19px] mt-1 text-center whitespace-nowrap inline-block">
-                    <strong>BW:</strong> {formatDecimal(Math.max(0, getCurrentBalance().balanceWeight - (parseFloat(formData.weight) || 0)))}
+                    <strong>BW:</strong> {formatDecimal(Math.max(0, getAvailableBalance().availableWeight))}
                   </span>
                 )}
               </div>
@@ -1132,7 +1168,7 @@ export default function SalesEntry() {
                 <input id="packs" ref={refs.packs} name="packs" type="text" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="අසුරුම්" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-20 overflow-x-auto whitespace-nowrap" maxLength="4" />
                 {formData.grn_entry_code && (
                   <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block">
-                    <strong>BP:</strong> {Math.max(0, getCurrentBalance().balancePacks - (parseInt(formData.packs) || 0))}
+                    <strong>BP:</strong> {Math.max(0, getAvailableBalance().availablePacks)}
                   </span>
                 )}
               </div>
