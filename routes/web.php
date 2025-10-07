@@ -175,7 +175,7 @@ Route::get('/grn/update/form', [GrnEntryController::class, 'showupdateform'])->n
 //new  GRN PDFS FOR UPDATE GRN
 Route::post('grn/export/update/excel', [GrnEntryController::class, 'exportUPDATEExcel'])->name('grn.export.excel');
 Route::post('grn/export/update/pdf', [GrnEntryController::class, 'exportUPDATEPdf'])->name('grn.export.pdf');
-
+Route::get('/grn-entries/latest', [GrnEntryController::class, 'getLatestEntries']);
 Route::delete('/grn/delete/update/{id}', [GrnEntryController::class, 'destroyupdate'])->name('grnupdate.delete');
 
 //new  Gettin te real time balances for update grn page

@@ -308,7 +308,8 @@
       getLoanAmount: '/get-loan-amount',
       markAllProcessed: '/sales/mark-all-processed',
       givenAmount: '/sales/:id/given-amount',
-     
+     getGrnEntries: '/grn-entries',
+    getLatestGrnEntries: '/grn-entries/latest'     
     };
 </script>
    @include('layouts.partials.footer')

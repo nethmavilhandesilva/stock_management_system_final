@@ -107,4 +107,5 @@ class DashboardController extends Controller
         // 3. Return the data structure that the frontend's fetchAllSales function expects
         return response()->json($response);
     }
+    
 }

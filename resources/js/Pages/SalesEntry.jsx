@@ -122,7 +122,8 @@ export default function SalesEntry() {
     isManualClear: false,
     isSubmitting: false,
     formData: initialFormData,
-    packCost: 0
+    packCost: 0,
+    realTimeGrnEntries: initialData.entries
   });
 
   const setFormData = (updater) => setState(prev => ({
@@ -195,6 +196,31 @@ export default function SalesEntry() {
       if (!res.ok) throw new Error(data.error || "Server error: " + res.statusText);
       return data;
     } catch (error) { throw error; }
+  };
+
+  const fetchLatestGrnEntries = async () => {
+    try {
+      const response = await fetch('/grn-entries/latest', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': initialData.csrf
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        updateState({ realTimeGrnEntries: data.entries });
+        return data.entries;
+      } else {
+        console.error('Failed to fetch GRN entries:', data.message);
+        return state.realTimeGrnEntries; // Return current entries as fallback
+      }
+    } catch (error) {
+      console.error('Error fetching GRN entries:', error);
+      return state.realTimeGrnEntries; // Return current entries as fallback
+    }
   };
 
   const fetchLoanAmount = async (customerCode) => {
@@ -405,12 +431,21 @@ export default function SalesEntry() {
       updateState({
         allSales: allSales.filter(s => s.id !== editingSaleId)
       });
-
+      fetchLatestGrnEntries();
       handleClearForm();
     } catch (error) {
       updateState({ errors: { form: error.message } });
     }
   };
+  useEffect(() => {
+    // Refresh GRN data when component mounts
+    fetchLatestGrnEntries();
+
+    // Optional: Set up interval to refresh data every 30 seconds
+    const interval = setInterval(fetchLatestGrnEntries, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmitGivenAmount = async (e) => {
     e.preventDefault();
@@ -456,6 +491,18 @@ export default function SalesEntry() {
       updateState({ errors: { form: error.message } });
     }
   };
+  const getCurrentBalance = () => {
+    if (!formData.grn_entry_code) {
+      return { balancePacks: 0, balanceWeight: 0 };
+    }
+
+    const latestEntry = state.realTimeGrnEntries.find(en => en.code === formData.grn_entry_code);
+    return {
+      balancePacks: latestEntry?.packs || 0,
+      balanceWeight: latestEntry?.weight || 0
+    };
+  };
+
   const { isSubmitting } = state;
 
   const handleSubmit = async (e) => {
@@ -525,6 +572,9 @@ export default function SalesEntry() {
       updateState({
         allSales: isEditing ? allSales.map(s => s.id === newSale.id ? newSale : s) : [...allSales, newSale]
       });
+
+      // ✅ CALL fetchLatestGrnEntries HERE - After successful submission
+      await fetchLatestGrnEntries();
 
       setFormData(prevForm => ({
         customer_code: prevForm.customer_code || customerCode, // Preserve the customer code
@@ -865,7 +915,7 @@ export default function SalesEntry() {
           handleCustomerClick={handleCustomerClick} unprintedTotal={unprintedTotal} formatDecimal={formatDecimal} allSales={allSales} />
       </div>
 
-      <div className="w-[125%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
+      <div className="w-[135%] shadow-2xl rounded-3xl p-6" style={{ backgroundColor: "#111439ff" }}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center bg-gray-50 p-0.5 rounded-xl shadow-sm border border-black">
             <span className="text-gray-600 font-medium">Bill No: {currentBillNo}</span>
@@ -891,35 +941,45 @@ export default function SalesEntry() {
               value={formData.grn_entry_code ? {
                 value: formData.grn_entry_code,
                 label: formData.grn_entry_code,
-                data: initialData.entries.find((en) => en.code === formData.grn_entry_code)
+                data: state.realTimeGrnEntries.find((en) => en.code === formData.grn_entry_code)
               } : null}
-              onChange={(selected) => {
+              onChange={async (selected) => {
                 if (selected?.data) {
-                  const entry = selected.data;
-                  const matchingItem = initialData.items.find(i => String(i.no) === String(entry.item_code));
-                  const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
-                  const fetchedPackCost = parseFloat(matchingItem?.pack_cost) || 0;
+                  // Fetch latest data before processing selection
+                  const latestEntries = await fetchLatestGrnEntries();
+                  const latestEntry = latestEntries.find(en => en.code === selected.value);
 
-                  setFormData(prev => ({
-                    ...prev,
-                    // Both grn_entry_code and code must be set to the new GRN code.
-                    grn_entry_code: selected.value,
-                    code: selected.value, // <-- **THE FIX**
-                    item_name: entry.item_name || "",
-                    supplier_code: entry.supplier_code || "",
-                    item_code: entry.item_code || "",
-                    price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
-                    pack_due: fetchedPackDue,
-                    weight: editingSaleId ? prev.weight : "",
-                    packs: editingSaleId ? prev.packs : "",
-                    total: editingSaleId ? prev.total : ""
-                  }));
+                  if (latestEntry) {
+                    const matchingItem = initialData.items.find(i => String(i.no) === String(latestEntry.item_code));
+                    const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
+                    const fetchedPackCost = parseFloat(matchingItem?.pack_cost) || 0;
 
-                  updateState({
-                    grnSearchInput: "",
-                    packCost: fetchedPackCost // Add this line
-                  });
-                  requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
+                    setFormData(prev => ({
+                      ...prev,
+                      grn_entry_code: selected.value,
+                      code: selected.value,
+                      item_name: latestEntry.item_name || "",
+                      supplier_code: latestEntry.supplier_code || "",
+                      item_code: latestEntry.item_code || "",
+                      price_per_kg: latestEntry.price_per_kg || latestEntry.PerKGPrice || latestEntry.SalesKGPrice || "",
+                      pack_due: fetchedPackDue,
+                      weight: editingSaleId ? prev.weight : "",
+                      packs: editingSaleId ? prev.packs : "",
+                      total: editingSaleId ? prev.total : ""
+                    }));
+
+                    // Update balance info with real-time data
+                    updateState({
+                      grnSearchInput: "",
+                      packCost: fetchedPackCost,
+                      balanceInfo: {
+                        balancePacks: latestEntry.packs || 0,
+                        balanceWeight: latestEntry.weight || 0
+                      }
+                    });
+
+                    requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
+                  }
                 }
               }}
               onInputChange={(inputValue, { action }) => {
@@ -930,9 +990,10 @@ export default function SalesEntry() {
                 }
                 return inputValue;
               }}
-              onKeyDown={(e) => {
+              onKeyDown={async (e) => {
                 if (e.key === "Enter" && !e.isPropagationStopped()) {
-                  // Allow React Select's default behavior to select the highlighted option
+                  // Refresh data when Enter is pressed in search
+                  await fetchLatestGrnEntries();
                   setTimeout(() => {
                     refs.weight.current?.focus();
                   }, 10);
@@ -940,7 +1001,7 @@ export default function SalesEntry() {
               }}
               getOptionLabel={(option) => option.label}
               getOptionValue={(option) => option.value}
-              options={initialData.entries
+              options={state.realTimeGrnEntries
                 .filter(entry => {
                   if (!state.grnSearchInput || state.grnSearchInput === '') return false;
                   return state.grnSearchInput.charAt(0) === (entry.code ? entry.code.charAt(0) : '');
@@ -954,16 +1015,32 @@ export default function SalesEntry() {
                   : "No GRN entries found matching the first letter"
               }
               formatOptionLabel={(option, { context }) => {
-                const entry = option.data || initialData.entries.find(en => en.code === option.value);
+                const entry = option.data || state.realTimeGrnEntries.find(en => en.code === option.value);
                 if (!entry) return option.label;
 
                 const showHeader = option.index === 0;
                 return (
                   <div className="w-full">
                     {showHeader && (
-                      <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center"><div className="text-left">Code</div><div className="text-left">Item Name</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>
+                      <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center">
+                        <div className="text-left">Code</div>
+                        <div className="text-left">Item Name</div>
+                        <div className="text-center">OP</div>
+                        <div className="text-center">OW</div>
+                        <div className="text-center">BP</div>
+                        <div className="text-center">BW</div>
+                        <div className="text-right">PRICE</div>
+                      </div>
                     )}
-                    <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-blue-200 items-center"><div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>{entry.code || "-"}</div><div className="text-left truncate" title={entry.item_name || "Unknown Item"}>{entry.item_name || "Unknown Item"}</div><div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div><div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div></div>
+                    <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-blue-200 items-center">
+                      <div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>{entry.code || "-"}</div>
+                      <div className="text-left truncate" title={entry.item_name || "Unknown Item"}>{entry.item_name || "Unknown Item"}</div>
+                      <div className="text-center">{entry.original_packs || "0"}</div>
+                      <div className="text-center">{formatDecimal(entry.original_weight)}</div>
+                      <div className="text-center">{entry.packs || "0"}</div>
+                      <div className="text-center">{formatDecimal(entry.weight)}</div>
+                      <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
+                    </div>
                   </div>
                 );
               }}
@@ -1035,35 +1112,32 @@ export default function SalesEntry() {
             <div className="flex items-start gap-3">
               <div className="flex flex-col">
                 <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-3 border border-gray-400 rounded-xl text-lg font-semibold text-black w-45 bg-gray-100 overflow-x-auto whitespace-nowrap" />
-                {formData.grn_entry_code && <span className="text-red-600 font-bold text-[19px] mt-1 text-center whitespace-nowrap inline-block"><strong>BW:</strong> {formatDecimal(balanceInfo.balanceWeight)}</span>}
+                {formData.grn_entry_code && (
+                  <span className="text-red-600 font-bold text-[19px] mt-1 text-center whitespace-nowrap inline-block">
+                    <strong>BW:</strong> {formatDecimal(Math.max(0, getCurrentBalance().balanceWeight - (parseFloat(formData.weight) || 0)))}
+                  </span>
+                )}
               </div>
               <div className="flex flex-col">
-                <input id="weight" ref={refs.weight} name="weight" type="text" value={formData.weight} onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" maxLength="6" />
+                <input id="weight" ref={refs.weight} name="weight" type="text" value={formData.weight} onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg font-semibold text-black overflow-x-auto whitespace-nowrap w-[120px]" maxLength="7" />
                 <span className="text-sm mt-1 text-center invisible">Placeholder</span>
               </div>
               <div className="flex flex-col">
-  <input 
-    id="price_per_kg" 
-    ref={refs.pricePerKg} 
-    name="price_per_kg" 
-    type="text" 
-    value={formData.price_per_kg} 
-    onChange={(e) => handleInputChange('price_per_kg', e.target.value)} 
-    onKeyDown={(e) => handleKeyDown(e, 6)} 
-    placeholder="මිල" 
-    className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-24 overflow-x-auto whitespace-nowrap" 
-    maxLength="6" 
-  />
- <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block">
-  {formatDecimal(packCost)}
-</span>
-</div>
-              <div className="flex flex-col">
-                <input id="packs" ref={refs.packs} name="packs" type="text" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="අසුරුම්" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-20 overflow-x-auto whitespace-nowrap" maxLength="3" />
-                {formData.grn_entry_code && <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block"><strong>BP:</strong> {balanceInfo.balancePacks || 0}</span>}
+                <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="text" value={formData.price_per_kg} onChange={(e) => handleInputChange('price_per_kg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මිල" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg font-semibold text-black overflow-x-auto whitespace-nowrap w-[120px]" maxLength="7" />
+                <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block">
+                  {formatDecimal(packCost)}
+                </span>
               </div>
               <div className="flex flex-col">
-                <input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} onInput={(e) => e.target.value.length > 6 && (e.target.value = e.target.value.slice(0, 6))} className="px-4 py-3 border border-gray-400 rounded-xl text-right text-lg font-semibold text-black bg-gray-100 w-[9.0rem] overflow-x-auto whitespace-nowrap" maxLength="6" />
+                <input id="packs" ref={refs.packs} name="packs" type="text" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="අසුරුම්" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-20 overflow-x-auto whitespace-nowrap" maxLength="4" />
+                {formData.grn_entry_code && (
+                  <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block">
+                    <strong>BP:</strong> {Math.max(0, getCurrentBalance().balancePacks - (parseInt(formData.packs) || 0))}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col">
+                <input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} onInput={(e) => e.target.value.length > 6 && (e.target.value = e.target.value.slice(0, 6))} className="px-4 py-3 border border-gray-400 rounded-xl text-right text-lg font-semibold text-black bg-gray-100 w-[10.0rem] overflow-x-auto whitespace-nowrap" maxLength="20" />
               </div>
             </div>
           </div>
