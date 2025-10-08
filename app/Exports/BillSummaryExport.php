@@ -1,6 +1,4 @@
 <?php
-// app/Exports/BillSummaryExport.php
-
 namespace App\Exports;
 
 use Illuminate\Support\Collection;

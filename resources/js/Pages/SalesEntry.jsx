@@ -123,7 +123,9 @@ export default function SalesEntry() {
     isSubmitting: false,
     formData: initialFormData,
     packCost: 0,
-    realTimeGrnEntries: initialData.entries
+    realTimeGrnEntries: initialData.entries,
+    customerSearchInput: "",
+    searchQueries: { printed: "", unprinted: "" },
   });
 
   const setFormData = (updater) => setState(prev => ({
@@ -133,7 +135,7 @@ export default function SalesEntry() {
 
   const updateState = (updates) => setState(prev => ({ ...prev, ...updates }));
 
-  const { allSales, selectedPrintedCustomer, selectedUnprintedCustomer, editingSaleId, searchQueries, errors, balanceInfo, loanAmount, isManualClear, formData, packCost } = state;
+  const { allSales, customerSearchInput, selectedPrintedCustomer, selectedUnprintedCustomer, editingSaleId, searchQueries, errors, balanceInfo, loanAmount, isManualClear, formData, packCost } = state;
 
   const { newSales, printedSales, unprintedSales } = useMemo(() => ({
     newSales: allSales.filter(s => s.id && s.bill_printed !== 'Y' && s.bill_printed !== 'N'),
@@ -350,21 +352,28 @@ export default function SalesEntry() {
     }
   };
 
-  const handleCustomerSelect = (e) => {
-    const short = e.target.value;
+  // REPLACE THE ENTIRE OLD FUNCTION WITH THIS:
+  const handleCustomerSelect = (selectedOption) => {
+    // react-select passes the object { value: 'short_name', label: 'Customer Name (short_name)' }
+    const short = selectedOption ? selectedOption.value : "";
     const customer = initialData.customers.find(x => String(x.short_name) === String(short));
     const hasUnprintedSales = unprintedCustomers.includes(short);
+
     updateState({
       selectedUnprintedCustomer: hasUnprintedSales ? short : null,
-      selectedPrintedCustomer: null
+      selectedPrintedCustomer: null,
+      customerSearchInput: "" // Clear search input on selection
     });
+
     setFormData(prev => ({
       ...prev,
-      customer_code: short || prev.customer_code,
+      customer_code: short || "", // If no option selected (cleared), set to ""
       customer_name: customer?.name || ""
     }));
+
     fetchLoanAmount(short);
     updateState({ isManualClear: false });
+
     setTimeout(() => {
       refs.grnSelect.current?.focus();
     }, 100);
@@ -415,7 +424,8 @@ export default function SalesEntry() {
       balanceInfo: { balancePacks: 0, balanceWeight: 0 },
       loanAmount: 0,
       isManualClear: false,
-      packCost: 0
+      packCost: 0,
+      customerSearchInput: "",
     });
   };
 
@@ -634,7 +644,8 @@ export default function SalesEntry() {
 
     updateState({
       editingSaleId: null, // FIX: Clear editing state
-      isManualClear: false
+      isManualClear: false,
+      customerSearchInput: ""
     });
     fetchLoanAmount(newCustomerCode);
 
@@ -689,12 +700,12 @@ export default function SalesEntry() {
       updateState({
         allSales: allSales.filter(s => s.id !== saleId)
       });
-       fetchLatestGrnEntries();
+      fetchLatestGrnEntries();
 
       // Clear form if we were editing the deleted record
       if (editingSaleId === saleId) {
         handleClearForm();
-       
+
       }
     } catch (error) {
       updateState({ errors: { form: error.message } });
@@ -790,8 +801,8 @@ export default function SalesEntry() {
       itemGroups[s.item_name].totalPacks += packs;
       return `<tr style="font-size:1.2em;">
         <td style="text-align:left;">${s.item_name || ""} <br>${packs}</td>
-        <td style="text-align:right; padding-right:18px;">${(parseFloat(s.weight) || 0).toFixed(2)}</td>
-        <td style="text-align:right;">${(parseFloat(s.price_per_kg) || 0).toFixed(2)}</td>
+        <td style="text-align:center; padding-right:20px;">${(parseFloat(s.weight) || 0).toFixed(2)}</td>
+        <td style="text-align:left;">${(parseFloat(s.price_per_kg) || 0).toFixed(2)}</td>
         <td style="text-align:right;">${((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0)).toFixed(2)}</td>
       </tr>`;
     }).join("");
@@ -819,22 +830,36 @@ export default function SalesEntry() {
       <td style="width:50%;text-align:right;white-space:nowrap;font-size:1rem;"><span style="font-size:0.8rem;">ඉතිරිය: </span><span style="font-weight:bold;font-size:1.5rem;">${Math.abs(remaining).toFixed(2)}</span></td>
     </tr>` : '';
 
-    const loanRow = globalLoanAmount > 0 ? `<tr>
-      <td style="font-weight:normal;font-size:0.9rem;text-align:left;">පෙර ණය: Rs. <span>${globalLoanAmount.toFixed(2)}</span></td>
-      <td style="font-weight:bold;text-align:right;font-size:1.5em;">Rs. ${(globalLoanAmount + totalPrice).toFixed(2)}</td>
-    </tr>` : '';
+   const totalAmount = Math.abs(globalLoanAmount) + totalPrice;
+
+    const loanRow = globalLoanAmount !== 0 ? `<tr>
+  <td style="font-weight:normal;font-size:0.9rem;text-align:left; white-space: nowrap;">
+  පෙර ණය: Rs. <span>
+    ${globalLoanAmount < 0
+        ? Math.abs(globalLoanAmount).toFixed(2)   // remove minus sign if negative
+        : globalLoanAmount.toFixed(2)
+      }
+  </span>
+</td>
+
+  <td style="font-weight:bold;text-align:right;font-size:1.5em;">
+    Rs. ${Math.abs(totalAmount).toFixed(2)}<!-- ✅ removes minus sign only -->
+  </td>
+</tr>` : '';
+
+
 
     return `<div class="receipt-container" style="width:100%;max-width:300px;margin:0 auto;padding:5px;">
       <div style="text-align:center;margin-bottom:5px;">
         <h3 style="font-size:1.8em;font-weight:bold;margin:0;"><span style="border:2px solid #000;padding:0.1em 0.3em;display:inline-block;margin-right:5px;">B32</span>TAG ට්‍රේඩර්ස්</h3>
-        <p style="margin:0;font-size:0.7em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
+       <p style="margin:0;font-size:0.7em; white-space: nowrap;"> අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ/බෙදාහරින්නෝ</p>
         <p style="margin:0;font-size:0.7em;">වි.ආ.ම. වේයන්ගොඩ</p>
       </div>
       <div style="text-align:left;margin-bottom:5px;">
         <table style="width:100%;font-size:9px;border-collapse:collapse;">
           <tr><td style="width:50%;">දිනය : ${date}</td><td style="width:50%;text-align:right;">${time}</td></tr>
           <tr><td colspan="2">දුර : ${mobile || ''}</td></tr>
-          <tr><td>බිල් අංකය : <strong>${billNo}</strong></td><td style="text-align:right;"><strong style="font-size:1.8em;">${customerName.toUpperCase()}</strong></td></tr>
+          <tr><td>බිල් අංකය : <strong>${billNo}</strong></td><td style="text-align:right;"><strong style="font-size:2.0em;">${customerName.toUpperCase()}</strong></td></tr>
         </table>
       </div>
       <hr style="border:0.5px solid #000;margin:5px 0;">
@@ -852,11 +877,11 @@ export default function SalesEntry() {
       <table style="width:100%;font-size:11px;border-collapse:collapse;">
         <tr><td>ප්‍රවාහන ගාස්තු:</td><td style="text-align:right;font-weight:bold;">00</td></tr>
         <tr><td>කුලිය:</td><td style="text-align:right;font-weight:bold;">${totalPackDueCost.toFixed(2)}</td></tr>
-        <tr><td>අගය:</td><td style="text-align:right;font-weight:bold;"><span style="display:inline-block;border-top:1px solid #000;border-bottom:3px double #000;padding:2px 4px;min-width:80px;text-align:right;">${(totalPrice).toFixed(2)}</span></td></tr>
+        <tr><td>අගය:</td><td style="text-align:right;font-weight:bold;"><span style="display:inline-block; border-top:1px solid #000; border-bottom:3px double #000; padding:2px 4px; min-width:80px; text-align:right; font-size:1.5em;">${(totalPrice).toFixed(2)}</span></td></tr>
         ${givenAmountRow}${loanRow}
       </table>
-      <hr style="border:0.5px solid #000;margin:5px 0;">
       <div style="font-size:10px;">${itemSummaryHtml}</div>
+       <hr style="border:0.5px solid #000;margin:5px 0;">
       <div style="text-align:center;margin-top:10px;font-size:10px;">
         <p style="margin:0;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p><p style="margin:0;">නැවත භාර ගනු නොලැබේ</p>
       </div>
@@ -896,7 +921,6 @@ export default function SalesEntry() {
 
       const printPromises = [
         printSingleContent(receiptHtml, customerName),
-        printSingleContent(copyHtml, customerName)
       ];
 
       await Promise.all(printPromises);
@@ -908,7 +932,8 @@ export default function SalesEntry() {
           return isPrinted ? { ...s, bill_printed: 'Y', bill_no: billNo } : s;
         }),
         selectedUnprintedCustomer: null,
-        selectedPrintedCustomer: null
+        selectedPrintedCustomer: null,
+        customerSearchInput: ""
       });
       handleClearForm();
     } catch (error) {
@@ -962,12 +987,7 @@ export default function SalesEntry() {
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
               <input id="customer_code_input" ref={refs.customerCode} name="customer_code" value={formData.customer_code || autoCustomerCode} onChange={(e) => { const value = e.target.value.toUpperCase(); handleInputChange("customer_code", value); if (value.trim() === "") { setFormData(prev => ({ ...prev, customer_code: "", customer_name: "", given_amount: "" })); updateState({ selectedPrintedCustomer: null, selectedUnprintedCustomer: null }); } }} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10} placeholder="Customer Code" className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase" />
-              <select id="customer_code_select" ref={refs.customerSelect} value={formData.customer_code}
-                onChange={handleCustomerSelect} onKeyDown={(e) => handleKeyDown(e, 1)} className="px-4 py-2 border rounded-xl">
-                <option value="">-- Select Customer --</option>
-                {initialData.customers.map(c => <option key={c.short_name} value={c.short_name}>{c.name} ({c.short_name})</option>)}
-              </select>
-
+             <Select id="customer_code_select" ref={refs.customerSelect} value={formData.customer_code ? { value: formData.customer_code, label: `${formData.customer_name} (${formData.customer_code})` } : null} onChange={handleCustomerSelect} options={initialData.customers.filter(c => !customerSearchInput || c.short_name.charAt(0).toUpperCase() === customerSearchInput.charAt(0).toUpperCase()).map(c => ({ value: c.short_name, label: `(${c.short_name})` }))} onInputChange={(inputValue, { action }) => { if(action === "input-change") updateState({ customerSearchInput: inputValue.toUpperCase() }); }} inputValue={customerSearchInput} placeholder="-- Select Customer --" isClearable isSearchable className="rounded-xl" styles={{ control: base => ({ ...base, minHeight:"44px", height:"44px", borderRadius:"0.75rem" }), valueContainer: base => ({ ...base, padding:"0 8px", height:"44px", flex:1, display:"flex", alignItems:"center", overflow:"hidden" }), placeholder: base => ({ ...base, fontSize:"1rem" }) }} />
               <input type="text" readOnly value={`Loan: Rs. ${formatDecimal(loanAmount)}`} placeholder="Loan Amount"
                 className="px-4 py-2 border rounded-xl bg-yellow-100 text-red-600 font-bold" />
             </div>
