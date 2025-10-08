@@ -22,14 +22,21 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'short_name'=>'nullable',
+            'short_name' => 'nullable',
             'ID_NO' => 'nullable',
             'name' => 'nullable',
             'telephone_no' => 'nullable',
             'credit_limit' => 'nullable',
         ]);
 
-        Customer::create($request->all());
+        // Transform short_name to uppercase before saving
+        $data = $request->all();
+        if (!empty($data['short_name'])) {
+            $data['short_name'] = strtoupper($data['short_name']);
+        }
+
+        Customer::create($data);
+
         return redirect()->route('customers.index')->with('success', 'Customer added successfully.');
     }
 
@@ -41,10 +48,10 @@ class CustomerController extends Controller
     public function update(Request $request, Customer $customer)
     {
         $request->validate([
-            'short_name'=>'required',
+            'short_name' => 'required',
             'name' => 'required',
             'telephone_no' => 'nullable',
-             'ID_NO' => 'nullable',
+            'ID_NO' => 'nullable',
             'credit_limit' => 'required|numeric',
         ]);
 

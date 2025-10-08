@@ -373,6 +373,7 @@ export default function SalesEntry() {
 
     fetchLoanAmount(short);
     updateState({ isManualClear: false });
+    handleSubmitGivenAmount();
 
     setTimeout(() => {
       refs.grnSelect.current?.focus();
@@ -457,50 +458,51 @@ export default function SalesEntry() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSubmitGivenAmount = async (e) => {
-    e.preventDefault();
-    updateState({ errors: {} });
+ const handleSubmitGivenAmount = async (e) => {
+  e.preventDefault();
+  updateState({ errors: {} });
 
-    const customerCode = formData.customer_code || autoCustomerCode;
+  // Get customer code from BOTH sources: form input AND React Select
+  const customerCode = formData.customer_code || autoCustomerCode;
 
-    if (!customerCode) {
-      updateState({ errors: { form: "Please enter a customer code first" } });
-      refs.customerCode.current?.focus();
-      return;
-    }
+  if (!customerCode) {
+    updateState({ errors: { form: "Please enter or select a customer code first" } });
+    refs.customerCode.current?.focus();
+    return;
+  }
 
-    if (!formData.given_amount) {
-      updateState({ errors: { form: "Please enter a given amount" } });
-      return;
-    }
+  if (!formData.given_amount) {
+    updateState({ errors: { form: "Please enter a given amount" } });
+    return;
+  }
 
-    const customerSales = allSales.filter(s => s.customer_code === customerCode);
-    const firstSale = customerSales[0];
-    if (!firstSale) {
-      updateState({ errors: { form: "No sales records found for this customer. Please add a sales record first." } });
-      return;
-    }
+  const customerSales = allSales.filter(s => s.customer_code === customerCode);
+  const firstSale = customerSales[0];
+  if (!firstSale) {
+    updateState({ errors: { form: "No sales records found for this customer. Please add a sales record first." } });
+    return;
+  }
 
-    try {
-      const url = window.__ROUTES__.givenAmount.replace(':id', firstSale.id);
-      const data = await apiCall(url, "PUT", { given_amount: parseFloat(formData.given_amount) || 0 });
+  try {
+    const url = window.__ROUTES__.givenAmount.replace(':id', firstSale.id);
+    const data = await apiCall(url, "PUT", { given_amount: parseFloat(formData.given_amount) || 0 });
 
-      // Update the sales data with the new accumulated given_amount
-      updateState({
-        allSales: allSales.map(s => s.id === data.sale.id ? data.sale : s)
-      });
+    // Update the sales data with the new accumulated given_amount
+    updateState({
+      allSales: allSales.map(s => s.id === data.sale.id ? data.sale : s)
+    });
 
-      // CLEAR the input field after successful submission
-      setFormData(prev => ({
-        ...prev,
-        given_amount: "" // Clear the field instead of showing accumulated total
-      }));
+    // CLEAR the input field after successful submission
+    setFormData(prev => ({
+      ...prev,
+      given_amount: "" // Clear the field instead of showing accumulated total
+    }));
 
-      refs.grnSelect.current?.focus();
-    } catch (error) {
-      updateState({ errors: { form: error.message } });
-    }
-  };
+    refs.grnSelect.current?.focus();
+  } catch (error) {
+    updateState({ errors: { form: error.message } });
+  }
+};
   const getCurrentBalance = () => {
     if (!formData.grn_entry_code) {
       return { balancePacks: 0, balanceWeight: 0 };
@@ -987,9 +989,8 @@ export default function SalesEntry() {
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
               <input id="customer_code_input" ref={refs.customerCode} name="customer_code" value={formData.customer_code || autoCustomerCode} onChange={(e) => { const value = e.target.value.toUpperCase(); handleInputChange("customer_code", value); if (value.trim() === "") { setFormData(prev => ({ ...prev, customer_code: "", customer_name: "", given_amount: "" })); updateState({ selectedPrintedCustomer: null, selectedUnprintedCustomer: null }); } }} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10} placeholder="Customer Code" className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase" />
-             <Select id="customer_code_select" ref={refs.customerSelect} value={formData.customer_code ? { value: formData.customer_code, label: `${formData.customer_name} (${formData.customer_code})` } : null} onChange={handleCustomerSelect} options={initialData.customers.filter(c => !customerSearchInput || c.short_name.charAt(0).toUpperCase() === customerSearchInput.charAt(0).toUpperCase()).map(c => ({ value: c.short_name, label: `(${c.short_name})` }))} onInputChange={(inputValue, { action }) => { if(action === "input-change") updateState({ customerSearchInput: inputValue.toUpperCase() }); }} inputValue={customerSearchInput} placeholder="-- Select Customer --" isClearable isSearchable className="rounded-xl" styles={{ control: base => ({ ...base, minHeight:"44px", height:"44px", borderRadius:"0.75rem" }), valueContainer: base => ({ ...base, padding:"0 8px", height:"44px", flex:1, display:"flex", alignItems:"center", overflow:"hidden" }), placeholder: base => ({ ...base, fontSize:"1rem" }) }} />
-              <input type="text" readOnly value={`Loan: Rs. ${formatDecimal(loanAmount)}`} placeholder="Loan Amount"
-                className="px-4 py-2 border rounded-xl bg-yellow-100 text-red-600 font-bold" />
+             <Select id="customer_code_select" ref={refs.customerSelect} value={formData.customer_code ? { value: formData.customer_code, label: `${formData.customer_code}` } : null} onChange={handleCustomerSelect} options={initialData.customers.filter(c => !customerSearchInput || c.short_name.charAt(0).toUpperCase() === customerSearchInput.charAt(0).toUpperCase()).map(c => ({ value: c.short_name, label: `${c.short_name}` }))} onInputChange={(inputValue, { action }) => { if(action === "input-change") updateState({ customerSearchInput: inputValue.toUpperCase() }); }} inputValue={customerSearchInput} placeholder="-- Select Customer --" isClearable isSearchable className="rounded-xl" styles={{ control: base => ({ ...base, minHeight:"44px", height:"44px", borderRadius:"0.75rem" }), valueContainer: base => ({ ...base, padding:"0 8px", height:"44px", flex:1, display:"flex", alignItems:"center", overflow:"hidden" }), placeholder: base => ({ ...base, fontSize:"1rem" }) }} />
+             <input type="text" readOnly value={`Loan: Rs. ${loanAmount < 0 ? formatDecimal(Math.abs(loanAmount)) : formatDecimal(loanAmount)}`} placeholder="Loan Amount" className="px-4 py-2 border rounded-xl bg-yellow-100 text-red-600 font-bold" />
             </div>
 
             <Select
