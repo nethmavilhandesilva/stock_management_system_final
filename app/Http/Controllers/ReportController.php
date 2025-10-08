@@ -850,65 +850,69 @@ class ReportController extends Controller
             'totalDamages'
         ));
     }
-    public function salesReport(Request $request)
-    {
-        // Determine which table to query
-        $query = Sale::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
+  public function salesReport(Request $request)
+{
+    // Determine which table to query
+    $useHistory = $request->filled('start_date') || $request->filled('end_date');
 
-        $useHistory = $request->filled('start_date') || $request->filled('end_date');
+    // Use SalesHistory if date range is provided, otherwise Sale
+    $query = $useHistory
+        ? SalesHistory::query()
+        : Sale::query();
 
-        if ($useHistory) {
-            // Use SalesHistory table if date range is provided
-            $query = \App\Models\SalesHistory::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
-        }
+    // Include only processed sales
+    $query->where('Processed', 'Y');
 
-        // Supplier filter
-        if ($request->filled('supplier_code')) {
-            $query->where('supplier_code', $request->supplier_code);
-        }
-
-        // Item filter
-        if ($request->filled('item_code')) {
-            $query->where('item_code', $request->item_code);
-        }
-
-        // Customer short name filter
-        if ($request->filled('customer_short_name')) {
-            $search = $request->customer_short_name;
-            $query->where(function ($q) use ($search) {
-                $q->where('customer_code', 'like', '%' . $search . '%')
-                    ->orWhereIn('customer_code', function ($sub) use ($search) {
-                        $sub->select('short_name')
-                            ->from('customers')
-                            ->where('name', 'like', '%' . $search . '%');
-                    });
-            });
-        }
-
-        // Customer code filter
-        if ($request->filled('customer_code')) {
-            $query->where('customer_code', $request->customer_code);
-        }
-
-        // Bill No filter
-        if ($request->filled('bill_no')) {
-            $query->where('bill_no', $request->bill_no);
-        }
-
-        // Date range filter
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('Date', [$request->start_date, $request->end_date]);
-        } elseif ($request->filled('start_date')) {
-            $query->where('Date', '>=', $request->start_date);
-        } elseif ($request->filled('end_date')) {
-            $query->where('Date', '<=', $request->end_date);
-        }
-
-        $salesByBill = $query->get()->groupBy('bill_no');
-
-        return view('dashboard.reports.new_sales_report', compact('salesByBill'));
+    // Supplier filter
+    if ($request->filled('supplier_code')) {
+        $query->where('supplier_code', $request->supplier_code);
     }
 
+    // Item filter
+    if ($request->filled('item_code')) {
+        $query->where('item_code', $request->item_code);
+    }
+
+    // Customer short name filter
+    if ($request->filled('customer_short_name')) {
+        $search = $request->customer_short_name;
+        $query->where(function ($q) use ($search) {
+            $q->where('customer_code', 'like', '%' . $search . '%')
+                ->orWhereIn('customer_code', function ($sub) use ($search) {
+                    $sub->select('short_name')
+                        ->from('customers')
+                        ->where('name', 'like', '%' . $search . '%');
+                });
+        });
+    }
+
+    // Customer code filter
+    if ($request->filled('customer_code')) {
+        $query->where('customer_code', $request->customer_code);
+    }
+
+    // Bill No filter
+    if ($request->filled('bill_no')) {
+        $query->where('bill_no', $request->bill_no);
+    }
+
+    // Date range filter (only applied if provided)
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $query->whereBetween('Date', [$request->start_date, $request->end_date]);
+    } elseif ($request->filled('start_date')) {
+        $query->where('Date', '>=', $request->start_date);
+    } elseif ($request->filled('end_date')) {
+        $query->where('Date', '<=', $request->end_date);
+    }
+
+    // Order by sales ID in descending order (highest first)
+    $query->orderBy('id', 'DESC');
+
+    // Get all processed sales (no grouping by bill number)
+    $salesData = $query->get();
+
+    return view('dashboard.reports.new_sales_report', compact('salesData'));
+}
     public function grnReport(Request $request)
     {
         $code = $request->input('code');
@@ -1150,12 +1154,6 @@ class ReportController extends Controller
 
     public function emailItemWiseReport(Request $request)
     {
-        // This method is designed to be triggered by a POST request from a form.
-        // The "MethodNotAllowed" error indicates that the frontend is trying to use a GET request.
-        // Make sure the "Email" button is inside a <form> with method="POST" and its action
-        // attribute set to the correct route for this method.
-
-        // Start with the base query, replicating the logic from your itemWiseReport method
         $query = Sale::query();
 
         // Apply any filters from the request to the query
@@ -1741,81 +1739,107 @@ class ReportController extends Controller
     }
 }
     public function downloadSalesReport(Request $request)
-    {
-        // Replicate the data-fetching logic from your salesReport method
-        $query = Sale::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
+{
+    // Determine which table to query - replicate logic from salesReport
+    $useHistory = $request->filled('start_date') || $request->filled('end_date');
 
-        // Apply all filters from the original request
-        if ($request->filled('supplier_code')) {
-            $query->where('supplier_code', $request->supplier_code);
-        }
-        if ($request->filled('item_code')) {
-            $query->where('item_code', $request->item_code);
-        }
-        if ($request->filled('customer_short_name')) {
-            $search = $request->customer_short_name;
-            $query->where(function ($q) use ($search) {
-                $q->where('customer_code', 'like', '%' . $search . '%')
-                    ->orWhereIn('customer_code', function ($sub) use ($search) {
-                        $sub->select('short_name')
-                            ->from('customers')
-                            ->where('name', 'like', '%' . $search . '%');
-                    });
-            });
-        }
-        if ($request->filled('customer_code')) {
-            $query->where('customer_code', $request->customer_code);
-        }
-        if ($request->filled('bill_no')) {
-            $query->where('bill_no', $request->bill_no);
-        }
+    // Use SalesHistory if date range is provided, otherwise Sale
+    $query = $useHistory
+        ? SalesHistory::query()
+        : Sale::query();
 
-        $salesByBill = $query->get()->groupBy('bill_no');
-        $reportTitle = 'Sales Report - Bill Summary';
+    // Include only processed sales
+    $query->where('Processed', 'Y');
 
-        // Handle Excel format
-        if ($request->get('format') === 'excel') {
-            return Excel::download(new \App\Exports\BillSummaryExport($salesByBill), 'sales-report-bill-summary.xlsx');
-        }
-
-        // Handle PDF format
-        if ($request->get('format') === 'pdf') {
-            $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
-
-            try {
-                $defaultConfig = (new ConfigVariables())->getDefaults();
-                $fontDirs = $defaultConfig['fontDir'];
-                $defaultFontConfig = (new FontVariables())->getDefaults();
-                $fontData = $defaultFontConfig['fontdata'];
-
-                $mpdf = new Mpdf([
-                    'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
-                    'fontdata' => $fontData + [
-                        'notosanssinhala' => [
-                            'R' => 'NotoSansSinhala-Regular.ttf',
-                            'B' => 'NotoSansSinhala-Bold.ttf',
-                        ]
-                    ],
-                    'default_font' => 'notosanssinhala',
-                    'mode' => 'utf-8',
-                    'format' => 'A4-P',
-                    'margin_top' => 15,
-                    'margin_bottom' => 15,
-                    'margin_left' => 10,
-                    'margin_right' => 10,
-                ]);
-
-                $html = view('dashboard.reports.sales_report_pdf', compact('salesByBill'))->render();
-                $mpdf->WriteHTML($html);
-                return $mpdf->Output($filename, 'D');
-
-            } catch (\Exception $e) {
-                Log::error("PDF generation failed: " . $e->getMessage());
-                return back()->with('error', 'PDF generation failed: ' . $e->getMessage());
-            }
-        }
-        return back()->with('error', 'Invalid export format.');
+    // Apply all filters from the salesReport method
+    if ($request->filled('supplier_code')) {
+        $query->where('supplier_code', $request->supplier_code);
     }
+
+    if ($request->filled('item_code')) {
+        $query->where('item_code', $request->item_code);
+    }
+
+    if ($request->filled('customer_short_name')) {
+        $search = $request->customer_short_name;
+        $query->where(function ($q) use ($search) {
+            $q->where('customer_code', 'like', '%' . $search . '%')
+                ->orWhereIn('customer_code', function ($sub) use ($search) {
+                    $sub->select('short_name')
+                        ->from('customers')
+                        ->where('name', 'like', '%' . $search . '%');
+                });
+        });
+    }
+
+    if ($request->filled('customer_code')) {
+        $query->where('customer_code', $request->customer_code);
+    }
+
+    if ($request->filled('bill_no')) {
+        $query->where('bill_no', $request->bill_no);
+    }
+
+    // Date range filter (only applied if provided)
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $query->whereBetween('Date', [$request->start_date, $request->end_date]);
+    } elseif ($request->filled('start_date')) {
+        $query->where('Date', '>=', $request->start_date);
+    } elseif ($request->filled('end_date')) {
+        $query->where('Date', '<=', $request->end_date);
+    }
+
+    // Order by sales ID in descending order (highest first) - same as salesReport
+    $query->orderBy('id', 'DESC');
+
+    // Get all processed sales (no grouping by bill number) - same as salesReport
+    $salesData = $query->get();
+    $reportTitle = 'Sales Report';
+
+    // Handle Excel format
+    if ($request->get('format') === 'excel') {
+        return Excel::download(new \App\Exports\BillSummaryExport($salesData), 'sales-report.xlsx');
+    }
+
+    // Handle PDF format
+    if ($request->get('format') === 'pdf') {
+        $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
+
+        try {
+            $defaultConfig = (new ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+            $defaultFontConfig = (new FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
+
+            $mpdf = new Mpdf([
+                'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+                'fontdata' => $fontData + [
+                    'notosanssinhala' => [
+                        'R' => 'NotoSansSinhala-Regular.ttf',
+                        'B' => 'NotoSansSinhala-Bold.ttf',
+                    ]
+                ],
+                'default_font' => 'notosanssinhala',
+                'mode' => 'utf-8',
+                'format' => 'A4-P',
+                'margin_top' => 15,
+                'margin_bottom' => 15,
+                'margin_left' => 10,
+                'margin_right' => 10,
+            ]);
+
+            // Use the same view as salesReport but for PDF
+            $html = view('dashboard.reports.sales_report_pdf', compact('salesData'))->render();
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($filename, 'D');
+
+        } catch (\Exception $e) {
+            Log::error("PDF generation failed: " . $e->getMessage());
+            return back()->with('error', 'PDF generation failed: ' . $e->getMessage());
+        }
+    }
+    return back()->with('error', 'Invalid export format.');
+}
     public function sendGrnEmail(Request $request)
     {
         $code = $request->input('code');
