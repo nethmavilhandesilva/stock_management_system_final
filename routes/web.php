@@ -75,7 +75,7 @@ Route::get('/sales/all-data', [SalesEntryController::class, 'getAllSalesData']);
 Route::get('/sales/all', [SalesEntryController::class, 'getAllSales']);
 Route::post('/sales/day-start', [SalesEntryController::class, 'dayStart'])->name('sales.dayStart');
 Route::post('/update-grn-stock', [SalesEntryController::class, 'updateGrnRemainingStock'])->name('update.grn.stock');
-
+Route::get('/sales/customers', [SalesEntryController::class, 'getCustomers'])->name('sales.customers');
 // Reports
 Route::get('/report', [ReportController::class, 'index'])->name('report.index');
 Route::post('/report/fetch', [ReportController::class, 'fetch'])->name('report.fetch');

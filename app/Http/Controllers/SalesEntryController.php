@@ -1168,6 +1168,22 @@ public function updateGivenAmount(Request $request, Sale $sale)
     ]);
 }
 
+public function getCustomers()
+{
+    try {
+        $customers = Sale::select('customer_code')
+            ->whereNotNull('customer_code')
+            ->where('customer_code', '<>', '')
+            ->distinct()
+            ->orderBy('customer_code')
+            ->get();
+        
+        return response()->json(['customers' => $customers]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to fetch customers'], 500);
+    }
+}
+
 }
 
 

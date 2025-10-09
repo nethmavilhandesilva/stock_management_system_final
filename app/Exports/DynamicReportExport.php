@@ -24,9 +24,6 @@ class DynamicReportExport implements FromCollection, WithHeadings
         $this->meta = $meta;
     }
 
-    /**
-     * Prepend metadata rows to the data collection
-     */
     public function collection(): Collection
     {
         $metaRows = collect();

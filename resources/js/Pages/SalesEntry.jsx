@@ -458,51 +458,51 @@ export default function SalesEntry() {
     return () => clearInterval(interval);
   }, []);
 
- const handleSubmitGivenAmount = async (e) => {
-  e.preventDefault();
-  updateState({ errors: {} });
+  const handleSubmitGivenAmount = async (e) => {
+    e.preventDefault();
+    updateState({ errors: {} });
 
-  // Get customer code from BOTH sources: form input AND React Select
-  const customerCode = formData.customer_code || autoCustomerCode;
+    // Get customer code from BOTH sources: form input AND React Select
+    const customerCode = formData.customer_code || autoCustomerCode;
 
-  if (!customerCode) {
-    updateState({ errors: { form: "Please enter or select a customer code first" } });
-    refs.customerCode.current?.focus();
-    return;
-  }
+    if (!customerCode) {
+      updateState({ errors: { form: "Please enter or select a customer code first" } });
+      refs.customerCode.current?.focus();
+      return;
+    }
 
-  if (!formData.given_amount) {
-    updateState({ errors: { form: "Please enter a given amount" } });
-    return;
-  }
+    if (!formData.given_amount) {
+      updateState({ errors: { form: "Please enter a given amount" } });
+      return;
+    }
 
-  const customerSales = allSales.filter(s => s.customer_code === customerCode);
-  const firstSale = customerSales[0];
-  if (!firstSale) {
-    updateState({ errors: { form: "No sales records found for this customer. Please add a sales record first." } });
-    return;
-  }
+    const customerSales = allSales.filter(s => s.customer_code === customerCode);
+    const firstSale = customerSales[0];
+    if (!firstSale) {
+      updateState({ errors: { form: "No sales records found for this customer. Please add a sales record first." } });
+      return;
+    }
 
-  try {
-    const url = window.__ROUTES__.givenAmount.replace(':id', firstSale.id);
-    const data = await apiCall(url, "PUT", { given_amount: parseFloat(formData.given_amount) || 0 });
+    try {
+      const url = window.__ROUTES__.givenAmount.replace(':id', firstSale.id);
+      const data = await apiCall(url, "PUT", { given_amount: parseFloat(formData.given_amount) || 0 });
 
-    // Update the sales data with the new accumulated given_amount
-    updateState({
-      allSales: allSales.map(s => s.id === data.sale.id ? data.sale : s)
-    });
+      // Update the sales data with the new accumulated given_amount
+      updateState({
+        allSales: allSales.map(s => s.id === data.sale.id ? data.sale : s)
+      });
 
-    // CLEAR the input field after successful submission
-    setFormData(prev => ({
-      ...prev,
-      given_amount: "" // Clear the field instead of showing accumulated total
-    }));
+      // CLEAR the input field after successful submission
+      setFormData(prev => ({
+        ...prev,
+        given_amount: "" // Clear the field instead of showing accumulated total
+      }));
 
-    refs.grnSelect.current?.focus();
-  } catch (error) {
-    updateState({ errors: { form: error.message } });
-  }
-};
+      refs.grnSelect.current?.focus();
+    } catch (error) {
+      updateState({ errors: { form: error.message } });
+    }
+  };
   const getCurrentBalance = () => {
     if (!formData.grn_entry_code) {
       return { balancePacks: 0, balanceWeight: 0 };
@@ -714,40 +714,7 @@ export default function SalesEntry() {
     }
   };
 
-  const getAvailableBalance = () => {
-    if (!formData.grn_entry_code) {
-      return { availableWeight: 0, availablePacks: 0 };
-    }
-
-    const latestEntry = state.realTimeGrnEntries.find(en => en.code === formData.grn_entry_code);
-    if (!latestEntry) return { availableWeight: 0, availablePacks: 0 };
-
-    // Get the original GRN balance (always from the database)
-    const originalGrnWeight = latestEntry.weight || 0;
-    const originalGrnPacks = latestEntry.packs || 0;
-
-    // Get what's currently typed in the form
-    const newWeight = parseFloat(formData.weight) || 0;
-    const newPacks = parseInt(formData.packs) || 0;
-
-    // If editing, add back the old value and subtract the new value
-    if (editingSaleId) {
-      const originalSale = allSales.find(s => s.id === editingSaleId);
-      const oldWeight = parseFloat(originalSale?.weight) || 0;
-      const oldPacks = parseInt(originalSale?.packs) || 0;
-
-      return {
-        availableWeight: originalGrnWeight + oldWeight - newWeight,
-        availablePacks: originalGrnPacks + oldPacks - newPacks
-      };
-    } else {
-      // For new entries, just subtract the new value
-      return {
-        availableWeight: originalGrnWeight - newWeight,
-        availablePacks: originalGrnPacks - newPacks
-      };
-    }
-  };
+  
 
   const handleFullRefresh = () => { window.location.reload(); };
 
@@ -832,7 +799,7 @@ export default function SalesEntry() {
       <td style="width:50%;text-align:right;white-space:nowrap;font-size:1rem;"><span style="font-size:0.8rem;">ඉතිරිය: </span><span style="font-weight:bold;font-size:1.5rem;">${Math.abs(remaining).toFixed(2)}</span></td>
     </tr>` : '';
 
-   const totalAmount = Math.abs(globalLoanAmount) + totalPrice;
+    const totalAmount = Math.abs(globalLoanAmount) + totalPrice;
 
     const loanRow = globalLoanAmount !== 0 ? `<tr>
   <td style="font-weight:normal;font-size:0.9rem;text-align:left; white-space: nowrap;">
@@ -989,8 +956,8 @@ export default function SalesEntry() {
           <div className="grid grid-cols-1 gap-4">
             <div className="grid grid-cols-3 gap-4">
               <input id="customer_code_input" ref={refs.customerCode} name="customer_code" value={formData.customer_code || autoCustomerCode} onChange={(e) => { const value = e.target.value.toUpperCase(); handleInputChange("customer_code", value); if (value.trim() === "") { setFormData(prev => ({ ...prev, customer_code: "", customer_name: "", given_amount: "" })); updateState({ selectedPrintedCustomer: null, selectedUnprintedCustomer: null }); } }} onKeyDown={(e) => handleKeyDown(e, 0)} type="text" maxLength={10} placeholder="Customer Code" className="px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase" />
-             <Select id="customer_code_select" ref={refs.customerSelect} value={formData.customer_code ? { value: formData.customer_code, label: `${formData.customer_code}` } : null} onChange={handleCustomerSelect} options={initialData.customers.filter(c => !customerSearchInput || c.short_name.charAt(0).toUpperCase() === customerSearchInput.charAt(0).toUpperCase()).map(c => ({ value: c.short_name, label: `${c.short_name}` }))} onInputChange={(inputValue, { action }) => { if(action === "input-change") updateState({ customerSearchInput: inputValue.toUpperCase() }); }} inputValue={customerSearchInput} placeholder="-- Select Customer --" isClearable isSearchable className="rounded-xl" styles={{ control: base => ({ ...base, minHeight:"44px", height:"44px", borderRadius:"0.75rem" }), valueContainer: base => ({ ...base, padding:"0 8px", height:"44px", flex:1, display:"flex", alignItems:"center", overflow:"hidden" }), placeholder: base => ({ ...base, fontSize:"1rem" }) }} />
-             <input type="text" readOnly value={`Loan: Rs. ${loanAmount < 0 ? formatDecimal(Math.abs(loanAmount)) : formatDecimal(loanAmount)}`} placeholder="Loan Amount" className="px-4 py-2 border rounded-xl bg-yellow-100 text-red-600 font-bold" />
+              <Select id="customer_code_select" ref={refs.customerSelect} value={formData.customer_code ? { value: formData.customer_code, label: `${formData.customer_code}` } : null} onChange={handleCustomerSelect} options={initialData.customers.filter(c => !customerSearchInput || c.short_name.charAt(0).toUpperCase() === customerSearchInput.charAt(0).toUpperCase()).map(c => ({ value: c.short_name, label: `${c.short_name}` }))} onInputChange={(inputValue, { action }) => { if (action === "input-change") updateState({ customerSearchInput: inputValue.toUpperCase() }); }} inputValue={customerSearchInput} placeholder="-- Select Customer --" isClearable isSearchable className="rounded-xl" styles={{ control: base => ({ ...base, minHeight: "44px", height: "44px", borderRadius: "0.75rem" }), valueContainer: base => ({ ...base, padding: "0 8px", height: "44px", flex: 1, display: "flex", alignItems: "center", overflow: "hidden" }), placeholder: base => ({ ...base, fontSize: "1rem" }) }} />
+              <input type="text" readOnly value={`Loan: Rs. ${loanAmount < 0 ? formatDecimal(Math.abs(loanAmount)) : formatDecimal(loanAmount)}`} placeholder="Loan Amount" className="px-4 py-2 border rounded-xl bg-yellow-100 text-red-600 font-bold" />
             </div>
 
             <Select
@@ -1003,41 +970,58 @@ export default function SalesEntry() {
               } : null}
               onChange={async (selected) => {
                 if (selected?.data) {
-                  // Fetch latest data before processing selection
-                  const latestEntries = await fetchLatestGrnEntries();
-                  const latestEntry = latestEntries.find(en => en.code === selected.value);
+                  const entry = selected.data;
 
-                  if (latestEntry) {
+                  // ⚡ INSTANT UI UPDATE (no waiting)
+                  setFormData(prev => ({
+                    ...prev,
+                    grn_entry_code: selected.value,
+                    code: selected.value,
+                    item_name: entry.item_name || "",
+                    supplier_code: entry.supplier_code || "",
+                    item_code: entry.item_code || "",
+                    price_per_kg: entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice || "",
+                    pack_due: parseFloat(entry.pack_due || 0),
+                    weight: editingSaleId ? prev.weight : "",
+                    packs: editingSaleId ? prev.packs : "",
+                    total: editingSaleId ? prev.total : ""
+                  }));
+
+                  updateState({
+                    grnSearchInput: "",
+                    packCost: parseFloat(entry.pack_cost || 0),
+                    balanceInfo: {
+                      balancePacks: entry.packs || 0,
+                      balanceWeight: entry.weight || 0
+                    }
+                  });
+
+                  // Immediate focus for smoother workflow
+                  setTimeout(() => refs.weight.current?.focus(), 0);
+
+                  // 🕒 BACKGROUND FETCH for latest GRN entry data
+                  fetchLatestGrnEntries().then((latestEntries) => {
+                    const latestEntry = latestEntries.find(en => en.code === selected.value);
+                    if (!latestEntry) return;
+
                     const matchingItem = initialData.items.find(i => String(i.no) === String(latestEntry.item_code));
                     const fetchedPackDue = parseFloat(matchingItem?.pack_due) || 0;
                     const fetchedPackCost = parseFloat(matchingItem?.pack_cost) || 0;
 
                     setFormData(prev => ({
                       ...prev,
-                      grn_entry_code: selected.value,
-                      code: selected.value,
-                      item_name: latestEntry.item_name || "",
-                      supplier_code: latestEntry.supplier_code || "",
-                      item_code: latestEntry.item_code || "",
-                      price_per_kg: latestEntry.price_per_kg || latestEntry.PerKGPrice || latestEntry.SalesKGPrice || "",
+                      price_per_kg: latestEntry.price_per_kg || latestEntry.PerKGPrice || latestEntry.SalesKGPrice || prev.price_per_kg,
                       pack_due: fetchedPackDue,
-                      weight: editingSaleId ? prev.weight : "",
-                      packs: editingSaleId ? prev.packs : "",
-                      total: editingSaleId ? prev.total : ""
                     }));
 
-                    // Update balance info with real-time data
                     updateState({
-                      grnSearchInput: "",
                       packCost: fetchedPackCost,
                       balanceInfo: {
                         balancePacks: latestEntry.packs || 0,
                         balanceWeight: latestEntry.weight || 0
                       }
                     });
-
-                    requestAnimationFrame(() => setTimeout(() => refs.weight.current?.focus(), 10));
-                  }
+                  });
                 }
               }}
               onInputChange={(inputValue, { action }) => {
@@ -1048,13 +1032,17 @@ export default function SalesEntry() {
                 }
                 return inputValue;
               }}
-              onKeyDown={async (e) => {
-                if (e.key === "Enter" && !e.isPropagationStopped()) {
-                  // Refresh data when Enter is pressed in search
-                  await fetchLatestGrnEntries();
-                  setTimeout(() => {
-                    refs.weight.current?.focus();
-                  }, 10);
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+
+                  const menuList = document.querySelector(".select__menu-list");
+                  const focused = menuList?.querySelector(".select__option--is-focused");
+                  if (focused) {
+                    // Simulate click on highlighted option instantly
+                    focused.click();
+                  }
                 }
               }}
               getOptionLabel={(option) => option.label}
@@ -1065,6 +1053,7 @@ export default function SalesEntry() {
                   return state.grnSearchInput.charAt(0) === (entry.code ? entry.code.charAt(0) : '');
                 })
                 .map((en, index) => ({ value: en.code, label: en.code, data: en, index }))}
+
               placeholder="Select GRN Entry"
               isSearchable={true}
               noOptionsMessage={() =>
@@ -1109,15 +1098,14 @@ export default function SalesEntry() {
                   return (
                     <span>
                       {data.label} - {entry.item_name || "Unknown Item"} (
-                      <strong>Price:</strong> Rs.{formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)} /
-                      <strong>BW:</strong> {formatDecimal(entry.weight)} /
+                      <strong>Price:</strong> Rs.{formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)} /{" "}
+                      <strong>BW:</strong> {formatDecimal(entry.weight)} /{" "}
                       <strong>BP:</strong> {entry.packs || 0})
                     </span>
                   );
                 }
               }}
               styles={{
-                // FIX: Corrects highlighting on hover
                 option: (base, { isFocused, isSelected }) => ({
                   ...base,
                   backgroundColor: isFocused
@@ -1127,16 +1115,14 @@ export default function SalesEntry() {
                 }),
                 menu: (base) => ({ ...base, width: "680px", maxWidth: "95vw" }),
                 menuList: (base) => ({ ...base, padding: 0, maxHeight: "400px" }),
-
-                // FIXES: Alignment and Opacity
                 control: (base, state) => ({
                   ...base,
                   minHeight: "44px",
                   height: "44px",
-                  opacity: 1, // Redundant safety, but doesn't hurt
-                  display: 'flex', // Ensure control is a flex container for alignment
+                  opacity: 1,
+                  display: 'flex',
                   alignItems: 'center',
-                  flexWrap: 'nowrap', // Prevent content wrapping if needed
+                  flexWrap: 'nowrap',
                 }),
                 valueContainer: (base) => ({
                   ...base,
@@ -1154,11 +1140,11 @@ export default function SalesEntry() {
                   margin: 0,
                   padding: 0,
                   lineHeight: 'normal',
-                  opacity: 1, // CRITICAL FIX 1: Ensures selected text is full color
+                  opacity: 1,
                 }),
                 input: (base) => ({
                   ...base,
-                  opacity: 1, // CRITICAL FIX 2: Ensures the search input area (which contains singleValue) is full color
+                  opacity: 1,
                 }),
                 indicatorsContainer: (base) => ({
                   ...base,
@@ -1166,15 +1152,12 @@ export default function SalesEntry() {
                   alignItems: 'center',
                 }),
               }}
+              classNamePrefix="select"
             />
+
             <div className="flex items-start gap-3">
               <div className="flex flex-col">
                 <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-3 border border-gray-400 rounded-xl text-lg font-semibold text-black w-45 bg-gray-100 overflow-x-auto whitespace-nowrap" />
-                {formData.grn_entry_code && (
-                  <span className="text-red-600 font-bold text-[19px] mt-1 text-center whitespace-nowrap inline-block">
-                    <strong>BW:</strong> {formatDecimal(Math.max(0, getAvailableBalance().availableWeight))}
-                  </span>
-                )}
               </div>
               <div className="flex flex-col">
                 <input id="weight" ref={refs.weight} name="weight" type="text" value={formData.weight} onChange={(e) => handleInputChange('weight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg font-semibold text-black overflow-x-auto whitespace-nowrap w-[120px]" maxLength="7" />
@@ -1188,11 +1171,6 @@ export default function SalesEntry() {
               </div>
               <div className="flex flex-col">
                 <input id="packs" ref={refs.packs} name="packs" type="text" value={formData.packs} onChange={(e) => handleInputChange('packs', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 7)} placeholder="අසුරුම්" className="px-3 py-3 border border-gray-400 rounded-2xl text-right text-lg font-semibold text-black w-20 overflow-x-auto whitespace-nowrap" maxLength="4" />
-                {formData.grn_entry_code && (
-                  <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block">
-                    <strong>BP:</strong> {Math.max(0, getAvailableBalance().availablePacks)}
-                  </span>
-                )}
               </div>
               <div className="flex flex-col">
                 <input id="total" ref={refs.total} name="total" type="number" value={formData.total} readOnly placeholder="Total" onKeyDown={(e) => handleKeyDown(e, 8)} onInput={(e) => e.target.value.length > 6 && (e.target.value = e.target.value.slice(0, 6))} className="px-4 py-3 border border-gray-400 rounded-xl text-right text-lg font-semibold text-black bg-gray-100 w-[10.0rem] overflow-x-auto whitespace-nowrap" maxLength="20" />
