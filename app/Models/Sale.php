@@ -6,10 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sale extends Model
 {
-    // If your table name is not "sales", uncomment and change this
-    // protected $table = 'sales';
-
-    // Columns you want to be mass assignable
     protected $fillable = [
 
         'customer_name',
@@ -25,7 +21,7 @@ class Sale extends Model
         'bill_printed', // <-- ADD THIS
         'Processed', 
         'bill_no',
-        'updated'   ,
+        'updated',
         'is_printed', // <-- ADD THIS
         'CustomerBillEnteredOn',
         'FirstTimeBillPrintedOn',
