@@ -1,54 +1,172 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Select from "react-select";
-
+//Rendering the printed and unprinted customer lists
 const CustomerList = React.memo(({
   customers, type, searchQuery, onSearchChange, selectedPrintedCustomer,
   selectedUnprintedCustomer, handleCustomerClick, formatDecimal, allSales
-}) => (
-  <div className="w-full shadow-xl rounded-xl overflow-y-auto max-h-screen border border-black" style={{ backgroundColor: "#1ec139ff" }}>
-    <div style={{ backgroundColor: "#006400" }} className="p-1 rounded-t-xl">
-      <h2 className="text-base font-bold text-white mb-1 whitespace-nowrap text-center">
-        {type === "printed" ? "මුද්‍රණය කළ" : "මුද්‍රණය නොකළ"}
-      </h2>
-      <input
-        type="text"
-        placeholder={`Search by ${type === "printed" ? "Bill No or Code..." : "Customer Code..."}`}
-        value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value.toUpperCase())}
-        className="w-full px-4 py-0.5 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase"
-      />
-    </div>
+}) => {
+  const getPrintedCustomerGroups = () => {
+    const groups = {};
+    allSales
+      .filter(s => s.bill_printed === 'Y' && s.bill_no)
+      .forEach(sale => {
+        const groupKey = `${sale.customer_code}-${sale.bill_no}`;
+        if (!groups[groupKey]) {
+          groups[groupKey] = {
+            customerCode: sale.customer_code,
+            billNo: sale.bill_no,
+            displayText: `${sale.customer_code}`
+          };
+        }
+      });
+    return groups;
+  };
 
-    <div className="py-1">
-      {customers.length === 0 ? (
-        <p className="text-gray-700">No {type === "printed" ? "printed sales" : "unprinted sales"} found.</p>
-      ) : (
-        <ul className="flex flex-col px-1">
-          {customers.map((customerCode) => {
-            const customerSales = allSales.filter(s => s.customer_code === customerCode);
-            const customerTotal = customerSales.reduce((sum, sale) => sum + (parseFloat(sale.total) || 0), 0);
-            const isSelected = (type === "printed" ? selectedPrintedCustomer : selectedUnprintedCustomer) === customerCode;
+  const getUnprintedCustomers = () => {
+    const customerMap = {};
+    allSales
+      .filter(s => s.bill_printed === 'N')
+      .forEach(sale => {
+        const customerCode = sale.customer_code;
+        const saleTimestamp = new Date(sale.timestamp || sale.created_at || sale.date || sale.id);
 
-            return (
-              <li key={customerCode} className="flex">
-                <button
-                  onClick={() => handleCustomerClick(type, customerCode)}
-                  className={`w-full py-1 mb-2 rounded-xl border border-black text-left ${isSelected ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+        if (!customerMap[customerCode] || saleTimestamp > new Date(customerMap[customerCode].latestTimestamp)) {
+          customerMap[customerCode] = {
+            customerCode: customerCode,
+            latestTimestamp: sale.timestamp || sale.created_at || sale.date || sale.id,
+            originalItem: customerCode
+          };
+        }
+      });
+    return customerMap;
+  };
+
+  const printedCustomerGroups = type === "printed" ? getPrintedCustomerGroups() : {};
+  const unprintedCustomerMap = type === "unprinted" ? getUnprintedCustomers() : {};
+
+  // 🔹 Only change in search: startsWith instead of includes
+  const filteredPrintedGroups = useMemo(() => {
+    if (type !== "printed") return [];
+    let groupsArray = Object.values(printedCustomerGroups);
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      groupsArray = groupsArray.filter(group =>
+        group.customerCode.toLowerCase().startsWith(lowerQuery) ||
+        group.billNo.toString().toLowerCase().startsWith(lowerQuery) ||
+        group.displayText.toLowerCase().startsWith(lowerQuery)
+      );
+    }
+    return groupsArray.sort((a, b) => {
+      const billNoA = parseInt(a.billNo) || 0;
+      const billNoB = parseInt(b.billNo) || 0;
+      return billNoB - billNoA;
+    });
+  }, [printedCustomerGroups, searchQuery, type]);
+
+  const filteredUnprintedCustomers = useMemo(() => {
+    if (type !== "unprinted") return [];
+    let customersArray = Object.values(unprintedCustomerMap);
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      customersArray = customersArray.filter(customer =>
+        customer.customerCode.toLowerCase().startsWith(lowerQuery)
+      );
+    }
+    return customersArray.sort((a, b) =>
+      new Date(b.latestTimestamp) - new Date(a.latestTimestamp)
+    );
+  }, [unprintedCustomerMap, searchQuery, type]);
+
+  const displayItems = type === "printed" ? filteredPrintedGroups : filteredUnprintedCustomers;
+
+  const isSelected = (item) => {
+    if (type === "printed") {
+      const selectionKey = `${item.customerCode}-${item.billNo}`;
+      return selectedPrintedCustomer === selectionKey;
+    } else {
+      return selectedUnprintedCustomer === item.customerCode;
+    }
+  };
+
+  return (
+    <div
+      className="w-full shadow-xl rounded-xl overflow-y-auto border border-black"
+      style={{
+        backgroundColor: "#1ec139ff",
+        maxHeight: "80.5vh",   // 🔹 Added fixed max height
+        overflowY: "auto"    // 🔹 Scrollbar enabled inside this box
+      }}
+    >
+      <div style={{ backgroundColor: "#006400" }} className="p-1 rounded-t-xl">
+        <h2 className="text-base font-bold text-white mb-1 whitespace-nowrap text-center">
+          {type === "printed" ? "මුද්‍රණය කළ" : "මුද්‍රණය නොකළ"}
+        </h2>
+        <input
+          type="text"
+          placeholder={`Search by ${type === "printed" ? "Bill No or Code..." : "Customer Code..."}`}
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value.toUpperCase())}
+          className="w-full px-4 py-0.5 border rounded-xl focus:ring-2 focus:ring-blue-300 uppercase"
+        />
+      </div>
+
+      <div className="py-1">
+        {displayItems.length === 0 ? (
+          <p className="text-gray-700">No {type === "printed" ? "printed sales" : "unprinted sales"} found.</p>
+        ) : (
+          <ul className="flex flex-col px-1">
+            {displayItems.map((item) => {
+              let customerCode, displayText, totalAmount;
+
+              if (type === "printed") {
+                customerCode = item.customerCode;
+                displayText = item.displayText;
+                const billSales = allSales.filter(s =>
+                  s.customer_code === item.customerCode && s.bill_no === item.billNo
+                );
+                totalAmount = billSales.reduce((sum, sale) => sum + (parseFloat(sale.total) || 0), 0);
+              } else {
+                customerCode = item.customerCode;
+                displayText = item.customerCode;
+                const customerSales = allSales.filter(s => s.customer_code === item.customerCode);
+                totalAmount = customerSales.reduce((sum, sale) => sum + (parseFloat(sale.total) || 0), 0);
+              }
+
+              const isItemSelected = isSelected(item);
+
+              return (
+                <li key={type === "printed" ? `${item.customerCode}-${item.billNo}` : item.customerCode} className="flex">
+                  <button
+                    onClick={() => {
+                      if (type === "printed") {
+                        const billSales = allSales.filter(s =>
+                          s.customer_code === item.customerCode && s.bill_no === item.billNo
+                        );
+                        handleCustomerClick(type, item.customerCode, item.billNo, billSales);
+                      } else {
+                        const customerSales = allSales.filter(s => s.customer_code === item.customerCode);
+                        handleCustomerClick(type, item.customerCode, null, customerSales);
+                      }
+                    }}
+                    className={`w-full py-1 mb-2 rounded-xl border border-black text-left ${
+                      isItemSelected ? "bg-blue-500 text-white border-blue-600" : "bg-gray-50 hover:bg-gray-100 border-gray-200"
                     }`}
-                >
-                  <span className="font-semibold truncate pl-4">
-                    {customerCode} - {formatDecimal(customerTotal)}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  >
+                    <span className="font-semibold truncate pl-4">
+                      {displayText} - {formatDecimal(totalAmount)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
-  </div>
-));
+  );
+});
 
+//Bellow te main sales table Item summary Rendering
 const ItemSummary = ({ sales, formatDecimal }) => {
   const summary = useMemo(() => {
     const result = {};
@@ -79,7 +197,7 @@ const ItemSummary = ({ sales, formatDecimal }) => {
     </div>
   );
 };
-
+//Gets te data from Dashboard controller->entryblade->salesEntryjsx via arrays
 export default function SalesEntry() {
   const getInitialData = () => ({
     sales: (window.__INITIAL_SALES__ || []).filter(s => s.id),
@@ -92,8 +210,9 @@ export default function SalesEntry() {
     csrf: document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
     routes: window.__ROUTES__ || {}
   });
-
+//use te above data as initial data
   const initialData = getInitialData();
+//Cursor Focussin order metod  
   const refs = {
     customerCode: useRef(null), customerSelect: useRef(null), givenAmount: useRef(null),
     grnSelect: useRef(null), itemName: useRef(null), weight: useRef(null),
@@ -126,6 +245,7 @@ export default function SalesEntry() {
     realTimeGrnEntries: initialData.entries,
     customerSearchInput: "",
     searchQueries: { printed: "", unprinted: "" },
+    currentBillNo: null
   });
 
   const setFormData = (updater) => setState(prev => ({
@@ -154,35 +274,55 @@ export default function SalesEntry() {
     }
     return allCustomers.filter(code => code.toLowerCase().includes(lowerQuery));
   };
-
+//Usin memos to filter printerd and unprintered customers
   const printedCustomers = useMemo(() => filterCustomers(printedSales, searchQueries.printed, true), [printedSales, searchQueries.printed]);
   const unprintedCustomers = useMemo(() => filterCustomers(unprintedSales, searchQueries.unprinted), [unprintedSales, searchQueries.unprinted]);
-
+//Handling the displayed sales in the main table
   const displayedSales = useMemo(() => {
     let sales = newSales;
-    if (selectedUnprintedCustomer) sales = [...sales, ...unprintedSales.filter(s => s.customer_code === selectedUnprintedCustomer)];
-    else if (selectedPrintedCustomer) sales = [...sales, ...printedSales.filter(s => s.customer_code === selectedPrintedCustomer)];
+
+    if (selectedUnprintedCustomer) {
+      // For unprinted: show all unprinted sales for this customer
+      sales = [...sales, ...unprintedSales.filter(s => s.customer_code === selectedUnprintedCustomer)];
+    } else if (selectedPrintedCustomer && selectedPrintedCustomer.includes('-')) {
+      // For printed with bill number: show only sales for that specific bill
+      const [customerCode, billNo] = selectedPrintedCustomer.split('-');
+      sales = [...sales, ...printedSales.filter(s =>
+        s.customer_code === customerCode && s.bill_no === billNo
+      )];
+    } else if (selectedPrintedCustomer) {
+      // Fallback: if no bill number, show all printed sales for customer
+      sales = [...sales, ...printedSales.filter(s => s.customer_code === selectedPrintedCustomer)];
+    }
+
     return sales.slice().reverse();
   }, [newSales, unprintedSales, printedSales, selectedUnprintedCustomer, selectedPrintedCustomer]);
-
+//When a customer is selected, auto-populate the customer_code field if it's empty 
   const autoCustomerCode = useMemo(() =>
     displayedSales.length > 0 && !isManualClear ? displayedSales[0].customer_code || "" : "",
     [displayedSales, isManualClear]
   );
-
-  const currentBillNo = useMemo(() =>
-    selectedPrintedCustomer ? printedSales.find(s => s.customer_code === selectedPrintedCustomer)?.bill_no || "N/A" : "",
-    [selectedPrintedCustomer, printedSales]
-  );
-
+//Get the current bill number based on selected printed customer
+  const currentBillNo = useMemo(() => {
+    if (selectedPrintedCustomer && selectedPrintedCustomer.includes('-')) {
+      // For bill-specific selection: "CUST001-1001" -> extract "1001"
+      const [, billNo] = selectedPrintedCustomer.split('-');
+      return billNo || "N/A";
+    } else if (selectedPrintedCustomer) {
+      // Fallback for old format
+      return printedSales.find(s => s.customer_code === selectedPrintedCustomer)?.bill_no || "N/A";
+    }
+    return "";
+  }, [selectedPrintedCustomer, printedSales]);
+//Bellow te total calculation metod
   const calculateTotal = (sales) => sales.reduce((acc, s) =>
     acc + (parseFloat(s.total) || parseFloat(s.weight || 0) * parseFloat(s.price_per_kg || 0) || 0), 0
   );
-
+//Calculating the main total and unprinted total
   const mainTotal = calculateTotal(displayedSales);
   const unprintedTotal = calculateTotal(unprintedSales);
   const formatDecimal = (val) => (Number.isFinite(parseFloat(val)) ? parseFloat(val).toFixed(2) : "0.00");
-
+//API call metod for CRUD operations
   const apiCall = async (url, method, body) => {
     try {
       const res = await fetch(url, {
@@ -199,7 +339,7 @@ export default function SalesEntry() {
       return data;
     } catch (error) { throw error; }
   };
-
+//Fetch latest GRN entries from server to update display  GRN entries table
   const fetchLatestGrnEntries = async () => {
     try {
       const response = await fetch('/grn-entries/latest', {
@@ -224,7 +364,7 @@ export default function SalesEntry() {
       return state.realTimeGrnEntries; // Return current entries as fallback
     }
   };
-
+//Fetch loan amount for a customer
   const fetchLoanAmount = async (customerCode) => {
     if (!customerCode) return updateState({ loanAmount: 0 });
     try {
@@ -240,7 +380,7 @@ export default function SalesEntry() {
       updateState({ loanAmount: 0 });
     }
   };
-
+//Auto calculate the total when weight, price_per_kg, packs, or pack_due changes
   useEffect(() => {
     const w = parseFloat(formData.weight) || 0;
     const p = parseFloat(formData.price_per_kg) || 0;
@@ -250,7 +390,7 @@ export default function SalesEntry() {
   }, [formData.weight, formData.price_per_kg, formData.packs, formData.pack_due]);
 
   useEffect(() => { refs.customerCode.current?.focus(); }, []);
-
+//Update balance info when GRN entry changes
   useEffect(() => {
     if (formData.grn_entry_code) {
       const matchingEntry = initialData.entries.find((en) => en.code === formData.grn_entry_code);
@@ -294,6 +434,7 @@ export default function SalesEntry() {
       }, 0));
     }
   };
+  //Handle input changes in the  customer_code form field
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -331,8 +472,7 @@ export default function SalesEntry() {
 
       fetchLoanAmount(trimmedValue);
     }
-
-    // ... rest of your existing code for other fields
+    // Auto-populate fields based on selected GRN entry
     if (field === 'grn_entry_code') {
       const grnEntry = initialData.entries.find(entry => entry.code === value);
       if (grnEntry) {
@@ -357,29 +497,41 @@ export default function SalesEntry() {
     // react-select passes the object { value: 'short_name', label: 'Customer Name (short_name)' }
     const short = selectedOption ? selectedOption.value : "";
     const customer = initialData.customers.find(x => String(x.short_name) === String(short));
+
+    // Check if customer has unprinted sales
     const hasUnprintedSales = unprintedCustomers.includes(short);
+
+    // Check if customer has printed sales (any bill number)
+    const hasPrintedSales = printedSales.some(s => s.customer_code === short);
 
     updateState({
       selectedUnprintedCustomer: hasUnprintedSales ? short : null,
-      selectedPrintedCustomer: null,
+      selectedPrintedCustomer: hasPrintedSales ? short : null,
       customerSearchInput: "" // Clear search input on selection
     });
 
     setFormData(prev => ({
       ...prev,
       customer_code: short || "", // If no option selected (cleared), set to ""
-      customer_name: customer?.name || ""
+      customer_name: customer?.name || "",
+      // Auto-populate given_amount from existing sales if available
+      given_amount: hasUnprintedSales || hasPrintedSales
+        ? (allSales.find(s => s.customer_code === short)?.given_amount || "")
+        : ""
     }));
 
     fetchLoanAmount(short);
     updateState({ isManualClear: false });
-    handleSubmitGivenAmount();
+
+    // Only auto-submit given_amount if we're selecting an unprinted customer
+    if (hasUnprintedSales) {
+      handleSubmitGivenAmount();
+    }
 
     setTimeout(() => {
       refs.grnSelect.current?.focus();
     }, 100);
   };
-
   const handleEditClick = (sale) => {
     // Find the GRN entry to get the item_code
     const grnEntry = initialData.entries.find(entry => entry.code === (sale.grn_entry_code || sale.code));
@@ -416,8 +568,8 @@ export default function SalesEntry() {
   const handleTableRowKeyDown = (e, sale) => {
     if (e.key === "Enter") { e.preventDefault(); handleEditClick(sale); }
   };
-
-  const handleClearForm = () => {
+  //Clear the form and optionally the current bill number
+  const handleClearForm = (clearBillNo = false) => {
     setFormData(initialFormData);
     updateState({
       editingSaleId: null,
@@ -427,9 +579,10 @@ export default function SalesEntry() {
       isManualClear: false,
       packCost: 0,
       customerSearchInput: "",
+      ...(clearBillNo && { currentBillNo: null }) // Only clear bill number when explicitly requested
     });
   };
-
+  //Handle the deletion of a sales record
   const handleDeleteClick = async () => {
     if (!editingSaleId || !window.confirm("Are you sure you want to delete this sales record?")) return;
 
@@ -457,9 +610,9 @@ export default function SalesEntry() {
 
     return () => clearInterval(interval);
   }, []);
-
+  // Handle submission of given_amount separately
   const handleSubmitGivenAmount = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     updateState({ errors: {} });
 
     // Get customer code from BOTH sources: form input AND React Select
@@ -476,43 +629,54 @@ export default function SalesEntry() {
       return;
     }
 
-    const customerSales = allSales.filter(s => s.customer_code === customerCode);
-    const firstSale = customerSales[0];
-    if (!firstSale) {
-      updateState({ errors: { form: "No sales records found for this customer. Please add a sales record first." } });
+    // 🔥 CRITICAL CHANGE: Use ONLY the currently displayed sales
+    // This ensures we only update the specific bill that's currently selected/displayed
+    const salesToUpdate = displayedSales.filter(s => s.id); // Only sales with valid IDs
+
+    if (salesToUpdate.length === 0) {
+      updateState({ errors: { form: "No sales records found to update. Please add sales records first." } });
       return;
     }
 
     try {
-      const url = window.__ROUTES__.givenAmount.replace(':id', firstSale.id);
-      const data = await apiCall(url, "PUT", { given_amount: parseFloat(formData.given_amount) || 0 });
+      const givenAmount = parseFloat(formData.given_amount) || 0;
 
-      // Update the sales data with the new accumulated given_amount
+      // Store the SAME original amount in ONLY the currently displayed sales records
+      const updatePromises = salesToUpdate.map(sale => {
+        const url = window.__ROUTES__.givenAmount.replace(':id', sale.id);
+        return apiCall(url, "PUT", { given_amount: givenAmount }); // Same amount for all in THIS bill
+      });
+
+      // Wait for all updates to complete
+      const results = await Promise.all(updatePromises);
+
+      // Update the sales data with new given_amount values
+      const updatedSalesMap = {};
+      results.forEach(result => {
+        if (result.sale) {
+          updatedSalesMap[result.sale.id] = result.sale;
+        }
+      });
+
       updateState({
-        allSales: allSales.map(s => s.id === data.sale.id ? data.sale : s)
+        allSales: allSales.map(s =>
+          updatedSalesMap[s.id] ? updatedSalesMap[s.id] : s
+        )
       });
 
       // CLEAR the input field after successful submission
       setFormData(prev => ({
         ...prev,
-        given_amount: "" // Clear the field instead of showing accumulated total
+        given_amount: "" // Clear the field
       }));
 
       refs.grnSelect.current?.focus();
+
+      console.log(`Successfully stored ${givenAmount} in ${salesToUpdate.length} sales records for the current bill`);
+
     } catch (error) {
       updateState({ errors: { form: error.message } });
     }
-  };
-  const getCurrentBalance = () => {
-    if (!formData.grn_entry_code) {
-      return { balancePacks: 0, balanceWeight: 0 };
-    }
-
-    const latestEntry = state.realTimeGrnEntries.find(en => en.code === formData.grn_entry_code);
-    return {
-      balancePacks: latestEntry?.packs || 0,
-      balanceWeight: latestEntry?.weight || 0
-    };
   };
 
   const { isSubmitting } = state;
@@ -520,7 +684,6 @@ export default function SalesEntry() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prevent multiple submissions
     if (isSubmitting) {
       console.log('Submission already in progress...');
       return;
@@ -529,7 +692,6 @@ export default function SalesEntry() {
     updateState({ errors: {}, isSubmitting: true });
 
     try {
-      // FIX: Use autoCustomerCode as fallback when formData.customer_code is empty
       const customerCode = formData.customer_code || autoCustomerCode;
 
       if (!customerCode) {
@@ -542,10 +704,18 @@ export default function SalesEntry() {
       }
 
       const isEditing = editingSaleId !== null;
+
       let billPrintedStatus = undefined;
+
       if (!isEditing) {
-        if (selectedPrintedCustomer) billPrintedStatus = 'Y';
-        else if (selectedUnprintedCustomer) billPrintedStatus = 'N';
+        // If we have a current bill number, new records should be part of that printed bill
+        if (state.currentBillNo) {
+          billPrintedStatus = 'Y';
+        } else {
+          // Original logic for new records
+          if (selectedPrintedCustomer) billPrintedStatus = 'Y';
+          else if (selectedUnprintedCustomer) billPrintedStatus = 'N';
+        }
       }
 
       const customerSales = allSales.filter(s => s.customer_code === customerCode);
@@ -553,7 +723,7 @@ export default function SalesEntry() {
 
       const payload = {
         supplier_code: formData.supplier_code,
-        customer_code: customerCode.toUpperCase(), // Use the fallback value here
+        customer_code: customerCode.toUpperCase(),
         customer_name: formData.customer_name,
         code: formData.code || formData.grn_entry_code,
         item_code: formData.item_code,
@@ -570,6 +740,8 @@ export default function SalesEntry() {
           ? (formData.given_amount ? parseFloat(formData.given_amount) : null)
           : null,
         ...(billPrintedStatus && { bill_printed: billPrintedStatus }),
+        // Pass the current bill number to backend if available
+        ...(state.currentBillNo && { bill_no: state.currentBillNo })
       };
 
       const url = isEditing ? `/sales/${editingSaleId}` : initialData.storeUrl;
@@ -579,17 +751,24 @@ export default function SalesEntry() {
 
       if (!newSale.grn_entry_code && formData.grn_entry_code) newSale = { ...newSale, grn_entry_code: formData.grn_entry_code };
       if (!newSale.code && formData.code) newSale = { ...newSale, code: formData.code };
-      if (!isEditing && billPrintedStatus && !newSale.bill_printed) newSale = { ...newSale, bill_printed: billPrintedStatus };
+
+      // Ensure bill_printed status and bill number are properly set
+      if (!isEditing) {
+        if (state.currentBillNo && !newSale.bill_no) {
+          newSale = { ...newSale, bill_printed: 'Y', bill_no: state.currentBillNo };
+        } else if (billPrintedStatus && !newSale.bill_printed) {
+          newSale = { ...newSale, bill_printed: billPrintedStatus };
+        }
+      }
 
       updateState({
         allSales: isEditing ? allSales.map(s => s.id === newSale.id ? newSale : s) : [...allSales, newSale]
       });
 
-      // ✅ CALL fetchLatestGrnEntries HERE - After successful submission
       await fetchLatestGrnEntries();
 
       setFormData(prevForm => ({
-        customer_code: prevForm.customer_code || customerCode, // Preserve the customer code
+        customer_code: prevForm.customer_code || customerCode,
         customer_name: prevForm.customer_name,
         supplier_code: "", code: "", item_code: "", item_name: "", weight: "", price_per_kg: "", pack_due: "", total: "", packs: "",
         grn_entry_code: "", original_weight: "", original_packs: "", given_amount: ""
@@ -602,6 +781,7 @@ export default function SalesEntry() {
         isManualClear: false,
         isSubmitting: false,
         packCost: 0
+        // Don't clear currentBillNo - keep it for subsequent additions
       });
 
       refs.grnSelect.current?.focus();
@@ -610,31 +790,48 @@ export default function SalesEntry() {
     }
   };
 
-  const handleCustomerClick = async (type, customerCode) => {
+  const handleCustomerClick = async (type, customerCode, billNo = null, salesRecords = []) => {
     const isPrinted = type === 'printed';
-    const isCurrentlySelected = isPrinted ? selectedPrintedCustomer === customerCode : selectedUnprintedCustomer === customerCode;
+
+    // For printed section, we need to handle bill-specific selection
+    let selectionKey = customerCode;
+    if (isPrinted && billNo) {
+      selectionKey = `${customerCode}-${billNo}`;
+    }
+
+    const isCurrentlySelected = isPrinted
+      ? selectedPrintedCustomer === selectionKey
+      : selectedUnprintedCustomer === selectionKey;
 
     if (isPrinted) {
       updateState({
-        selectedPrintedCustomer: isCurrentlySelected ? null : customerCode,
-        selectedUnprintedCustomer: null
+        selectedPrintedCustomer: isCurrentlySelected ? null : selectionKey,
+        selectedUnprintedCustomer: null,
+        // Set current bill number when selecting a printed record
+        currentBillNo: isCurrentlySelected ? null : billNo
       });
     } else {
       updateState({
-        selectedUnprintedCustomer: isCurrentlySelected ? null : customerCode,
-        selectedPrintedCustomer: null
+        selectedUnprintedCustomer: isCurrentlySelected ? null : selectionKey,
+        selectedPrintedCustomer: null,
+        currentBillNo: null // Clear bill number for unprinted
       });
     }
 
     const customer = initialData.customers.find(x => String(x.short_name) === String(customerCode));
-    const customerSales = allSales.filter(s => s.customer_code === customerCode);
+
+    // Use the passed salesRecords instead of filtering again
+    const customerSales = salesRecords.length > 0 ? salesRecords :
+      (isPrinted && billNo
+        ? allSales.filter(s => s.customer_code === customerCode && s.bill_no === billNo)
+        : allSales.filter(s => s.customer_code === customerCode));
+
     const firstSale = customerSales[0];
     const newCustomerCode = isCurrentlySelected ? "" : customerCode;
 
-    // FIX: Display the existing given_amount in the input field, but don't auto-submit it
     if (!isCurrentlySelected) {
       setFormData({
-        ...initialFormData, // Reset to initial form data
+        ...initialFormData,
         customer_code: newCustomerCode,
         customer_name: customer?.name || "",
         given_amount: firstSale?.given_amount || "" // Show existing amount for reference
@@ -645,14 +842,12 @@ export default function SalesEntry() {
     }
 
     updateState({
-      editingSaleId: null, // FIX: Clear editing state
+      editingSaleId: null,
       isManualClear: false,
       customerSearchInput: ""
     });
-    fetchLoanAmount(newCustomerCode);
 
-    // REMOVED the problematic automatic API call that was re-adding existing amount
-    // The existing given_amount is now only displayed, not re-submitted
+    fetchLoanAmount(newCustomerCode);
 
     if (isCurrentlySelected) {
       refs.customerCode.current?.focus();
@@ -664,7 +859,6 @@ export default function SalesEntry() {
   const handleMarkPrinted = async () => {
     try { await handlePrintAndClear(); } catch (error) { alert("Mark printed failed: " + error.message); }
   };
-
   const handleMarkAllProcessed = async () => {
     const salesToProcess = [...newSales, ...unprintedSales];
     if (salesToProcess.length === 0) return;
@@ -714,7 +908,7 @@ export default function SalesEntry() {
     }
   };
 
-  
+
 
   const handleFullRefresh = () => { window.location.reload(); };
 
@@ -779,8 +973,10 @@ export default function SalesEntry() {
     const totalPrice = totalAmountSum;
     const totalSalesExcludingPackDue = salesData.reduce((sum, s) => sum + ((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0)), 0);
     const totalPackDueCost = totalPrice - totalSalesExcludingPackDue;
-    const givenAmount = salesData.reduce((sum, s) => sum + (parseFloat(s.given_amount) || 0), 0);
-    const remaining = givenAmount - totalPrice;
+
+    // 🔥 CHANGED: Get only ONE given_amount value (first available)
+    const givenAmount = salesData.find(s => parseFloat(s.given_amount) > 0)?.given_amount || 0;
+    const remaining = parseFloat(givenAmount) - totalPrice;
 
     let itemSummaryHtml = '';
     const entries = Object.entries(itemGroups);
@@ -794,8 +990,9 @@ export default function SalesEntry() {
       itemSummaryHtml += '</div>';
     }
 
+    // 🔥 CHANGED: Only show given amount row if there's a given amount
     const givenAmountRow = givenAmount > 0 ? `<tr>
-      <td style="width:50%;text-align:left;white-space:nowrap;"><span style="font-size:0.75rem;">දුන් මුදල: </span><span style="font-weight:bold;font-size:0.9rem;">${givenAmount.toFixed(2)}</span></td>
+      <td style="width:50%;text-align:left;white-space:nowrap;"><span style="font-size:0.75rem;">දුන් මුදල: </span><span style="font-weight:bold;font-size:0.9rem;">${parseFloat(givenAmount).toFixed(2)}</span></td>
       <td style="width:50%;text-align:right;white-space:nowrap;font-size:1rem;"><span style="font-size:0.8rem;">ඉතිරිය: </span><span style="font-weight:bold;font-size:1.5rem;">${Math.abs(remaining).toFixed(2)}</span></td>
     </tr>` : '';
 
@@ -815,8 +1012,6 @@ export default function SalesEntry() {
     Rs. ${Math.abs(totalAmount).toFixed(2)}<!-- ✅ removes minus sign only -->
   </td>
 </tr>` : '';
-
-
 
     return `<div class="receipt-container" style="width:100%;max-width:300px;margin:0 auto;padding:5px;">
       <div style="text-align:center;margin-bottom:5px;">
@@ -863,7 +1058,11 @@ export default function SalesEntry() {
 
     try {
       const [printResponse, loanResponse] = await Promise.allSettled([
-        apiCall(initialData.routes.markPrinted, "POST", { sales_ids: salesData.map(s => s.id) }),
+        apiCall(initialData.routes.markPrinted, "POST", {
+          sales_ids: salesData.map(s => s.id),
+          // Force new bill number for this group
+          force_new_bill: true
+        }),
         fetch(initialData.routes.getLoanAmount, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': initialData.csrf },
@@ -893,7 +1092,6 @@ export default function SalesEntry() {
       ];
 
       await Promise.all(printPromises);
-      window.location.reload();
 
       updateState({
         allSales: allSales.map(s => {
@@ -905,26 +1103,16 @@ export default function SalesEntry() {
         customerSearchInput: ""
       });
       handleClearForm();
+
+      // Refresh to see the new separate bill in printed section
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       alert("Printing failed: " + error.message);
       setTimeout(() => { window.location.reload(); }, 100);
     }
   };
-
-  const handleCustomerCodeChange = (e) => {
-    const code = e.target.value;
-    const customer = initialData.customers.find(x => String(x.short_name) === String(code));
-    const customerSale = allSales.find(s => s.customer_code === code);
-    if (!code) {
-      setFormData(prev => ({ ...prev, customer_code: "", customer_name: "", given_amount: "" }));
-      updateState({ selectedPrintedCustomer: null, selectedUnprintedCustomer: null });
-      fetchLoanAmount("");
-    } else {
-      setFormData(prev => ({ ...prev, customer_code: code, customer_name: customer?.name || "", given_amount: customerSale?.given_amount || "" }));
-      fetchLoanAmount(code);
-    }
-  };
-
   useEffect(() => {
     const handleShortcut = (e) => {
       if (e.key === "F1") {
@@ -1069,25 +1257,9 @@ export default function SalesEntry() {
                 return (
                   <div className="w-full">
                     {showHeader && (
-                      <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center">
-                        <div className="text-left">Code</div>
-                        <div className="text-left">Item Name</div>
-                        <div className="text-center">OP</div>
-                        <div className="text-center">OW</div>
-                        <div className="text-center">BP</div>
-                        <div className="text-center">BW</div>
-                        <div className="text-right">PRICE</div>
-                      </div>
+                      <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1.5 bg-gray-100 font-bold text-xs border-b border-gray-300 items-center"><div className="text-left">Code</div><div className="text-left">Item Name</div><div className="text-center">OP</div><div className="text-center">OW</div><div className="text-center">BP</div><div className="text-center">BW</div><div className="text-right">PRICE</div></div>
                     )}
-                    <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-blue-200 items-center">
-                      <div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>{entry.code || "-"}</div>
-                      <div className="text-left truncate" title={entry.item_name || "Unknown Item"}>{entry.item_name || "Unknown Item"}</div>
-                      <div className="text-center">{entry.original_packs || "0"}</div>
-                      <div className="text-center">{formatDecimal(entry.original_weight)}</div>
-                      <div className="text-center">{entry.packs || "0"}</div>
-                      <div className="text-center">{formatDecimal(entry.weight)}</div>
-                      <div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div>
-                    </div>
+                    <div className="grid grid-cols-[120px_150px_55px_70px_55px_70px_90px] gap-1 px-2 py-1 text-sm border-b border-gray-100 hover:bg-blue-200 items-center"><div className="text-left font-medium text-blue-700 truncate" title={entry.code || "-"}>{entry.code || "-"}</div><div className="text-left truncate" title={entry.item_name || "Unknown Item"}>{entry.item_name || "Unknown Item"}</div><div className="text-center">{entry.original_packs || "0"}</div><div className="text-center">{formatDecimal(entry.original_weight)}</div><div className="text-center">{entry.packs || "0"}</div><div className="text-center">{formatDecimal(entry.weight)}</div><div className="text-right font-semibold text-green-600">Rs. {formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)}</div></div>
                   </div>
                 );
               }}
@@ -1096,63 +1268,20 @@ export default function SalesEntry() {
                   const entry = data.data;
                   if (!entry) return data.label;
                   return (
-                    <span>
-                      {data.label} - {entry.item_name || "Unknown Item"} (
-                      <strong>Price:</strong> Rs.{formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)} /{" "}
-                      <strong>BW:</strong> {formatDecimal(entry.weight)} /{" "}
-                      <strong>BP:</strong> {entry.packs || 0})
-                    </span>
+                    <span>{data.label} - {entry.item_name || "Unknown Item"} (<strong>Price:</strong> Rs.{formatDecimal(entry.price_per_kg || entry.PerKGPrice || entry.SalesKGPrice)} / <strong>BW:</strong> {formatDecimal(entry.weight)} / <strong>BP:</strong> {entry.packs || 0})</span>
                   );
                 }
               }}
               styles={{
-                option: (base, { isFocused, isSelected }) => ({
-                  ...base,
-                  backgroundColor: isFocused
-                    ? "#bfdbfe"
-                    : (isSelected ? "#e5e5e5" : "transparent"),
-                  padding: 0,
-                }),
+                option: (base, { isFocused, isSelected }) => ({ ...base, backgroundColor: isFocused ? "#bfdbfe" : (isSelected ? "#e5e5e5" : "transparent"), padding: 0 }),
                 menu: (base) => ({ ...base, width: "680px", maxWidth: "95vw" }),
                 menuList: (base) => ({ ...base, padding: 0, maxHeight: "400px" }),
-                control: (base, state) => ({
-                  ...base,
-                  minHeight: "44px",
-                  height: "44px",
-                  opacity: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexWrap: 'nowrap',
-                }),
-                valueContainer: (base) => ({
-                  ...base,
-                  padding: '0 8px',
-                  height: '44px',
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  overflow: 'hidden',
-                }),
-                singleValue: (base) => ({
-                  ...base,
-                  display: 'flex',
-                  alignItems: 'center',
-                  margin: 0,
-                  padding: 0,
-                  lineHeight: 'normal',
-                  opacity: 1,
-                }),
-                input: (base) => ({
-                  ...base,
-                  opacity: 1,
-                }),
-                indicatorsContainer: (base) => ({
-                  ...base,
-                  height: '44px',
-                  alignItems: 'center',
-                }),
-              }}
-              classNamePrefix="select"
+                control: (base, state) => ({ ...base, minHeight: "44px", height: "44px", opacity: 1, display: 'flex', alignItems: 'center', flexWrap: 'nowrap' }),
+                valueContainer: (base) => ({ ...base, padding: '0 8px', height: '44px', flex: 1, display: 'flex', alignItems: 'center', overflow: 'hidden' }),
+                singleValue: (base) => ({ ...base, display: 'flex', alignItems: 'center', margin: 0, padding: 0, lineHeight: 'normal', opacity: 1 }),
+                input: (base) => ({ ...base, opacity: 1 }),
+                indicatorsContainer: (base) => ({ ...base, height: '44px', alignItems: 'center' }),
+              }} classNamePrefix="select"
             />
 
             <div className="flex items-start gap-3">
@@ -1201,7 +1330,20 @@ export default function SalesEntry() {
 
             <ItemSummary sales={displayedSales} formatDecimal={formatDecimal} />
             <div className="flex items-center justify-between mt-6 mb-4">
-              <h2 className="text-2xl font-bold text-red-600">Total Sales: Rs. {formatDecimal(mainTotal)}</h2>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-0">
+                  <div className="text-2xl font-bold text-red-600">
+                    (<span>Sales: Rs. {formatDecimal(displayedSales.reduce((sum, s) =>
+                      sum + ((parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0)), 0)
+                    )}</span><span>+ Pack Cost: Rs. {formatDecimal(displayedSales.reduce((sum, s) => {
+                      const itemCost = (parseFloat(s.weight) || 0) * (parseFloat(s.price_per_kg) || 0);
+                      const totalCost = parseFloat(s.total) || 0;
+                      const packCost = totalCost - itemCost;
+                      return sum + Math.max(0, packCost);
+                    }, 0))}</span>)
+                  </div>
+                </div>
+              </div>
               <input id="given_amount" ref={refs.givenAmount} name="given_amount" type="number" step="0.01" value={formData.given_amount}
                 onChange={(e) => handleInputChange('given_amount', e.target.value)} onKeyDown={(e) => handleKeyDown(e, 2)} placeholder="Given Amount"
                 className="px-4 py-2 border rounded-xl text-right w-40" />
@@ -1210,14 +1352,7 @@ export default function SalesEntry() {
         </div>
 
         <div className="flex justify-between items-center mt-6">
-          <div className="flex space-x-3">
-            <button type="button" onClick={handleMarkPrinted} className="px-4 py-1 text-sm bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow transition">
-              PRINT</button>
-            <button type="button" onClick={handleMarkAllProcessed} className="px-4 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition">
-              HOLD</button>
-            <button type="button" onClick={handleFullRefresh} className="px-4 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl shadow transition">
-              Full Refresh</button>
-          </div>
+          <div className="flex space-x-3"><button type="button" onClick={handleMarkPrinted} className="px-4 py-1 text-sm bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow transition">PRINT</button><button type="button" onClick={handleMarkAllProcessed} className="px-4 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition">HOLD</button><button type="button" onClick={handleFullRefresh} className="px-4 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl shadow transition">Full Refresh</button></div>
         </div>
       </div>
 
