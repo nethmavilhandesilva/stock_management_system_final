@@ -228,54 +228,60 @@
                             </div>
                         </div>
                     </div>
-                 {{-- NEW: Returns Section --}}
-<div id="returnsFields" class="col-md-12 d-none">
-    <div class="border rounded p-2 bg-light" style="border-color: #006600 !important;">
-        <h6 class="text-success fw-bold mb-2" style="border-bottom: 1px solid #006600;">Returns Details</h6>
-        <div class="row g-2">
-            <div class="col-2">
-                <label for="return_grn_code" class="form-label mb-1">GRN Code</label>
-                <select class="form-select form-select-sm" name="return_grn_code" id="return_grn_code">
-                    <option value="">-- Select GRN Code --</option>
-                    @foreach($grnCodes as $code)
-                        <option value="{{ $code }}">{{ $code }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-2">
-                <label for="return_item_code" class="form-label mb-1">Item Code</label>
-                <input type="text" class="form-control form-control-sm" name="return_item_code" id="return_item_code" readonly>
-            </div>
-            <div class="col-2">
-    <label for="return_bill_no" class="form-label mb-1">Bill No</label>
-    <select class="form-select form-select-sm" name="return_bill_no" id="return_bill_no">
-        <option value="">-- Select Bill --</option>
-        @foreach(\App\Models\Sale::pluck('bill_no') as $bill)
-            <option value="{{ $bill }}">{{ $bill }}</option>
-        @endforeach
-    </select>
-</div>
+                    {{-- NEW: Returns Section --}}
+                    <div id="returnsFields" class="col-md-12 d-none">
+                        <div class="border rounded p-2 bg-light" style="border-color: #006600 !important;">
+                            <h6 class="text-success fw-bold mb-2" style="border-bottom: 1px solid #006600;">Returns Details
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-2">
+                                    <label for="return_grn_code" class="form-label mb-1">GRN Code</label>
+                                    <select class="form-select form-select-sm" name="return_grn_code" id="return_grn_code">
+                                        <option value="">-- Select GRN Code --</option>
+                                        @foreach($grnCodes as $code)
+                                            <option value="{{ $code }}">{{ $code }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-2">
+                                    <label for="return_item_code" class="form-label mb-1">Item Code</label>
+                                    <input type="text" class="form-control form-control-sm" name="return_item_code"
+                                        id="return_item_code" readonly>
+                                </div>
+                                <div class="col-2">
+                                    <label for="return_bill_no" class="form-label mb-1">Bill No</label>
+                                    <select class="form-select form-select-sm" name="return_bill_no" id="return_bill_no">
+                                        <option value="">-- Select Bill --</option>
+                                        @foreach(\App\Models\Sale::pluck('bill_no') as $bill)
+                                            <option value="{{ $bill }}">{{ $bill }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-            <div class="col-2">
-                <label for="return_weight" class="form-label mb-1">Weight</label>
-                <input type="number" step="0.01" class="form-control form-control-sm" name="return_weight" id="return_weight">
-            </div>
-            <div class="col-2">
-                <label for="return_packs" class="form-label mb-1">Packs</label>
-                <input type="number" step="1" class="form-control form-control-sm" name="return_packs" id="return_packs">
-            </div>
-            <div class="col-2">
-                <label for="return_reason" class="form-label mb-1">Reason</label>
-                <input type="text" class="form-control form-control-sm" name="return_reason" id="return_reason">
-            </div>
-        </div>
+                                <div class="col-2">
+                                    <label for="return_weight" class="form-label mb-1">Weight</label>
+                                    <input type="number" step="0.01" class="form-control form-control-sm"
+                                        name="return_weight" id="return_weight">
+                                </div>
+                                <div class="col-2">
+                                    <label for="return_packs" class="form-label mb-1">Packs</label>
+                                    <input type="number" step="1" class="form-control form-control-sm" name="return_packs"
+                                        id="return_packs">
+                                </div>
+                                <div class="col-2">
+                                    <label for="return_reason" class="form-label mb-1">Reason</label>
+                                    <input type="text" class="form-control form-control-sm" name="return_reason"
+                                        id="return_reason">
+                                </div>
+                            </div>
 
-        <!-- Submit button for Returns Section -->
-        <div class="mt-3 text-end">
-            <button type="submit" class="btn btn-success btn-sm" id="returnSubmitButton">Add Return</button>
-        </div>
-    </div>
-</div>
+                            <!-- Submit button for Returns Section -->
+                            <div class="mt-3 text-end">
+                                <button type="submit" class="btn btn-success btn-sm" id="returnSubmitButton">Add
+                                    Return</button>
+                            </div>
+                        </div>
+                    </div>
 
 
                     <div class="col-12 mt-3" id="mainSubmitSection">
@@ -299,78 +305,83 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                   <tbody>
-    @forelse($loans->where('loan_type', '!=', 'returns') as $loan)
-        <tr class="loan-row" data-loan='@json($loan)'>
-            <td>{{ $loan->description }}</td>
-            <td>{{ number_format(abs($loan->amount), 2) }}</td>
-            <td>{{ $loan->customer_short_name }}</td>
-            <td>{{ ucfirst($loan->loan_type) }}</td>
-            <td>{{ $loan->bill_no ?? '-' }}</td>
-            <td>
-                <button type="button" class="btn btn-sm btn-warning edit-loan-btn">Edit</button>
-                <form action="{{ route('customers-loans.destroy', $loan->id) }}" method="POST" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" onclick="return confirm('Are you sure?')" class="btn btn-sm btn-danger">Delete</button>
-                </form>
-            </td>
-        </tr>
-    @empty
-        <tr>
-            <td colspan="8" class="text-center">No loan records found.</td>
-        </tr>
-    @endforelse
-</tbody>
+                    <tbody>
+                        @forelse($loans->where('loan_type', '!=', 'returns') as $loan)
+                            <tr class="loan-row" data-loan='@json($loan)'>
+                                <td>{{ $loan->description }}</td>
+                                <td>{{ number_format(abs($loan->amount), 2) }}</td>
+                                <td>{{ $loan->customer_short_name }}</td>
+                                <td>{{ ucfirst($loan->loan_type) }}</td>
+                                <td>{{ $loan->bill_no ?? '-' }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-warning edit-loan-btn">Edit</button>
+                                    <form action="{{ route('customers-loans.destroy', $loan->id) }}" method="POST"
+                                        class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" onclick="return confirm('Are you sure?')"
+                                            class="btn btn-sm btn-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center">No loan records found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
 
                 </table>
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <!-- Financial Report Button -->
-    <a href="{{ route('financial.report') }}" target="_blank" class="btn btn-dark">
-        ආදායම් / වියදම්
-    </a>
+                    <!-- Financial Report Button -->
+                    <a href="{{ route('financial.report') }}" target="_blank" class="btn btn-dark">
+                        ආදායම් / වියදම්
+                    </a>
 
-    <!-- Loan Report Button -->
-    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark">
-        ණය වාර්තාව
-    </a>
+                    <!-- Loan Report Button -->
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark">
+                        ණය වාර්තාව
+                    </a>
 
-    <!-- Returns Report Button -->
-    <a href="{{ route('returns.report') }}" class="btn btn-dark">
-       නැවත ලබා දීම්  වාර්තාව 
-    </a>
+                    <!-- Returns Report Button -->
+                    <a href="{{ route('returns.report') }}" class="btn btn-dark">
+                        නැවත ලබා දීම් වාර්තාව
+                    </a>
 
-    <!-- Cheque Payments Report Button -->
-    <a href="{{ route('reports.cheque-payments') }}" class="btn btn-dark">
-        චෙක් ගෙවීම් වාර්තාව බලන්න
-    </a>
+                    <!-- Cheque Payments Report Button -->
+                    <a href="{{ route('reports.cheque-payments') }}" class="btn btn-dark">
+                        චෙක් ගෙවීම් වාර්තාව බලන්න
+                    </a>
 
-    <!-- Set Balance Button -->
-    <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#balanceModal">
-        Set Balance
-    </button>
-</div>
-<!-- Modal -->
-<div class="modal fade" id="balanceModal" tabindex="-1" aria-labelledby="balanceModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form action="{{ route('settings.updateBalance') }}" method="POST">
-        @csrf
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="balanceModalLabel">Enter Balance for Today</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <input type="number" name="balance" class="form-control" placeholder="Enter today's balance" step="0.01" required>
-            </div>
-            <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Save Balance</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </form>
-  </div>
-</div>
+                    <!-- Set Balance Button -->
+                    <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#balanceModal">
+                        Set Balance
+                    </button>
+                </div>
+                <!-- Modal -->
+                <div class="modal fade" id="balanceModal" tabindex="-1" aria-labelledby="balanceModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <form action="{{ route('settings.updateBalance') }}" method="POST">
+                            @csrf
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="balanceModalLabel">Enter Balance for Today</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="number" name="balance" class="form-control"
+                                        placeholder="Enter today's balance" step="0.01" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-success">Save Balance</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
 
             </div>
         </div>
@@ -384,30 +395,30 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const returnBtn = document.getElementById("returnSubmitButton");
-    const loanForm = document.getElementById("loanForm");
+        document.addEventListener("DOMContentLoaded", function () {
+            const returnBtn = document.getElementById("returnSubmitButton");
+            const loanForm = document.getElementById("loanForm");
 
-    if (returnBtn) {
-        returnBtn.addEventListener("click", function (e) {
-            e.preventDefault(); // stop normal form submission
+            if (returnBtn) {
+                returnBtn.addEventListener("click", function (e) {
+                    e.preventDefault(); // stop normal form submission
 
-            // force loan_type = returns
-            let returnRadio = document.querySelector('input[name="loan_type"][value="returns"]');
-            if (returnRadio) {
-                returnRadio.checked = true;
+                    // force loan_type = returns
+                    let returnRadio = document.querySelector('input[name="loan_type"][value="returns"]');
+                    if (returnRadio) {
+                        returnRadio.checked = true;
+                    }
+
+                    // hide amount/description validation for returns
+                    document.querySelector('[name="amount"]').removeAttribute("required");
+                    document.querySelector('[name="description"]').removeAttribute("required");
+
+                    // submit form
+                    loanForm.submit();
+                });
             }
-
-            // hide amount/description validation for returns
-            document.querySelector('[name="amount"]').removeAttribute("required");
-            document.querySelector('[name="description"]').removeAttribute("required");
-
-            // submit form
-            loanForm.submit();
         });
-    }
-});
-</script>
+    </script>
 
 
     <script>
@@ -479,13 +490,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 if (customerId && (loanType === 'today' || loanType === 'old')) {
                     $.ajax({
-                        url:  `https://wday.lk/AA/sms/customers/${customerId}/loans-total`,
+                        url: `customers/${customerId}/loans-total`,
                         method: 'GET',
                         success: function (response) {
-                            const formattedAmount = parseFloat(response.total_amount).toLocaleString(undefined, {
+                            // Parse the total amount
+                            let totalAmount = parseFloat(response.total_amount);
+
+                            // Remove minus sign if negative
+                            if (totalAmount < 0) {
+                                totalAmount = Math.abs(totalAmount);
+                            }
+
+                            // Format the amount
+                            const formattedAmount = totalAmount.toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
                             });
+
+                            // Update the display
                             totalAmountDisplay.text(`(Total Loans: ${formattedAmount})`);
                         },
                         error: function () {
@@ -493,6 +515,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     });
                 }
+
             }
 
             // Toggle fields based on loan type / settling way
@@ -571,8 +594,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Handle PUT action dynamically
                 if (method === 'PUT') {
                     const loanId = $('#loan_id').val();
-                    url = `https://wday.lk/AA/sms/customers-loans/${loanId}`
-; // The URL must include the ID for update
+                    url = `customers-loans/${loanId}`
+                        ; // The URL must include the ID for update
                 }
 
                 const formData = $(form).serialize();
@@ -663,120 +686,120 @@ document.addEventListener("DOMContentLoaded", function () {
             resetForm();
         });
     </script>
-   <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const returnsFields = document.getElementById('returnsFields');
-    const wastedFields = document.getElementById('wastedFields');
-    const chequeFields = document.getElementById('chequeFields');
-    const loanDetails = document.getElementById('loan-details-row');
-    const radios = document.querySelectorAll('input[name="loan_type"]');
-    const loanSection = document.getElementById('submitButton');
-    const amountSection = document.getElementById('amount_section');
-    const descriptionSection = document.getElementById('description_section');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const returnsFields = document.getElementById('returnsFields');
+            const wastedFields = document.getElementById('wastedFields');
+            const chequeFields = document.getElementById('chequeFields');
+            const loanDetails = document.getElementById('loan-details-row');
+            const radios = document.querySelectorAll('input[name="loan_type"]');
+            const loanSection = document.getElementById('submitButton');
+            const amountSection = document.getElementById('amount_section');
+            const descriptionSection = document.getElementById('description_section');
 
-    radios.forEach(radio => {
-        radio.addEventListener('change', function () {
-            // Hide all optional sections first
-            returnsFields.classList.add('d-none');
-            wastedFields.classList.add('d-none');
-            chequeFields.classList.add('d-none');
-            loanDetails.classList.remove('d-none');
-            amountSection.classList.remove('d-none');
-            descriptionSection.classList.remove('d-none');
+            radios.forEach(radio => {
+                radio.addEventListener('change', function () {
+                    // Hide all optional sections first
+                    returnsFields.classList.add('d-none');
+                    wastedFields.classList.add('d-none');
+                    chequeFields.classList.add('d-none');
+                    loanDetails.classList.remove('d-none');
+                    amountSection.classList.remove('d-none');
+                    descriptionSection.classList.remove('d-none');
 
-            if (this.value === 'returns') {
-                // Show returns, hide amount + description
-                returnsFields.classList.remove('d-none');
-                loanDetails.classList.add('d-none');
-                amountSection.classList.add('d-none');
-                descriptionSection.classList.add('d-none');
-                loanSection.classList.add('d-none');
-            } else if (this.value === 'grn_damage') {
-                // Show wasted, hide amount + description
-                wastedFields.classList.remove('d-none');
-                loanDetails.classList.add('d-none');
-                amountSection.classList.add('d-none');
-                descriptionSection.classList.add('d-none');
-            }
-        });
-    });
-
-    // Autofill Item Code from GRN when Returns selected
-    const returnGrn = document.getElementById('return_grn_code');
-    if (returnGrn) {
-        returnGrn.addEventListener('change', function () {
-            let code = this.value;
-            if (!code) return;
-            fetch(`https://wday.lk/AA/sms/api/grn-entry/${code}`)
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('return_item_code').value = data?.item_code || '';
+                    if (this.value === 'returns') {
+                        // Show returns, hide amount + description
+                        returnsFields.classList.remove('d-none');
+                        loanDetails.classList.add('d-none');
+                        amountSection.classList.add('d-none');
+                        descriptionSection.classList.add('d-none');
+                        loanSection.classList.add('d-none');
+                    } else if (this.value === 'grn_damage') {
+                        // Show wasted, hide amount + description
+                        wastedFields.classList.remove('d-none');
+                        loanDetails.classList.add('d-none');
+                        amountSection.classList.add('d-none');
+                        descriptionSection.classList.add('d-none');
+                    }
                 });
+            });
+
+            // Autofill Item Code from GRN when Returns selected
+            const returnGrn = document.getElementById('return_grn_code');
+            if (returnGrn) {
+                returnGrn.addEventListener('change', function () {
+                    let code = this.value;
+                    if (!code) return;
+                    fetch(`api/grn-entry/${code}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            document.getElementById('return_item_code').value = data?.item_code || '';
+                        });
+                });
+            }
+
+            fetch('api/all-bill-nos')
+                .then(res => res.json())
+                .then(billNosObj => {
+                    const returnBill = document.getElementById('return_bill_no');
+                    returnBill.innerHTML = '<option value="">-- Select Bill --</option>';
+
+                    // Convert object values to array
+                    const billNos = Object.values(billNosObj);
+
+                    billNos.forEach(bill => {
+                        const opt = document.createElement('option');
+                        opt.value = bill;
+                        opt.textContent = bill;
+                        returnBill.appendChild(opt);
+                    });
+                })
+                .catch(err => console.error(err));
+
         });
-    }
-
- fetch('https://wday.lk/AA/sms/api/all-bill-nos')
-    .then(res => res.json())
-    .then(billNosObj => {
-        const returnBill = document.getElementById('return_bill_no');
-        returnBill.innerHTML = '<option value="">-- Select Bill --</option>';
-
-        // Convert object values to array
-        const billNos = Object.values(billNosObj);
-
-        billNos.forEach(bill => {
-            const opt = document.createElement('option');
-            opt.value = bill;
-            opt.textContent = bill;
-            returnBill.appendChild(opt);
-        });
-    })
-    .catch(err => console.error(err));
-
-});
-</script>
-<script>
-    $(document).ready(function() {
-        $('#return_bill_no').select2({
-            placeholder: "-- Select Bill --",
-            allowClear: true
-        });
-    });
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const loanTypeRadios = document.querySelectorAll('input[name="loan_type"]');
-        const descriptionSection = document.getElementById('description_section');
-
-        // Original HTML content of the description field
-        const originalDescriptionHTML = descriptionSection.innerHTML;
-
-        // Dropdown HTML for outgoing
-        const outgoingDropdownHTML = `
-            <label for="description" class="text-form-label">විස්තරය</label>
-            <select class="form-select form-select-sm" name="description" id="description" required>
-                <option value="">-- Select --</option>
-                <option value="Salary">Salary</option>
-                <option value="Fuel">Fuel</option>
-                <option value="Electricity">Electricity</option>
-                <option value="Food">Food</option>
-                <option value="WaterBill">WaterBill</option>
-                <option value="Other">Other</option>
-            </select>
-            <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
-        `;
-
-        loanTypeRadios.forEach(radio => {
-            radio.addEventListener('change', function () {
-                if (this.value === 'outgoing') {
-                    descriptionSection.innerHTML = outgoingDropdownHTML;
-                } else {
-                    descriptionSection.innerHTML = originalDescriptionHTML;
-                }
+    </script>
+    <script>
+        $(document).ready(function () {
+            $('#return_bill_no').select2({
+                placeholder: "-- Select Bill --",
+                allowClear: true
             });
         });
-    });
-</script>
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loanTypeRadios = document.querySelectorAll('input[name="loan_type"]');
+            const descriptionSection = document.getElementById('description_section');
+
+            // Original HTML content of the description field
+            const originalDescriptionHTML = descriptionSection.innerHTML;
+
+            // Dropdown HTML for outgoing
+            const outgoingDropdownHTML = `
+                <label for="description" class="text-form-label">විස්තරය</label>
+                <select class="form-select form-select-sm" name="description" id="description" required>
+                    <option value="">-- Select --</option>
+                    <option value="Salary">Salary</option>
+                    <option value="Fuel">Fuel</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Food">Food</option>
+                    <option value="WaterBill">WaterBill</option>
+                    <option value="Other">Other</option>
+                </select>
+                <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
+            `;
+
+            loanTypeRadios.forEach(radio => {
+                radio.addEventListener('change', function () {
+                    if (this.value === 'outgoing') {
+                        descriptionSection.innerHTML = outgoingDropdownHTML;
+                    } else {
+                        descriptionSection.innerHTML = originalDescriptionHTML;
+                    }
+                });
+            });
+        });
+    </script>
 
 
 

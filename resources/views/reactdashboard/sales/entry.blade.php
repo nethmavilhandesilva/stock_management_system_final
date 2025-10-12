@@ -312,6 +312,14 @@
     getLatestGrnEntries: '/grn-entries/latest'     
     };
 </script>
+  <script>
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'F10') {
+        event.preventDefault(); // prevent browser default F10 behavior
+        location.reload(); // refresh the page
+      }
+    });
+  </script>
    @include('layouts.partials.footer')
     @include('layouts.partials.report-modal')
     @include('layouts.partials.item-wisemodal')

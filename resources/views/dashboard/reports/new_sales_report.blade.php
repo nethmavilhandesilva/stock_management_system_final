@@ -90,7 +90,11 @@ use Illuminate\Support\Str;
                 @foreach ($groupedData as $groupKey => $sales)
                     @php
                         $isBill = !empty($sales->first()->bill_no);
-                        $billTotal = $sales->sum('total');
+                        $billTotal = $sales->sum(function($sale) {
+    return $sale->weight * $sale->price_per_kg;
+});
+
+                        $billTotal2 = $sales->sum('total');
                         $firstPrinted = $sales->first()->FirstTimeBillPrintedOn ?? null;
                         $reprinted = $sales->first()->BillReprintAfterchanges ?? null;
                     @endphp
@@ -146,7 +150,7 @@ use Illuminate\Support\Str;
                                         {{ number_format($sale->price_per_kg, 2) }}
                                     </td>
                                     <td>{{ $sale->packs }}</td>
-                                    <td>{{ number_format($sale->total, 2) }}</td>
+                                    <td>{{ number_format($sale->weight*$sale->price_per_kg, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -155,10 +159,14 @@ use Illuminate\Support\Str;
                                 <td colspan="5" class="text-end">Total:</td>
                                 <td>{{ number_format($billTotal, 2) }}</td>
                             </tr>
+                             <tr class="fw-bold text-center">
+                                <td colspan="5" class="text-end">Total with Pack Cost:</td>
+                                <td>{{ number_format($billTotal2, 2) }}</td>
+                            </tr>
                         </tfoot>
                     </table>
 
-                    @php $grandTotal += $billTotal; @endphp
+                    @php $grandTotal += $billTotal2; @endphp
                 @endforeach
 
                 {{-- Grand Total --}}

@@ -660,7 +660,7 @@ class ReportController extends Controller
                         number_format($weightSum, 2),
                         $packsSum,
                         number_format($packDueCostSum, 2),
-                        number_format($totalSum, 2),
+                        number_format($totalSum-$packDueCostSum, 2),
                     ]);
 
                     $totalWeight += $weightSum;
@@ -676,7 +676,7 @@ class ReportController extends Controller
                     number_format($totalWeight, 2),
                     $totalPacks,
                     number_format($totalPackDueCost, 2),
-                    number_format($totalAmount, 2),
+                    number_format($totalAmount-$totalPackDueCost, 2),
                 ]);
 
                 // Append final total row
