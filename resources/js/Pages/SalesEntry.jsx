@@ -1039,15 +1039,15 @@ export default function SalesEntry() {
           <tr><td>බිල් අංකය : <strong>${billNo}</strong></td><td style="text-align:right;"><strong style="font-size:2.0em;">${customerName.toUpperCase()}</strong></td></tr>
         </table>
       </div>
-      <hr style="border:0.5px solid #000;margin:5px 0;">
+     <hr style="border:1px solid #000;margin:5px 0;opacity:1;">
       <table style="width:100%;font-size:9px;border-collapse:collapse;">
         <thead style="font-size:1.5em;">
           <tr><th style="text-align:left;padding:2px;">වර්ගය<br>මලු</th><th style="padding:2px;">කිලෝ</th><th style="padding:2px;">මිල</th><th style="text-align:right;padding:2px;">අගය</th></tr>
         </thead>
         <tbody>
-          <tr><td colspan="4"> <hr style="border:0.5px solid #000;margin:5px 0;"></td></tr>
+          <tr><td colspan="4"><hr style="border:1px solid #000;margin:5px 0;opacity:1;"></td></tr>
           ${itemsHtml}
-          <tr><td colspan="4"><hr style="border:0.5px solid #000;margin:5px 0;"></td></tr>
+          <tr><td colspan="4"><hr style="border:1px solid #000;margin:5px 0;opacity:1;"></td></tr>
           <tr><td colspan="2" style="text-align:left;font-weight:bold;font-size:1.2em;">${totalPacksSum}</td><td colspan="2" style="text-align:right;font-weight:bold;font-size:1.2em;">${totalSalesExcludingPackDue.toFixed(2)}</td></tr>
         </tbody>
       </table>
@@ -1058,7 +1058,7 @@ export default function SalesEntry() {
         ${givenAmountRow}${loanRow}
       </table>
       <div style="font-size:10px;">${itemSummaryHtml}</div>
-       <hr style="border:0.5px solid #000;margin:5px 0;">
+       <tr><td colspan="4"><hr style="border:1px solid #000;margin:5px 0;opacity:1;"></td></tr>
       <div style="text-align:center;margin-top:10px;font-size:10px;">
         <p style="margin:0;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p><p style="margin:0;">නැවත භාර ගනු නොලැබේ</p>
       </div>

@@ -48,7 +48,9 @@
         .bg-custom-dark {
             background-color: #004d00 !important;
             color: #fff;
+
         }
+
 
         .text-form-label {
             color: #fff !important;
@@ -150,7 +152,8 @@
                         <select class="form-select form-select-sm" id="customer_id" name="customer_id" required>
                             <option value="">-- Select Customer --</option>
                             @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" data-credit-limit="{{ $customer->credit_limit }}">
+                                <option value="{{ $customer->id }}" data-credit-limit="{{ $customer->credit_limit }}"
+                                    data-short-name="{{ $customer->short_name }}">
                                     {{ $customer->short_name }} - {{ $customer->name }}
                                 </option>
                             @endforeach
@@ -490,7 +493,7 @@
 
                 if (customerId && (loanType === 'today' || loanType === 'old')) {
                     $.ajax({
-                        url: `customers/${customerId}/loans-total`,
+                        url: `https://wday.lk/customers/${customerId}/loans-total`,
                         method: 'GET',
                         success: function (response) {
                             // Parse the total amount
@@ -515,7 +518,6 @@
                         }
                     });
                 }
-
             }
 
             // Toggle fields based on loan type / settling way
@@ -574,6 +576,97 @@
                     }
                 }
             }
+            //searc function
+            // Add this to your existing JavaScript
+            $(document).ready(function () {
+                // Initialize Select2 with custom search
+                $('#customer_id').select2({
+                    placeholder: "-- Select Customer --",
+                    allowClear: true,
+                    width: '100%',
+                    language: {
+                        noResults: function () {
+                            return "No customers found";
+                        }
+                    },
+                    matcher: function (params, data) {
+                        // If there's no search term, return all results
+                        if ($.trim(params.term) === '') {
+                            return data;
+                        }
+
+                        const searchTerm = params.term.toLowerCase();
+                        const optionText = data.text.toLowerCase();
+
+                        // If search term is only one character, use first letter matching
+                        if (searchTerm.length === 1) {
+                            // Check if the first letter of short name matches the search term
+                            if (data.element && $(data.element).data('short-name')) {
+                                const shortName = $(data.element).data('short-name').toLowerCase();
+                                // Check if first letter matches
+                                if (shortName.charAt(0) === searchTerm.charAt(0)) {
+                                    return data;
+                                }
+                            }
+                        }
+                        // If search term has more than one character, use normal text filtering
+                        else {
+                            // Check if the option text contains the search term
+                            if (optionText.includes(searchTerm)) {
+                                return data;
+                            }
+                        }
+
+                        // If no match, don't return the result
+                        return null;
+                    }
+                });
+                // Function to focus on customer search
+                function focusCustomerSearch() {
+                    setTimeout(function () {
+                        // Open the Select2 dropdown and focus on search field
+                        $('#customer_id').select2('open');
+                    }, 100);
+                }
+
+                // Focus on page load
+                $(document).ready(function () {
+                    // Focus on customer search when page loads (only for 'old' and 'today' loan types)
+                    const currentLoanType = $('input[name="loan_type"]:checked').val();
+                    if (currentLoanType === 'old' || currentLoanType === 'today') {
+                        focusCustomerSearch();
+                    }
+                });
+
+                // Focus when radio buttons change
+                $('input[name="loan_type"]').on('change', function () {
+                    if (this.value === 'old' || this.value === 'today') {
+                        focusCustomerSearch();
+                    }
+                });
+
+                // Also add this to your existing toggleLoanTypeDependentFields function
+                function toggleLoanTypeDependentFields() {
+                    const loanType = $('input[name="loan_type"]:checked').val();
+                    const settlingWay = $('input[name="settling_way"]:checked').val();
+
+                    // Auto-focus for old and today loan types
+                    if (loanType === 'old' || loanType === 'today') {
+                        setTimeout(function () {
+                            if ($('#customer_id').is(':visible')) {
+                                focusCustomerSearch();
+                            }
+                        }, 300);
+                    }
+                }
+
+                // Focus the search input when dropdown opens
+                $('#customer_id').on('select2:open', function () {
+                    setTimeout(function () {
+                        document.querySelector('.select2-container--open .select2-search__field').focus();
+                    }, 50);
+                });
+            });
 
             // Event listeners
             $('input[name="loan_type"], input[name="settling_way"]').on('change', function () {
@@ -594,7 +687,7 @@
                 // Handle PUT action dynamically
                 if (method === 'PUT') {
                     const loanId = $('#loan_id').val();
-                    url = `customers-loans/${loanId}`
+                    url = `https://wday.lk/customers-loans/${loanId}`
                         ; // The URL must include the ID for update
                 }
 
@@ -605,7 +698,7 @@
                     type: 'POST', // Use POST for form submission and spoof the method
                     data: formData + '&_method=' + method, // Append _method to the data
                     success: function (response) {
-                        alert(response.message || 'Success!');
+
                         location.reload();
                     },
                     error: function (xhr) {
@@ -638,7 +731,12 @@
                 $('input[name="settling_way"][value="' + (loan.settling_way ?? 'cash') + '"]').prop('checked', true);
 
                 // Set common fields
-                $('input[name="amount"]').val(loan.amount);
+                // Set amount field - remove minus sign if present (for display only)
+                let displayAmount = loan.amount;
+                if (displayAmount < 0) {
+                    displayAmount = Math.abs(displayAmount);
+                }
+                $('input[name="amount"]').val(displayAmount);
                 $('input[name="description"]').val(loan.description);
                 $('input[name="bill_no"]').val(loan.bill_no ?? '');
                 if (loan.customer_id) $('#customer_id').val(loan.customer_id).trigger('change');
@@ -677,10 +775,46 @@
             $('#cancelEditButton').on('click', resetForm);
 
             // Keyboard navigation
+            // Keyboard navigation
             $('#customer_id').on('select2:close', () => $('input[name="bill_no"]').focus());
-            $('input[name="bill_no"]').on('keypress', e => { if (e.which === 13) { e.preventDefault(); $('input[name="amount"]').focus(); } });
-            $('input[name="amount"]').on('keypress', e => { if (e.which === 13) { e.preventDefault(); $('input[name="description"]').focus(); } });
-            $('input[name="description"]').on('keypress', e => { if (e.which === 13) { e.preventDefault(); $('#submitButton').click(); } });
+            $('input[name="bill_no"]').on('keypress', e => {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    $('input[name="amount"]').focus();
+                }
+            });
+            $('input[name="amount"]').on('keypress', e => {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    $('input[name="description"]').focus();
+                }
+            });
+            $('input[name="description"]').on('keypress', e => {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    // Submit the form only for these three loan types
+                    const loanType = $('input[name="loan_type"]:checked').val();
+                    if (['today', 'ingoing', 'outgoing'].includes(loanType)) {
+                        $('#submitButton').click();
+                    } else {
+                        // For other loan types, you can add specific behavior or leave as is
+                        $('#submitButton').click(); // or remove this line if you don't want auto-submit for other types
+                    }
+                }
+            });
+            // Form submission with Enter key
+            $(document).on('keypress', function (e) {
+                if (e.which === 13) {
+                    // Check if we're in a text input or textarea
+                    if ($(e.target).is('input:not([type="button"]):not([type="submit"]):not([type="reset"]), textarea, select')) {
+                        e.preventDefault();
+                        // Only submit if we're specifically in the description field for those loan types
+                        if ($(e.target).is('#description') && ['today', 'ingoing', 'outgoing'].includes($('input[name="loan_type"]:checked').val())) {
+                            $('#submitButton').click();
+                        }
+                    }
+                }
+            });
 
             // Initial setup
             resetForm();
@@ -730,7 +864,7 @@
                 returnGrn.addEventListener('change', function () {
                     let code = this.value;
                     if (!code) return;
-                    fetch(`api/grn-entry/${code}`)
+                    fetch(`https://wday.lk/api/grn-entry/${code}`)
                         .then(res => res.json())
                         .then(data => {
                             document.getElementById('return_item_code').value = data?.item_code || '';
@@ -738,7 +872,7 @@
                 });
             }
 
-            fetch('api/all-bill-nos')
+            fetch('https://wday.lk/api/all-bill-nos')
                 .then(res => res.json())
                 .then(billNosObj => {
                     const returnBill = document.getElementById('return_bill_no');
@@ -759,6 +893,17 @@
         });
     </script>
     <script>
+        document.addEventListener('input', function (e) {
+            // Detect typing inside the search box of a searchable dropdown
+            const searchField = e.target.closest('.select2-search__field, .bs-searchbox input');
+
+            if (searchField) {
+                e.target.value = e.target.value.toUpperCase();
+            }
+        });
+    </script>
+
+    <script>
         $(document).ready(function () {
             $('#return_bill_no').select2({
                 placeholder: "-- Select Bill --",
@@ -776,18 +921,18 @@
 
             // Dropdown HTML for outgoing
             const outgoingDropdownHTML = `
-                <label for="description" class="text-form-label">විස්තරය</label>
-                <select class="form-select form-select-sm" name="description" id="description" required>
-                    <option value="">-- Select --</option>
-                    <option value="Salary">Salary</option>
-                    <option value="Fuel">Fuel</option>
-                    <option value="Electricity">Electricity</option>
-                    <option value="Food">Food</option>
-                    <option value="WaterBill">WaterBill</option>
-                    <option value="Other">Other</option>
-                </select>
-                <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
-            `;
+                                <label for="description" class="text-form-label">විස්තරය</label>
+                                <select class="form-select form-select-sm" name="description" id="description" required>
+                                    <option value="">-- Select --</option>
+                                    <option value="Salary">Salary</option>
+                                    <option value="Fuel">Fuel</option>
+                                    <option value="Electricity">Electricity</option>
+                                    <option value="Food">Food</option>
+                                    <option value="WaterBill">WaterBill</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
+                            `;
 
             loanTypeRadios.forEach(radio => {
                 radio.addEventListener('change', function () {
