@@ -175,46 +175,87 @@ class ReportController extends Controller
         ]);
     }
     public function getweight(Request $request)
-    {
-        $grnCode = $request->input('grn_code');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+{
+    $grnCode = $request->input('grn_code');
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $supplierCode = $request->input('supplier_code'); // Get supplier code from request
 
-        // Choose base query depending on date range
-        if ($startDate && $endDate) {
-            $query = SalesHistory::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total')
-                ->whereBetween('Date', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay()
-                ]);
-        } else {
-            $query = Sale::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total');
+    // Determine whether to use SalesHistory or Sale based on date range
+    if ($startDate && $endDate) {
+        $query = SalesHistory::selectRaw('
+            sales_histories.item_name,
+            sales_histories.item_code,
+            SUM(sales_histories.price_per_kg) as price_per_kg,
+            SUM(sales_histories.packs) as packs,
+            SUM(sales_histories.weight) as weight,
+            SUM(sales_histories.total) as total,
+            items.pack_due
+        ')
+            ->leftJoin('items', 'sales_histories.item_code', '=', 'items.no')
+            ->whereBetween('sales_histories.Date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay()
+            ]);
+
+        // Add supplier code filter for SalesHistory if provided
+        if (!empty($supplierCode)) {
+            $query->where('sales_histories.supplier_code', $supplierCode);
         }
+    } else {
+        $query = Sale::selectRaw('
+            sales.item_name,
+            sales.item_code,
+            SUM(sales.price_per_kg) as price_per_kg,
+            SUM(sales.packs) as packs,
+            SUM(sales.weight) as weight,
+            SUM(sales.total) as total,
+            items.pack_due
+        ')
+            ->leftJoin('items', 'sales.item_code', '=', 'items.no');
 
-        // Filter by GRN code if given
-        if (!empty($grnCode)) {
-            $query->where('code', $grnCode);
+        // Add supplier code filter for Sale if provided
+        if (!empty($supplierCode)) {
+            $query->where('sales.supplier_code', $supplierCode);
         }
-
-        // Group by item name & code
-        $sales = $query->groupBy('item_name', 'item_code')
-            ->orderBy('item_name', 'asc')
-            ->get();
-
-        // Only fetch GRN entry if code given
-        $selectedGrnEntry = !empty($grnCode)
-            ? GrnEntry::where('code', $grnCode)->first()
-            : null;
-
-        return view('dashboard.reports.weight-based-report', [
-            'sales' => $sales,
-            'selectedGrnCode' => $grnCode,
-            'selectedGrnEntry' => $selectedGrnEntry,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'filters' => $request->all(),
-        ]);
     }
+
+    // Filter by GRN code if provided
+    if (!empty($grnCode)) {
+        $query->where(function ($q) use ($grnCode) {
+            $q->where('sales.code', $grnCode)
+                ->orWhere('sales_histories.code', $grnCode);
+        });
+    }
+
+    // Group by item and pack_due (since it's per item)
+    $sales = $query->groupBy(
+        $startDate && $endDate ? 'sales_histories.item_name' : 'sales.item_name',
+        $startDate && $endDate ? 'sales_histories.item_code' : 'sales.item_code',
+        'items.pack_due'
+    )
+        ->orderBy(
+            $startDate && $endDate ? 'sales_histories.item_name' : 'sales.item_name',
+            'asc'
+        )
+        ->get();
+
+    // Fetch GRN entry if a code is given
+    $selectedGrnEntry = !empty($grnCode)
+        ? GrnEntry::where('code', $grnCode)->first()
+        : null;
+
+    // Return Blade view (not JSON)
+    return view('dashboard.reports.weight-based-report', [
+        'sales' => $sales,
+        'selectedGrnCode' => $grnCode,
+        'selectedGrnEntry' => $selectedGrnEntry,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'supplierCode' => $supplierCode, // Pass supplier code to view
+        'filters' => $request->all(),
+    ]);
+}
 
     public function getGrnSalecodereport(Request $request)
     {
@@ -257,93 +298,7 @@ class ReportController extends Controller
             'filters' => $request->all(),
         ]);
     }
-    public function getSalesFilterReport(Request $request)
-    {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-
-        // Determine which model to query based on the presence of a date range
-        if ($startDate && $endDate) {
-            // If both start_date and end_date are provided, query Salesadjustment
-            $query = SalesHistory::query();
-
-            // Apply the date range filter using Carbon for robustness
-            $query->whereBetween('Date', [
-                Carbon::parse($startDate)->startOfDay(),
-                Carbon::parse($endDate)->endOfDay()
-            ]);
-
-        } else {
-            // Otherwise, query Sale (default behavior)
-            $query = Sale::query();
-        }
-
-        // Apply other filters if present, regardless of the chosen model
-        if ($request->filled('supplier_code')) {
-            $query->where('supplier_code', $request->input('supplier_code'));
-        }
-
-        if ($request->filled('customer_code')) {
-            $query->where('customer_code', $request->input('customer_code'));
-        }
-
-        if ($request->filled('item_code')) {
-            $query->where('item_code', $request->input('item_code'));
-        }
-
-        // Apply ordering
-        switch ($request->input('order_by', 'id_desc')) { // Default to id_desc
-            case 'id_asc':
-                $query->orderBy('id', 'asc');
-                break;
-            case 'customer_code_asc':
-                $query->orderBy('customer_code', 'asc');
-                break;
-            case 'customer_code_desc':
-                $query->orderBy('customer_code', 'desc');
-                break;
-            case 'item_name_asc':
-                $query->orderBy('item_name', 'asc');
-                break;
-            case 'item_name_desc':
-                $query->orderBy('item_name', 'desc');
-                break;
-            case 'total_desc':
-                $query->orderBy('total', 'desc');
-                break;
-            case 'total_asc':
-                $query->orderBy('total', 'asc');
-                break;
-            case 'weight_desc':
-                $query->orderBy('weight', 'desc');
-                break;
-            case 'weight_asc':
-                $query->orderBy('weight', 'asc');
-                break;
-            case 'id_desc':
-            default:
-                $query->orderBy('id', 'desc');
-                break;
-        }
-
-        $sales = $query->get([
-            'code',
-            'packs',
-            'item_name',
-            'weight',
-            'price_per_kg',
-            'total',
-            'bill_no',
-            'customer_code',
-            'created_at' // Ensure created_at is selected for date filtering
-        ]);
-
-        // Calculate grand total
-        $grandTotal = $sales->sum('total');
-
-        // Pass data to the report view
-        return view('dashboard.reports.sales_filter_report', compact('sales', 'grandTotal', 'request'));
-    }
+   
     public function getGrnSalesOverviewReport()
     {
         // Fetch all GRN entries
@@ -623,72 +578,131 @@ class ReportController extends Controller
 
                 break;
 
-            case 'grn-sales-report':
-                $reportTitle = 'GRN-based Sales Report';
+          case 'grn-sales-report':
+    $reportTitle = 'GRN-based Sales Report';
 
-                $query = Sale::query()
-                    ->when(isset($filters['grn_code']), fn($q) => $q->where('code', $filters['grn_code']))
-                    ->when(isset($filters['start_date']), fn($q) => $q->whereDate('created_at', '>=', $filters['start_date']))
-                    ->when(isset($filters['end_date']), fn($q) => $q->whereDate('created_at', '<=', $filters['end_date']));
+    // Determine whether to use SalesHistory or Sale based on date range
+    if (isset($filters['start_date']) && isset($filters['end_date'])) {
+        $query = SalesHistory::selectRaw('
+            sales_histories.item_code,
+            MAX(sales_histories.item_name) as item_name,
+            SUM(sales_histories.price_per_kg) as price_per_kg,
+            SUM(sales_histories.packs) as packs,
+            SUM(sales_histories.weight) as weight,
+            SUM(sales_histories.total) as total,
+            MAX(items.pack_due) as pack_due
+        ')
+            ->leftJoin('items', 'sales_histories.item_code', '=', 'items.no')
+            ->whereBetween('sales_histories.Date', [
+                Carbon::parse($filters['start_date'])->startOfDay(),
+                Carbon::parse($filters['end_date'])->endOfDay()
+            ]);
 
-                $records = $query->get();
+        // Add supplier code filter for SalesHistory if provided
+        if (isset($filters['supplier_code']) && !empty($filters['supplier_code'])) {
+            $query->where('sales_histories.supplier_code', $filters['supplier_code']);
+        }
+    } else {
+        $query = Sale::selectRaw('
+            sales.item_code,
+            MAX(sales.item_name) as item_name,
+            SUM(sales.price_per_kg) as price_per_kg,
+            SUM(sales.packs) as packs,
+            SUM(sales.weight) as weight,
+            SUM(sales.total) as total,
+            MAX(items.pack_due) as pack_due
+        ')
+            ->leftJoin('items', 'sales.item_code', '=', 'items.no');
 
-                $headings = ['භාණ්ඩ කේතය', 'වර්ගය', 'බර', 'මලු', 'මලු ගාස්තුව', 'එකතුව'];
+        // Add supplier code filter for Sale if provided
+        if (isset($filters['supplier_code']) && !empty($filters['supplier_code'])) {
+            $query->where('sales.supplier_code', $filters['supplier_code']);
+        }
+    }
 
-                // Group by item_code
-                $grouped = $records->groupBy('item_code');
+    // Filter by GRN code if provided
+    if (isset($filters['grn_code'])) {
+        $query->where(function ($q) use ($filters) {
+            $q->where('sales.code', $filters['grn_code'])
+                ->orWhere('sales_histories.code', $filters['grn_code']);
+        });
+    }
 
-                $reportData = collect();
-                $totalWeight = 0;
-                $totalPacks = 0;
-                $totalAmount = 0;
-                $totalPackDueCost = 0;
+    // Group by item_code only
+    $records = $query->groupBy(
+        isset($filters['start_date']) && isset($filters['end_date']) ? 'sales_histories.item_code' : 'sales.item_code'
+    )
+        ->orderBy(
+            isset($filters['start_date']) && isset($filters['end_date']) ? 'sales_histories.item_code' : 'sales.item_code',
+            'asc'
+        )
+        ->get();
 
-                foreach ($grouped as $itemCode => $sales) {
-                    $itemName = $sales->first()->item_name ?? '';
-                    $weightSum = $sales->sum('weight');
-                    $packsSum = $sales->sum('packs');
-                    $totalSum = $sales->sum('total');
+    // Headings for Blade view - EXACTLY as in your blade file
+    $headings = ['අයිතම කේතය', 'වර්ගය', 'බර (kg)', 'මිල (Rs/kg)', 'මලු', 'මලු ගාස්තුව (Rs)', 'එකතුව (Rs)'];
 
-                    // Calculate "මලු ගාස්තුව" based on item->pack_due
-                    $packDue = $sales->first()->item->pack_due ?? 0;
-                    $packDueCostSum = $packsSum * $packDue;
+    // Initialize report data and totals - EXACTLY as in your blade file
+    $reportData = collect();
+    $totalWeight = 0;
+    $totalPacks = 0;
+    $totalAmount = 0;
+    $totalPackDueCost = 0;
 
-                    $reportData->push([
-                        $itemCode,
-                        $itemName,
-                        number_format($weightSum, 2),
-                        $packsSum,
-                        number_format($packDueCostSum, 2),
-                        number_format($totalSum-$packDueCostSum, 2),
-                    ]);
+    foreach ($records as $record) {
+        $itemCode = $record->item_code;
+        $itemName = $record->item_name;
+        $weight = $record->weight ?? 0;
+        $pricePerKg = $record->price_per_kg ?? 0;
+        $packs = $record->packs ?? 0;
+        $packDue = $record->pack_due ?? 0;
 
-                    $totalWeight += $weightSum;
-                    $totalPacks += $packsSum;
-                    $totalAmount += $totalSum;
-                    $totalPackDueCost += $packDueCostSum;
-                }
+        // Calculate EXACTLY as in your blade file
+        $packDueCost = $packs * $packDue;
+        $netTotal = $weight * $pricePerKg; // This is the key difference - using weight * price_per_kg
 
-                // Append totals row
-                $reportData->push([
-                    'TOTAL',
-                    '',
-                    number_format($totalWeight, 2),
-                    $totalPacks,
-                    number_format($totalPackDueCost, 2),
-                    number_format($totalAmount-$totalPackDueCost, 2),
-                ]);
+        $reportData->push([
+            $itemCode,
+            $itemName,
+            number_format($weight, 2),
+            number_format($pricePerKg, 2),
+            number_format($packs, 0),
+            number_format($packDueCost, 2),
+            number_format($netTotal, 2),
+        ]);
 
-                // Append final total row
-                $reportData->push([
-                    '',
-                    '',
-                    '',
-                    '',
-                    'අවසන් මුළු එකතුව:',
-                    number_format($totalAmount + $totalPackDueCost, 2),
-                ]);
-                break;
+        // Update totals EXACTLY as in blade file
+        $totalWeight += $weight;
+        $totalPacks += $packs;
+        $totalAmount += $netTotal;
+        $totalPackDueCost += $packDueCost;
+    }
+
+    // Add empty row for separation (like the <hr> in blade)
+    $reportData->push(['', '', '', '', '', '', '']);
+
+    // Totals row - EXACTLY as in blade file's first totals row
+    $reportData->push([
+        '', // Empty for item code
+        'මුළු එකතුව:', // Note: In your blade this is in the second column
+        number_format($totalWeight, 2),
+        '', // Empty for price per kg
+        number_format($totalPacks, 0),
+        number_format($totalPackDueCost, 2),
+        number_format($totalAmount, 2),
+    ]);
+
+    // Final total row - EXACTLY as in blade file's final row
+    $reportData->push([
+        '',
+        '',
+        '',
+        '',
+        '',
+        'අවසන් මුළු එකතුව:',
+        number_format($totalAmount + $totalPackDueCost, 2),
+    ]);
+
+    break;
 
             case 'grn-sale-code-report':
                 $reportTitle = 'GRN Code-based Sales Report';
@@ -769,7 +783,7 @@ class ReportController extends Controller
 
         return view('dashboard.reports.salesadjustment', compact('entries', 'code', 'startDate', 'endDate'));
     }
-
+    // In your ReportController or CustomersLoanController
 
     public function financialReport()
     {

@@ -2,7 +2,6 @@
 
 @section('content')
 <style>
-    /* --- Body and card styling --- */
     body {
         background-color: #99ff99;
     }
@@ -22,7 +21,6 @@
         background-color: #00800033;
     }
 
-    /* --- Report title bar --- */
     .report-title-bar {
         display: flex;
         align-items: center;
@@ -60,7 +58,6 @@
         border-radius: 5px;
         cursor: pointer;
         font-weight: 600;
-        white-space: nowrap;
         transition: background-color 0.3s ease;
     }
 
@@ -68,14 +65,12 @@
         background-color: #003300;
     }
 
-    /* --- Compact table --- */
     .compact-table th,
     .compact-table td {
         font-size: 13px;
         padding: 4px 8px;
     }
 
-    /* --- Print styles --- */
     @media print {
         body {
             background-color: #fff !important;
@@ -123,7 +118,6 @@
             display: none !important;
         }
 
-        /* Hide everything by default except card */
         body * {
             visibility: hidden;
         }
@@ -141,31 +135,47 @@
             @php
                 $companyName = \App\Models\Setting::value('CompanyName');
             @endphp
-
             <h2 class="company-name">{{ $companyName ?? 'Default Company' }}</h2>
 
             <h4 class="fw-bold text-white">මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව</h4>
-            @php
-                $settingDate = \App\Models\Setting::value('value');
-            @endphp
-            <span class="right-info">
-                {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
-            </span>
+
+            <span class="right-info">{{ now()->format('Y-m-d') }}</span>
+
             <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
         </div>
 
-        <table class="table table-sm table-bordered table-striped compact-table">
+        {{-- GRN Info --}}
+        @if ($selectedGrnEntry)
+            <div class="mb-3 text-white">
+                <strong>GRN කේතය:</strong> {{ $selectedGrnCode }}
+                @if ($selectedGrnEntry->supplier ?? false)
+                    , <strong>Supplier:</strong> {{ $selectedGrnEntry->supplier }}
+                @endif
+            </div>
+        @endif
+
+        {{-- Date Range --}}
+        @if (!empty($startDate) || !empty($endDate))
+            <div class="mb-3 text-white">
+                <strong>දින පරාසය:</strong>
+                {{ $startDate ? $startDate : '' }}
+                {{ $endDate ? ' සිට ' . $endDate . ' දක්වා' : '' }}
+            </div>
+        @endif
+
+        <table class="table table-sm table-bordered table-striped compact-table text-center align-middle">
             <thead>
                 <tr>
                     <th>අයිතම කේතය</th>
                     <th>වර්ගය</th>
-                    <th>බර</th>
+                    <th>බර (kg)</th>
+                    <th>මිල (Rs/kg)</th>
                     <th>මලු</th>
-                    <th>මලු ගාස්තුව</th>
-                   
-                    <th>එකතුව</th>
+                    <th>මලු ගාස්තුව (Rs)</th>
+                    <th>එකතුව (Rs)</th>
                 </tr>
             </thead>
+
             <tbody>
                 @php
                     $total_packs = 0;
@@ -174,25 +184,29 @@
                     $total_pack_due_cost = 0;
                 @endphp
 
-                @forelse($sales as $sale)
+                @forelse ($sales as $sale)
                     @php
-                        // Get the pack_due value from the related item
-                        $pack_due = $sale->item->pack_due ?? 0;
-                        $pack_due_cost = $sale->packs * $pack_due;
-                        
-                        $total_packs += $sale->packs;
-                        $total_weight += $sale->weight;
-                        $total_amount += $sale->total;
+                        $pack_due = $sale->pack_due ?? 0;
+                        $packs = $sale->packs ?? 0;
+                        $weight = $sale->weight ?? 0;
+                        $price_per_kg = $sale->price_per_kg ?? 0;
+
+                        $pack_due_cost = $packs * $pack_due;
+                        $net_total = $weight * $price_per_kg;
+
+                        $total_packs += $packs;
+                        $total_weight += $weight;
+                        $total_amount += $net_total;
                         $total_pack_due_cost += $pack_due_cost;
                     @endphp
                     <tr>
                         <td>{{ $sale->item_code }}</td>
-                        <td>{{ $sale->item_name }}</td>
-                        <td>{{ number_format($sale->weight, 2) }}</td>
-                        <td>{{ $sale->packs }}</td>
-                      
-                        <td>{{ number_format($pack_due_cost, 2) }}</td>
-                        <td>{{ number_format($sale->total-$pack_due_cost, 2) }}</td>
+                        <td class="text-start">{{ $sale->item_name }}</td>
+                        <td class="text-end">{{ number_format($weight, 2) }}</td>
+                        <td class="text-end">{{ number_format($price_per_kg, 2) }}</td>
+                        <td class="text-end">{{ number_format($packs, 0) }}</td>
+                        <td class="text-end">{{ number_format($pack_due_cost, 2) }}</td>
+                        <td class="text-end">{{ number_format($net_total, 2) }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -200,39 +214,34 @@
                     </tr>
                 @endforelse
             </tbody>
-           <tfoot>
-    {{-- Subtotals --}}
-    <tr class="table-secondary fw-bold">
-        <td class="text-end" colspan="2">මුළු එකතුව:</td>
-        <td class="text-end">{{ number_format($total_weight, 2) }}</td>
-        <td class="text-end">{{ $total_packs }}</td>
-        <td class="text-end">{{ number_format($total_pack_due_cost, 2) }}</td>
-        <td class="text-end">{{ number_format($total_amount-$total_pack_due_cost, 2) }}</td>
-    </tr>
 
-    {{-- Divider row for clarity --}}
-    <tr>
-        <td colspan="6" class="p-0">
-            <hr class="m-0">
-        </td>
-    </tr>
+            <tfoot>
+                <tr class="table-secondary fw-bold">
+                    <td colspan="2" class="text-end">මුළු එකතුව:</td>
+                    <td class="text-end">{{ number_format($total_weight, 2) }}</td>
+                    <td></td>
+                    <td class="text-end">{{ number_format($total_packs, 0) }}</td>
+                    <td class="text-end">{{ number_format($total_pack_due_cost, 2) }}</td>
+                    <td class="text-end">{{ number_format($total_amount, 2) }}</td>
+                </tr>
 
-    {{-- Final total --}}
-    <tr class="table-dark fw-bold">
-        <td class="text-end" colspan="4"></td>
-        <td class="text-end">අවසන් මුළු එකතුව:</td>
-        <td class="text-end">
-            {{ number_format($total_pack_due_cost + $total_amount-$total_pack_due_cost, 2) }}
-        </td>
-    </tr>
-</tfoot>
+                <tr>
+                    <td colspan="7" class="p-0">
+                        <hr class="m-0">
+                    </td>
+                </tr>
 
-
+                <tr class="table-dark fw-bold">
+                    <td colspan="5"></td>
+                    <td class="text-end">අවසන් මුළු එකතුව:</td>
+                    <td class="text-end">{{ number_format($total_amount + $total_pack_due_cost, 2) }}</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 
+    {{-- Export Buttons --}}
     <div class="mt-3">
-        {{-- Excel Download Form --}}
         <form action="{{ route('report.download', ['reportType' => 'grn-sales-report', 'format' => 'excel']) }}" method="POST" class="d-inline">
             @csrf
             @foreach ($filters as $key => $value)
@@ -241,7 +250,6 @@
             <button type="submit" class="btn btn-success me-2">Download Excel</button>
         </form>
 
-        {{-- PDF Download Form --}}
         <form action="{{ route('report.download', ['reportType' => 'grn-sales-report', 'format' => 'pdf']) }}" method="POST" class="d-inline">
             @csrf
             @foreach ($filters as $key => $value)
