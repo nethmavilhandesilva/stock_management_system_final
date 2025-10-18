@@ -113,20 +113,20 @@
 
         <div class="card custom-card shadow border-0 rounded-3 p-4">
             <div class="report-title-bar">
-               @php
-    $companyName = \App\Models\Setting::value('CompanyName');
-@endphp
+                @php
+                    $companyName = \App\Models\Setting::value('CompanyName');
+                @endphp
 
-<h2 class="company-name">{{ $companyName ?? 'Default Company' }}</h2>
+                <h2 class="company-name">{{ $companyName ?? 'Default Company' }}</h2>
 
                 <h4 class="fw-bold text-white">ණය වාර්තාව</h4>
-               @php
-    $settingDate = \App\Models\Setting::value('value');
-@endphp
+                @php
+                    $settingDate = \App\Models\Setting::value('value');
+                @endphp
 
-<span class="right-info">
-    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
-</span>
+                <span class="right-info">
+                    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+                </span>
                 <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
             </div>
 
@@ -149,14 +149,15 @@
                     <table class="table table-bordered table-striped table-hover mb-0">
                         <thead>
                             <tr>
+                                <th>දිනය</th>
                                 <th>පාරිභෝගික නම</th>
                                 <th>බිල් අංකය</th>
-                                <th>දිනය</th>
                                 <th>විස්තරය</th>
                                 <th>චෙක්පත්</th>
                                 <th>බැංකුව</th>
                                 <th>ලබීම්</th>
                                 <th>දීම්</th>
+                                <th>ශේෂය</th> <!-- 🆕 Added Balance column -->
                             </tr>
                         </thead>
                         <tbody>
@@ -166,53 +167,59 @@
                             @endphp
                             @foreach ($loans as $loan)
                                 @php
-                                    // Determine if the amount is a receipt or a payment based on the description
                                     if ($loan->loan_type === 'old') {
                                         $receivedTotal += $loan->amount;
-                                        $receivedAmount = number_format($loan->amount, 2);
-                                        $paidAmount = '';
+                                        $receivedAmount = $loan->amount;
+                                        $paidAmount = 0;
                                     } elseif ($loan->loan_type === 'today') {
                                         $paidTotal += $loan->amount;
-                                        $receivedAmount = '';
-                                        $paidAmount = number_format($loan->amount, 2);
+                                        $receivedAmount = 0;
+                                        $paidAmount = $loan->amount;
                                     } else {
-                                        $receivedAmount = '';
-                                        $paidAmount = '';
+                                        $receivedAmount = 0;
+                                        $paidAmount = 0;
                                     }
+
+                                    // 🧮 Calculate balance for each row
+                                    $balance = $paidAmount - $receivedAmount;
                                 @endphp
                                 <tr>
+                                    <td>{{ $loan->created_at ? $loan->created_at->format('Y-m-d') : 'N/A' }}</td>
                                     <td>{{ $loan->customer_short_name }}</td>
                                     <td>{{ $loan->bill_no }}</td>
-                                   <td>{{ $loan->created_at ? $loan->created_at->format('Y-m-d') : 'N/A' }}</td>
-
                                     <td>{{ $loan->description }}</td>
                                     <td>{{ $loan->cheque_no }}</td>
                                     <td>{{ $loan->bank }}</td>
-                                    <td>{{ $receivedAmount }}</td>
-                                    <td>{{ $paidAmount }}</td>
+                                    <td>{{ $receivedAmount ? number_format($receivedAmount, 2) : '' }}</td>
+                                    <td>{{ $paidAmount ? number_format($paidAmount, 2) : '' }}</td>
+                                    <td>{{ number_format($balance, 2) }}</td> <!-- 🆕 Show balance -->
                                 </tr>
                             @endforeach
+
                             <!-- Total Row -->
                             <tr style="font-weight: bold; background-color: #dff0d8; color: black;">
                                 <td colspan="6" class="text-end">එකතුව:</td>
                                 <td>{{ number_format($receivedTotal, 2) }}</td>
                                 <td>{{ number_format($paidTotal, 2) }}</td>
+                                <td>{{ number_format($paidTotal - $receivedTotal, 2) }}</td> <!-- 🆕 Total balance -->
                             </tr>
+
                             <!-- Net Balance Row -->
                             <tr style="font-weight: bold; background-color: #004d00; color: white;">
                                 @php
                                     $netBalance = $paidTotal - $receivedTotal;
                                 @endphp
-                                <td colspan="7" class="text-end">ශුද්ධ ශේෂය:</td>
+                                <td colspan="8" class="text-end">ශුද්ධ ශේෂය:</td>
                                 <td>{{ number_format($netBalance, 2) }}</td>
                             </tr>
                         </tbody>
                     </table>
 
+
                 @endif
             </div>
         </div>
-   
-     
-     </div>
+
+
+    </div>
 @endsection
