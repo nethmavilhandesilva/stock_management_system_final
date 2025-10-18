@@ -1,6 +1,6 @@
 <div class="modal fade" id="reportLoanModal" tabindex="-1" aria-labelledby="reportLoanModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form action="{{ route('loan.report.results') }}" method="POST" target="_blank">
+    <form id="loanReportForm" action="{{ route('loan.report.results') }}" method="POST" target="_blank">
       @csrf
       <div class="modal-content" style="background-color: #99ff99;">
         <div class="modal-header">
@@ -40,9 +40,9 @@
         </div>
 
         <div class="modal-footer">
-             <a href="{{ route('report.loans.email-simple') }}" class="print-btn" style="text-decoration: none;">
-        📧 Email Report
-    </a>
+          <a href="{{ route('report.loans.email-simple') }}" class="print-btn" style="text-decoration: none;">
+            📧 Email Report
+          </a>
           <button type="submit" class="btn btn-primary w-100">ඉදිරිපත් කරන්න</button>
         </div>
       </div>
@@ -58,13 +58,14 @@
     const passwordInput = document.getElementById('loanReport_password');
     const dateRangeContainer = document.getElementById('loanReport_date_range_container');
     const correctPassword = 'nethma123';
+    const form = document.getElementById('loanReportForm');
 
-    // Initialize Select2 with dropdownParent
+    // Initialize Select2 inside modal
     $(customerSelect).select2({
       dropdownParent: $('#reportLoanModal')
     });
 
-    // Show/hide date range fields on password input
+    // Password show/hide date range
     passwordInput.addEventListener('input', function () {
       if (passwordInput.value === correctPassword) {
         dateRangeContainer.style.display = 'block';
@@ -72,6 +73,14 @@
         dateRangeContainer.style.display = 'none';
         document.getElementById('loanReport_start_date').value = '';
         document.getElementById('loanReport_end_date').value = '';
+      }
+    });
+
+    // Prevent form submit if customer not selected
+    form.addEventListener('submit', function (e) {
+      if (customerSelect.value === "") {
+        e.preventDefault();
+        alert("කරුණාකර ගැනුම්කරු තෝරන්න"); // Sinhala alert message
       }
     });
   });

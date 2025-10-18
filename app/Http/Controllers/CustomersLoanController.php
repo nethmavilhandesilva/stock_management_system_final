@@ -408,7 +408,6 @@ public function getTotalLoanAmount($customerId)
 
    public function loanReportResults(Request $request)
 {
-    // Get the date from Setting or default to today
     $settingDate = Setting::value('value') ?? now()->toDateString();
 
     $query = CustomersLoan::query();
@@ -420,22 +419,19 @@ public function getTotalLoanAmount($customerId)
 
     // Apply date filtering
     if ($request->filled('start_date') && $request->filled('end_date')) {
-        // Both dates given → filter between them
         $query->whereBetween('Date', [$request->start_date, $request->end_date]);
     } elseif ($request->filled('start_date')) {
-        // Only start date given → from start_date until now
         $query->whereDate('Date', '>=', $request->start_date);
     } elseif ($request->filled('end_date')) {
-        // Only end date given → until end_date
         $query->whereDate('Date', '<=', $request->end_date);
-    
     }
 
-    // Fetch results ordered by Date desc
-    $loans = $query->orderBy('Date', 'desc')->get();
+    // ✅ Change order to ascending (first record first)
+    $loans = $query->orderBy('Date', 'asc')->get();
 
     return view('dashboard.reports.loan-results', compact('loans'));
 }
+
 
 
 

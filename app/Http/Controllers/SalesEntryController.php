@@ -283,9 +283,6 @@ public function markAsPrinted(Request $request)
     }
 
     try {
-        // Step 1: Check for an existing bill number among the provided sales IDs.
-        // This is the key step. We query the database directly to find if any
-        // of the records have already been processed and assigned a bill number.
         $existingBillNo =Sale::whereIn('id', $salesIds)
                                           ->where('processed', 'Y')
                                           ->whereNotNull('bill_no')
@@ -355,7 +352,7 @@ private function generateNewBillNumber()
     });
 }
 
-  public function update(Request $request, Sale $sale)
+    public function update(Request $request, Sale $sale)
 {
     $validatedData = $request->validate([
         'customer_code' => 'required|string|max:255',
@@ -1186,22 +1183,6 @@ public function updateGivenAmount(Request $request, Sale $sale)
         'message' => 'Given amount updated successfully',
         'sale' => $sale
     ]);
-}
-
-public function getCustomers()
-{
-    try {
-        $customers = Sale::select('customer_code')
-            ->whereNotNull('customer_code')
-            ->where('customer_code', '<>', '')
-            ->distinct()
-            ->orderBy('customer_code')
-            ->get();
-        
-        return response()->json(['customers' => $customers]);
-    } catch (\Exception $e) {
-        return response()->json(['error' => 'Failed to fetch customers'], 500);
-    }
 }
 
 }
