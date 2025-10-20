@@ -72,10 +72,7 @@
     }
 
     @media print {
-        body {
-            background-color: #fff !important;
-            color: #000;
-        }
+        body { background-color: #fff !important; color: #000; }
 
         .custom-card {
             background-color: #fff !important;
@@ -88,59 +85,31 @@
             width: 100%;
         }
 
-        .custom-card table {
-            border: 1px solid #ccc;
-        }
-
+        .custom-card table { border: 1px solid #ccc; }
         .custom-card table th,
-        .custom-card table td {
-            border: 1px solid #ccc;
-            color: #000;
-        }
-
+        .custom-card table td { border: 1px solid #ccc; color: #000; }
         .custom-card table thead,
-        .custom-card table tfoot {
-            background-color: #eee !important;
-            color: #000 !important;
-        }
-
-        .custom-card table tbody tr:nth-child(odd) {
-            background-color: #f9f9f9 !important;
-        }
+        .custom-card table tfoot { background-color: #eee !important; color: #000 !important; }
+        .custom-card table tbody tr:nth-child(odd) { background-color: #f9f9f9 !important; }
 
         .report-title-bar h2,
         .report-title-bar h4,
-        .right-info {
-            color: #000 !important;
-        }
+        .right-info { color: #000 !important; }
 
-        .print-btn {
-            display: none !important;
-        }
-
-        body * {
-            visibility: hidden;
-        }
-
-        .custom-card,
-        .custom-card * {
-            visibility: visible;
-        }
+        .print-btn { display: none !important; }
+        body * { visibility: hidden; }
+        .custom-card, .custom-card * { visibility: visible; }
     }
 </style>
 
 <div class="container mt-4">
     <div class="card shadow border-0 rounded-3 p-4 custom-card">
         <div class="report-title-bar">
-            @php
-                $companyName = \App\Models\Setting::value('CompanyName');
-            @endphp
+            @php $companyName = \App\Models\Setting::value('CompanyName'); @endphp
             <h2 class="company-name">{{ $companyName ?? 'Default Company' }}</h2>
 
             <h4 class="fw-bold text-white">මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව</h4>
-
             <span class="right-info">{{ now()->format('Y-m-d') }}</span>
-
             <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
         </div>
 
@@ -169,7 +138,6 @@
                     <th>අයිතම කේතය</th>
                     <th>වර්ගය</th>
                     <th>බර (kg)</th>
-                    <th>මිල (Rs/kg)</th>
                     <th>මලු</th>
                     <th>මලු ගාස්තුව (Rs)</th>
                     <th>එකතුව (Rs)</th>
@@ -180,8 +148,8 @@
                 @php
                     $total_packs = 0;
                     $total_weight = 0;
-                    $total_amount = 0;
                     $total_pack_due_cost = 0;
+                    $total_net_total = 0;
                 @endphp
 
                 @forelse ($sales as $sale)
@@ -189,28 +157,27 @@
                         $pack_due = $sale->pack_due ?? 0;
                         $packs = $sale->packs ?? 0;
                         $weight = $sale->weight ?? 0;
-                        $price_per_kg = $sale->price_per_kg ?? 0;
+                        $item_total = $sale->total ?? 0;
 
                         $pack_due_cost = $packs * $pack_due;
-                        $net_total = $weight * $price_per_kg;
+                        $net_total = $item_total - $pack_due_cost;
 
                         $total_packs += $packs;
                         $total_weight += $weight;
-                        $total_amount += $net_total;
                         $total_pack_due_cost += $pack_due_cost;
+                        $total_net_total += $net_total;
                     @endphp
                     <tr>
                         <td>{{ $sale->item_code }}</td>
                         <td class="text-start">{{ $sale->item_name }}</td>
                         <td class="text-end">{{ number_format($weight, 2) }}</td>
-                        <td class="text-end">{{ number_format($price_per_kg, 2) }}</td>
                         <td class="text-end">{{ number_format($packs, 0) }}</td>
                         <td class="text-end">{{ number_format($pack_due_cost, 2) }}</td>
                         <td class="text-end">{{ number_format($net_total, 2) }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-white bg-secondary">වාර්තා නැත</td>
+                        <td colspan="6" class="text-center text-white bg-secondary">වාර්තා නැත</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -219,22 +186,19 @@
                 <tr class="table-secondary fw-bold">
                     <td colspan="2" class="text-end">මුළු එකතුව:</td>
                     <td class="text-end">{{ number_format($total_weight, 2) }}</td>
-                    <td></td>
                     <td class="text-end">{{ number_format($total_packs, 0) }}</td>
                     <td class="text-end">{{ number_format($total_pack_due_cost, 2) }}</td>
-                    <td class="text-end">{{ number_format($total_amount, 2) }}</td>
+                    <td class="text-end">{{ number_format($total_net_total, 2) }}</td>
                 </tr>
 
                 <tr>
-                    <td colspan="7" class="p-0">
-                        <hr class="m-0">
-                    </td>
+                    <td colspan="6" class="p-0"><hr class="m-0"></td>
                 </tr>
 
                 <tr class="table-dark fw-bold">
-                    <td colspan="5"></td>
+                    <td colspan="4"></td>
                     <td class="text-end">අවසන් මුළු එකතුව:</td>
-                    <td class="text-end">{{ number_format($total_amount + $total_pack_due_cost, 2) }}</td>
+                    <td class="text-end">{{ number_format($final_total, 2) }}</td>
                 </tr>
             </tfoot>
         </table>

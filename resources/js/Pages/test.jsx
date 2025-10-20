@@ -745,7 +745,7 @@ export default function SalesEntry() {
         price_per_kg: parseFloat(formData.price_per_kg) || 0,
         pack_due: parseFloat(formData.pack_due) || 0,
         total: parseFloat(formData.total) || 0,
-        packs: parseInt(formData.packs) || 0,
+        packs: parseFloat(formData.packs) || 0,
         grn_entry_code: formData.grn_entry_code,
         original_weight: formData.original_weight,
         original_packs: formData.original_packs,
@@ -1066,66 +1066,74 @@ export default function SalesEntry() {
   };
 
   const handlePrintAndClear = async () => {
-    const salesData = displayedSales.filter(s => s.id);
-    if (!salesData.length) return alert("No sales records to print!");
+  const salesData = displayedSales.filter(s => s.id);
+  if (!salesData.length) return alert("No sales records to print!");
 
-    try {
-      const [printResponse, loanResponse] = await Promise.allSettled([
-        apiCall(initialData.routes.markPrinted, "POST", {
-          sales_ids: salesData.map(s => s.id),
-          // Force new bill number for this group
-          force_new_bill: true
-        }),
-        fetch(initialData.routes.getLoanAmount, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': initialData.csrf },
-          body: JSON.stringify({ customer_short_name: salesData[0].customer_code || "N/A" })
-        }).then(res => res.json())
-      ]);
+  // ✅ Check if any item has price_per_kg = 0
+  const hasZeroPrice = salesData.some(s => parseFloat(s.price_per_kg) === 0);
+  if (hasZeroPrice) {
+    alert("Cannot print! One or more items have a price per kg of 0.");
+    return; // Stop execution
+  }
 
-      if (printResponse.status === 'rejected' || printResponse.value.status !== "success") {
-        throw new Error(printResponse.value?.message || "Printing failed");
-      }
+  try {
+    const [printResponse, loanResponse] = await Promise.allSettled([
+      apiCall(initialData.routes.markPrinted, "POST", {
+        sales_ids: salesData.map(s => s.id),
+        // Force new bill number for this group
+        force_new_bill: true
+      }),
+      fetch(initialData.routes.getLoanAmount, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': initialData.csrf },
+        body: JSON.stringify({ customer_short_name: salesData[0].customer_code || "N/A" })
+      }).then(res => res.json())
+    ]);
 
-      const customerCode = salesData[0].customer_code || "N/A";
-      const customerName = customerCode;
-      const mobile = salesData[0].mobile || '0773358518';
-      const billNo = printResponse.value.bill_no || "";
-
-      let globalLoanAmount = 0;
-      if (loanResponse.status === 'fulfilled') {
-        globalLoanAmount = parseFloat(loanResponse.value.total_loan_amount) || 0;
-      }
-
-      const receiptHtml = buildFullReceiptHTML(salesData, billNo, customerName, mobile, globalLoanAmount);
-      const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>${receiptHtml}`;
-
-      const printPromises = [
-        printSingleContent(receiptHtml, customerName),
-      ];
-
-      await Promise.all(printPromises);
-
-      updateState({
-        allSales: allSales.map(s => {
-          const isPrinted = salesData.some(d => d.id === s.id);
-          return isPrinted ? { ...s, bill_printed: 'Y', bill_no: billNo } : s;
-        }),
-        selectedUnprintedCustomer: null,
-        selectedPrintedCustomer: null,
-        customerSearchInput: ""
-      });
-      handleClearForm();
-
-      // Refresh to see the new separate bill in printed section
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    } catch (error) {
-      alert("Printing failed: " + error.message);
-      setTimeout(() => { window.location.reload(); }, 100);
+    if (printResponse.status === 'rejected' || printResponse.value.status !== "success") {
+      throw new Error(printResponse.value?.message || "Printing failed");
     }
-  };
+
+    const customerCode = salesData[0].customer_code || "N/A";
+    const customerName = customerCode;
+    const mobile = salesData[0].mobile || '0773358518';
+    const billNo = printResponse.value.bill_no || "";
+
+    let globalLoanAmount = 0;
+    if (loanResponse.status === 'fulfilled') {
+      globalLoanAmount = parseFloat(loanResponse.value.total_loan_amount) || 0;
+    }
+
+    const receiptHtml = buildFullReceiptHTML(salesData, billNo, customerName, mobile, globalLoanAmount);
+    const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>${receiptHtml}`;
+
+    const printPromises = [
+      printSingleContent(receiptHtml, customerName),
+    ];
+
+    await Promise.all(printPromises);
+
+    updateState({
+      allSales: allSales.map(s => {
+        const isPrinted = salesData.some(d => d.id === s.id);
+        return isPrinted ? { ...s, bill_printed: 'Y', bill_no: billNo } : s;
+      }),
+      selectedUnprintedCustomer: null,
+      selectedPrintedCustomer: null,
+      customerSearchInput: ""
+    });
+    handleClearForm();
+
+    // Refresh to see the new separate bill in printed section
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  } catch (error) {
+    alert("Printing failed: " + error.message);
+    setTimeout(() => { window.location.reload(); }, 100);
+  }
+};
+
   useEffect(() => {
     const handleShortcut = (e) => {
       if (selectedPrintedCustomer && e.key === "F5") {

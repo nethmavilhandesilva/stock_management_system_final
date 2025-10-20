@@ -236,89 +236,95 @@
 <body>
 
     <div class="container">
-
-      
-
-        {{-- Section 5 - Bill Summary (Sales By Bill) --}}
-        <div class="report-section">
-            <div class="report-header">
-                <div class="title">
-                    <h2 class="company-name">Sales Report</h2>
-                    <h4>Bill Summary</h4>
-                </div>
-                <div class="date-info">
-                    <span>{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
-                  
-                </div>
-            </div>
-            <div class="bill-details">
-                @if ($salesByBill->isEmpty())
-                    <div class="alert alert-info">No sales records found.</div>
-                @else
-                    @php $grandTotal = 0; @endphp
-                    @foreach ($salesByBill as $billNo => $sales)
-                        @php
-                            $firstPrinted = $sales->first()->FirstTimeBillPrintedOn ?? null;
-                            $reprinted = $sales->first()->BillReprintedOn ?? null;
-                            $billTotal = 0;
-                        @endphp
-                        <div class="bill-header">
-                            <h5>Bill No: {{ $billNo }}</h5>
-                            <div class="info">
-                                @if($firstPrinted)
-                                    <span>First Printed: {{ \Carbon\Carbon::parse($firstPrinted)->format('Y-m-d H:i') }}</span>
-                                @endif
-                                @if($reprinted)
-                                    <span>Reprinted: {{ \Carbon\Carbon::parse($reprinted)->format('Y-m-d H:i') }}</span>
-                                @endif
-                            </div>
-                        </div>
-                        <table class="report-table bill-summary-table mb-4">
-                            <thead>
-                                <tr>
-                                    <th>කේතය</th>
-                                    <th>පාරිභෝගික කේතය</th>
-                                    <th>සැපයුම්කරු කේතය</th>
-                                    <th>භාණ්ඩ නාමය</th>
-                                    <th>බර</th>
-                                    <th>කිලෝවකට මිල</th>
-                                    <th>එකතුව</th>
-                                    <th>පැකේජ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($sales as $sale)
-                                    @php $billTotal += $sale->total; @endphp
-                                    <tr>
-                                        <td>{{ $sale->code }}</td>
-                                        <td>{{ $sale->customer_code }}</td>
-                                        <td>{{ $sale->supplier_code }}</td>
-                                        <td>{{ $sale->item_name }}</td>
-                                        <td>{{ number_format($sale->weight, 2) }}</td>
-                                        <td>{{ number_format($sale->price_per_kg, 2) }}</td>
-                                        <td>{{ number_format($sale->total, 2) }}</td>
-                                        <td>{{ $sale->packs }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr class="bill-total-row">
-                                    <th colspan="6">Bill Total:</th>
-                                    <th>{{ number_format($billTotal, 2) }}</th>
-                                    <th></th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                        @php $grandTotal += $billTotal; @endphp
-                    @endforeach
-                    <div class="grand-total">
-                        <h3>Grand Total: Rs. {{ number_format($grandTotal, 2) }}</h3>
-                    </div>
-                @endif
-            </div>
+        {{-- Section 5 - Customer-wise Sales Summary --}}
+<div class="report-section">
+    <div class="report-header">
+        <div class="title">
+            <h2 class="company-name">Sales Report</h2>
+            <h4>Customer-wise Bill Summary</h4>
         </div>
-        
-      
+        <div class="date-info">
+            <span>{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
+        </div>
+    </div>
+
+    <div class="bill-details">
+        @if ($salesByBill->isEmpty())
+            <div class="alert alert-info">No sales records found.</div>
+        @else
+            @php $grandTotal = 0; @endphp
+
+            @foreach ($salesByBill as $customerCode => $sales)
+                @php
+                    $billNo = $sales->first()->bill_no ?? null;
+                    $firstPrinted = $sales->first()->FirstTimeBillPrintedOn ?? null;
+                    $reprinted = $sales->first()->BillReprintedOn ?? null;
+                    $billTotal = 0;
+                @endphp
+
+                {{-- Header for each customer --}}
+                <div class="bill-header mt-4">
+                    <h5>Customer Code: {{ $customerCode }}</h5>
+                    @if($billNo)
+                        <p><strong>Bill No:</strong> {{ $billNo }}</p>
+                    @endif
+                    <div class="info">
+                        @if($firstPrinted)
+                            <span>First Printed: {{ \Carbon\Carbon::parse($firstPrinted)->format('Y-m-d H:i') }}</span>
+                        @endif
+                        @if($reprinted)
+                            <span>Reprinted: {{ \Carbon\Carbon::parse($reprinted)->format('Y-m-d H:i') }}</span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Table for each customer's sales --}}
+                <table class="report-table bill-summary-table mb-4">
+                    <thead>
+                        <tr>
+                            <th>කේතය</th>
+                            <th>පාරිභෝගික කේතය</th>
+                            <th>සැපයුම්කරු කේතය</th>
+                            <th>භාණ්ඩ නාමය</th>
+                            <th>බර</th>
+                            <th>කිලෝවකට මිල</th>
+                            <th>එකතුව</th>
+                            <th>පැකේජ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($sales as $sale)
+                            @php $billTotal += $sale->total; @endphp
+                            <tr>
+                                <td>{{ $sale->code }}</td>
+                                <td>{{ $sale->customer_code }}</td>
+                                <td>{{ $sale->supplier_code }}</td>
+                                <td>{{ $sale->item_name }}</td>
+                                <td>{{ number_format($sale->weight, 2) }}</td>
+                                <td>{{ number_format($sale->price_per_kg, 2) }}</td>
+                                <td>{{ number_format($sale->total, 2) }}</td>
+                                <td>{{ $sale->packs }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="bill-total-row">
+                            <th colspan="6">Customer Total:</th>
+                            <th>{{ number_format($billTotal, 2) }}</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                @php $grandTotal += $billTotal; @endphp
+            @endforeach
+
+            <div class="grand-total mt-4">
+                <h3>Grand Total: Rs. {{ number_format($grandTotal, 2) }}</h3>
+            </div>
+        @endif
+    </div>
+</div>
 
         {{-- Section 7 - Financial Report --}}
         <div class="report-section">
@@ -375,7 +381,7 @@
                         </tr>
                         <tr class="financial-profit-row">
                             <td>💰 Profit</td>
-                            <td colspan="2" class="text-success text-center">{{ number_format($profitTotal, 2) }}</td>
+                           <td colspan="2" class="text-success text-center">{{ number_format(0, 2) }}</td>
                         </tr>
                         <tr class="financial-damages-row">
                             <td>Total Damages</td>

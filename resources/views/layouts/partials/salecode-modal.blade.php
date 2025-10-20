@@ -17,10 +17,12 @@
                             </ul>
                         </div>
                     @endif
+
+                    <!-- GRN Select -->
                     <div class="mb-3">
                         <label for="grn_select" class="form-label" style="font-weight: bold; color: black;">GRN තොරතුරු තෝරන්න</label>
                         <select id="grn_select" class="form-select form-select-sm select2" name="grn_code" required>
-                            <option value="">-- GRN තෝරන්න --</option>
+                            <option value="" selected disabled>-- GRN තෝරන්න --</option>
                             @foreach ($entries as $entry)
                                 <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
                                     data-item-code="{{ $entry->item_code }}"
@@ -37,12 +39,16 @@
                             @endforeach
                         </select>
                     </div>
-                    
+
                     <input type="hidden" name="supplier_code" id="grn_supplier_code">
+
+                    <!-- Password Field -->
                     <div class="mb-3">
                         <label for="grn_password_field" class="form-label" style="font-weight: bold; color: black;">මුරපදය ඇතුලත් කරන්න</label>
                         <input type="password" id="grn_password_field" class="form-control" placeholder="මුරපදය">
                     </div>
+
+                    <!-- Date Range Fields -->
                     <div id="grn_date_range_fields" style="display: none;">
                         <div class="mb-3">
                             <label for="grn_start_date" class="form-label" style="font-weight: bold; color: black;">ආරම්භ දිනය</label>
@@ -54,10 +60,11 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="modal-footer">
-                      <a href="{{ route('report.email.grn-sales') }}" class="btn btn-info">
-            📧 Daily Email Report
-        </a>
+                    <a href="{{ route('report.email.grn-sales') }}" class="btn btn-info">
+                        📧 Daily Email Report
+                    </a>
                     <button type="submit" class="btn btn-primary w-100">වාර්තාව ලබාගන්න</button>
                 </div>
             </div>
@@ -65,45 +72,62 @@
     </div>
 </div>
 
+<!-- JS Libraries -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const grnSelect = document.getElementById('grn_select');
-        const supplierCodeInput = document.getElementById('grn_supplier_code');
-        const passwordField = document.getElementById('grn_password_field');
-        const dateRangeFields = document.getElementById('grn_date_range_fields');
-        const grnSaleReportModal = document.getElementById('grnSaleReportModal');
-        const correctPassword = 'nethma123';
+document.addEventListener("DOMContentLoaded", function () {
+    const grnSelect = document.getElementById('grn_select');
+    const supplierCodeInput = document.getElementById('grn_supplier_code');
+    const passwordField = document.getElementById('grn_password_field');
+    const dateRangeFields = document.getElementById('grn_date_range_fields');
+    const grnSaleReportModal = document.getElementById('grnSaleReportModal');
+    const correctPassword = 'nethma123';
 
-        // Initialize Select2 on the dropdown
-        $(grnSelect).select2({
-            dropdownParent: $('#grnSaleReportModal')
-        });
-
-        grnSelect.addEventListener('change', function () {
-            const selectedOption = grnSelect.options[grnSelect.selectedIndex];
-            const supplierCode = selectedOption.getAttribute('data-supplier-code');
-            supplierCodeInput.value = supplierCode || '';
-        });
-
-        if (passwordField && dateRangeFields) {
-            function checkPassword() {
-                if (passwordField.value === correctPassword) {
-                    dateRangeFields.style.display = 'block';
-                } else {
-                    dateRangeFields.style.display = 'none';
-                }
-            }
-            passwordField.addEventListener('input', checkPassword);
-            checkPassword();
-        }
-
-        // Add the event listener to refresh the page on modal close
-        if (grnSaleReportModal) {
-            grnSaleReportModal.addEventListener('hidden.bs.modal', function () {
-                window.location.reload();
-            });
+    // Initialize Select2 with custom matcher
+    $(grnSelect).select2({
+        dropdownParent: $('#grnSaleReportModal'),
+        placeholder: "-- GRN තෝරන්න --",
+        allowClear: true,
+        minimumResultsForSearch: 0,
+        matcher: function(params, data) {
+            if ($.trim(params.term) === '') return data;
+            const term = params.term.trim().toUpperCase();
+            const optionText = data.text.trim().toUpperCase();
+            if (optionText.startsWith(term)) return data;
+            return null;
         }
     });
+
+    // Clear selection initially
+    grnSelect.selectedIndex = 0;
+
+    // Auto-fill supplier code when a GRN is selected
+    grnSelect.addEventListener('change', function () {
+        const selectedOption = grnSelect.options[grnSelect.selectedIndex];
+        const supplierCode = selectedOption.getAttribute('data-supplier-code');
+        supplierCodeInput.value = supplierCode || '';
+    });
+
+    // Show/hide date range fields based on password
+    if(passwordField && dateRangeFields) {
+        function checkPassword() {
+            if(passwordField.value === correctPassword) {
+                dateRangeFields.style.display = 'block';
+            } else {
+                dateRangeFields.style.display = 'none';
+            }
+        }
+        passwordField.addEventListener('input', checkPassword);
+        checkPassword();
+    }
+
+    // Refresh page on modal close
+    if(grnSaleReportModal) {
+        grnSaleReportModal.addEventListener('hidden.bs.modal', function () {
+            window.location.reload();
+        });
+    }
+});
 </script>

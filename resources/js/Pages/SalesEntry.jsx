@@ -745,7 +745,7 @@ export default function SalesEntry() {
         price_per_kg: parseFloat(formData.price_per_kg) || 0,
         pack_due: parseFloat(formData.pack_due) || 0,
         total: parseFloat(formData.total) || 0,
-        packs: parseInt(formData.packs) || 0,
+        packs: parseFloat(formData.packs) || 0,
         grn_entry_code: formData.grn_entry_code,
         original_weight: formData.original_weight,
         original_packs: formData.original_packs,
@@ -975,7 +975,7 @@ export default function SalesEntry() {
       if (!itemGroups[s.item_name]) itemGroups[s.item_name] = { totalWeight: 0, totalPacks: 0 };
       itemGroups[s.item_name].totalWeight += parseFloat(s.weight) || 0;
       itemGroups[s.item_name].totalPacks += packs;
-      return `<tr style="font-size:1.2em;">
+      return `<tr style="font-size:1.5em;">
         <td style="text-align:left;">${s.item_name || ""} <br>${packs}</td>
         <td style="text-align:center; padding-right:20px;">${(parseFloat(s.weight) || 0).toFixed(2)}</td>
         <td style="text-align:left;">${(parseFloat(s.price_per_kg) || 0).toFixed(2)}</td>
@@ -1041,17 +1041,17 @@ export default function SalesEntry() {
       </div>
      <hr style="border:1px solid #000;margin:5px 0;opacity:1;">
       <table style="width:100%;font-size:9px;border-collapse:collapse;">
-        <thead style="font-size:1.5em;">
+        <thead style="font-size:1.8em;">
           <tr><th style="text-align:left;padding:2px;">වර්ගය<br>මලු</th><th style="padding:2px;">කිලෝ</th><th style="padding:2px;">මිල</th><th style="text-align:right;padding:2px;">අගය</th></tr>
         </thead>
         <tbody>
           <tr><td colspan="4"><hr style="border:1px solid #000;margin:5px 0;opacity:1;"></td></tr>
           ${itemsHtml}
           <tr><td colspan="4"><hr style="border:1px solid #000;margin:5px 0;opacity:1;"></td></tr>
-          <tr><td colspan="2" style="text-align:left;font-weight:bold;font-size:1.2em;">${totalPacksSum}</td><td colspan="2" style="text-align:right;font-weight:bold;font-size:1.2em;">${totalSalesExcludingPackDue.toFixed(2)}</td></tr>
+          <tr><td colspan="2" style="text-align:left;font-weight:bold;font-size:1.8em;">${totalPacksSum}</td><td colspan="2" style="text-align:right;font-weight:bold;font-size:1.5em;">${totalSalesExcludingPackDue.toFixed(2)}</td></tr>
         </tbody>
       </table>
-      <table style="width:100%;font-size:11px;border-collapse:collapse;">
+      <table style="width:100%;font-size:15px;border-collapse:collapse;">
         <tr><td>ප්‍රවාහන ගාස්තු:</td><td style="text-align:right;font-weight:bold;">00</td></tr>
         <tr><td>කුලිය:</td><td style="text-align:right;font-weight:bold;">${totalPackDueCost.toFixed(2)}</td></tr>
         <tr><td>අගය:</td><td style="text-align:right;font-weight:bold;"><span style="display:inline-block; border-top:1px solid #000; border-bottom:3px double #000; padding:2px 4px; min-width:80px; text-align:right; font-size:1.5em;">${(totalPrice).toFixed(2)}</span></td></tr>

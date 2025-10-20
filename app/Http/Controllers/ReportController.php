@@ -39,6 +39,7 @@ use App\Mail\CombinedReportsMail;
 use App\Mail\CombinedReportsMail2;
 use App\Models\GrnEntry2;
 use App\Exports\GrnOverviewExport;
+use App\Models\Item;
 
 
 class ReportController extends Controller
@@ -174,88 +175,77 @@ class ReportController extends Controller
             'filters' => $request->all()
         ]);
     }
-    public function getweight(Request $request)
+public function getweight(Request $request)
 {
     $grnCode = $request->input('grn_code');
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
-    $supplierCode = $request->input('supplier_code'); // Get supplier code from request
+    $supplierCode = $request->input('supplier_code');
 
-    // Determine whether to use SalesHistory or Sale based on date range
     if ($startDate && $endDate) {
-        $query = SalesHistory::selectRaw('
-            sales_histories.item_name,
-            sales_histories.item_code,
-            SUM(sales_histories.price_per_kg) as price_per_kg,
-            SUM(sales_histories.packs) as packs,
-            SUM(sales_histories.weight) as weight,
-            SUM(sales_histories.total) as total,
-            items.pack_due
-        ')
-            ->leftJoin('items', 'sales_histories.item_code', '=', 'items.no')
-            ->whereBetween('sales_histories.Date', [
-                Carbon::parse($startDate)->startOfDay(),
-                Carbon::parse($endDate)->endOfDay()
-            ]);
-
-        // Add supplier code filter for SalesHistory if provided
-        if (!empty($supplierCode)) {
-            $query->where('sales_histories.supplier_code', $supplierCode);
-        }
+        $model = SalesHistory::query();
+        $table = 'sales_histories';
+        $dateColumn = 'Date';
     } else {
-        $query = Sale::selectRaw('
-            sales.item_name,
-            sales.item_code,
-            SUM(sales.price_per_kg) as price_per_kg,
-            SUM(sales.packs) as packs,
-            SUM(sales.weight) as weight,
-            SUM(sales.total) as total,
-            items.pack_due
-        ')
-            ->leftJoin('items', 'sales.item_code', '=', 'items.no');
-
-        // Add supplier code filter for Sale if provided
-        if (!empty($supplierCode)) {
-            $query->where('sales.supplier_code', $supplierCode);
-        }
+        $model = Sale::query();
+        $table = 'sales';
+        $dateColumn = null;
     }
 
-    // Filter by GRN code if provided
+    // Aggregate first to avoid duplicates
+    $query = $model->selectRaw("
+        item_code,
+        item_name,
+        SUM(packs) as packs,
+        SUM(weight) as weight,
+        SUM(total) as total
+    ");
+
+    if ($dateColumn) {
+        $query->whereBetween($dateColumn, [
+            Carbon::parse($startDate)->startOfDay(),
+            Carbon::parse($endDate)->endOfDay()
+        ]);
+    }
+
+    if (!empty($supplierCode)) {
+        $query->where('supplier_code', $supplierCode);
+    }
+
     if (!empty($grnCode)) {
-        $query->where(function ($q) use ($grnCode) {
-            $q->where('sales.code', $grnCode)
-                ->orWhere('sales_histories.code', $grnCode);
-        });
+        $query->where('code', $grnCode);
     }
 
-    // Group by item and pack_due (since it's per item)
-    $sales = $query->groupBy(
-        $startDate && $endDate ? 'sales_histories.item_name' : 'sales.item_name',
-        $startDate && $endDate ? 'sales_histories.item_code' : 'sales.item_code',
-        'items.pack_due'
-    )
-        ->orderBy(
-            $startDate && $endDate ? 'sales_histories.item_name' : 'sales.item_name',
-            'asc'
-        )
-        ->get();
+    // Group by item_code and item_name to aggregate duplicates
+    $sales = $query->groupBy('item_code', 'item_name')->get();
 
-    // Fetch GRN entry if a code is given
+    // Join items separately to avoid multiplication
+    $sales = $sales->map(function ($sale) {
+        $item = Item::where('no', $sale->item_code)->first();
+        $sale->pack_due = $item ? $item->pack_due : null;
+        return $sale;
+    });
+
+    $final_total = $sales->sum('total');
+
     $selectedGrnEntry = !empty($grnCode)
         ? GrnEntry::where('code', $grnCode)->first()
         : null;
 
-    // Return Blade view (not JSON)
     return view('dashboard.reports.weight-based-report', [
         'sales' => $sales,
         'selectedGrnCode' => $grnCode,
         'selectedGrnEntry' => $selectedGrnEntry,
         'startDate' => $startDate,
         'endDate' => $endDate,
-        'supplierCode' => $supplierCode, // Pass supplier code to view
+        'supplierCode' => $supplierCode,
         'filters' => $request->all(),
+        'final_total' => $final_total,
     ]);
 }
+
+
+
 
     public function getGrnSalecodereport(Request $request)
     {
@@ -592,13 +582,12 @@ class ReportController extends Controller
             SUM(sales_histories.total) as total,
             MAX(items.pack_due) as pack_due
         ')
-            ->leftJoin('items', 'sales_histories.item_code', '=', 'items.no')
-            ->whereBetween('sales_histories.Date', [
-                Carbon::parse($filters['start_date'])->startOfDay(),
-                Carbon::parse($filters['end_date'])->endOfDay()
-            ]);
+        ->leftJoin('items', 'sales_histories.item_code', '=', 'items.no')
+        ->whereBetween('sales_histories.Date', [
+            Carbon::parse($filters['start_date'])->startOfDay(),
+            Carbon::parse($filters['end_date'])->endOfDay()
+        ]);
 
-        // Add supplier code filter for SalesHistory if provided
         if (isset($filters['supplier_code']) && !empty($filters['supplier_code'])) {
             $query->where('sales_histories.supplier_code', $filters['supplier_code']);
         }
@@ -612,9 +601,8 @@ class ReportController extends Controller
             SUM(sales.total) as total,
             MAX(items.pack_due) as pack_due
         ')
-            ->leftJoin('items', 'sales.item_code', '=', 'items.no');
+        ->leftJoin('items', 'sales.item_code', '=', 'items.no');
 
-        // Add supplier code filter for Sale if provided
         if (isset($filters['supplier_code']) && !empty($filters['supplier_code'])) {
             $query->where('sales.supplier_code', $filters['supplier_code']);
         }
@@ -624,7 +612,7 @@ class ReportController extends Controller
     if (isset($filters['grn_code'])) {
         $query->where(function ($q) use ($filters) {
             $q->where('sales.code', $filters['grn_code'])
-                ->orWhere('sales_histories.code', $filters['grn_code']);
+              ->orWhere('sales_histories.code', $filters['grn_code']);
         });
     }
 
@@ -632,16 +620,16 @@ class ReportController extends Controller
     $records = $query->groupBy(
         isset($filters['start_date']) && isset($filters['end_date']) ? 'sales_histories.item_code' : 'sales.item_code'
     )
-        ->orderBy(
-            isset($filters['start_date']) && isset($filters['end_date']) ? 'sales_histories.item_code' : 'sales.item_code',
-            'asc'
-        )
-        ->get();
+    ->orderBy(
+        isset($filters['start_date']) && isset($filters['end_date']) ? 'sales_histories.item_code' : 'sales.item_code',
+        'asc'
+    )
+    ->get();
 
-    // Headings for Blade view - EXACTLY as in your blade file
+    // Headings for Blade view
     $headings = ['අයිතම කේතය', 'වර්ගය', 'බර (kg)', 'මිල (Rs/kg)', 'මලු', 'මලු ගාස්තුව (Rs)', 'එකතුව (Rs)'];
 
-    // Initialize report data and totals - EXACTLY as in your blade file
+    // Initialize report data and totals
     $reportData = collect();
     $totalWeight = 0;
     $totalPacks = 0;
@@ -655,10 +643,13 @@ class ReportController extends Controller
         $pricePerKg = $record->price_per_kg ?? 0;
         $packs = $record->packs ?? 0;
         $packDue = $record->pack_due ?? 0;
+        $itemTotal = $record->total ?? 0;
 
-        // Calculate EXACTLY as in your blade file
+        // Calculate pack due cost
         $packDueCost = $packs * $packDue;
-        $netTotal = $weight * $pricePerKg; // This is the key difference - using weight * price_per_kg
+
+        // Net total per item = total from DB - pack due cost
+        $netTotal = $itemTotal - $packDueCost;
 
         $reportData->push([
             $itemCode,
@@ -670,28 +661,28 @@ class ReportController extends Controller
             number_format($netTotal, 2),
         ]);
 
-        // Update totals EXACTLY as in blade file
+        // Update totals
         $totalWeight += $weight;
         $totalPacks += $packs;
-        $totalAmount += $netTotal;
         $totalPackDueCost += $packDueCost;
+        $totalAmount += $netTotal;
     }
 
-    // Add empty row for separation (like the <hr> in blade)
+    // Add empty row for separation
     $reportData->push(['', '', '', '', '', '', '']);
 
-    // Totals row - EXACTLY as in blade file's first totals row
+    // Totals row
     $reportData->push([
-        '', // Empty for item code
-        'මුළු එකතුව:', // Note: In your blade this is in the second column
+        '', 
+        'මුළු එකතුව:', 
         number_format($totalWeight, 2),
-        '', // Empty for price per kg
+        '',
         number_format($totalPacks, 0),
         number_format($totalPackDueCost, 2),
         number_format($totalAmount, 2),
     ]);
 
-    // Final total row - EXACTLY as in blade file's final row
+    // Final total row
     $reportData->push([
         '',
         '',
@@ -703,6 +694,7 @@ class ReportController extends Controller
     ]);
 
     break;
+
 
             case 'grn-sale-code-report':
                 $reportTitle = 'GRN Code-based Sales Report';
@@ -779,7 +771,8 @@ class ReportController extends Controller
         }
 
         // Final results
-        $entries = $query->orderBy('created_at', 'desc')->paginate(20);
+       $entries = $query->orderBy('created_at', 'desc')->get();
+
 
         return view('dashboard.reports.salesadjustment', compact('entries', 'code', 'startDate', 'endDate'));
     }
@@ -789,9 +782,9 @@ class ReportController extends Controller
     {
         // Fetch today's Income/Expenses records
         $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
-            ->whereDate('created_at', Carbon::today())
-            ->get();
-
+        ->whereIn('Date', Setting::pluck('value')) // compare Date with all values from Setting table
+        ->get();
+        
         $reportData = [];
         $totalDr = 0;
         $totalCr = 0;
