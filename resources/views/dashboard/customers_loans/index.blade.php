@@ -921,18 +921,19 @@
 
             // Dropdown HTML for outgoing
             const outgoingDropdownHTML = `
-                                <label for="description" class="text-form-label">විස්තරය</label>
-                                <select class="form-select form-select-sm" name="description" id="description" required>
-                                    <option value="">-- Select --</option>
-                                    <option value="Salary">Salary</option>
-                                    <option value="Fuel">Fuel</option>
-                                    <option value="Electricity">Electricity</option>
-                                    <option value="Food">Food</option>
-                                    <option value="WaterBill">WaterBill</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
-                            `;
+                                   <label for="description" class="text-form-label">විස්තරය</label>
+    <input list="descriptionOptions" class="form-control form-control-sm" name="description" id="description" placeholder="Type or select" required>
+    <datalist id="descriptionOptions">
+        <option value="Salary">
+        <option value="Fuel">
+        <option value="Electricity">
+        <option value="Food">
+        <option value="WaterBill">
+        <option value="Other">
+    </datalist>
+    <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
+
+                                `;
 
             loanTypeRadios.forEach(radio => {
                 radio.addEventListener('change', function () {

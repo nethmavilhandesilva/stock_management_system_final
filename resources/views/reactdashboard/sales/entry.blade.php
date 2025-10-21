@@ -259,7 +259,7 @@
                 </div>
                 <div class="nav-item">
                     <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal" class="nav-link-custom">
-                        මිල එක්තුකරණය
+                        මිල එකතුව
                     </a>
                 </div>
                 <div class="nav-item">
