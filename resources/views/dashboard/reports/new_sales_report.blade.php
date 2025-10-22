@@ -13,8 +13,15 @@ use Illuminate\Support\Str;
     /* ===== PRINT SETTINGS ===== */
     @media print {
         @page { size: A4 portrait; margin: 15mm; }
+
+        /* Hide everything outside the printable card */
         body * { visibility: hidden; }
-        .custom-card, .custom-card * { visibility: visible; }
+
+        /* Show only the printable section */
+        .custom-card, .custom-card * {
+            visibility: visible;
+        }
+
         .custom-card {
             position: absolute;
             left: 0;
@@ -24,16 +31,39 @@ use Illuminate\Support\Str;
             margin: auto;
             border: none !important;
             box-shadow: none !important;
-        }
-        body, .custom-card, .custom-card table, .custom-card th, .custom-card td {
             background: white !important;
             color: black !important;
         }
-        .print-btn, .btn { display: none !important; }
-        table { page-break-inside: auto; border-collapse: collapse !important; }
-        tr { page-break-inside: avoid; page-break-after: auto; }
-        thead { display: table-header-group; }
-        tfoot { display: table-footer-group; }
+
+        /* Make absolutely everything print in black text */
+        * {
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Hide print and action buttons */
+        .print-btn, .btn {
+            display: none !important;
+        }
+
+        table {
+            page-break-inside: auto;
+            border-collapse: collapse !important;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tfoot {
+            display: table-footer-group;
+        }
     }
 
     /* ===== SCREEN STYLES ===== */
@@ -85,16 +115,18 @@ use Illuminate\Support\Str;
                         return $sale->bill_no ?: $sale->customer_code;
                     });
                     $grandTotal = 0;
+                    $totalPackCost = 0; // ✅ Added total pack cost accumulator
                 @endphp
 
                 @foreach ($groupedData as $groupKey => $sales)
                     @php
                         $isBill = !empty($sales->first()->bill_no);
                         $billTotal = $sales->sum(function($sale) {
-    return $sale->weight * $sale->price_per_kg;
-});
-
+                            return $sale->weight * $sale->price_per_kg;
+                        });
                         $billTotal2 = $sales->sum('total');
+                        $packCost = $billTotal2 - $billTotal; // ✅ Calculate pack cost
+                        $totalPackCost += $packCost;          // ✅ Add to total pack cost
                         $firstPrinted = $sales->first()->FirstTimeBillPrintedOn ?? null;
                         $reprinted = $sales->first()->BillReprintAfterchanges ?? null;
                     @endphp
@@ -112,14 +144,14 @@ use Illuminate\Support\Str;
                             @endif
                         </h5>
                         @if ($isBill)
-                        <div class="right-info">
-                            @if($firstPrinted)
-                                <span>First Printed: {{ \Carbon\Carbon::parse($firstPrinted)->format('Y-m-d') }}</span>
-                            @endif
-                            @if($reprinted)
-                                <span>Reprinted: {{ \Carbon\Carbon::parse($reprinted)->format('Y-m-d') }}</span>
-                            @endif
-                        </div>
+                            <div class="right-info">
+                                @if($firstPrinted)
+                                    <span>First Printed: {{ \Carbon\Carbon::parse($firstPrinted)->format('Y-m-d') }}</span>
+                                @endif
+                                @if($reprinted)
+                                    <span>Reprinted: {{ \Carbon\Carbon::parse($reprinted)->format('Y-m-d') }}</span>
+                                @endif
+                            </div>
                         @endif
                     </div>
 
@@ -150,7 +182,7 @@ use Illuminate\Support\Str;
                                         {{ number_format($sale->price_per_kg, 2) }}
                                     </td>
                                     <td>{{ $sale->packs }}</td>
-                                    <td>{{ number_format($sale->weight*$sale->price_per_kg, 2) }}</td>
+                                    <td>{{ number_format($sale->weight * $sale->price_per_kg, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -159,8 +191,10 @@ use Illuminate\Support\Str;
                                 <td colspan="5" class="text-end">Total:</td>
                                 <td>{{ number_format($billTotal, 2) }}</td>
                             </tr>
-                             <tr class="fw-bold text-center">
-                                <td colspan="5" class="text-end">Total with Pack Cost:</td>
+                            <tr class="fw-bold text-center">
+                                <td colspan="3" class="text-end">Pack Cost:</td>
+                                <td>{{ number_format($packCost, 2) }}</td>
+                                <td class="text-end">Total with Pack Cost:</td>
                                 <td>{{ number_format($billTotal2, 2) }}</td>
                             </tr>
                         </tfoot>
@@ -169,8 +203,9 @@ use Illuminate\Support\Str;
                     @php $grandTotal += $billTotal2; @endphp
                 @endforeach
 
-                {{-- Grand Total --}}
+                {{-- ✅ Grand Totals Section --}}
                 <div class="text-end fw-bold mt-3 me-3">
+                    <h4>Total Pack Cost: {{ number_format($totalPackCost, 2) }}</h4>
                     <h3>Grand Total: {{ number_format($grandTotal, 2) }}</h3>
                 </div>
             @endif

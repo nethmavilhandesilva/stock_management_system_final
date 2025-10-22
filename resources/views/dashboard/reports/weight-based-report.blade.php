@@ -1,260 +1,341 @@
 @extends('layouts.app')
 
 @section('content')
-<style>
-    body {
-        background-color: #99ff99;
-    }
-
-    .custom-card {
-        background-color: #006400 !important;
-        color: white;
-    }
-
-    .custom-card table thead,
-    .custom-card table tfoot {
-        background-color: #004d00 !important;
-        color: white;
-    }
-
-    .custom-card table tbody tr:nth-child(odd) {
-        background-color: #00800033;
-    }
-
-    .report-title-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .company-name {
-        font-weight: 700;
-        font-size: 1.5rem;
-        color: white;
-        margin: 0;
-    }
-
-    .report-title-bar h4 {
-        margin: 0;
-        color: white;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .print-btn {
-        background-color: #004d00;
-        color: white;
-        border: none;
-        padding: 0.4rem 1rem;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: background-color 0.3s ease;
-    }
-
-    .print-btn:hover {
-        background-color: #003300;
-    }
-
-    .compact-table th,
-    .compact-table td {
-        font-size: 13px;
-        padding: 4px 8px;
-    }
-
-    /* --- Print Styles --- */
-    @media print {
+    <style>
         body {
-            background-color: #fff !important;
-            color: #000;
+            background-color: #99ff99;
         }
 
         .custom-card {
-            background-color: #fff !important;
-            color: #000 !important;
-            box-shadow: none !important;
-            border: none !important;
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-        }
-
-        .custom-card table th,
-        .custom-card table td {
-            border: 1px solid #ccc;
-            color: #000;
+            background-color: #006400 !important;
+            color: white;
         }
 
         .custom-card table thead,
         .custom-card table tfoot {
-            background-color: #eee !important;
-            color: #000 !important;
+            background-color: #004d00 !important;
+            color: white;
         }
 
         .custom-card table tbody tr:nth-child(odd) {
-            background-color: #f9f9f9 !important;
+            background-color: #00800033;
         }
 
-        .report-title-bar h2,
+        .report-title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .company-name {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
+            margin: 0;
+        }
+
         .report-title-bar h4 {
-            color: #000 !important;
+            margin: 0;
+            color: white;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .right-info {
+            color: white;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .print-btn {
-            display: none !important;
-        }
-
-        /* Report Printed Time only in print */
-        .report-title-bar::after {
-            content: "Report Printed Time: {{ now()->timezone('Asia/Colombo')->format('Y-m-d H:i:s') }}";
-            display: block;
-            margin-top: 0.5rem;
+            background-color: #004d00;
+            color: white;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
             font-weight: 600;
-            color: #000;
+            transition: background-color 0.3s ease;
         }
 
-        /* Page Footer with Page Numbers */
-        .page-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            text-align: right;
-            font-size: 12px;
-            color: #000;
+        .print-btn:hover {
+            background-color: #003300;
         }
 
-        .page-number:after {
-            content: "Page " counter(page);
+        .compact-table th,
+        .compact-table td {
+            font-size: 13px;
+            padding: 4px 8px;
         }
 
-        @page {
-            counter-increment: page;
+        /* Print header styles */
+        .print-header {
+            display: none;
         }
-    }
-</style>
 
-<div class="container mt-4">
-    <div class="card shadow border-0 rounded-3 p-4 custom-card">
-        <div class="report-title-bar">
-            @php $companyName = \App\Models\Setting::value('CompanyName'); @endphp
-            <h2 class="company-name">{{ $companyName ?? 'Default Company' }}</h2>
+        @media print {
+            body {
+                background-color: #fff !important;
+                color: #000;
+                margin: 0;
+                padding: 0;
+            }
 
-            <h4 class="fw-bold text-white">
-                @if(isset($supplierCode) && $supplierCode === 'L')
-                    (සිල්ලර) මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව
-                @elseif(isset($supplierCode) && $supplierCode === 'A')
-                    (තොග) මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව
-                @else
-                    මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව
-                @endif
-            </h4>
+            .custom-card {
+                background-color: #fff !important;
+                color: #000 !important;
+                box-shadow: none !important;
+                border: none !important;
+                position: relative;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
 
-            <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+            .custom-card table {
+                border: 1px solid #ccc;
+            }
+
+            .custom-card table th,
+            .custom-card table td {
+                border: 1px solid #ccc;
+                color: #000;
+            }
+
+            .custom-card table thead,
+            .custom-card table tfoot {
+                background-color: #eee !important;
+                color: #000 !important;
+            }
+
+            .custom-card table tbody tr:nth-child(odd) {
+                background-color: #f9f9f9 !important;
+            }
+
+            .report-title-bar h2,
+            .report-title-bar h4,
+            .right-info {
+                color: #000 !important;
+            }
+
+            .print-btn {
+                display: none !important;
+            }
+
+            /* Print header */
+            .print-header {
+                display: block;
+                text-align: center;
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #ccc;
+            }
+
+            .print-time {
+                font-size: 12px;
+                margin-bottom: 5px;
+            }
+
+            .page-number {
+                font-size: 12px;
+                position: fixed;
+                bottom: 10px;
+                right: 15px;
+            }
+
+            .page-number:after {
+                content: "Page " counter(page);
+            }
+
+            /* Ensure content visibility */
+            body * {
+                visibility: hidden;
+            }
+
+            .custom-card,
+            .custom-card *,
+            .print-header,
+            .print-header *,
+            .page-number,
+            .page-number * {
+                visibility: visible;
+            }
+
+            .custom-card {
+                position: absolute;
+                top: 60px; /* Space for print header */
+                left: 0;
+            }
+
+            /* Page break support */
+            .custom-card table {
+                page-break-inside: auto;
+            }
+
+            .custom-card table tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            .custom-card table thead {
+                display: table-header-group;
+            }
+
+            .custom-card table tfoot {
+                display: table-footer-group;
+            }
+
+            @page {
+                margin: 1cm;
+                size: portrait;
+                @bottom-right {
+                    content: "Page " counter(page) " of " counter(pages);
+                    font-size: 10px;
+                }
+            }
+        }
+    </style>
+
+    <div class="container mt-4">
+        <div class="card shadow border-0 rounded-3 p-4 custom-card">
+            <!-- Print Header - Only visible when printing -->
+            <div class="print-header">
+                <div class="print-time" id="printTime"></div>
+                <h2 class="company-name">{{ \App\Models\Setting::value('CompanyName') ?? 'Default Company' }}</h2>
+                <h4>
+                    @if(isset($supplierCode) && $supplierCode === 'L')
+                        (සිල්ලර) මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව
+                    @elseif(isset($supplierCode) && $supplierCode === 'A')
+                        (තොග) මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව
+                    @else
+                        මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව
+                    @endif
+                </h4>
+            </div>
+
+            <div class="report-title-bar">
+                @php $companyName = \App\Models\Setting::value('CompanyName'); @endphp
+                <h2 class="company-name">{{ $companyName ?? 'Default Company' }}</h2>
+
+                <h4 class="fw-bold text-white">
+                    @if(isset($supplierCode) && $supplierCode === 'L')
+                        (සිල්ලර) මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව
+                    @elseif(isset($supplierCode) && $supplierCode === 'A')
+                        (තොග) මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව
+                    @else
+                        මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව
+                    @endif
+                </h4>
+                <span class="right-info">{{ now()->format('Y-m-d') }}</span>
+                <button class="print-btn" onclick="printReport()">🖨️ මුද්‍රණය</button>
+            </div>
+
+            {{-- GRN Info --}}
+            @if ($selectedGrnEntry)
+                <div class="mb-3 text-white">
+                    <strong>GRN කේතය:</strong> {{ $selectedGrnCode }}
+                    @if ($selectedGrnEntry->supplier ?? false)
+                        , <strong>Supplier:</strong> {{ $selectedGrnEntry->supplier }}
+                    @endif
+                </div>
+            @endif
+
+            {{-- Date Range --}}
+            @if (!empty($startDate) || !empty($endDate))
+                <div class="mb-3 text-white">
+                    <strong>දින පරාසය:</strong>
+                    {{ $startDate ? $startDate : '' }}
+                    {{ $endDate ? ' සිට ' . $endDate . ' දක්වා' : '' }}
+                </div>
+            @endif
+
+            <table class="table table-sm table-bordered table-striped compact-table text-center align-middle">
+                <thead>
+                    <tr>
+                        <th>අයිතම කේතය</th>
+                        <th>වර්ගය</th>
+                        <th>බර (kg)</th>
+                        <th>මලු</th>
+                        <th>මලු ගාස්තුව (Rs)</th>
+                        <th>එකතුව (Rs)</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @php
+                        $total_packs = 0;
+                        $total_weight = 0;
+                        $total_pack_due_cost = 0;
+                        $total_net_total = 0;
+                    @endphp
+
+                    @forelse ($sales as $sale)
+                        @php
+                            $pack_due = $sale->pack_due ?? 0;
+                            $packs = $sale->packs ?? 0;
+                            $weight = $sale->weight ?? 0;
+                            $price_per_kg = $sale->price_per_kg ?? 0;
+                            $item_total = $sale->total ?? 0;
+
+                            $pack_due_cost = $packs * $pack_due;
+                            $net_total = $item_total - $pack_due_cost;
+
+                            $total_packs += $packs;
+                            $total_weight += $weight;
+                            $total_pack_due_cost += $pack_due_cost;
+                            $total_net_total += $net_total;
+                        @endphp
+                        <tr>
+                            <td>{{ $sale->item_code }}</td>
+                            <td class="text-start">{{ $sale->item_name }}</td>
+                            <td class="text-end">{{ number_format($weight, 2) }}</td>
+                            <td class="text-end">{{ number_format($packs, 0) }}</td>
+                            <td class="text-end">{{ number_format($pack_due_cost, 2) }}</td>
+                            <td class="text-end">{{ number_format($net_total, 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-white bg-secondary">වාර්තා නැත</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+
+                <tfoot>
+                    <!-- Subtotals -->
+                    <tr class="table-secondary fw-bold">
+                        <td colspan="2" class="text-end">මුළු එකතුව:</td>
+                        <td class="text-end">{{ number_format($total_weight, 2) }}</td>
+                        <td class="text-end">{{ number_format($total_packs, 0) }}</td>
+                        <td class="text-end">{{ number_format($total_pack_due_cost, 2) }}</td>
+                        <td class="text-end">{{ number_format($total_net_total, 2) }}</td>
+                    </tr>
+
+                    <!-- Separator -->
+                    <tr>
+                        <td colspan="6" class="p-0">
+                            <hr class="m-0">
+                        </td>
+                    </tr>
+
+                    <!-- Final Total -->
+                    <tr class="table-dark fw-bold">
+                        <td colspan="4"></td>
+                        <td class="text-end">අවසන් මුළු එකතුව:</td>
+                        @php
+                            $final_total = $total_net_total + $total_pack_due_cost;
+                        @endphp
+                        <td class="text-end">{{ number_format($final_total, 2) }}</td>
+                    </tr>
+                </tfoot>
+
+            </table>
+
+            
+           
         </div>
-
-        {{-- GRN Info --}}
-        @if ($selectedGrnEntry)
-            <div class="mb-3 text-white">
-                <strong>GRN කේතය:</strong> {{ $selectedGrnCode }}
-                @if ($selectedGrnEntry->supplier ?? false)
-                    , <strong>Supplier:</strong> {{ $selectedGrnEntry->supplier }}
-                @endif
-            </div>
-        @endif
-
-        {{-- Date Range --}}
-        @if (!empty($startDate) || !empty($endDate))
-            <div class="mb-3 text-white">
-                <strong>දින පරාසය:</strong>
-                {{ $startDate ? $startDate : '' }}
-                {{ $endDate ? ' සිට ' . $endDate . ' දක්වා' : '' }}
-            </div>
-        @endif
-
-        <table class="table table-sm table-bordered table-striped compact-table text-center align-middle">
-            <thead>
-                <tr>
-                    <th>අයිතම කේතය</th>
-                    <th>වර්ගය</th>
-                    <th>බර (kg)</th>
-                    <th>මලු</th>
-                    <th>මලු ගාස්තුව (Rs)</th>
-                    <th>එකතුව (Rs)</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                @php
-                    $total_packs = 0;
-                    $total_weight = 0;
-                    $total_pack_due_cost = 0;
-                    $total_net_total = 0;
-                @endphp
-
-                @forelse ($sales as $sale)
-                    @php
-                        $pack_due = $sale->pack_due ?? 0;
-                        $packs = $sale->packs ?? 0;
-                        $weight = $sale->weight ?? 0;
-                        $price_per_kg = $sale->price_per_kg ?? 0;
-                        $item_total = $sale->total ?? 0;
-
-                        $pack_due_cost = $packs * $pack_due;
-                        $net_total = $item_total - $pack_due_cost;
-
-                        $total_packs += $packs;
-                        $total_weight += $weight;
-                        $total_pack_due_cost += $pack_due_cost;
-                        $total_net_total += $net_total;
-                    @endphp
-                    <tr>
-                        <td>{{ $sale->item_code }}</td>
-                        <td class="text-start">{{ $sale->item_name }}</td>
-                        <td class="text-end">{{ number_format($weight, 2) }}</td>
-                        <td class="text-end">{{ number_format($packs, 0) }}</td>
-                        <td class="text-end">{{ number_format($pack_due_cost, 2) }}</td>
-                        <td class="text-end">{{ number_format($net_total, 2) }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="text-center text-white bg-secondary">වාර්තා නැත</td>
-                    </tr>
-                @endforelse
-            </tbody>
-
-            <tfoot>
-                <!-- Subtotals -->
-                <tr class="table-secondary fw-bold">
-                    <td colspan="2" class="text-end">මුළු එකතුව:</td>
-                    <td class="text-end">{{ number_format($total_weight, 2) }}</td>
-                    <td class="text-end">{{ number_format($total_packs, 0) }}</td>
-                    <td class="text-end">{{ number_format($total_pack_due_cost, 2) }}</td>
-                    <td class="text-end">{{ number_format($total_net_total, 2) }}</td>
-                </tr>
-
-                <!-- Separator -->
-                <tr>
-                    <td colspan="6" class="p-0">
-                        <hr class="m-0">
-                    </td>
-                </tr>
-
-                <!-- Final Total -->
-                <tr class="table-dark fw-bold">
-                    <td colspan="4"></td>
-                    <td class="text-end">අවසන් මුළු එකතුව:</td>
-                    @php
-                        $final_total = $total_net_total + $total_pack_due_cost;
-                    @endphp
-                    <td class="text-end">{{ number_format($final_total, 2) }}</td>
-                </tr>
-            </tfoot>
-        </table>
 
         {{-- Export Buttons --}}
         <div class="mt-3">
@@ -277,4 +358,26 @@
             </form>
         </div>
     </div>
+
+    <script>
+        function printReport() {
+            // Set the print time
+            const now = new Date();
+            const printTimeElement = document.getElementById('printTime');
+            if (printTimeElement) {
+                printTimeElement.textContent = 'මුද්‍රණය කළ වේලාව: ' + now.toLocaleString();
+            }
+            
+            window.print();
+        }
+
+        // Initialize print time when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const printTimeElement = document.getElementById('printTime');
+            if (printTimeElement) {
+                printTimeElement.textContent = 'මුද්‍රණය කළ වේලාව: ' + now.toLocaleString();
+            }
+        });
+    </script>
 @endsection

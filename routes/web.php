@@ -38,6 +38,9 @@ Route::resource('items', ItemController::class);
 
 // Customers
 Route::resource('customers', CustomerController::class);
+Route::get('/customers/export/pdf', [App\Http\Controllers\CustomerController::class, 'exportPdf']) ->name('customers.export.pdf');
+Route::get('/customers/export/excel', [App\Http\Controllers\CustomerController::class, 'exportExcel']) ->name('customers.export.excel');
+   
 
 // Suppliers
 Route::resource('suppliers', SupplierController::class);
@@ -91,7 +94,8 @@ Route::get('/financial-report', [ReportController::class, 'financialReport'])->n
 Route::get('/sales-report', [ReportController::class, 'salesReport'])->name('sales.report');
 Route::get('/grn-report', [ReportController::class, 'grnReport'])->name('grn.report');
 Route::get('/returns-report', [ReportController::class, 'returnsReport']) ->name('returns.report');
-
+Route::get('items/export/excel', [ReportController::class, 'exportItemsExcel'])->name('items.export.excel');
+Route::get('items/export/pdf', [ReportController::class, 'exportItemsPdf'])->name('items.export.pdf');
 // Customer loans
 Route::get('/customers/{id}/loans-total', [CustomersLoanController::class, 'getTotalLoanAmount']);
 Route::post('/get-loan-amount', [SalesEntryController::class, 'getLoanAmount'])->name('get.loan.amount');
@@ -101,6 +105,9 @@ Route::post('/save-receipt-file', [SalesEntryController::class, 'saveReceiptFile
 Route::post('/loan-report/results', [CustomersLoanController::class, 'loanReportResults'])->name('loan.report.results');
 Route::get('/customers-loans/report', [CustomersLoanController::class, 'loanReport'])->name('customers-loans.report');
 Route::resource('customers-loans', CustomersLoanController::class);
+Route::get('/loans/pdf', [CustomersLoanController::class, 'exportPdf'])->name('loans.export.pdf');
+Route::get('/loans/excel', [CustomersLoanController::class, 'exportExcel'])->name('loans.export.excel');
+
 //Emails
 Route::post('/send-receipt-email', [EmailController::class, 'sendReceiptEmail'])->name('send.receipt.email');
 Route::post('/send-receipt-email', [EmailController::class, 'sendReceiptEmail'])->name('send.receipt.email');

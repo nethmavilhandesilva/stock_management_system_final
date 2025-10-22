@@ -9,6 +9,11 @@ use App\Models\IncomeExpenses; // This is the correct model name
 use Carbon\Carbon;
 use App\Models\GrnEntry;
 use App\Models\Setting;
+use Mpdf\Mpdf;
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\LoanReportExport;
 
 
 class CustomersLoanController extends Controller
@@ -440,21 +445,24 @@ public function getTotalLoanAmount($customerId)
      *
      * @return \Illuminate\View\View
      */
-    public function loanReport()
+  public function loanReport()
 {
-    $allLoans = CustomersLoan::all();
+    $allLoans = CustomersLoan::orderBy('customer_short_name', 'asc')->get();
     $groupedLoans = $allLoans->groupBy('customer_short_name');
 
-    // 🔑 Get all customers with Non realized status from IncomeExpenses
-   $nonRealizedCustomers = IncomeExpenses::where('status', 'Non realized')
-    ->where('settling_way', 'Cheque')
-    ->pluck('customer_short_name')
-    ->toArray();
-
+    // Get all customers with Non realized cheques
+    $nonRealizedCustomers = IncomeExpenses::where('status', 'Non realized')
+        ->where('settling_way', 'Cheque')
+        ->pluck('customer_short_name')
+        ->toArray();
 
     $finalLoans = [];
 
-    foreach ($groupedLoans as $customerShortName => $loans) {
+    foreach ($groupedLoans as $shortName => $loans) {
+
+        // Fetch Customer info
+        $customer = \App\Models\Customer::where('short_name', $shortName)->first();
+
         $lastOldLoan = $loans->where('loan_type', 'old')->sortByDesc('created_at')->first();
         $firstTodayAfterOld = $loans->where('loan_type', 'today')
                                     ->where('created_at', '>', $lastOldLoan->created_at ?? '1970-01-01')
@@ -495,18 +503,126 @@ public function getTotalLoanAmount($customerId)
         $totalOld = $loans->where('loan_type', 'old')->sum('amount');
         $totalAmount = $totalToday - $totalOld;
 
-        // 🔥 If this customer has Non realized cheques → force orange highlight
-        if (in_array($customerShortName, $nonRealizedCustomers)) {
+        // Non realized cheques
+        if (in_array($shortName, $nonRealizedCustomers)) {
             $highlightColor = 'orange-highlight';
         }
 
         $finalLoans[] = (object) [
-            'customer_short_name' => $customerShortName,
-            'total_amount' => $totalAmount,
-            'highlight_color' => $highlightColor,
+            'customer_short_name' => $shortName,
+            'customer_name'       => $customer->name ?? '-', 
+            'telephone_no'        => $customer->telephone_no ?? '-',
+            'credit_limit'        => $customer->credit_limit ?? 0,
+            'total_amount'        => $totalAmount,
+            'highlight_color'     => $highlightColor,
         ];
     }
 
     return view('dashboard.reports.loan-report', ['loans' => collect($finalLoans)]);
 }
+public function exportPdf()
+{
+    $loans = $this->prepareLoans(); // your existing logic to fetch loans
+
+    // --- mPDF setup for Sinhala ---
+    $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
+    $fontData = (new FontVariables())->getDefaults()['fontdata'];
+
+    $mpdf = new Mpdf([
+        'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+        'fontdata' => $fontData + [
+            'notosanssinhala' => [
+                'R' => 'NotoSansSinhala-Regular.ttf',
+                'B' => 'NotoSansSinhala-Bold.ttf',
+            ]
+        ],
+        'default_font' => 'notosanssinhala',
+        'mode' => 'utf-8',
+        'format' => 'A4-P',
+        'margin_top' => 15,
+        'margin_bottom' => 15,
+        'margin_left' => 10,
+        'margin_right' => 10,
+    ]);
+
+    $html = view('dashboard.reports.loan-report-pdf', compact('loans'))->render();
+    $mpdf->WriteHTML($html);
+
+    $fileName = 'Loan_Report_' . date('Ymd_His') . '.pdf';
+
+    return response($mpdf->Output($fileName, 'S'), 200)
+        ->header('Content-Type', 'application/pdf')
+        ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
 }
+
+public function exportExcel()
+{
+    return Excel::download(new LoanReportExport, 'Loan_Report_' . date('Ymd_His') . '.xlsx');
+}
+   public function prepareLoans()
+    {
+        $allLoans = CustomersLoan::all();
+
+        // Group by customer_short_name and order alphabetically
+        $groupedLoans = $allLoans->groupBy('customer_short_name')->sortKeys();
+
+        // Fetch Non realized cheques
+        $nonRealizedCustomers = IncomeExpenses::where('status', 'Non realized')
+            ->where('settling_way', 'Cheque')
+            ->pluck('customer_short_name')
+            ->toArray();
+
+        $finalLoans = [];
+
+        foreach ($groupedLoans as $shortName => $loans) {
+            $customer = Customer::where('short_name', $shortName)->first();
+
+            $lastOldLoan = $loans->where('loan_type', 'old')->sortByDesc('created_at')->first();
+            $firstTodayAfterOld = $loans->where('loan_type', 'today')
+                                        ->where('created_at', '>', $lastOldLoan->created_at ?? '1970-01-01')
+                                        ->sortBy('created_at')
+                                        ->first();
+
+            $highlightColor = null;
+
+            if ($lastOldLoan && $firstTodayAfterOld) {
+                $daysBetweenLoans = Carbon::parse($lastOldLoan->created_at)
+                                          ->diffInDays(Carbon::parse($firstTodayAfterOld->created_at));
+
+                if ($daysBetweenLoans > 30) $highlightColor = 'red-highlight';
+                elseif ($daysBetweenLoans >= 14 && $daysBetweenLoans <= 30) $highlightColor = 'blue-highlight';
+
+                $extraTodayLoanExists = $loans->where('loan_type', 'today')
+                                              ->where('created_at', '>', $firstTodayAfterOld->created_at)
+                                              ->count() > 0;
+
+                if ($extraTodayLoanExists) $highlightColor = null;
+            } elseif ($lastOldLoan && !$firstTodayAfterOld) {
+                $daysSinceLastOldLoan = Carbon::parse($lastOldLoan->created_at)->diffInDays(Carbon::now());
+                if ($daysSinceLastOldLoan > 30) $highlightColor = 'red-highlight';
+                elseif ($daysSinceLastOldLoan >= 14 && $daysSinceLastOldLoan <= 30) $highlightColor = 'blue-highlight';
+            }
+
+            if (in_array($shortName, $nonRealizedCustomers)) {
+                $highlightColor = 'orange-highlight';
+            }
+
+            $totalToday = $loans->where('loan_type', 'today')->sum('amount');
+            $totalOld = $loans->where('loan_type', 'old')->sum('amount');
+            $totalAmount = $totalToday - $totalOld;
+
+            $finalLoans[] = (object)[
+                'customer_short_name' => $shortName,
+                'customer_name' => $customer->name ?? '',
+                'telephone_no' => $customer->telephone_no ?? '',
+                'credit_limit' => $customer->credit_limit ?? 0,
+                'total_amount' => $totalAmount,
+                'highlight_color' => $highlightColor,
+            ];
+        }
+
+        return collect($finalLoans);
+    }
+}
+
+

@@ -9,7 +9,10 @@ class ItemController extends Controller
 {
     public function index()
     {
-        $items = Item::all();
+        $items = Item::query()
+            ->orderBy('no', 'asc') // alphabetical ascending
+            ->get();
+
         return view('dashboard.items.index', compact('items'));
     }
 
@@ -19,22 +22,22 @@ class ItemController extends Controller
     }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'no'        => 'required',
-        'type'      => 'required',
-        'pack_cost' => 'required|numeric',
-        'pack_due'  => 'required|numeric',
-    ]);
+    {
+        $request->validate([
+            'no' => 'required',
+            'type' => 'required',
+            'pack_cost' => 'required|numeric',
+            'pack_due' => 'required|numeric',
+        ]);
 
-    // Force 'no' to uppercase
-    $data = $request->all();
-    $data['no'] = strtoupper($data['no']);
+        // Force 'no' to uppercase
+        $data = $request->all();
+        $data['no'] = strtoupper($data['no']);
 
-    Item::create($data);
+        Item::create($data);
 
-    return redirect()->route('items.index')->with('success', 'Item added successfully!');
-}
+        return redirect()->route('items.index')->with('success', 'Item added successfully!');
+    }
 
     public function edit(Item $item)
     {

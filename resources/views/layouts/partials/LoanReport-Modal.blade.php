@@ -20,7 +20,7 @@
               <option value="">-- ගැනුම්කරු --</option>
               @foreach ($customers as $customer)
                 <option value="{{ $customer->short_name }}">
-                  {{ $customer->short_name }} | {{ $customer->name }}
+                  {{ $customer->short_name }} 
                 </option>
               @endforeach
             </select>

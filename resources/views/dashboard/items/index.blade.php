@@ -51,7 +51,7 @@
             <a href="{{ route('items.create') }}" class="btn btn-success">
                 + නව භාණ්ඩයක් එකතු කරන්න
             </a>
-            <input type="text" id="itemSearch" class="form-control form-control-sm" placeholder="අංකය හෝ වර්ගය අනුව සොයන්න">
+           <input type="text" id="itemSearch" class="form-control form-control-sm"  placeholder="අංකය හෝ වර්ගය අනුව සොයන්න" style="text-transform: uppercase;">
         </div>
 
         @if(session('success'))
@@ -95,6 +95,8 @@
                     @endif
                 </tbody>
             </table>
+            <a href="{{ route('items.export.excel') }}" class="btn btn-success">📥 Excel</a>
+            <a href="{{ route('items.export.pdf') }}" class="btn btn-danger">📥 PDF</a>
         </div>
     </div>
 </div>

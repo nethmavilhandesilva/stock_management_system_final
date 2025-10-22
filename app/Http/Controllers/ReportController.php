@@ -40,6 +40,7 @@ use App\Mail\CombinedReportsMail2;
 use App\Models\GrnEntry2;
 use App\Exports\GrnOverviewExport;
 use App\Models\Item;
+use App\Exports\ItemsExport;
 
 
 class ReportController extends Controller
@@ -876,8 +877,6 @@ class ReportController extends Controller
         ? SalesHistory::query()
         : Sale::query();
 
-    // Include only processed sales
-    $query->where('Processed', 'Y');
 
     // Supplier filter
     if ($request->filled('supplier_code')) {
@@ -2297,6 +2296,61 @@ class ReportController extends Controller
 
         return back()->with('success', 'Report generated and emails sent successfully!');
     }
+    //items pdf and ecxel export
+     public function exportItemsExcel(Request $request)
+    {
+        // Get items same as your index filtering if any
+        $items = Item::query()
+    ->orderBy('no', 'asc') // ascending (A → Z)
+    ->get();
+
+
+        // instantiate export with items
+        return Excel::download(new ItemsExport($items), 'items_list.xlsx');
+    }
+
+    // PDF download
+    public function exportItemsPdf(Request $request)
+{
+   $items = Item::query()
+    ->orderBy('no', 'asc') // ascending (A → Z)
+    ->get();
+
+
+    // --- mPDF Setup for Sinhala ---
+    $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
+    $fontData = (new FontVariables())->getDefaults()['fontdata'];
+
+    $mpdf = new Mpdf([
+        'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+        'fontdata' => $fontData + [
+            'notosanssinhala' => [
+                'R' => 'NotoSansSinhala-Regular.ttf',
+                'B' => 'NotoSansSinhala-Bold.ttf',
+            ],
+        ],
+        'default_font' => 'notosanssinhala',
+        'mode' => 'utf-8',
+        'format' => 'A4-P', // portrait
+        'margin_top' => 15,
+        'margin_bottom' => 15,
+        'margin_left' => 10,
+        'margin_right' => 10,
+    ]);
+
+    // --- Load your Blade view ---
+    $html = view('dashboard.reports.items_excelpdf', compact('items'))->render();
+
+    $mpdf->WriteHTML($html);
+
+    // --- File name ---
+    $fileName = 'Items_List_' . date('Ymd_His') . '.pdf';
+
+    // --- Return as download ---
+    return response($mpdf->Output($fileName, 'S'), 200)
+        ->header('Content-Type', 'application/pdf')
+        ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+}
 
 
 
