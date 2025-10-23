@@ -172,9 +172,8 @@
                         <a class="dropdown-item" href="{{ route('customers.index') }}">ගනුදෙනුකරුවන්</a>
                         <a class="dropdown-item" href="{{ route('suppliers.index') }}">සැපයුම්කරුවන්</a>
                         <a class="dropdown-item" href="{{ route('customers-loans.report') }}">ණය වාර්තාව දැකීම</a>
-                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#codeSelectModal">
-                            GRN වාර්තාව
-                        </a>
+                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#codeSelectModal"> GRN වාර්තාව</a>
+                        <a class="dropdown-item" href="{{ route('loan.report') }}">Final Loan Report</a>
                     </div>
                 </div>
 
