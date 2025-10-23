@@ -71,7 +71,7 @@
                 <label for="item_name" class="form-label">භාණ්ඩ නාමය</label>
                 <input type="text" name="item_name" id="item_name" 
                        class="form-control form-control-sm" 
-                       value="{{ $entry->item_name }}" required>
+                       value="{{ $entry->item_name }}">
             </div>
 
             {{-- Supplier --}}
@@ -101,14 +101,14 @@
                 <label for="grn_no" class="form-label">GRN අංකය</label>
                 <input type="text" name="grn_no" id="grn_no" 
                        class="form-control form-control-sm" 
-                       value="{{ $entry->grn_no }}" required>
+                       value="{{ $entry->grn_no }}">
             </div>
 
             <div class="col-md-3">
                 <label for="warehouse_no" class="form-label">ගබඩා අංකය</label>
                 <input type="text" name="warehouse_no" id="warehouse_no" 
                        class="form-control form-control-sm" 
-                       value="{{ $entry->warehouse_no }}" required>
+                       value="{{ $entry->warehouse_no }}">
             </div>
 
             {{-- Packs & Weight --}}
@@ -116,14 +116,14 @@
                 <label for="packs" class="form-label">පැක්</label>
                 <input type="number" name="packs" id="packs" 
                        class="form-control form-control-sm" 
-                       value="{{ $entry->packs }}" required>
+                       value="{{ $entry->packs }}">
             </div>
 
             <div class="col-md-3">
                 <label for="weight" class="form-label">බර (kg) <span class="text-danger">*</span></label>
                 <input type="number" id="weight" name="weight" 
                        class="form-control form-control-sm" 
-                       value="{{ old('weight', $entry->weight) }}" step="0.01" min="0.01" required>
+                       value="{{ old('weight', $entry->weight) }}">
             </div>
 
             {{-- Transaction Date --}}
@@ -131,7 +131,7 @@
                 <label for="txn_date" class="form-label">ගනුදෙනු දිනය</label>
                 <input type="date" name="txn_date" id="txn_date" 
                        class="form-control form-control-sm" 
-                       value="{{ $entry->txn_date }}" required>
+                       value="{{ $entry->txn_date }}">
             </div>
 
             {{-- Total GRN --}}
@@ -147,7 +147,7 @@
                 <label for="per_kg_price" class="form-label">Per KG Price</label>
                 <input type="number" id="per_kg_price" name="per_kg_price" 
                        class="form-control form-control-sm" 
-                       value="{{ old('per_kg_price', $entry->	PerKGPrice) }}" step="0.01">
+                       value="{{ old('per_kg_price', $entry->PerKGPrice) }}" step="0.01">
             </div>
 
         </div>

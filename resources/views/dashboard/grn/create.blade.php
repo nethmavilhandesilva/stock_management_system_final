@@ -271,8 +271,9 @@
                         <label for="list_password" class="form-label">මුරපදය (View hidden columns)</label>
                         <input type="password" id="list_password" class="form-control form-control-sm">
                     </div>
-                    <input type="text" id="searchInput" class="form-control form-control-sm mb-3"
-                        placeholder="Search by Code, Supplier, Item Code, or Name">
+                  <input type="text" id="searchInput" class="form-control form-control-sm mb-3"
+       placeholder="Search by Code, Supplier, Item Code, or Name" style="text-transform: uppercase;">
+
 
                     @if($entries->isEmpty())
                         <div class="alert alert-info text-center" role="alert">
