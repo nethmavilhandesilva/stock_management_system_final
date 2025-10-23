@@ -2351,6 +2351,24 @@ class ReportController extends Controller
         ->header('Content-Type', 'application/pdf')
         ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
 }
+ public function showReport()
+    {
+        // Get the report using the optimized method
+        $report = IncomeExpenses::generateReport();
+        
+        return view('dashboard.reports.loan-report2', compact('report'));
+    }
+    
+    public function refreshReport(Request $request)
+    {
+        $report = IncomeExpenses::generateReport();
+        
+        if ($request->ajax()) {
+            return view('reports.partials.report-table', compact('report'))->render();
+        }
+        
+        return back();
+    }
 
 
 
