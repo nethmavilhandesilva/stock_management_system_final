@@ -788,155 +788,202 @@ class ReportController extends Controller
 
         return view('dashboard.reports.salesadjustment', compact('entries', 'code', 'startDate', 'endDate'));
     }
-    
-    public function financialReport()
-    {
-        // Fetch today's Income/Expenses records
-        $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
-            ->whereIn('Date', Setting::pluck('value')) // compare Date with all values from Setting table
-            ->get();
 
-        $reportData = [];
-        $totalDr = 0;
-        $totalCr = 0;
+  public function financialReport()
+{
+    // Fetch dates from Setting table
+    $dates = Setting::pluck('value');
 
-        // 🆕 Fetch last_day_started_date row (contains Balance column)
-        $balanceRow = Setting::where('key', 'last_day_started_date')
-            ->whereColumn('value', '<>', 'Date_of_balance')
-            ->first();
+    // Fetch Income/Expenses filtered by dates
+    $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
+        ->whereIn('Date', $dates)
+        ->get();
 
-        if ($balanceRow) {
-            $reportData[] = [
-                'description' => 'Balance As At ' . \Carbon\Carbon::parse($balanceRow->value)->format('Y-m-d'),
-                'dr' => $balanceRow->Balance, // Use the Balance column
-                'cr' => null
-            ];
-            $totalDr += $balanceRow->Balance; // Add Balance to total DR
-        }
+    $reportData = [];
+    $totalDr = 0;
+    $totalCr = 0;
 
-        // Loop through Income/Expenses records
-        foreach ($records as $record) {
-            $dr = null;
-            $cr = null;
+    // 🧾 Balance row
+    $balanceRow = Setting::where('key', 'last_day_started_date')
+        ->whereColumn('value', '<>', 'Date_of_balance')
+        ->first();
 
-            // Build description
-            $desc = $record->customer_short_name;
-            if (!empty($record->bill_no)) {
-                $desc .= " ({$record->bill_no})";
-            }
-            $desc .= " - {$record->description}";
-
-            // Determine DR or CR based on loan_type
-            if (in_array($record->loan_type, ['old', 'ingoing'])) {
-                $dr = $record->amount;
-                $totalDr += $record->amount;
-            } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
-                $cr = $record->amount;
-                $totalCr += $record->amount;
-            }
-
-            $reportData[] = [
-                'description' => $desc,
-                'dr' => $dr,
-                'cr' => $cr
-            ];
-        }
-
-        // Add Sales total
-        $salesTotal = Sale::sum('total');
-        $totalDr += $salesTotal;
+    if ($balanceRow) {
         $reportData[] = [
-            'description' => 'Sales Total',
-            'dr' => $salesTotal,
+            'description' => 'Balance As At ' . \Carbon\Carbon::parse($balanceRow->value)->format('Y-m-d'),
+            'dr' => $balanceRow->Balance,
             'cr' => null
         ];
-
-        // Get Profit from SellingKGTotal
-        $profitTotal = Sale::sum('SellingKGTotal');
-
-        // Calculate Total Damages
-        $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
-            ->value(DB::raw('SUM(wasted_weight * PerKGPrice)'));
-        $totalDamages = $totalDamages ?? 0;
-
-        return view('dashboard.reports.financial', compact(
-            'reportData',
-            'totalDr',
-            'totalCr',
-            'salesTotal',
-            'profitTotal',
-            'totalDamages'
-        ));
-    }
-    public function salesReport(Request $request)
-{
-    // Determine which table to query
-    $useHistory = $request->filled('start_date') || $request->filled('end_date');
-
-    // Use SalesHistory if date range is provided, otherwise Sale
-    $query = $useHistory
-        ? SalesHistory::query()
-        : Sale::query();
-
-
-    // Supplier filter
-    if ($request->filled('supplier_code')) {
-        $query->where('supplier_code', $request->supplier_code);
+        $totalDr += $balanceRow->Balance;
     }
 
-    // Item filter
-    if ($request->filled('item_code')) {
-        $query->where('item_code', $request->item_code);
-    }
+    // 💵 Income/Expenses entries
+    foreach ($records as $record) {
+        $dr = null;
+        $cr = null;
 
-    // Customer short name filter
-    if ($request->filled('customer_short_name')) {
-        $search = $request->customer_short_name;
-        $query->where(function ($q) use ($search) {
-            $q->where('customer_code', 'like', '%' . $search . '%')
-                ->orWhereIn('customer_code', function ($sub) use ($search) {
-                    $sub->select('short_name')
-                        ->from('customers')
-                        ->where('name', 'like', '%' . $search . '%');
-                });
-        });
-    }
-
-    // Customer code filter
-    if ($request->filled('customer_code')) {
-        $query->where('customer_code', $request->customer_code);
-    }
-
-    // Bill No filter
-    if ($request->filled('bill_no')) {
-        $query->where('bill_no', $request->bill_no);
-    }
-
-    // Date range filter
-    if ($request->filled('start_date') && $request->filled('end_date')) {
-        $query->whereBetween('Date', [$request->start_date, $request->end_date]);
-    } elseif ($request->filled('start_date')) {
-        $query->where('Date', '>=', $request->start_date);
-    } elseif ($request->filled('end_date')) {
-        $query->where('Date', '<=', $request->end_date);
-    }
-
-    // Order based on dropdown selection
-    if ($request->filled('order_by')) {
-        if ($request->order_by == 'bill_no') {
-            $query->orderBy('bill_no', 'asc'); // smallest → largest
-        } elseif ($request->order_by == 'customer_code') {
-            $query->orderBy('customer_code', 'asc'); // A → Z
+        $desc = $record->customer_short_name;
+        if (!empty($record->bill_no)) {
+            $desc .= " ({$record->bill_no})";
         }
-    } else {
-        $query->orderBy('id', 'desc'); // default
+        $desc .= " - {$record->description}";
+
+        if (in_array($record->loan_type, ['old', 'ingoing'])) {
+            $dr = $record->amount;
+            $totalDr += $record->amount;
+        } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
+            $cr = $record->amount;
+            $totalCr += $record->amount;
+        }
+
+        $reportData[] = [
+            'description' => $desc,
+            'dr' => $dr,
+            'cr' => $cr
+        ];
     }
 
-    // Fetch all sales
-    $salesData = $query->get();
+    // 🧮 Sales Total
+    $salesTotal = Sale::sum('total');
+    $totalDr += $salesTotal;
+    $reportData[] = [
+        'description' => 'Sales Total',
+        'dr' => $salesTotal,
+        'cr' => null
+    ];
 
-    return view('dashboard.reports.new_sales_report', compact('salesData'));
+    // 💰 Profit (SellingKGTotal)
+    $profitTotal = Sale::sum('SellingKGTotal');
+
+    // 💥 Total Damages
+    $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))->value(DB::raw('SUM(wasted_weight * PerKGPrice)')) ?? 0;
+
+    // 🏦 Loans
+    $dates = Setting::pluck('value');
+
+    $oldLoanCustomers = IncomeExpenses::whereIn('Date', $dates)
+        ->where('loan_type', 'old')
+        ->pluck('customer_short_name')
+        ->unique();
+
+    $todayLoanCustomers = IncomeExpenses::whereIn('Date', $dates)
+        ->where('loan_type', 'today')
+        ->pluck('customer_short_name')
+        ->unique();
+
+  
+    $totalOldLoans = IncomeExpenses::whereIn('Date', $dates)
+    ->where('loan_type', 'old')
+    ->sum('amount');
+
+    $totaltodayLoans = IncomeExpenses::whereIn('Date', $dates)
+    ->where('loan_type', 'today')
+    ->sum('amount');
+
+   
+
+   
+    // 🧾 NEW SECTION: Sales Info
+    $totalQtySold = Sale::sum('weight');
+    $totalBillsPrinted = Sale::distinct('bill_no')->count('bill_no');
+
+    // 🕓 NEW SECTION: First and Last Bill Printed Time
+    $firstBill = Sale::orderBy('FirstTimeBillPrintedOn', 'asc')->first();
+    $lastBill = Sale::orderBy('FirstTimeBillPrintedOn', 'desc')->first();
+
+    $firstBillTime = $firstBill ? \Carbon\Carbon::parse($firstBill->FirstTimeBillPrintedOn)->setTimezone('Asia/Colombo')->format('h:i A') : 'N/A';
+    $lastBillTime = $lastBill ? \Carbon\Carbon::parse($lastBill->FirstTimeBillPrintedOn)->setTimezone('Asia/Colombo')->format('h:i A') : 'N/A';
+
+    $firstBillNo = $firstBill->bill_no ?? 'N/A';
+    $lastBillNo = $lastBill->bill_no ?? 'N/A';
+
+    return view('dashboard.reports.financial', compact(
+        'reportData',
+        'totalDr',
+        'totalCr',
+        'salesTotal',
+        'profitTotal',
+        'totalDamages',
+        'totalOldLoans',
+        'totaltodayLoans',
+        'totalQtySold',
+        'totalBillsPrinted',
+        'firstBillTime',
+        'lastBillTime',
+        'firstBillNo',
+        'lastBillNo'
+    ));
 }
+
+    public function salesReport(Request $request)
+    {
+        // Determine which table to query
+        $useHistory = $request->filled('start_date') || $request->filled('end_date');
+
+        // Use SalesHistory if date range is provided, otherwise Sale
+        $query = $useHistory
+            ? SalesHistory::query()
+            : Sale::query();
+
+
+        // Supplier filter
+        if ($request->filled('supplier_code')) {
+            $query->where('supplier_code', $request->supplier_code);
+        }
+
+        // Item filter
+        if ($request->filled('item_code')) {
+            $query->where('item_code', $request->item_code);
+        }
+
+        // Customer short name filter
+        if ($request->filled('customer_short_name')) {
+            $search = $request->customer_short_name;
+            $query->where(function ($q) use ($search) {
+                $q->where('customer_code', 'like', '%' . $search . '%')
+                    ->orWhereIn('customer_code', function ($sub) use ($search) {
+                        $sub->select('short_name')
+                            ->from('customers')
+                            ->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        // Customer code filter
+        if ($request->filled('customer_code')) {
+            $query->where('customer_code', $request->customer_code);
+        }
+
+        // Bill No filter
+        if ($request->filled('bill_no')) {
+            $query->where('bill_no', $request->bill_no);
+        }
+
+        // Date range filter
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('Date', [$request->start_date, $request->end_date]);
+        } elseif ($request->filled('start_date')) {
+            $query->where('Date', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            $query->where('Date', '<=', $request->end_date);
+        }
+
+        // Order based on dropdown selection
+        if ($request->filled('order_by')) {
+            if ($request->order_by == 'bill_no') {
+                $query->orderBy('bill_no', 'asc'); // smallest → largest
+            } elseif ($request->order_by == 'customer_code') {
+                $query->orderBy('customer_code', 'asc'); // A → Z
+            }
+        } else {
+            $query->orderBy('id', 'desc'); // default
+        }
+
+        // Fetch all sales
+        $salesData = $query->get();
+
+        return view('dashboard.reports.new_sales_report', compact('salesData'));
+    }
 
     public function grnReport(Request $request)
     {
@@ -2298,12 +2345,12 @@ class ReportController extends Controller
         return back()->with('success', 'Report generated and emails sent successfully!');
     }
     //items pdf and ecxel export
-     public function exportItemsExcel(Request $request)
+    public function exportItemsExcel(Request $request)
     {
         // Get items same as your index filtering if any
         $items = Item::query()
-    ->orderBy('no', 'asc') // ascending (A → Z)
-    ->get();
+            ->orderBy('no', 'asc') // ascending (A → Z)
+            ->get();
 
 
         // instantiate export with items
@@ -2312,63 +2359,87 @@ class ReportController extends Controller
 
     // PDF download
     public function exportItemsPdf(Request $request)
-{
-   $items = Item::query()
-    ->orderBy('no', 'asc') // ascending (A → Z)
-    ->get();
+    {
+        $items = Item::query()
+            ->orderBy('no', 'asc') // ascending (A → Z)
+            ->get();
 
 
-    // --- mPDF Setup for Sinhala ---
-    $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
-    $fontData = (new FontVariables())->getDefaults()['fontdata'];
+        // --- mPDF Setup for Sinhala ---
+        $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
+        $fontData = (new FontVariables())->getDefaults()['fontdata'];
 
-    $mpdf = new Mpdf([
-        'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
-        'fontdata' => $fontData + [
-            'notosanssinhala' => [
-                'R' => 'NotoSansSinhala-Regular.ttf',
-                'B' => 'NotoSansSinhala-Bold.ttf',
+        $mpdf = new Mpdf([
+            'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+            'fontdata' => $fontData + [
+                'notosanssinhala' => [
+                    'R' => 'NotoSansSinhala-Regular.ttf',
+                    'B' => 'NotoSansSinhala-Bold.ttf',
+                ],
             ],
-        ],
-        'default_font' => 'notosanssinhala',
-        'mode' => 'utf-8',
-        'format' => 'A4-P', // portrait
-        'margin_top' => 15,
-        'margin_bottom' => 15,
-        'margin_left' => 10,
-        'margin_right' => 10,
-    ]);
+            'default_font' => 'notosanssinhala',
+            'mode' => 'utf-8',
+            'format' => 'A4-P', // portrait
+            'margin_top' => 15,
+            'margin_bottom' => 15,
+            'margin_left' => 10,
+            'margin_right' => 10,
+        ]);
 
-    // --- Load your Blade view ---
-    $html = view('dashboard.reports.items_excelpdf', compact('items'))->render();
+        // --- Load your Blade view ---
+        $html = view('dashboard.reports.items_excelpdf', compact('items'))->render();
 
-    $mpdf->WriteHTML($html);
+        $mpdf->WriteHTML($html);
 
-    // --- File name ---
-    $fileName = 'Items_List_' . date('Ymd_His') . '.pdf';
+        // --- File name ---
+        $fileName = 'Items_List_' . date('Ymd_His') . '.pdf';
 
-    // --- Return as download ---
-    return response($mpdf->Output($fileName, 'S'), 200)
-        ->header('Content-Type', 'application/pdf')
-        ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
-}
- public function showReport()
+        // --- Return as download ---
+        return response($mpdf->Output($fileName, 'S'), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+    }
+    public function showReport()
     {
         // Get the report using the optimized method
         $report = IncomeExpenses::generateReport();
-        
+
         return view('dashboard.reports.loan-report2', compact('report'));
     }
-    
+
     public function refreshReport(Request $request)
     {
         $report = IncomeExpenses::generateReport();
-        
+
         if ($request->ajax()) {
             return view('reports.partials.report-table', compact('report'))->render();
         }
-        
+
         return back();
+    }
+    public function expensereport(Request $request)
+    {
+        $query = IncomeExpenses::query()->where('loan_type', 'Outgoing');
+
+        // Optional: Filter by customer
+        if ($request->filled('customer')) {
+            $query->where('customer_short_name', $request->customer);
+        }
+
+        // Optional: Filter by date range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('Date', [$request->start_date, $request->end_date]);
+        }
+
+        // Get records with pagination
+        $expenses = $query->orderBy('Date', 'desc')->get();
+
+        // For customer filter dropdown
+        $customers = IncomeExpenses::select('customer_short_name')
+            ->distinct()
+            ->pluck('customer_short_name');
+
+        return view('dashboard.reports.expensesreport', compact('expenses', 'customers'));
     }
 
 

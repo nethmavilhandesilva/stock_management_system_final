@@ -136,6 +136,7 @@ Route::get('/send-financial-report', [ReportController::class, 'sendFinancialRep
 Route::get('/report/loans/email-simple', [ReportController::class, 'sendLoanReportEmail'])->name('report.loans.email-simple');
 Route::get('/grn/send-email', [ReportController::class, 'sendGrnEmail'])->name('grn.sendEmail'); 
 Route::get('/loan-report2', [ReportController::class, 'showReport'])->name('loan.report');
+Route::get('/expenses-report', [ReportController::class, 'expensereport'])->name('expenses.report');
 //exports
 Route::get('/sales-adjustment-report/excel', [ReportController::class, 'exportToExcel'])->name('sales-adjustment.export.excel');
 Route::get('/sales-adjustment-report/pdf', [ReportController::class, 'exportToPdf'])->name('sales-adjustment.export.pdf');
