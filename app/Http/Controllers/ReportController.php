@@ -250,46 +250,61 @@ class ReportController extends Controller
     }
 
     public function getGrnSalecodereport(Request $request)
-    {
-        $grnCode = $request->input('grn_code');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+{
+    $grnCode = $request->input('grn_code');
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
 
-        if (!$grnCode) {
-            return redirect()->back()->withErrors('Please select a GRN code.');
-        }
-
-        // Determine which model to query based on the presence of a date range
-        if ($startDate && $endDate) {
-            // If both start_date and end_date are provided, query Salesadjustment
-            $query = SalesHistory::query();
-
-            // Apply the date filter using Carbon for precision
-            $query->whereBetween('Date', [
-                Carbon::parse($startDate)->startOfDay(),
-                Carbon::parse($endDate)->endOfDay()
-            ]);
-
-        } else {
-            // Otherwise, query Sale (default behavior)
-            $query = Sale::query();
-        }
-
-        // Apply the GRN code filter to the selected query
-        $query->where('code', $grnCode);
-
-        $sales = $query->orderBy('created_at', 'asc')->get();
-        $selectedGrnEntry = GrnEntry::where('code', $grnCode)->first();
-
-        return view('dashboard.reports.grn_sale_code_report', [
-            'sales' => $sales,
-            'selectedGrnCode' => $grnCode,
-            'selectedGrnEntry' => $selectedGrnEntry,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'filters' => $request->all(),
-        ]);
+    if (!$grnCode) {
+        return redirect()->back()->withErrors('Please select a GRN code.');
     }
+
+    // Determine which model to query based on the presence of a date range
+    if ($startDate && $endDate) {
+        // If both start_date and end_date are provided, query SalesHistory
+        $query = SalesHistory::query();
+
+        // Apply the date filter using Carbon
+        $query->whereBetween('Date', [
+            \Carbon\Carbon::parse($startDate)->startOfDay(),
+            \Carbon\Carbon::parse($endDate)->endOfDay(),
+        ]);
+    } else {
+        // Otherwise, query Sale (default behavior)
+        $query = Sale::query();
+    }
+
+    // Apply the GRN code filter
+    $query->where('code', $grnCode);
+
+    // Fetch sales data
+    $sales = $query->orderBy('created_at', 'asc')->get();
+
+    // Fetch GRN entry data
+    $selectedGrnEntry = GrnEntry::where('code', $grnCode)->first();
+
+    // Extract Ow / Op / Bw / Bp values (handle null case safely)
+    $ow = $selectedGrnEntry->original_weight ?? 0;
+    $op = $selectedGrnEntry->original_packs ?? 0;
+    $bw = $selectedGrnEntry->weight ?? 0;
+    $bp = $selectedGrnEntry->packs ?? 0;
+    $Date= $selectedGrnEntry->txn_date ?? null;
+
+    return view('dashboard.reports.grn_sale_code_report', [
+        'sales' => $sales,
+        'selectedGrnCode' => $grnCode,
+        'selectedGrnEntry' => $selectedGrnEntry,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'filters' => $request->all(),
+        'ow' => $ow,
+        'op' => $op,
+        'bw' => $bw,
+        'bp' => $bp,
+        'Date' => $Date,
+    ]);
+}
+
 
     public function getGrnSalesOverviewReport()
     {

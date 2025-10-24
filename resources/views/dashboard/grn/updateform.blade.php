@@ -58,7 +58,7 @@
 
                     <div class="col-md-2">
                         <label for="nc_packs" class="form-label">Packs</label>
-                        <input type="number" id="nc_packs" name="packs" class="form-control form-control-sm" min="1">
+                        <input type="number" id="nc_packs" name="packs" class="form-control form-control-sm">
                     </div>
 
                     <div class="col-md-2">

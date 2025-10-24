@@ -58,6 +58,32 @@
             background-color: #003300;
         }
 
+        /* OW/OP/BW/BP info box */
+        .stock-info {
+            background-color: #004d00;
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .stock-info span {
+            background-color: #228B22;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+        }
+
+        .stock-info .weight {
+            background-color: #009933;
+        }
+
+        .stock-info .pack {
+            background-color: #00b300;
+        }
+
         table.table {
             width: 100%;
             border-collapse: collapse;
@@ -82,7 +108,6 @@
             background-color: #00800033;
         }
 
-        /* Print Styles */
         /* Print Styles */
         @media print {
             body {
@@ -123,7 +148,6 @@
                 color: #000 !important;
             }
 
-            /* Hide buttons and export section */
             .print-btn,
             .btn-success,
             .btn-danger,
@@ -156,28 +180,41 @@
             <div class="report-title-bar">
                 @php
                     $companyName = \App\Models\Setting::value('CompanyName');
+                    $settingDate = \App\Models\Setting::value('value');
                 @endphp
 
                 <h2 class="company-name">{{ $companyName ?? 'Default Company' }}</h2>
 
                 <h4>📄 GRN කේතය අනුව විකුණුම් වාර්තාව</h4>
 
-                @php $settingDate = \App\Models\Setting::value('value'); @endphp
                 <span class="right-info">{{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}</span>
 
-                <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+
+                    {{-- Display Ow / Op / Bw / Bp --}}
+                    @if(isset($selectedGrnEntry))
+                        <div class="stock-info">
+                            <span class="weight">OW: {{ number_format($ow, 2) }}</span>
+                            <span class="pack">OP: {{ $op }}</span>
+                            <span class="weight">BW: {{ number_format($bw, 2) }}</span>
+                            <span class="pack">BP: {{ $bp }}</span>
+                            <span class="pack">Date: {{ $Date }}</span>
+                        </div>
+                    @endif
+                </div>
             </div>
 
             {{-- Filters Summary --}}
             <div class="mb-3 text-white">
                 <span>
-    <strong>තෝරාගත් GRN කේතය:</strong> {{ $selectedGrnCode }}
-    @if($selectedGrnEntry)
-        <span class="ms-2">
-            ({{ $selectedGrnEntry->item_code }} - {{ $selectedGrnEntry->item_name }})
-        </span>
-    @endif
-</span>
+                    <strong>තෝරාගත් GRN කේතය:</strong> {{ $selectedGrnCode }}
+                    @if($selectedGrnEntry)
+                        <span class="ms-2">
+                            ({{ $selectedGrnEntry->item_code }} - {{ $selectedGrnEntry->item_name }})
+                        </span>
+                    @endif
+                </span>
 
                 @if($startDate && $endDate)
                     <span class="ms-3"><strong>දිනයන්:</strong> {{ $startDate }} සිට {{ $endDate }} දක්වා</span>
