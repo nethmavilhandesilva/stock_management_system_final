@@ -174,7 +174,9 @@
                     <td>💰 Profit</td>
                     <td colspan="2" class="text-success">
                         <span id="profit-value" style="display: none;">
-                            {{ number_format(0, 2) }}
+                            {{ number_format($totalProfit, 2) }}
+                            <br>
+                           
                         </span>
                         <input type="password" id="profit-password" placeholder="Enter password" style="padding:2px 5px;" />
                     </td>
@@ -197,9 +199,7 @@
                                 style="flex:1; background-color:#006600; padding:10px; border-radius:5px; text-align:center; color:white;">
                                අද දින නය ගැනීම<br>
                                <strong>{{ abs($totaltodayLoans) }}</strong>
-
                             </div>
-                          
                         </div>
                     </td>
                 </tr>
@@ -237,8 +237,6 @@
                         </div>
                     </td>
                 </tr>
-
-
             </tfoot>
         </table>
 

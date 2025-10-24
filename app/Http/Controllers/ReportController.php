@@ -789,131 +789,166 @@ class ReportController extends Controller
         return view('dashboard.reports.salesadjustment', compact('entries', 'code', 'startDate', 'endDate'));
     }
 
-  public function financialReport()
-{
-    // Fetch dates from Setting table
-    $dates = Setting::pluck('value');
+    public function financialReport()
+    {
+        // Fetch dates from Setting table
+        $dates = Setting::pluck('value');
 
-    // Fetch Income/Expenses filtered by dates
-    $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
-        ->whereIn('Date', $dates)
-        ->get();
+        // Fetch Income/Expenses filtered by dates
+        $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
+            ->whereIn('Date', $dates)
+            ->get();
 
-    $reportData = [];
-    $totalDr = 0;
-    $totalCr = 0;
+        $reportData = [];
+        $totalDr = 0;
+        $totalCr = 0;
 
-    // 🧾 Balance row
-    $balanceRow = Setting::where('key', 'last_day_started_date')
-        ->whereColumn('value', '<>', 'Date_of_balance')
-        ->first();
+        // 🧾 Balance row
+        $balanceRow = Setting::where('key', 'last_day_started_date')
+            ->whereColumn('value', '<>', 'Date_of_balance')
+            ->first();
 
-    if ($balanceRow) {
+        if ($balanceRow) {
+            $reportData[] = [
+                'description' => 'Balance As At ' . \Carbon\Carbon::parse($balanceRow->value)->format('Y-m-d'),
+                'dr' => $balanceRow->Balance,
+                'cr' => null
+            ];
+            $totalDr += $balanceRow->Balance;
+        }
+
+        // 💵 Income/Expenses entries
+        foreach ($records as $record) {
+            $dr = null;
+            $cr = null;
+
+            $desc = $record->customer_short_name;
+            if (!empty($record->bill_no)) {
+                $desc .= " ({$record->bill_no})";
+            }
+            $desc .= " - {$record->description}";
+
+            if (in_array($record->loan_type, ['old', 'ingoing'])) {
+                $dr = $record->amount;
+                $totalDr += $record->amount;
+            } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
+                $cr = $record->amount;
+                $totalCr += $record->amount;
+            }
+
+            $reportData[] = [
+                'description' => $desc,
+                'dr' => $dr,
+                'cr' => $cr
+            ];
+        }
+
+        // 🧮 Sales Total
+        $salesTotal = Sale::sum('total');
+        $totalDr += $salesTotal;
         $reportData[] = [
-            'description' => 'Balance As At ' . \Carbon\Carbon::parse($balanceRow->value)->format('Y-m-d'),
-            'dr' => $balanceRow->Balance,
+            'description' => 'Sales Total',
+            'dr' => $salesTotal,
             'cr' => null
         ];
-        $totalDr += $balanceRow->Balance;
+
+        // 💰 NEW: Profit Calculation for each sale record (skip invalids)
+        $sales = Sale::all();
+        $totalProfit = 0;
+        $profitDetails = [];
+
+        foreach ($sales as $sale) {
+            // Skip records with invalid or zero selling price or weight
+            if (
+                !is_null($sale->PerKGPrice) &&
+                $sale->PerKGPrice > 0 &&
+                !is_null($sale->price_per_kg) &&
+                !is_null($sale->weight) &&
+                $sale->weight > 0
+            ) {
+                // Calculate profit: (selling - cost) × weight
+                $profitPerRecord = ($sale->price_per_kg - $sale->PerKGPrice) * $sale->weight;
+                $totalProfit += $profitPerRecord;
+
+                $profitDetails[] = [
+                    'bill_no' => $sale->bill_no,
+                    'item_name' => $sale->item_name,
+                    'weight' => $sale->weight,
+                    'selling_price_per_kg' => $sale->PerKGPrice,
+                    'cost_price_per_kg' => $sale->price_per_kg,
+                    'profit' => $profitPerRecord
+                ];
+            }
+        }
+
+        // 💰 Existing Profit (SellingKGTotal) - keeping for backward compatibility
+        $profitTotal = Sale::sum('SellingKGTotal');
+
+        // 💥 Total Damages
+        $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
+            ->value(DB::raw('SUM(wasted_weight * PerKGPrice)')) ?? 0;
+
+        // 🏦 Loans
+        $dates = Setting::pluck('value');
+
+        $oldLoanCustomers = IncomeExpenses::whereIn('Date', $dates)
+            ->where('loan_type', 'old')
+            ->pluck('customer_short_name')
+            ->unique();
+
+        $todayLoanCustomers = IncomeExpenses::whereIn('Date', $dates)
+            ->where('loan_type', 'today')
+            ->pluck('customer_short_name')
+            ->unique();
+
+        $totalOldLoans = IncomeExpenses::whereIn('Date', $dates)
+            ->where('loan_type', 'old')
+            ->sum('amount');
+
+        $totaltodayLoans = IncomeExpenses::whereIn('Date', $dates)
+            ->where('loan_type', 'today')
+            ->sum('amount');
+
+        // 🧾 Sales Info
+        $totalQtySold = Sale::sum('weight');
+        $totalBillsPrinted = Sale::distinct('bill_no')->count('bill_no');
+
+        // 🕓 First and Last Bill Printed Time
+        $firstBill = Sale::where('bill_printed', 'Y')
+            ->orderBy('FirstTimeBillPrintedOn', 'asc')
+            ->first();
+
+        $lastBill = Sale::where('bill_printed', 'Y')
+            ->orderBy('FirstTimeBillPrintedOn', 'desc')
+            ->first();
+
+
+        $firstBillTime = $firstBill ? Carbon::parse($firstBill->FirstTimeBillPrintedOn)->setTimezone('Asia/Colombo')->format('h:i A') : 'N/A';
+        $lastBillTime = $lastBill ? Carbon::parse($lastBill->FirstTimeBillPrintedOn)->setTimezone('Asia/Colombo')->format('h:i A') : 'N/A';
+
+        $firstBillNo = $firstBill->bill_no ?? 'N/A';
+        $lastBillNo = $lastBill->bill_no ?? 'N/A';
+
+        return view('dashboard.reports.financial', compact(
+            'reportData',
+            'totalDr',
+            'totalCr',
+            'salesTotal',
+            'profitTotal',
+            'totalProfit', // NEW: Added calculated profit
+            'profitDetails', // NEW: Added profit details array
+            'totalDamages',
+            'totalOldLoans',
+            'totaltodayLoans',
+            'totalQtySold',
+            'totalBillsPrinted',
+            'firstBillTime',
+            'lastBillTime',
+            'firstBillNo',
+            'lastBillNo'
+        ));
     }
 
-    // 💵 Income/Expenses entries
-    foreach ($records as $record) {
-        $dr = null;
-        $cr = null;
-
-        $desc = $record->customer_short_name;
-        if (!empty($record->bill_no)) {
-            $desc .= " ({$record->bill_no})";
-        }
-        $desc .= " - {$record->description}";
-
-        if (in_array($record->loan_type, ['old', 'ingoing'])) {
-            $dr = $record->amount;
-            $totalDr += $record->amount;
-        } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
-            $cr = $record->amount;
-            $totalCr += $record->amount;
-        }
-
-        $reportData[] = [
-            'description' => $desc,
-            'dr' => $dr,
-            'cr' => $cr
-        ];
-    }
-
-    // 🧮 Sales Total
-    $salesTotal = Sale::sum('total');
-    $totalDr += $salesTotal;
-    $reportData[] = [
-        'description' => 'Sales Total',
-        'dr' => $salesTotal,
-        'cr' => null
-    ];
-
-    // 💰 Profit (SellingKGTotal)
-    $profitTotal = Sale::sum('SellingKGTotal');
-
-    // 💥 Total Damages
-    $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))->value(DB::raw('SUM(wasted_weight * PerKGPrice)')) ?? 0;
-
-    // 🏦 Loans
-    $dates = Setting::pluck('value');
-
-    $oldLoanCustomers = IncomeExpenses::whereIn('Date', $dates)
-        ->where('loan_type', 'old')
-        ->pluck('customer_short_name')
-        ->unique();
-
-    $todayLoanCustomers = IncomeExpenses::whereIn('Date', $dates)
-        ->where('loan_type', 'today')
-        ->pluck('customer_short_name')
-        ->unique();
-
-  
-    $totalOldLoans = IncomeExpenses::whereIn('Date', $dates)
-    ->where('loan_type', 'old')
-    ->sum('amount');
-
-    $totaltodayLoans = IncomeExpenses::whereIn('Date', $dates)
-    ->where('loan_type', 'today')
-    ->sum('amount');
-
-   
-
-   
-    // 🧾 NEW SECTION: Sales Info
-    $totalQtySold = Sale::sum('weight');
-    $totalBillsPrinted = Sale::distinct('bill_no')->count('bill_no');
-
-    // 🕓 NEW SECTION: First and Last Bill Printed Time
-    $firstBill = Sale::orderBy('FirstTimeBillPrintedOn', 'asc')->first();
-    $lastBill = Sale::orderBy('FirstTimeBillPrintedOn', 'desc')->first();
-
-    $firstBillTime = $firstBill ? \Carbon\Carbon::parse($firstBill->FirstTimeBillPrintedOn)->setTimezone('Asia/Colombo')->format('h:i A') : 'N/A';
-    $lastBillTime = $lastBill ? \Carbon\Carbon::parse($lastBill->FirstTimeBillPrintedOn)->setTimezone('Asia/Colombo')->format('h:i A') : 'N/A';
-
-    $firstBillNo = $firstBill->bill_no ?? 'N/A';
-    $lastBillNo = $lastBill->bill_no ?? 'N/A';
-
-    return view('dashboard.reports.financial', compact(
-        'reportData',
-        'totalDr',
-        'totalCr',
-        'salesTotal',
-        'profitTotal',
-        'totalDamages',
-        'totalOldLoans',
-        'totaltodayLoans',
-        'totalQtySold',
-        'totalBillsPrinted',
-        'firstBillTime',
-        'lastBillTime',
-        'firstBillNo',
-        'lastBillNo'
-    ));
-}
 
     public function salesReport(Request $request)
     {

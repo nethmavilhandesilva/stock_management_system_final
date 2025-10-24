@@ -169,7 +169,7 @@ class SalesEntryController extends Controller
             }
 
             // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal
-            $perKgPrice = $grnEntry->PerKGPrice;
+            $perKgPrice = $grnEntry->BP;
             $perKgTotal = $perKgPrice * $validated['weight'];
 
             // 3. Get the date value from settings

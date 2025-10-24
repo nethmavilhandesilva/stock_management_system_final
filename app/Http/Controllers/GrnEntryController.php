@@ -278,7 +278,6 @@ public function store2(Request $request)
         Sale::where('code', $entry->code)->get()->each(function ($sale) use ($newPerKgPrice) {
             $sale->PerKGPrice = $newPerKgPrice;
             $sale->PerKGTotal = $sale->weight * $newPerKgPrice;
-            $sale->SellingKGTotal = $sale->total - $sale->PerKGTotal;
             $sale->save();
         });
     }
