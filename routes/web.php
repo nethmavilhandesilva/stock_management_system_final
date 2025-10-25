@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController2;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ItemController;
@@ -189,6 +190,7 @@ Route::post('grn/export/update/excel', [GrnEntryController::class, 'exportUPDATE
 Route::post('grn/export/update/pdf', [GrnEntryController::class, 'exportUPDATEPdf'])->name('grn.export.pdf');
 Route::get('/grn-entries/latest', [GrnEntryController::class, 'getLatestEntries']);
 Route::delete('/grn/delete/update/{id}', [GrnEntryController::class, 'destroyupdate'])->name('grnupdate.delete');
+Route::get('/grn-report2', [GrnEntryController::class, 'showGrnReport'])->name('grn.report2');
 
 //new  Gettin te real time balances for update grn page
 Route::get('/grn/balance/{code}', [GrnEntryController::class, 'getBalance'])->name('grn.balance');
@@ -198,5 +200,7 @@ Route::get('/sales-entry/react', [DashboardController::class, 'index'])->name('d
 Route::post('/grn/react', [GrnEntryController::class, 'store'])->name('grn.store2'); // existing store handler (JSON)
 //given amount
 Route::put('/sales/{sale}/given-amount', [SalesEntryController::class, 'updateGivenAmount'])->name('sales.update-given-amount');
+//new dasboard2
+Route::get('/sales-entry2', [DashboardController2::class, 'showEntry2'])->name('Dashboard2');
 
 require __DIR__.'/auth.php';

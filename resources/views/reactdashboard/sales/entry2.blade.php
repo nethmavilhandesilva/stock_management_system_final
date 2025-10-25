@@ -141,6 +141,37 @@
             padding-bottom: 50px;
         }
 
+        /* Welcome Section Styling */
+        .main-content h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #004d00;
+            letter-spacing: 2px;
+            transition: transform 0.3s ease;
+        }
+
+        .main-content h1:hover {
+            transform: scale(1.05);
+        }
+
+        .main-content p {
+            font-size: 1.2rem;
+            color: #006400;
+            margin-top: 10px;
+        }
+
+        .btn-success,
+        .btn-outline-success {
+            border-radius: 10px;
+            padding: 10px 25px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-success:hover,
+        .btn-outline-success:hover {
+            transform: scale(1.05);
+        }
+
         /* Make sure all text is visible */
         .text-white {
             color: white !important;
@@ -157,7 +188,7 @@
                 <div class="nav-left">
                     <!-- Dashboard -->
                     <div class="nav-item">
-                        <a href="{{ route('dasboard.index') }}" class="nav-link-custom">
+                        <a href="{{ route('Dashboard2') }}" class="nav-link-custom">
                             <span class="material-icons">dashboard</span>
                             <span>Dashboard</span>
                         </a>
@@ -178,7 +209,7 @@
                                 GRN වාර්තාව</a>
                             <a class="dropdown-item" href="{{ route('loan.report') }}">Final Loan Report</a>
                             <a class="dropdown-item" href="{{ route('expenses.report') }}">වි‍යදම් වාර්තාව</a>
-                            <a class="dropdown-item" href="supplierSelectModal2" data-bs-toggle="modal" data-bs-target="#supplierSelectModal2">
+                             <a class="dropdown-item" href="supplierSelectModal2" data-bs-toggle="modal" data-bs-target="#supplierSelectModal2">
                                 GRN වාර්තාව2</a>
                         </div>
                     </div>
@@ -210,14 +241,6 @@
 
                 <!-- Right side items -->
                 <div class="nav-right">
-                    <!-- Day Start Process -->
-                    <div class="nav-item">
-                        <a href="#" class="nav-link-custom" data-bs-toggle="modal" data-bs-target="#dayStartModal">
-                            <span class="material-icons">play_circle_filled</span>
-                            <span>Day Start</span>
-                        </a>
-                    </div>
-
                     <!-- Logout -->
                     <div class="nav-item">
                         <form action="{{ route('logout') }}" method="POST" style="display: inline;">
@@ -243,10 +266,35 @@
         </div>
     </nav>
 
-    <!-- Main Content Area -->
-    <div class="main-content">
-        <div id="salesApp"></div>
+   <!-- 🌿 Main Welcome Section 🌿 -->
+<main class="d-flex justify-content-center align-items-center text-center"
+    style="min-height: 100vh; background: linear-gradient(135deg, #99ff99; 0%, #c2f2b4 100%); padding: 40px 20px;">
+
+    <div class="p-5 rounded-4 shadow-lg"
+        style="background: white; max-width: 650px; border-top: 6px solid #006400; border-radius: 20px; animation: fadeIn 1.5s ease;">
+        
+        <h1 class="fw-bold mb-3" style="color: #006400; font-size: 2.2rem;">
+            🌿 Welcome to <span style="color: #004d00;">POS-SALES</span> 🌿
+        </h1>
+        
+        <p style="color: #004d00; font-size: 1.15rem; line-height: 1.7;">
+            Empower your business with effortless <strong>sales tracking</strong>,
+            seamless <strong>GRN management</strong>, and insightful
+            <strong>reports</strong> — all in one place.
+        </p>
+        
+        <hr style="border: 1px solid  #99ff99; width: 80%; margin: 1.5rem auto;">
     </div>
+</main>
+
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
 
     <!-- Bottom Navigation Bar - Always Visible -->
     <nav class="navbar bottom-navbar fixed-bottom">
@@ -277,20 +325,16 @@
                         <a href="#" class="nav-link-custom" data-bs-toggle="modal" data-bs-target="#supplierSelectModal"
                             data-report-action="{{ route('report.grn.sales.overview') }}"
                             data-report-name="GRN Sales Overview Report 1">
-                             ඉතිරි වාර්තාව 1
+                            ඉතිරි වාර්තාව 1
                         </a>
                     </div>
-
-
                     <div class="nav-item">
                         <a href="#" class="nav-link-custom" data-bs-toggle="modal" data-bs-target="#supplierSelectModal"
                             data-report-action="{{ route('report.grn.sales.overview2') }}"
                             data-report-name="GRN Sales Overview Report 2">
-                             ඉතිරි වාර්තාව 2
+                            ඉතිරි වාර්තාව 2
                         </a>
                     </div>
-
-
                     <div class="nav-item">
                         <a href="#" data-bs-toggle="modal" data-bs-target="#filterModal" class="nav-link-custom">
                             විකුණුම් වාර්තාව
@@ -305,28 +349,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // pass server data to React via window.* variables
-        window.__INITIAL_SALES__ = @json($sales->toArray());
-        window.__CUSTOMERS__ = @json($customers->toArray());
-        window.__ENTRIES__ = @json($entries->toArray());
-        window.__ITEMS__ = @json($items->toArray());
-        window.__STORE_URL__ = "{{ route('grn.store') }}";
-        window.__PRINTED_SALES__ = {!! json_encode($printedSales) !!};
-        window.__UNPRINTED_SALES__ = {!! json_encode($unprintedSales) !!};
-
-        console.log('Navigation bars loaded - always visible');
-    </script>
-    <script>
-        window.__ROUTES__ = {
-            markPrinted: '/sales/mark-printed',
-            getLoanAmount: '/get-loan-amount',
-            markAllProcessed: '/sales/mark-all-processed',
-            givenAmount: '/sales/:id/given-amount',
-            getGrnEntries: '/grn-entries',
-            getLatestGrnEntries: '/grn-entries/latest'
-        };
-    </script>
-    <script>
         document.addEventListener('keydown', function (event) {
             if (event.key === 'F10') {
                 event.preventDefault(); // prevent browser default F10 behavior
@@ -334,6 +356,7 @@
             }
         });
     </script>
+
     @include('layouts.partials.footer')
     @include('layouts.partials.report-modal')
     @include('layouts.partials.item-wisemodal')
@@ -346,7 +369,6 @@
     @include('layouts.partials.grn-modal')
     @include('layouts.partials.filterModal')
     @include('layouts.partials.grn1Modal')
-    @include('layouts.partials.grn2Modal')
 </body>
 
 </html>

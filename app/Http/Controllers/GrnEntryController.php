@@ -178,7 +178,7 @@ class GrnEntryController extends Controller
 
             // ✅ Update GRN entry with the calculated remaining values
             $grn->packs += abs($remainingNewPacks);
-            $grn->weight +=abs($remainingNewWeight);
+            $grn->weight += abs($remainingNewWeight);
             $grn->original_packs += abs($remainingNewPacks);
             $grn->original_weight += abs($remainingNewWeight);
             $grn->PerKGPrice = (float) $request->per_kg_price;
@@ -688,8 +688,8 @@ class GrnEntryController extends Controller
     {
         try {
             // Get all GRN entries with latest data, ordered by date
-             $entries = GrnEntry::where('is_hidden', 0)
-            ->orderBy('txn_date', 'desc')
+            $entries = GrnEntry::where('is_hidden', 0)
+                ->orderBy('txn_date', 'desc')
                 ->get()
                 ->map(function ($entry) {
                     return [
@@ -719,6 +719,27 @@ class GrnEntryController extends Controller
             ], 500);
         }
     }
+    public function showGrnReport(Request $request)
+    {
+        $query = \App\Models\GrnEntry::where('is_hidden', 0);
+
+        // Filter if a GRN code is selected
+        if ($request->has('code') && $request->code != '') {
+            $query->where('code', $request->code);
+        }
+
+        $grnEntries = $query->orderBy('txn_date', 'desc')->get();
+
+        $grnEntry2Data = GrnEntry2::all()->groupBy('code');
+
+        // For modal autocomplete
+        $allCodes = GrnEntry::select('code')->distinct()->pluck('code');
+
+        return view('dashboard.reports.grn_report', compact('grnEntries', 'grnEntry2Data', 'allCodes'));
+    }
+
+
+
 
 }
 
