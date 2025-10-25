@@ -688,7 +688,8 @@ class GrnEntryController extends Controller
     {
         try {
             // Get all GRN entries with latest data, ordered by date
-            $entries = GrnEntry::orderBy('txn_date', 'desc')
+             $entries = GrnEntry::where('is_hidden', 0)
+            ->orderBy('txn_date', 'desc')
                 ->get()
                 ->map(function ($entry) {
                     return [

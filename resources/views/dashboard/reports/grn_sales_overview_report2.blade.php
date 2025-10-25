@@ -177,17 +177,14 @@
         </div>
     </div>
 
-    <div class="mt-3">
-        <a href="{{ route('grn-overview.download2', ['format' => 'excel']) }}" class="btn btn-success me-2">Download
-            Excel</a>
-        <a href="{{ route('grn-overview.download2', ['format' => 'pdf']) }}" class="btn btn-danger">Download PDF</a>
+     <div class="mt-3">
+    <a href="{{ route('grn-overview.download2', ['format' => 'pdf', 'supplier_code' => request('supplier_code')]) }}" 
+       class="btn btn-danger btn-sm">📄 Download PDF</a>
 
-        {{-- New form for the email button --}}
-        <form action="{{ route('report.email.overview-report') }}" method="POST" style="display:inline;">
-            @csrf
-            <button type="submit" class="btn btn-info">📧 Email Report</button>
-        </form>
-    </div>
+    <a href="{{ route('grn-overview.download2', ['format' => 'excel', 'supplier_code' => request('supplier_code')]) }}" 
+       class="btn btn-success btn-sm">📊 Download Excel</a>
+</div>
+
 
     {{-- Custom Styles --}}
     <style>

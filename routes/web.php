@@ -140,7 +140,7 @@ Route::get('/expenses-report', [ReportController::class, 'expensereport'])->name
 //exports
 Route::get('/sales-adjustment-report/excel', [ReportController::class, 'exportToExcel'])->name('sales-adjustment.export.excel');
 Route::get('/sales-adjustment-report/pdf', [ReportController::class, 'exportToPdf'])->name('sales-adjustment.export.pdf');
-Route::get('/grn-sales-overview/download', [ReportController::class, 'downloadGrnSalesOverviewReport'])->name('grn-sales.download');
+Route::get('/grn-sales-overview/download', [ReportController::class, 'downloadGrnSalesOverviewReport'])->name('report.download.grn.sales.overview');
 Route::get('/grn-overview/download2', [ReportController::class, 'downloadGrnOverviewReport2'])->name('grn-overview.download2');
 Route::get('/sales-report/download', [ReportController::class, 'downloadSalesReport'])->name('sales.report.download');
 Route::get('/grn/export/pdf', [ReportController::class, 'exportPdf'])->name('grn.exportPdf');
@@ -166,6 +166,9 @@ Route::get('/api/all-bill-nos', function () {
 });
 //GRN OPTIONS
 Route::post('/grn/update-status/{id}', [GrnEntryController::class, 'updateStatus'])->name('grn.updateStatus');
+Route::post('/grn/{id}/hide', [GrnEntryController::class, 'hide'])->name('grn.hide');
+Route::post('/grn/{id}/unhide', [GrnEntryController::class, 'unhide'])->name('grn.unhide');
+
 // web.php
 Route::get('/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntry'])->name('grn.entry.fetch');
 Route::post('/settings/update-balance', [SalesEntryController::class, 'updateBalance'])->name('settings.updateBalance');

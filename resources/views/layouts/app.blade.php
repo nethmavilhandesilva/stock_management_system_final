@@ -52,7 +52,7 @@
         </div>
     </div>
 
-   @include('layouts.partials.footer')
+    @include('layouts.partials.footer')
     @include('layouts.partials.report-modal')
     @include('layouts.partials.item-wisemodal')
     @include('layouts.partials.weight-modal')
@@ -62,7 +62,8 @@
     @include('layouts.partials.dayStartModal')
     @include('layouts.partials.LoanReport-Modal')
     @include('layouts.partials.grn-modal')
-     @include('layouts.partials.filterModal')
+    @include('layouts.partials.filterModal')
+    @include('layouts.partials.grn1Modal')
 
 
 </div>

@@ -16,7 +16,10 @@ class DashboardController extends Controller
     $customers = Customer::select('short_name', 'name')->get();
 
     // GRN entries (latest first)
-    $entries = GrnEntry::orderBy('txn_date', 'desc')->get();
+   $entries = GrnEntry::where('is_hidden', 0)
+    ->orderBy('txn_date', 'desc')
+    ->get();
+
 
     // Fetch items for pack_due values
     $items = Item::select('no', 'pack_due','pack_cost')->get(); // Add this line
