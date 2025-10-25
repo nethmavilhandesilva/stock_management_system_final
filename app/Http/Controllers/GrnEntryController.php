@@ -167,8 +167,8 @@ class GrnEntryController extends Controller
             $totalWastedWeight = $grn->wasted_weight ?? 0;
 
             // Calculate remaining for new stock only
-            $remainingNewPacks = abs($totalSoldPacks - $totalWastedPacks - $newPacks);
-            $remainingNewWeight = abs($totalSoldWeight - $totalWastedWeight - $newWeight);
+            $remainingNewPacks = $newPacks - ($totalSoldPacks + $totalWastedPacks);
+            $remainingNewWeight = $newWeight - ($totalSoldWeight + $totalWastedWeight);
 
             Log::info("New additions calculation:");
             Log::info("New Packs: {$newPacks}, New Weight: {$newWeight}");
@@ -177,10 +177,10 @@ class GrnEntryController extends Controller
             Log::info("Remaining New Packs: {$remainingNewPacks}, Remaining New Weight: {$remainingNewWeight}");
 
             // ✅ Update GRN entry with the calculated remaining values
-            $grn->packs += $remainingNewPacks;
-            $grn->weight += $remainingNewWeight;
-            $grn->original_packs += $remainingNewPacks;
-            $grn->original_weight += $remainingNewWeight;
+            $grn->packs += abs($remainingNewPacks);
+            $grn->weight +=abs($remainingNewWeight);
+            $grn->original_packs += abs($remainingNewPacks);
+            $grn->original_weight += abs($remainingNewWeight);
             $grn->PerKGPrice = (float) $request->per_kg_price;
             $grn->SalesKGPrice = (float) $request->per_kg_price;
 

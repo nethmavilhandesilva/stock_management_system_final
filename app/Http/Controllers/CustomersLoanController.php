@@ -103,18 +103,26 @@ class CustomersLoanController extends Controller
     $validated = $request->validate($rules);
 
     // --- Handle GRN Damage ---
-    if ($loanType === 'grn_damage') {
-        $grnEntry = GrnEntry::where('code', $validated['wasted_code'])->first();
-        if (!$grnEntry) {
-            return back()->with('error', 'GRN code not found.');
-        }
-        $grnEntry->packs = max(0, $grnEntry->packs - $validated['wasted_packs']);
-        $grnEntry->weight = max(0, $grnEntry->weight - $validated['wasted_weight']);
-        $grnEntry->save();
+   if ($loanType === 'grn_damage') {
+    $grnEntry = GrnEntry::where('code', $validated['wasted_code'])->first();
 
-        return redirect()->route('customers-loans.index')
-            ->with('success', 'GRN stock updated successfully!');
+    if (!$grnEntry) {
+        return back()->with('error', 'GRN code not found.');
     }
+
+    // Update remaining stock
+    $grnEntry->packs = max(0, $grnEntry->packs - $validated['wasted_packs']);
+    $grnEntry->weight = max(0, $grnEntry->weight - $validated['wasted_weight']);
+
+    // Record the wasted values (accumulate if already has previous values)
+    $grnEntry->wasted_packs = ($grnEntry->wasted_packs ?? 0) + $validated['wasted_packs'];
+    $grnEntry->wasted_weight = ($grnEntry->wasted_weight ?? 0) + $validated['wasted_weight'];
+
+    $grnEntry->save();
+
+    return redirect()->route('customers-loans.index')
+        ->with('success', 'GRN stock and waste details updated successfully!');
+}
 
     // --- Handle Returns ---
     if ($loanType === 'returns') {
