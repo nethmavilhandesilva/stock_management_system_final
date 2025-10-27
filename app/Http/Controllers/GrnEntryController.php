@@ -456,12 +456,6 @@ class GrnEntryController extends Controller
             'item_code' => $specificItemCode,
             'grn_price_from_db' => $grnPriceForDebug
         ]);
-
-        // Use `dd()` to halt execution and inspect data
-        // For example, if you want to see the exact GRN prices array before the view is rendered:
-        // dd($grnPrices); 
-
-        // 5. Pass the data to the view
         return view('reports.sales_bill_summary', [
             'salesByBill' => $salesByBill,
             'grnPrices' => $grnPrices,
@@ -719,61 +713,95 @@ class GrnEntryController extends Controller
             ], 500);
         }
     }
-    public function showGrnReport(Request $request)
-    {
-        $query = \App\Models\GrnEntry::where('is_hidden', 0);
+   public function showGrnReport(Request $request)
+{
+    $query = GrnEntry::where('is_hidden', 0);
 
-        // Apply filters dynamically
-        if ($request->filled('supplier_code')) {
-            $query->where('supplier_code', $request->supplier_code);
-        }
-
-        if ($request->filled('item_code')) {
-            $query->where('item_code', $request->item_code);
-        }
-
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('txn_date', [$request->start_date, $request->end_date]);
-        }
-
-        // Filter by GRN code (from modal)
-        if ($request->filled('code')) {
-            $query->where('code', $request->code);
-        }
-
-        // Only fetch GrnEntry2 if a GRN code is selected
-        $grnEntry2Data = collect();
-        if ($request->filled('code')) {
-            $grnEntry2Data = \App\Models\GrnEntry2::where('code', $request->code)
-                ->get()
-                ->groupBy('code');
-        }
-
-        $grnEntries = $query->orderBy('txn_date', 'desc')->get();
-
-        // For filters
-        $supplierCodes = \App\Models\GrnEntry::whereIn('supplier_code', ['L', 'A'])
-            ->select('supplier_code')
-            ->distinct()
-            ->pluck('supplier_code');
-
-        $itemCodes = \App\Models\GrnEntry::select('item_code', 'item_name')
-            ->distinct()
-            ->get();
-
-        // For modal autocomplete
-        $allCodes = \App\Models\GrnEntry::select('code', 'item_code', 'item_name', 'txn_date')
-            ->distinct()
-            ->get();
-
-        return view('dashboard.reports.grn_report', compact(
-            'grnEntries',
-            'grnEntry2Data',
-            'allCodes',
-            'supplierCodes',
-            'itemCodes'
-        ));
+    // Apply filters dynamically
+    if ($request->filled('supplier_code')) {
+        $query->where('supplier_code', $request->supplier_code);
     }
+
+    if ($request->filled('item_code')) {
+        $query->where('item_code', $request->item_code);
+    }
+
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $query->whereBetween('txn_date', [$request->start_date, $request->end_date]);
+    }
+
+    // Filter by GRN code (from modal or URL param)
+    if ($request->filled('code')) {
+        $query->where('code', $request->code);
+    }
+
+    // Fetch GrnEntry2 data for the existing sub-table (if you still want it)
+    $grnEntry2Data = collect();
+    if ($request->filled('code')) {
+        $grnEntry2Data = GrnEntry2::where('code', $request->code)
+            ->get()
+            ->groupBy('code');
+    }
+
+    $grnEntries = $query->orderBy('txn_date', 'desc')->get();
+
+    // For filters
+    $supplierCodes = GrnEntry::whereIn('supplier_code', ['L', 'A'])
+        ->select('supplier_code')
+        ->distinct()
+        ->pluck('supplier_code');
+
+    $itemCodes = GrnEntry::select('item_code', 'item_name')
+        ->distinct()
+        ->get();
+
+    // For modal autocomplete (kept for context)
+    $allCodes = GrnEntry::select('code', 'item_code', 'item_name', 'txn_date')
+        ->distinct()
+        ->get();
+
+    return view('dashboard.reports.grn_report', compact(
+        'grnEntries',
+        'grnEntry2Data', // Still passed for the original sub-table logic
+        'allCodes',
+        'supplierCodes',
+        'itemCodes'
+    ));
+}
+
+// ✅ NEW METHOD TO FETCH MODAL DETAILS VIA AJAX
+public function fetchGrnDetails(Request $request)
+{
+    // Validate the required 'code' parameter
+    $request->validate(['code' => 'required|string']);
+
+    $code = $request->input('code');
+
+    // 1. Fetch related GrnEntry2 data
+    $grnEntry2Data = GrnEntry2::where('code', $code)
+        ->select('item_code', 'item_name', 'packs', 'weight', 'per_kg_price', 'type')
+        ->get();
+
+    // 2. Fetch related Sale data
+    $saleData = Sale::where('code', $code)
+        ->select(
+            'Date', // Ensure case matches model property
+            'customer_code',
+            'item_code',
+            'item_name',
+            'weight',
+            'price_per_kg',
+            'total',
+            'packs'
+        )
+        ->get();
+
+    // Return the data as a JSON response
+    return response()->json([
+        'grnEntry2' => $grnEntry2Data,
+        'sales' => $saleData,
+    ]);
+}
 
 
 

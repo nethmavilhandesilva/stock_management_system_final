@@ -169,7 +169,7 @@ Route::get('/api/all-bill-nos', function () {
 Route::post('/grn/update-status/{id}', [GrnEntryController::class, 'updateStatus'])->name('grn.updateStatus');
 Route::post('/grn/{id}/hide', [GrnEntryController::class, 'hide'])->name('grn.hide');
 Route::post('/grn/{id}/unhide', [GrnEntryController::class, 'unhide'])->name('grn.unhide');
-
+Route::get('/grn/fetch-details', [GrnEntryController::class, 'fetchGrnDetails'])->name('grn.fetch.details');
 // web.php
 Route::get('/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntry'])->name('grn.entry.fetch');
 Route::post('/settings/update-balance', [SalesEntryController::class, 'updateBalance'])->name('settings.updateBalance');
