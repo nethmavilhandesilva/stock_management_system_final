@@ -723,20 +723,58 @@ class GrnEntryController extends Controller
     {
         $query = \App\Models\GrnEntry::where('is_hidden', 0);
 
-        // Filter if a GRN code is selected
-        if ($request->has('code') && $request->code != '') {
+        // Apply filters dynamically
+        if ($request->filled('supplier_code')) {
+            $query->where('supplier_code', $request->supplier_code);
+        }
+
+        if ($request->filled('item_code')) {
+            $query->where('item_code', $request->item_code);
+        }
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('txn_date', [$request->start_date, $request->end_date]);
+        }
+
+        // Filter by GRN code (from modal)
+        if ($request->filled('code')) {
             $query->where('code', $request->code);
+        }
+
+        // Only fetch GrnEntry2 if a GRN code is selected
+        $grnEntry2Data = collect();
+        if ($request->filled('code')) {
+            $grnEntry2Data = \App\Models\GrnEntry2::where('code', $request->code)
+                ->get()
+                ->groupBy('code');
         }
 
         $grnEntries = $query->orderBy('txn_date', 'desc')->get();
 
-        $grnEntry2Data = GrnEntry2::all()->groupBy('code');
+        // For filters
+        $supplierCodes = \App\Models\GrnEntry::whereIn('supplier_code', ['L', 'A'])
+            ->select('supplier_code')
+            ->distinct()
+            ->pluck('supplier_code');
+
+        $itemCodes = \App\Models\GrnEntry::select('item_code', 'item_name')
+            ->distinct()
+            ->get();
 
         // For modal autocomplete
-        $allCodes = GrnEntry::select('code')->distinct()->pluck('code');
+        $allCodes = \App\Models\GrnEntry::select('code', 'item_code', 'item_name', 'txn_date')
+            ->distinct()
+            ->get();
 
-        return view('dashboard.reports.grn_report', compact('grnEntries', 'grnEntry2Data', 'allCodes'));
+        return view('dashboard.reports.grn_report', compact(
+            'grnEntries',
+            'grnEntry2Data',
+            'allCodes',
+            'supplierCodes',
+            'itemCodes'
+        ));
     }
+
 
 
 

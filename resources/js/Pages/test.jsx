@@ -278,86 +278,24 @@ export default function SalesEntry() {
   const unprintedCustomers = useMemo(() => filterCustomers(unprintedSales, searchQueries.unprinted), [unprintedSales, searchQueries.unprinted]);
   //Handling the displayed sales in the main table
   const displayedSales = useMemo(() => {
-  let sales = newSales;
+    let sales = newSales;
 
-  if (selectedUnprintedCustomer) {
-    // For unprinted: show all unprinted sales for this customer
-    sales = [...sales, ...unprintedSales.filter(s => s.customer_code === selectedUnprintedCustomer)];
-  } else if (selectedPrintedCustomer && selectedPrintedCustomer.includes('-')) {
-    // For printed with bill number: show only sales for that specific bill
-    const [customerCode, billNo] = selectedPrintedCustomer.split('-');
-    sales = [...sales, ...printedSales.filter(s =>
-      s.customer_code === customerCode && s.bill_no === billNo
-    )];
-  } else if (selectedPrintedCustomer) {
-    // Fallback: if no bill number, show all printed sales for customer
-    sales = [...sales, ...printedSales.filter(s => s.customer_code === selectedPrintedCustomer)];
-  }
-
-  // Group sales by code when price_per_kg is zero
-  const groupedSales = [];
-  const codeGroups = {};
-  
-  sales.forEach(sale => {
-    // If price_per_kg is zero, group by code
-    if (parseFloat(sale.price_per_kg) === 0) {
-      const code = sale.code || 'NO_CODE';
-      
-      if (!codeGroups[code]) {
-        codeGroups[code] = {
-          ...sale,
-          // Create a unique ID for the grouped item
-          id: `grouped_${code}_${Date.now()}`,
-          // Sum weights and packs for same code items
-          weight: 0,
-          packs: 0,
-          original_weight: 0,
-          original_packs: 0,
-          // Keep other properties from the first item
-          item_name: sale.item_name,
-          customer_code: sale.customer_code,
-          customer_name: sale.customer_name,
-          grn_entry_code: sale.grn_entry_code,
-          supplier_code: sale.supplier_code,
-          item_code: sale.item_code,
-          price_per_kg: 0,
-          pack_due: sale.pack_due,
-          total: 0,
-          bill_printed: sale.bill_printed,
-          bill_no: sale.bill_no,
-          given_amount: sale.given_amount,
-          // Mark as grouped for identification
-          isGrouped: true,
-          groupedItems: [] // Store original items for reference
-        };
-      }
-      
-      // Add to grouped items array
-      codeGroups[code].groupedItems.push(sale);
-      
-      // Accumulate weights and packs
-      codeGroups[code].weight = (parseFloat(codeGroups[code].weight) || 0) + (parseFloat(sale.weight) || 0);
-      codeGroups[code].packs = (parseInt(codeGroups[code].packs) || 0) + (parseInt(sale.packs) || 0);
-      codeGroups[code].original_weight = (parseFloat(codeGroups[code].original_weight) || 0) + (parseFloat(sale.original_weight) || 0);
-      codeGroups[code].original_packs = (parseInt(codeGroups[code].original_packs) || 0) + (parseInt(sale.original_packs) || 0);
-      codeGroups[code].total = (parseFloat(codeGroups[code].total) || 0) + (parseFloat(sale.total) || 0);
-      
-    } else {
-      // For non-zero price items, add directly
-      groupedSales.push({
-        ...sale,
-        isGrouped: false
-      });
+    if (selectedUnprintedCustomer) {
+      // For unprinted: show all unprinted sales for this customer
+      sales = [...sales, ...unprintedSales.filter(s => s.customer_code === selectedUnprintedCustomer)];
+    } else if (selectedPrintedCustomer && selectedPrintedCustomer.includes('-')) {
+      // For printed with bill number: show only sales for that specific bill
+      const [customerCode, billNo] = selectedPrintedCustomer.split('-');
+      sales = [...sales, ...printedSales.filter(s =>
+        s.customer_code === customerCode && s.bill_no === billNo
+      )];
+    } else if (selectedPrintedCustomer) {
+      // Fallback: if no bill number, show all printed sales for customer
+      sales = [...sales, ...printedSales.filter(s => s.customer_code === selectedPrintedCustomer)];
     }
-  });
-  
-  // Add grouped items to the final array
-  Object.values(codeGroups).forEach(group => {
-    groupedSales.push(group);
-  });
-  
-  return groupedSales.slice().reverse();
-}, [newSales, unprintedSales, printedSales, selectedUnprintedCustomer, selectedPrintedCustomer]);
+
+    return sales.slice().reverse();
+  }, [newSales, unprintedSales, printedSales, selectedUnprintedCustomer, selectedPrintedCustomer]);
   //When a customer is selected, auto-populate the customer_code field if it's empty 
   const autoCustomerCode = useMemo(() =>
     displayedSales.length > 0 && !isManualClear ? displayedSales[0].customer_code || "" : "",

@@ -200,7 +200,7 @@
                             <span class="material-icons">storage</span>
                             <span>Master</span>
                         </a>
-                        <div class="dropdown-menu">
+                       <div class="dropdown-menu">
                             <a class="dropdown-item" href="{{ route('items.index') }}">භාණ්ඩ</a>
                             <a class="dropdown-item" href="{{ route('customers.index') }}">ගනුදෙනුකරුවන්</a>
                             <a class="dropdown-item" href="{{ route('suppliers.index') }}">සැපයුම්කරුවන්</a>
@@ -209,7 +209,7 @@
                                 GRN වාර්තාව</a>
                             <a class="dropdown-item" href="{{ route('loan.report') }}">Final Loan Report</a>
                             <a class="dropdown-item" href="{{ route('expenses.report') }}">වි‍යදම් වාර්තාව</a>
-                             <a class="dropdown-item" href="supplierSelectModal2" data-bs-toggle="modal" data-bs-target="#supplierSelectModal2">
+                            <a class="dropdown-item" href="supplierSelectModal2" data-bs-toggle="modal" data-bs-target="#supplierSelectModal2">
                                 GRN වාර්තාව2</a>
                         </div>
                     </div>
@@ -369,6 +369,7 @@
     @include('layouts.partials.grn-modal')
     @include('layouts.partials.filterModal')
     @include('layouts.partials.grn1Modal')
+     @include('layouts.partials.grn2Modal')
 </body>
 
 </html>

@@ -38,7 +38,6 @@
     </div>
 </div>
 
-<!-- Script for live search and selection -->
 <script>
     const searchInput = document.getElementById('codeSearch');
     const codeList = document.getElementById('codeList');
@@ -48,41 +47,92 @@
     const selectedItemNameInput = document.getElementById('selectedItemName');
     const selectedTxnDateInput = document.getElementById('selectedTxnDate');
 
+    let currentHighlightIndex = -1; // to handle arrow/enter selection
+
     function selectCode(el) {
         selectedCodeInput.value = el.dataset.code;
         selectedItemCodeInput.value = el.dataset.itemCode;
         selectedItemNameInput.value = el.dataset.itemName;
         selectedTxnDateInput.value = el.dataset.txnDate;
 
-        searchInput.value = el.dataset.code; // show code in input
-        // hide all items after selecting
+        searchInput.value = el.dataset.code; // show selected code in input
         Array.from(codeList.children).forEach(item => item.style.display = 'none');
     }
 
     searchInput.addEventListener('input', function() {
-        const filter = this.value.toLowerCase();
-        Array.from(codeList.children).forEach(item => {
-            // check if any of the fields contain the filter
+        const filter = this.value.trim().toLowerCase();
+        const items = Array.from(codeList.children);
+        currentHighlightIndex = -1;
+
+        items.forEach(item => {
             const code = item.dataset.code.toLowerCase();
             const itemCode = item.dataset.itemCode.toLowerCase();
             const itemName = item.dataset.itemName.toLowerCase();
 
-            if (code.includes(filter) || itemCode.includes(filter) || itemName.includes(filter)) {
+            // Show only items starting with the filter
+            if (
+                code.startsWith(filter) ||
+                itemCode.startsWith(filter) ||
+                itemName.startsWith(filter)
+            ) {
                 item.style.display = 'block';
+
+                // Highlight matching part in GRN code only
+                const regex = new RegExp(`^(${filter})`, 'i');
+                const highlightedCode = item.dataset.code.replace(regex, '<span style="background:yellow;font-weight:bold;">$1</span>');
+                item.innerHTML = `<strong>${highlightedCode}</strong> | ${item.dataset.itemCode} | ${item.dataset.itemName} | ${item.dataset.txnDate}`;
             } else {
                 item.style.display = 'none';
             }
         });
     });
 
-    // Reset input and show all items when modal opens or closes
+    // Handle Enter key to select the first visible result
+    searchInput.addEventListener('keydown', function(e) {
+        const visibleItems = Array.from(codeList.children).filter(item => item.style.display !== 'none');
+        if (visibleItems.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            currentHighlightIndex = (currentHighlightIndex + 1) % visibleItems.length;
+            highlightCurrent(visibleItems);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            currentHighlightIndex = (currentHighlightIndex - 1 + visibleItems.length) % visibleItems.length;
+            highlightCurrent(visibleItems);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentHighlightIndex >= 0) {
+                selectCode(visibleItems[currentHighlightIndex]);
+            } else {
+                selectCode(visibleItems[0]); // select first visible if none highlighted
+            }
+        }
+    });
+
+    function highlightCurrent(visibleItems) {
+        visibleItems.forEach((item, index) => {
+            item.style.backgroundColor = index === currentHighlightIndex ? '#d1ffd1' : 'white';
+        });
+    }
+
+    // Reset input when modal opens/closes
     const modal = document.getElementById('supplierSelectModal2');
     modal.addEventListener('shown.bs.modal', () => {
         searchInput.value = '';
-        Array.from(codeList.children).forEach(item => item.style.display = 'block');
+        Array.from(codeList.children).forEach(item => {
+            item.style.display = 'block';
+            item.style.backgroundColor = 'white';
+        });
+        currentHighlightIndex = -1;
     });
     modal.addEventListener('hidden.bs.modal', () => {
         searchInput.value = '';
-        Array.from(codeList.children).forEach(item => item.style.display = 'block');
+        Array.from(codeList.children).forEach(item => {
+            item.style.display = 'block';
+            item.style.backgroundColor = 'white';
+        });
+        currentHighlightIndex = -1;
     });
 </script>
+

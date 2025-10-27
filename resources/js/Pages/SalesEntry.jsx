@@ -703,6 +703,20 @@ export default function SalesEntry() {
       }
 
       const isEditing = editingSaleId !== null;
+      // 🔥 NEW: Prevent NEW submissions (but allow updates) when printed customer is selected
+      if (!isEditing && selectedPrintedCustomer) {
+        updateState({
+          errors: { form: "Cannot add new entries to printed bills. Please edit existing records or select an unprinted customer." },
+          isSubmitting: false
+        });
+
+        // Auto-clear error after 5 seconds
+        setTimeout(() => {
+          updateState({ errors: {} });
+        }, 1000);
+
+        return;
+      }
 
       let billPrintedStatus = undefined;
       let billNoToUse = null;
@@ -1066,73 +1080,73 @@ export default function SalesEntry() {
   };
 
   const handlePrintAndClear = async () => {
-  const salesData = displayedSales.filter(s => s.id);
-  if (!salesData.length) return alert("No sales records to print!");
+    const salesData = displayedSales.filter(s => s.id);
+    if (!salesData.length) return alert("No sales records to print!");
 
-  // ✅ Check if any item has price_per_kg = 0
-  const hasZeroPrice = salesData.some(s => parseFloat(s.price_per_kg) === 0);
-  if (hasZeroPrice) {
-    alert("Cannot print! One or more items have a price per kg of 0.");
-    return; // Stop execution
-  }
-
-  try {
-    const [printResponse, loanResponse] = await Promise.allSettled([
-      apiCall(initialData.routes.markPrinted, "POST", {
-        sales_ids: salesData.map(s => s.id),
-        // Force new bill number for this group
-        force_new_bill: true
-      }),
-      fetch(initialData.routes.getLoanAmount, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': initialData.csrf },
-        body: JSON.stringify({ customer_short_name: salesData[0].customer_code || "N/A" })
-      }).then(res => res.json())
-    ]);
-
-    if (printResponse.status === 'rejected' || printResponse.value.status !== "success") {
-      throw new Error(printResponse.value?.message || "Printing failed");
+    // ✅ Check if any item has price_per_kg = 0
+    const hasZeroPrice = salesData.some(s => parseFloat(s.price_per_kg) === 0);
+    if (hasZeroPrice) {
+      alert("Cannot print! One or more items have a price per kg of 0.");
+      return; // Stop execution
     }
 
-    const customerCode = salesData[0].customer_code || "N/A";
-    const customerName = customerCode;
-    const mobile = salesData[0].mobile || '0773358518';
-    const billNo = printResponse.value.bill_no || "";
+    try {
+      const [printResponse, loanResponse] = await Promise.allSettled([
+        apiCall(initialData.routes.markPrinted, "POST", {
+          sales_ids: salesData.map(s => s.id),
+          // Force new bill number for this group
+          force_new_bill: true
+        }),
+        fetch(initialData.routes.getLoanAmount, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': initialData.csrf },
+          body: JSON.stringify({ customer_short_name: salesData[0].customer_code || "N/A" })
+        }).then(res => res.json())
+      ]);
 
-    let globalLoanAmount = 0;
-    if (loanResponse.status === 'fulfilled') {
-      globalLoanAmount = parseFloat(loanResponse.value.total_loan_amount) || 0;
+      if (printResponse.status === 'rejected' || printResponse.value.status !== "success") {
+        throw new Error(printResponse.value?.message || "Printing failed");
+      }
+
+      const customerCode = salesData[0].customer_code || "N/A";
+      const customerName = customerCode;
+      const mobile = salesData[0].mobile || '0773358518';
+      const billNo = printResponse.value.bill_no || "";
+
+      let globalLoanAmount = 0;
+      if (loanResponse.status === 'fulfilled') {
+        globalLoanAmount = parseFloat(loanResponse.value.total_loan_amount) || 0;
+      }
+
+      const receiptHtml = buildFullReceiptHTML(salesData, billNo, customerName, mobile, globalLoanAmount);
+      const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>${receiptHtml}`;
+
+      const printPromises = [
+        printSingleContent(receiptHtml, customerName),
+      ];
+
+      await Promise.all(printPromises);
+
+      updateState({
+        allSales: allSales.map(s => {
+          const isPrinted = salesData.some(d => d.id === s.id);
+          return isPrinted ? { ...s, bill_printed: 'Y', bill_no: billNo } : s;
+        }),
+        selectedUnprintedCustomer: null,
+        selectedPrintedCustomer: null,
+        customerSearchInput: ""
+      });
+      handleClearForm();
+
+      // Refresh to see the new separate bill in printed section
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      alert("Printing failed: " + error.message);
+      setTimeout(() => { window.location.reload(); }, 100);
     }
-
-    const receiptHtml = buildFullReceiptHTML(salesData, billNo, customerName, mobile, globalLoanAmount);
-    const copyHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>${receiptHtml}`;
-
-    const printPromises = [
-      printSingleContent(receiptHtml, customerName),
-    ];
-
-    await Promise.all(printPromises);
-
-    updateState({
-      allSales: allSales.map(s => {
-        const isPrinted = salesData.some(d => d.id === s.id);
-        return isPrinted ? { ...s, bill_printed: 'Y', bill_no: billNo } : s;
-      }),
-      selectedUnprintedCustomer: null,
-      selectedPrintedCustomer: null,
-      customerSearchInput: ""
-    });
-    handleClearForm();
-
-    // Refresh to see the new separate bill in printed section
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  } catch (error) {
-    alert("Printing failed: " + error.message);
-    setTimeout(() => { window.location.reload(); }, 100);
-  }
-};
+  };
 
   useEffect(() => {
     const handleShortcut = (e) => {
@@ -1315,11 +1329,11 @@ export default function SalesEntry() {
                 <input id="item_name" ref={refs.itemName} type="text" value={formData.item_name} readOnly placeholder="අයිතමයේ නාමය" onKeyDown={(e) => handleKeyDown(e, 4)} className="px-4 py-3 border border-gray-400 rounded-xl text-lg font-semibold text-black w-45 bg-gray-100 overflow-x-auto whitespace-nowrap" />
               </div>
               <div className="flex flex-col">
-               <input id="weight" ref={refs.weight} name="weight" type="text" value={formData.weight} onChange={(e) => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) handleInputChange('weight', v); }} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg text-[23px] font-semibold text-black overflow-x-auto whitespace-nowrap w-[120px]" maxLength="7" />
+                <input id="weight" ref={refs.weight} name="weight" type="text" value={formData.weight} onChange={(e) => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) handleInputChange('weight', v); }} onKeyDown={(e) => handleKeyDown(e, 5)} placeholder="බර" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg text-[23px] font-semibold text-black overflow-x-auto whitespace-nowrap w-[120px]" maxLength="7" />
                 <span className="text-sm mt-1 text-center invisible">Placeholder</span>
               </div>
               <div className="flex flex-col">
-              <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="text" value={formData.price_per_kg} onChange={(e) => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) handleInputChange('price_per_kg', v); }} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මිල" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg text-[23px] font-semibold text-black overflow-x-auto whitespace-nowrap w-[120px]" maxLength="7" />
+                <input id="price_per_kg" ref={refs.pricePerKg} name="price_per_kg" type="text" value={formData.price_per_kg} onChange={(e) => { const v = e.target.value; if (/^\d*\.?\d*$/.test(v)) handleInputChange('price_per_kg', v); }} onKeyDown={(e) => handleKeyDown(e, 6)} placeholder="මිල" className="px-3 py-3 border border-gray-400 rounded-3xl text-right text-lg text-[23px] font-semibold text-black overflow-x-auto whitespace-nowrap w-[120px]" maxLength="7" />
                 <span className="text-red-600 font-bold text-[18px] mt-1 text-center whitespace-nowrap inline-block">
                   {formatDecimal(packCost)}
                 </span>
