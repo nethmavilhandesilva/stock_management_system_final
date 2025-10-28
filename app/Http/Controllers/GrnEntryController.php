@@ -250,63 +250,74 @@ class GrnEntryController extends Controller
         return view('dashboard.grn.edit', compact('entry', 'items', 'suppliers'));
     }
 
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'item_code' => 'required',
-            'item_name' => 'nullable|string',
-            'supplier_code' => 'nullable',
-            'packs' => 'nullable|integer',
-            'weight' => 'nullable|numeric',
-            'txn_date' => 'nullable|date',
-            'grn_no' => 'nullable|string',
-            'warehouse_no' => 'nullable|string',
-            'total_grn' => 'nullable|numeric',
-            'per_kg_price' => 'nullable|numeric',
-        ]);
+   public function update(Request $request, $id)
+{
+    $request->validate([
+        'item_code' => 'required',
+        'item_name' => 'nullable|string',
+        'supplier_code' => 'nullable',
+        'packs' => 'nullable|integer',
+        'weight' => 'nullable|numeric',
+        'txn_date' => 'nullable|date',
+        'grn_no' => 'nullable|string',
+        'warehouse_no' => 'nullable|string',
+        'total_grn' => 'nullable|numeric',
+        'per_kg_price' => 'nullable|numeric',
+        'code' => 'nullable|string|max:255', // ✅ added
+    ]);
 
-        $entry = GrnEntry::findOrFail($id);
+    $entry = GrnEntry::findOrFail($id);
 
-        $updateData = [
-            'item_code' => $request->item_code,
-            'item_name' => $request->item_name,
-            'supplier_code' => $request->supplier_code,
-            'packs' => $request->packs,
-            'weight' => $request->weight,
-            'original_packs' => $request->packs,
-            'original_weight' => $request->weight,
-            'sequence_no' => $request->sequence_no,
-            'txn_date' => $request->txn_date,
-            'grn_no' => $request->grn_no,
-            'warehouse_no' => $request->warehouse_no,
-        ];
+    $updateData = [
+        'item_code' => $request->item_code,
+        'item_name' => $request->item_name,
+        'supplier_code' => $request->supplier_code,
+        'packs' => $request->packs,
+        'weight' => $request->weight,
+        'original_packs' => $request->packs,
+        'original_weight' => $request->weight,
+        'sequence_no' => $request->sequence_no,
+        'txn_date' => $request->txn_date,
+        'grn_no' => $request->grn_no,
+        'warehouse_no' => $request->warehouse_no,
+    ];
 
-        if ($request->filled('total_grn')) {
-            $updateData['total_grn'] = $request->total_grn;
-        }
-
-        if ($request->filled('per_kg_price')) {
-            $updateData['PerKGPrice'] = $request->per_kg_price;
-        }
-
-        $entry->update($updateData);
-
-        // Update matching Sale rows
-        if ($request->filled('per_kg_price') && !empty($entry->code)) {
-            $newPerKgPrice = $request->per_kg_price;
-
-            Sale::where('code', $entry->code)->get()->each(function ($sale) use ($newPerKgPrice) {
-                $sale->PerKGPrice = $newPerKgPrice;
-                $sale->PerKGTotal = $sale->weight * $newPerKgPrice;
-                $sale->save();
-            });
-        }
-        // ðŸ”¹ Call your stock recalculation method after update
-        $this->updateGrnRemainingStock();
-
-
-        return redirect()->route('grn.create')->with('success', 'Entry updated successfully.');
+    // ✅ allow editing GRN code
+    if ($request->filled('code')) {
+        $updateData['code'] = strtoupper($request->code);
     }
+
+    if ($request->filled('total_grn')) {
+        $updateData['total_grn'] = $request->total_grn;
+    }
+
+    if ($request->filled('per_kg_price')) {
+        $updateData['PerKGPrice'] = $request->per_kg_price;
+    }
+
+    $entry->update($updateData);
+
+    // ✅ update related Sale rows when code changes
+    if ($request->filled('code') && $entry->wasChanged('code')) {
+        Sale::where('code', $entry->getOriginal('code'))
+            ->update(['code' => strtoupper($request->code)]);
+    }
+
+    // ✅ update sale price if changed
+    if ($request->filled('per_kg_price')) {
+        $newPerKgPrice = $request->per_kg_price;
+        Sale::where('code', $entry->code)->get()->each(function ($sale) use ($newPerKgPrice) {
+            $sale->PerKGPrice = $newPerKgPrice;
+            $sale->PerKGTotal = $sale->weight * $newPerKgPrice;
+            $sale->save();
+        });
+    }
+
+    // ✅ recalc stock
+    $this->updateGrnRemainingStock();
+
+    return redirect()->route('grn.create')->with('success', 'Entry updated successfully.');
+}
 
 
 

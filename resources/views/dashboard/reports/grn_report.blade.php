@@ -74,7 +74,6 @@
             border: 1px solid #99ff99;
         }
 
-        /* --- NEW MODAL/CLICKABLE ROW STYLES --- */
         .clickable-row {
             cursor: pointer;
             transition: background-color 0.15s;
@@ -82,7 +81,6 @@
 
         .clickable-row:hover {
             background-color: #f1f8e9;
-            /* Light green hover */
         }
 
         .modal-header {
@@ -101,15 +99,12 @@
             font-size: 13px;
         }
 
-        /* ------------------------------------- */
-
         /* Print styles */
         @media print {
             body {
                 background: white !important;
             }
 
-            /* Hide everything except the report container */
             body * {
                 visibility: hidden;
             }
@@ -126,7 +121,6 @@
                 width: 100%;
             }
 
-            /* Make all text black and bold */
             .report-container,
             .report-container table,
             .report-container th,
@@ -135,7 +129,6 @@
                 font-weight: bold !important;
             }
 
-            /* Hide print button */
             .print-btn {
                 display: none;
             }
@@ -172,7 +165,6 @@
                 </select>
             </div>
 
-
             {{-- Date Range Filters --}}
             <div class="col-md-3">
                 <label for="start_date" class="form-label fw-bold text-success">Start Date</label>
@@ -185,7 +177,6 @@
                 <input type="date" id="end_date" name="end_date" value="{{ request('end_date') }}" class="form-control">
             </div>
 
-            {{-- Buttons --}}
             <div class="col-12 text-center mt-2">
                 <button type="submit" class="btn btn-success px-4">Apply Filters</button>
                 <a href="{{ route('grn.report2') }}" class="btn btn-secondary px-4">Reset</a>
@@ -197,6 +188,12 @@
     <div class="report-container">
         <button class="print-btn" onclick="window.print()">🖨️ Print Report</button>
         <h2 class="report-title">Goods Received Note (GRN) Report</h2>
+
+        {{-- 🔍 SEARCH BAR --}}
+        <div class="d-flex justify-content-end mb-3">
+            <input type="text" id="search-grn-code" class="form-control w-25 border-success text-uppercase"
+                placeholder="🔍 Search by GRN Code..." style="text-transform: uppercase;">
+        </div>
 
         <table>
             <thead>
@@ -215,7 +212,6 @@
             </thead>
             <tbody>
                 @forelse ($grnEntries as $entry)
-                    {{-- Make the row clickable and pass the 'code' to the modal via data attribute --}}
                     <tr class="clickable-row" data-bs-toggle="modal" data-bs-target="#grnDetailsModal"
                         data-grn-code="{{ $entry->code }}">
                         <td>{{ $entry->code }}</td>
@@ -230,7 +226,6 @@
                         <td>{{ $entry->grn_no }}</td>
                     </tr>
 
-                    {{-- Original Related records from GrnEntry2 (can be removed if modal replaces this) --}}
                     @if (isset($grnEntry2Data[$entry->code]))
                         <tr>
                             <td colspan="10">
@@ -272,7 +267,7 @@
 
     {{-- ✅ GRN Details Modal --}}
     <div class="modal fade" id="grnDetailsModal" tabindex="-1" aria-labelledby="grnDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl"> {{-- Increased size for more content --}}
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="grnDetailsModalLabel">GRN Details for Code: <span
@@ -282,12 +277,6 @@
                 </div>
                 <div class="modal-body">
 
-
-
-
-
-
-                    {{-- Sale Records Section --}}
                     <h4>Related Sale Records</h4>
                     <table class="table table-bordered modal-table">
                         <thead>
@@ -309,8 +298,7 @@
                         </tbody>
                     </table>
                     <hr>
-                    {{-- GrnEntry2 Section --}}
-                    <h4>Related Entry Details </h4>
+                    <h4>Related Entry Details</h4>
                     <table class="table table-bordered mb-4 modal-table">
                         <thead>
                             <tr>
@@ -329,7 +317,6 @@
                         </tbody>
                     </table>
 
-
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -339,47 +326,40 @@
     </div>
 @endsection
 
-{{-- Add the script section to the bottom of the page or use @push('scripts') if configured --}}
 @section('scripts')
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    {{-- Ensure you have the Bootstrap JS bundle loaded for the modal functionality --}}
 
     <script>
         $(document).ready(function () {
-            // Event listener for clicking on a clickable row
+
+            // 🔍 Live search filter for GRN Code
+            $('#search-grn-code').on('keyup', function () {
+                var searchValue = $(this).val().toLowerCase();
+                $('table tbody tr.clickable-row').filter(function () {
+                    var code = $(this).find('td:first').text().toLowerCase();
+                    $(this).toggle(code.startsWith(searchValue));
+                });
+
+                // Keep related sub-rows synced
+                $('table tbody tr').not('.clickable-row').each(function () {
+                    var prevRow = $(this).prev('.clickable-row');
+                    $(this).toggle(prevRow.is(':visible'));
+                });
+            });
+
+            // 🟢 Clickable rows open modal + fetch details
             $('.clickable-row').on('click', function () {
                 var grnCode = $(this).data('grn-code');
-                console.log("Clicked GRN Code:", grnCode);
-
-                // 1. Display the main GRN details in the modal (from the clicked row)
-                var cells = $(this).children('td');
-                var mainDetailsHtml = '<tr>' +
-                    '<td>' + cells.eq(0).text() + '</td>' + // Code
-                    '<td>' + cells.eq(1).text() + '</td>' + // Supplier Code
-                    '<td>' + cells.eq(2).text() + '</td>' + // Item Code
-                    '<td>' + cells.eq(3).text() + '</td>' + // Item Name
-                    '<td>' + cells.eq(4).text() + '</td>' + // Packs
-                    '<td>' + cells.eq(5).text() + '</td>' + // Weight
-                    '<td>' + cells.eq(6).text() + '</td>' + // Txn Date
-                    '<td>' + cells.eq(9).text() + '</td>' + // GRN No
-                    '</tr>';
-
                 $('#modal-grn-code').text(grnCode);
-                $('#grn-main-details-body').html(mainDetailsHtml);
 
-                // Set loading state for dynamic tables
                 $('#grn-entry2-details-body').html('<tr><td colspan="6" class="text-center text-muted">Loading related GRN entries...</td></tr>');
                 $('#sale-details-body').html('<tr><td colspan="8" class="text-center text-muted">Loading related Sale records...</td></tr>');
 
-                // 2. AJAX call to fetch GrnEntry2 and Sale data
                 $.ajax({
-                    url: '{{ route('grn.fetch.details') }}', // Must be defined in web.php
+                    url: '{{ route('grn.fetch.details') }}',
                     method: 'GET',
-                    data: {
-                        code: grnCode
-                    },
+                    data: { code: grnCode },
                     success: function (response) {
-                        // --- Update GrnEntry2 table ---
                         var grnEntry2Html = '';
                         if (response.grnEntry2.length > 0) {
                             $.each(response.grnEntry2, function (i, item) {
@@ -397,12 +377,11 @@
                         }
                         $('#grn-entry2-details-body').html(grnEntry2Html);
 
-                        // --- Update Sale table ---
                         var saleHtml = '';
                         if (response.sales.length > 0) {
                             $.each(response.sales, function (i, sale) {
                                 saleHtml += '<tr>' +
-                                    '<td>' + sale.Date + '</td>' + // Ensure case matches model column
+                                    '<td>' + sale.Date + '</td>' +
                                     '<td>' + sale.customer_code + '</td>' +
                                     '<td>' + sale.item_code + '</td>' +
                                     '<td>' + sale.item_name + '</td>' +
@@ -416,10 +395,8 @@
                             saleHtml = '<tr><td colspan="8" class="text-center text-success">No related Sale records found.</td></tr>';
                         }
                         $('#sale-details-body').html(saleHtml);
-
                     },
                     error: function (xhr) {
-                        console.error('Error fetching details:', xhr.responseText);
                         $('#grn-entry2-details-body').html('<tr><td colspan="6" class="text-center text-danger">Error loading GrnEntry2 data.</td></tr>');
                         $('#sale-details-body').html('<tr><td colspan="8" class="text-center text-danger">Error loading Sale data.</td></tr>');
                     }

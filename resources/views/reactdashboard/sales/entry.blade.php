@@ -179,7 +179,7 @@
                             <a class="dropdown-item" href="{{ route('loan.report') }}">Final Loan Report</a>
                             <a class="dropdown-item" href="{{ route('expenses.report') }}">වි‍යදම් වාර්තාව</a>
                             <a class="dropdown-item" href="supplierSelectModal2" data-bs-toggle="modal" data-bs-target="#supplierSelectModal2">
-                                GRN වාර්තාව2</a>
+                               සියලු දින අනුව GRN වාර්තාව</a>
                         </div>
                     </div>
 
