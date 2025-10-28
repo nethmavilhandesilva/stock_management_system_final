@@ -178,8 +178,9 @@
                                 GRN වාර්තාව</a>
                             <a class="dropdown-item" href="{{ route('loan.report') }}">Final Loan Report</a>
                             <a class="dropdown-item" href="{{ route('expenses.report') }}">වි‍යදම් වාර්තාව</a>
-                            <a class="dropdown-item" href="supplierSelectModal2" data-bs-toggle="modal" data-bs-target="#supplierSelectModal2">
-                               සියලු දින අනුව GRN වාර්තාව</a>
+                            <a class="dropdown-item" href="supplierSelectModal2" data-bs-toggle="modal"
+                                data-bs-target="#supplierSelectModal2">
+                                සියලු දින අනුව GRN වාර්තාව</a>
                         </div>
                     </div>
 
@@ -206,6 +207,13 @@
                             <span>GRN අලුත් කිරීම</span>
                         </a>
                     </div>
+                    <div class="nav-item">
+                        <a href="{{ route('suppliers2.index') }}" class="nav-link-custom">
+                            <span class="material-icons">groups</span> <!-- "groups" icon for suppliers -->
+                            <span>Suppliers</span>
+                        </a>
+                    </div>
+
                 </div>
 
                 <!-- Right side items -->
@@ -277,7 +285,7 @@
                         <a href="#" class="nav-link-custom" data-bs-toggle="modal" data-bs-target="#supplierSelectModal"
                             data-report-action="{{ route('report.grn.sales.overview') }}"
                             data-report-name="GRN Sales Overview Report 1">
-                             ඉතිරි වාර්තාව 1
+                            ඉතිරි වාර්තාව 1
                         </a>
                     </div>
 
@@ -286,7 +294,7 @@
                         <a href="#" class="nav-link-custom" data-bs-toggle="modal" data-bs-target="#supplierSelectModal"
                             data-report-action="{{ route('report.grn.sales.overview2') }}"
                             data-report-name="GRN Sales Overview Report 2">
-                             ඉතිරි වාර්තාව 2
+                            ඉතිරි වාර්තාව 2
                         </a>
                     </div>
 

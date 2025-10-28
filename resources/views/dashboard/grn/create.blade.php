@@ -312,15 +312,27 @@
                                             <td>{{ $entry->grn_no }}</td>
                                             <td class="total-grn-column">{{ $entry->total_grn }}</td>
                                             <td class="per-kg-price-column">{{ $entry->PerKGPrice }}</td>
-                                            <td>
-                                                <a href="{{ route('grn.edit', $entry->id) }}" class="btn btn-sm btn-info me-1">
-                                                    <i class="material-icons">edit</i>
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-danger delete-btn"
-                                                    data-entry-id="{{ $entry->id }}">
-                                                    <i class="material-icons">delete</i>
-                                                </button>
-                                            </td>
+                                           <td>
+    <a href="{{ route('grn.edit', $entry->id) }}" 
+       class="btn btn-sm btn-info me-1"
+       @if(Auth::user()->role === 'Level2') 
+           onclick="return false;" 
+           style="pointer-events: none; opacity: 0.6;" 
+       @endif>
+        <i class="material-icons">edit</i>
+    </a>
+
+    <button type="button" 
+            class="btn btn-sm btn-danger delete-btn"
+            data-entry-id="{{ $entry->id }}"
+            @if(Auth::user()->role === 'Level2') 
+                disabled 
+                style="opacity: 0.6; cursor: not-allowed;" 
+            @endif>
+        <i class="material-icons">delete</i>
+    </button>
+</td>
+
                                         </tr>
                                     @endforeach
 

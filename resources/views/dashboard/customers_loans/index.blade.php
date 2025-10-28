@@ -104,34 +104,42 @@
                 <div class="row gy-2">
                     <div class="col-md-8">
                         <label class="me-3" style="color: white;">
-                            <input type="radio" name="loan_type" value="old" checked>
+                            <input type="radio" name="loan_type" value="old" checked @if(Auth::user()->role === 'Level2')
+                            disabled @endif>
                             වෙළෙන්දාගේ ලාද පරණ නය
                         </label>
 
                         <label class="me-3" style="color: white;">
-                            <input type="radio" name="loan_type" value="today">
+                            <input type="radio" name="loan_type" value="today" @if(Auth::user()->role === 'Level2') disabled
+                            @endif>
                             වෙළෙන්දාගේ අද දින නය ගැනීම
                         </label>
 
                         <label class="me-3" style="color: white;">
-                            <input type="radio" name="loan_type" value="ingoing">
+                            <input type="radio" name="loan_type" value="ingoing" @if(Auth::user()->role === 'Level2') disabled
+                            @endif>
                             වෙනත් ලාභීම/ආදායම්
                         </label>
 
                         <label class="me-3" style="color: white;">
-                            <input type="radio" name="loan_type" value="outgoing">
+                            <input type="radio" name="loan_type" value="outgoing" @if(Auth::user()->role === 'Level2')
+                            disabled @endif>
                             වි‍යදම්
                         </label>
 
-                        {{-- NEW: GRN Damages Radio Button --}}
+                        {{-- GRN Damages Radio Button --}}
                         <label style="color: white;">
-                            <input type="radio" name="loan_type" value="grn_damage">
+                            <input type="radio" name="loan_type" value="grn_damage" @if(Auth::user()->role === 'Level2')
+                            disabled @endif>
                             GRN Damages
                         </label>
+
                         <label class="me-3" style="color: white;">
-                            <input type="radio" name="loan_type" value="returns">
+                            <input type="radio" name="loan_type" value="returns" @if(Auth::user()->role === 'Level2') disabled
+                            @endif>
                             Returns
                         </label>
+
 
                     </div>
 
@@ -921,19 +929,19 @@
 
             // Dropdown HTML for outgoing
             const outgoingDropdownHTML = `
-                                   <label for="description" class="text-form-label">විස්තරය</label>
-    <input list="descriptionOptions" class="form-control form-control-sm" name="description" id="description" placeholder="Type or select" required>
-    <datalist id="descriptionOptions">
-        <option value="Salary">
-        <option value="Fuel">
-        <option value="Electricity">
-        <option value="Food">
-        <option value="WaterBill">
-        <option value="Other">
-    </datalist>
-    <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
+                                       <label for="description" class="text-form-label">විස්තරය</label>
+        <input list="descriptionOptions" class="form-control form-control-sm" name="description" id="description" placeholder="Type or select" required>
+        <datalist id="descriptionOptions">
+            <option value="Salary">
+            <option value="Fuel">
+            <option value="Electricity">
+            <option value="Food">
+            <option value="WaterBill">
+            <option value="Other">
+        </datalist>
+        <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
 
-                                `;
+                                    `;
 
             loanTypeRadios.forEach(radio => {
                 radio.addEventListener('change', function () {

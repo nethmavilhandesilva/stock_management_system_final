@@ -1,6 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    body {
+        background-color: #99ff99; /* Full page background */
+    }
+
+    /* Optional: keep your forms a little distinct */
+    .bg-light {
+        background-color: #ffffff !important;
+    }
+</style>
 <div class="container mt-4">
     <h3 class="text-success mb-3">Edit Supplier</h3>
 
