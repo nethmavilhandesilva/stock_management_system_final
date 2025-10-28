@@ -6,10 +6,6 @@ use Illuminate\Database\Eloquent\Model; // <-- ADDED: Import the base Model clas
 
 class GrnEntry extends Model
 {
-    // If your table name is not 'grn_entries', specify it here:
-    // protected $table = 'your_grn_entries_table_name';
-    // By convention, Laravel will assume your table name is 'grn_entries' (plural of GrnEntry)
-
     protected $fillable = [
         'auto_purchase_no',
         'code',

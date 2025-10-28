@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController2;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SupplierController2;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\CustomerController;
@@ -202,5 +203,13 @@ Route::post('/grn/react', [GrnEntryController::class, 'store'])->name('grn.store
 Route::put('/sales/{sale}/given-amount', [SalesEntryController::class, 'updateGivenAmount'])->name('sales.update-given-amount');
 //new dasboard2
 Route::get('/sales-entry2', [DashboardController2::class, 'showEntry2'])->name('Dashboard2');
+//supliers
+
+Route::get('/suppliers2', [SupplierController2::class, 'index'])->name('suppliers2.index');
+Route::post('/suppliers2', [SupplierController2::class, 'store'])->name('suppliers2.store');
+Route::get('/suppliers2/{id}/edit', [SupplierController2::class, 'edit'])->name('suppliers2.edit');
+Route::put('/suppliers2/{id}', [SupplierController2::class, 'update'])->name('suppliers2.update');
+Route::delete('/suppliers2/{id}', [SupplierController2::class, 'destroy'])->name('suppliers2.destroy');
+Route::post('suppliers2/payment', [SupplierController2::class, 'payment'])->name('suppliers2.payment');
 
 require __DIR__.'/auth.php';
