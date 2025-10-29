@@ -146,6 +146,7 @@ Route::get('/grn/export/excel', [ReportController::class, 'exportExcel'])->name(
 Route::get('/reports/cheque-payments', [ReportController::class, 'chequePaymentsReport']) ->name('reports.cheque-payments');
 Route::post('/reports/update-status/{id}', [ReportController::class, 'updateStatus'])  ->name('reports.update-status');
 Route::get('/generate-report', [ReportController::class, 'generateReport']) ->name('generate.report');//returns
+Route::get('/income-expenses-report', [ReportController::class, 'incomeExpensesReport'])->name('income.expenses.report');
 Route::get('/grn-entry/{code}/remaining', [App\Http\Controllers\GrnEntryController::class, 'getRemaining']);
 //returns
 Route::get('/api/grn-entry/{code}', function ($code) {

@@ -133,43 +133,56 @@ class SupplierController2 extends Controller
         ]);
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'supplier_code' => 'required|string',
-            'supplier_name' => 'nullable|string',
-            'grn_id' => 'nullable|exists:grn_entries,id',
-            'total_amount' => 'required|numeric',
-            'description' => 'nullable|string|max:500',
-            'transaction_id' => 'nullable|exists:supplier2s,id', // for edit
-        ]);
+   public function store(Request $request)
+{
+    $request->validate([
+        'supplier_code' => 'required|string',
+        'supplier_name' => 'nullable|string',
+        'grn_id' => 'nullable|exists:grn_entries,id',
+        'total_amount' => 'required|numeric',
+        'description' => 'nullable|string|max:500',
+        'transaction_id' => 'nullable|exists:supplier2s,id', // for edit
+    ]);
 
-        try {
-            // ✅ Get current date from Setting
-            $setting = \App\Models\Setting::first();
-            $currentDate = $setting ? $setting->value : now();
+    try {
+        // ✅ Get current date from Setting
+        $setting = \App\Models\Setting::first();
+        $currentDate = $setting ? $setting->value : now();
 
-            if ($request->transaction_id) {
-                // --- Editing an existing transaction ---
-                $transaction = Supplier2::find($request->transaction_id);
-                $transaction->update([
-                    'supplier_code' => $request->supplier_code,
+        if ($request->transaction_id) {
+            // --- Editing an existing transaction by transaction_id ---
+            $transaction = Supplier2::find($request->transaction_id);
+            $transaction->update([
+                'supplier_code' => $request->supplier_code,
+                'supplier_name' => $request->supplier_name,
+                'grn_id' => $request->grn_id,
+                'total_amount' => $request->total_amount, // replace old amount
+                'description' => $request->description ?? ('Updated Purchase / GRN ' . $request->grn_id),
+                'date' => $currentDate,
+            ]);
+
+            return redirect()
+                ->route('suppliers2.index')
+                ->with('success', 'Transaction updated successfully.');
+        } else {
+            // --- Check if a supplier record with the same code exists ---
+            $existing = Supplier2::where('supplier_code', $request->supplier_code)->first();
+
+            if ($existing) {
+                // Update existing record: add new total_amount to old total_amount
+                $existing->update([
                     'supplier_name' => $request->supplier_name,
                     'grn_id' => $request->grn_id,
-                    'total_amount' => $request->total_amount, // replace old amount
-                    'description' => $request->description ?? ('Updated Purchase / GRN ' . $request->grn_id),
+                    'total_amount' => $existing->total_amount + $request->total_amount,
+                    'description' => $request->description ?? ('Purchase / GRN ' . $request->grn_id),
                     'date' => $currentDate,
                 ]);
 
                 return redirect()
                     ->route('suppliers2.index')
-                    ->with('success', 'Transaction updated successfully.');
+                    ->with('success', 'Existing supplier record updated with new amount.');
             } else {
-                // --- Adding a new transaction ---
-                // NOTE: Your original logic attempts to ADD the new amount to an existing transaction for the supplier_code.
-                // This is an unusual way to handle purchases. Typically, each purchase is a NEW record.
-                // I will maintain your original logic, but generally, you should create a new record here.
-
+                // --- Create new supplier record if no existing record ---
                 Supplier2::create([
                     'supplier_code' => $request->supplier_code,
                     'supplier_name' => $request->supplier_name,
@@ -183,18 +196,19 @@ class SupplierController2 extends Controller
                     ->route('suppliers2.index')
                     ->with('success', 'New supplier purchase recorded successfully.');
             }
-        } catch (\Exception $e) {
-            \Log::error('Failed to store supplier purchase transaction', [
-                'error' => $e->getMessage(),
-                'request_data' => $request->all(),
-            ]);
-
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Failed to record purchase transaction. Check logs for details.');
         }
+    } catch (\Exception $e) {
+        \Log::error('Failed to store supplier purchase transaction', [
+            'error' => $e->getMessage(),
+            'request_data' => $request->all(),
+        ]);
+
+        return redirect()
+            ->back()
+            ->withInput()
+            ->with('error', 'Failed to record purchase transaction. Check logs for details.');
     }
+}
 
 
     /**

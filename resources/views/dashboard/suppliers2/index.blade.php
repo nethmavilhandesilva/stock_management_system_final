@@ -162,8 +162,10 @@
                 <td>{{ $supplier->date }}</td>
                 <td><span class="view-history-link" data-supplier-code="{{ $supplier->supplier_code }}">{{ $supplier->supplier_code }}</span></td>
                 <td>{{ $supplier->supplier_name }}</td>
-                <td class="{{ $supplier->total_amount < 0 ? 'text-danger' : 'text-success' }}">
-                    {{ number_format($supplier->total_amount, 2) }}
+               <td class="{{ $supplier->total_amount < 0 ? 'text-danger' : 'text-success' }}">
+    {{ number_format(abs($supplier->total_amount), 2) }}
+</td>
+
                 </td>
                 <td>{{ $supplier->description ?? '-' }}</td>
                 <td>{{ $supplier->grn->code ?? '-' }}</td>

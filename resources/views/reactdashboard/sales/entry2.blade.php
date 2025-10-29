@@ -211,6 +211,7 @@
                             <a class="dropdown-item" href="{{ route('expenses.report') }}">වි‍යදම් වාර්තාව</a>
                             <a class="dropdown-item" href="supplierSelectModal2" data-bs-toggle="modal" data-bs-target="#supplierSelectModal2">
                                සියලු දින අනුව GRN වාර්තාව</a>
+                            <a class="dropdown-item" href="{{ route('income.expenses.report') }}">සියලු දින අනුව ආදායම් / වියදම් වාර්තාව</a>
                         </div>
                     </div>
 
@@ -235,6 +236,12 @@
                         <a href="{{ route('grn.updateform') }}" class="nav-link-custom">
                             <span class="material-icons">receipt_long</span>
                             <span>GRN අලුත් කිරීම</span>
+                        </a>
+                    </div>
+                     <div class="nav-item">
+                        <a href="{{ route('suppliers2.index') }}" class="nav-link-custom">
+                            <span class="material-icons">groups</span> <!-- "groups" icon for suppliers -->
+                            <span>සැපයුම්කරුවන්</span>
                         </a>
                     </div>
                 </div>

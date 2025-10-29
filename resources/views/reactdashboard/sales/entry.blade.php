@@ -210,7 +210,7 @@
                     <div class="nav-item">
                         <a href="{{ route('suppliers2.index') }}" class="nav-link-custom">
                             <span class="material-icons">groups</span> <!-- "groups" icon for suppliers -->
-                            <span>Suppliers</span>
+                            <span>සැපයුම්කරුවන්</span>
                         </a>
                     </div>
 

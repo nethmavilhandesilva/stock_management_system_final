@@ -2496,6 +2496,59 @@ public function downloadGrnOverviewReport2(Request $request)
 
         return view('dashboard.reports.expensesreport', compact('expenses', 'customers'));
     }
+     public function incomeExpensesReport(Request $request)
+{
+    // Fetch start and end dates from request
+    $startDate = $request->start_date;
+    $endDate = $request->end_date;
+
+    // Default dates from Setting table if no filter provided
+    if (!$startDate || !$endDate) {
+        $dates = Setting::pluck('value');
+        $startDate = $dates->min();
+        $endDate = $dates->max();
+    }
+
+    // Fetch Income/Expenses filtered by date range
+    $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type', 'Date')
+        ->whereBetween('Date', [$startDate, $endDate])
+        ->get();
+
+    // Prepare report data
+    $reportData = [];
+    $totalDr = 0;
+    $totalCr = 0;
+
+    foreach ($records as $record) {
+        $dr = null;
+        $cr = null;
+
+        $desc = $record->customer_short_name;
+        if (!empty($record->bill_no)) {
+            $desc .= " ({$record->bill_no})";
+        }
+        $desc .= " - {$record->description}";
+
+        if (in_array($record->loan_type, ['old', 'ingoing'])) {
+            $dr = $record->amount;
+            $totalDr += $record->amount;
+        } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
+            $cr = $record->amount;
+            $totalCr += $record->amount;
+        }
+
+        $reportData[] = [
+            'description' => $desc,
+            'dr' => $dr,
+            'cr' => $cr,
+            'date' => $record->Date
+        ];
+    }
+
+    $reportData = collect($reportData); // make it a Collection
+
+    return view('dashboard.reports.income_expenses', compact('reportData', 'totalDr', 'totalCr', 'startDate', 'endDate'));
+}
 
 
 
