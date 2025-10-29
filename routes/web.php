@@ -53,7 +53,6 @@ Route::post('/grn/{id}/hide', [GrnEntryController::class, 'hide'])->name('grn.hi
 Route::post('/grn/{id}/unhide', [GrnEntryController::class, 'unhide'])->name('grn.unhide');
 Route::post('/grn-damages', [GrnEntryController::class, 'Damagestore'])->name('grn-damages.store');
 
-
 // Sales
 Route::get('/dashboard', [SalesEntryController::class, 'create'])->name('dashboard');
 Route::post('/grn-entry', [SalesEntryController::class, 'store'])->name('grn.store');

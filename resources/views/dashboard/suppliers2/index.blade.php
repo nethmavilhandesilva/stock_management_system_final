@@ -76,7 +76,7 @@
 
             <div class="col-md-3 position-relative">
                 <label for="grn_search" class="form-label">Search GRN</label>
-                <input type="text" id="grn_search" class="form-control" placeholder="🔍 Type GRN code or item name..." autocomplete="off" required>
+                <input type="text" id="grn_search" class="form-control" placeholder="🔍 Type GRN code or item name..." autocomplete="off">
                 <input type="hidden" name="grn_id" id="grn_id" required>
 
                 <div id="grnDropdown" class="list-group position-absolute w-100 shadow-sm"
@@ -132,6 +132,7 @@
         <thead class="table-success">
         <tr>
             <th>ID</th>
+            <th>Date</th>
             <th>Supplier Code</th>
             <th>Supplier Name</th>
             <th>Amount</th>
@@ -144,6 +145,7 @@
         @forelse($suppliers as $supplier)
             <tr>
                 <td>{{ $supplier->id }}</td>
+                 <td>{{ $supplier->date }}</td>
                 <td><span class="view-history-link" data-supplier-code="{{ $supplier->supplier_code }}">{{ $supplier->supplier_code }}</span></td>
                 <td>{{ $supplier->supplier_name }}</td>
                 <td class="{{ $supplier->total_amount < 0 ? 'text-danger' : 'text-success' }}">
@@ -188,7 +190,7 @@
                     <table class="table table-sm table-striped">
                         <thead class="table-light sticky-top">
                             <tr>
-                                <th>Date/Time</th>
+                                <th>Date</th>
                                 <th>Type</th>
                                 <th>Description</th>
                                 <th>GRN</th>
@@ -274,13 +276,9 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
             
             if (numericBalance > 0) {
                 balanceSpan.classList.add('text-danger'); // Red for positive balance (money owed)
-            } else if (numericBalance < 0) {
-                balanceSpan.classList.add('text-success'); // Green for negative balance (pre-payment/credit)
             } else {
-                 balanceSpan.classList.add('text-success'); // Green for 0.00
+                balanceSpan.classList.add('text-success'); // Green for credit/zero
             }
-            
-            // Only show the balance display if a supplier is selected/balance is non-zero
             balanceDisplayDiv.style.display = balance !== '0.00' ? 'block' : 'none';
         }
     };
@@ -296,7 +294,6 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
         });
         dropdown.style.display = visible ? 'block' : 'none';
 
-        // Clear hidden fields and balance display if input is cleared
         if(filter === ''){
             hiddenCode.value='';
             if(isPurchaseForm) document.getElementById('supplier_id').value='';
@@ -306,27 +303,35 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
     });
 
     dropdown.addEventListener('click', e => {
-        if(e.target.matches('button')){
+        if (e.target.matches('button')) {
             const button = e.target;
+            const id = button.getAttribute('data-id');
             const code = button.getAttribute('data-code');
             const balance = button.getAttribute('data-balance') || '0.00';
             const name = button.getAttribute('data-name');
 
-            // Set input value to Code/Name (without Balance for cleaner input)
-            input.value = `${code} ${name ? '— ' + name : ''}`.trim();
+            // --- Special case: GRN dropdown ---
+            if (inputId === 'grn_search') {
+                input.value = button.textContent.trim();
+                hiddenCode.value = id; // <-- FIX: Set the hidden grn_id value here
+                dropdown.style.display = 'none';
+                document.getElementById('supplierForm').querySelector('button[type="submit"]').focus();
+                return;
+            }
 
+            // --- Supplier dropdowns ---
+            input.value = `${code} ${name ? '— ' + name : ''}`.trim();
             hiddenCode.value = code;
 
-            if(isPurchaseForm){
+            if (isPurchaseForm) {
                 document.getElementById('supplier_id').value = button.getAttribute('data-id');
-                if(hiddenName) hiddenName.value = name || '';
+                if (hiddenName) hiddenName.value = name || '';
             }
 
             updateBalanceDisplay(balance);
-            dropdown.style.display='none';
+            dropdown.style.display = 'none';
 
-            // Optional: Move focus to the next field after selection
-            if(isPurchaseForm) document.getElementById('description').focus();
+            if (isPurchaseForm) document.getElementById('description').focus();
             else document.getElementById('payment_amount').focus();
         }
     });
@@ -339,21 +344,17 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
 
 // --- Setup live searches ---
 setupLiveSearch('supplier_search','supplierDropdown','supplier_code', 'purchaseBalanceDisplay', true);
-setupLiveSearch('grn_search','grnDropdown','grn_id'); 
+setupLiveSearch('grn_search','grnDropdown','grn_id');  // <-- now correctly fills grn_id
 setupLiveSearch('payment_supplier_search','paymentSupplierDropdown','payment_supplier_code', 'paymentBalanceDisplay');
 
 // --- Transaction History Modal Logic ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Determine the modal handler (Bootstrap 5/4)
     const modalElement = document.getElementById('transactionModal');
     let transactionModal;
     
-    // Check if Bootstrap 5 (bootstrap.Modal) is available
     if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
         transactionModal = new bootstrap.Modal(modalElement);
-    } 
-    // Check if Bootstrap 4 (jQuery/$.fn.modal) is available
-    else if (typeof $ !== 'undefined' && $.fn.modal) {
+    } else if (typeof $ !== 'undefined' && $.fn.modal) {
         transactionModal = $(modalElement);
     } else {
         console.error("Bootstrap JS not loaded correctly for modal.");
@@ -362,7 +363,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tableBody = document.getElementById('transactionHistoryBody');
 
-    // Attach click listener to table body for dynamic links (event delegation)
     document.querySelector('.table-bordered tbody').addEventListener('click', function(e) {
         if (e.target.classList.contains('view-history-link')) {
             const supplierCode = e.target.getAttribute('data-supplier-code');
@@ -373,10 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function fetchTransactionHistory(supplierCode) {
-        // Fetch the CSRF token (needed for Laravel AJAX requests if using POST/PUT/DELETE, but good practice to include)
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        // Ensure you have the route defined: Route::get('/suppliers/transactions', [SupplierController2::class, 'getSupplierTransactions'])->name('suppliers2.transactions');
         const url = "{{ route('suppliers2.transactions') }}?supplier_code=" + supplierCode;
 
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading transactions...</td></tr>';
@@ -392,26 +389,19 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(response => response.json())
         .then(data => {
-            // Update summary details
             document.getElementById('modal_supplier_code').textContent = data.supplier_code;
             document.getElementById('modal_supplier_name').textContent = data.supplier_name;
             document.getElementById('modal_total_purchases').textContent = data.total_purchases;
             document.getElementById('modal_total_payments').textContent = data.total_payments;
             
-            // Update remaining balance and color
             const balanceEl = document.getElementById('modal_remaining_balance');
             balanceEl.textContent = data.remaining_balance;
             balanceEl.classList.remove('text-success', 'text-danger');
-            
             const numericBalance = parseFloat(data.remaining_balance.replace(/,/g, ''));
-            if (numericBalance > 0) {
-                balanceEl.classList.add('text-danger'); // Red for positive balance (money owed)
-            } else {
-                balanceEl.classList.add('text-success'); // Green for negative/zero balance
-            }
+            if (numericBalance > 0) balanceEl.classList.add('text-danger');
+            else balanceEl.classList.add('text-success');
 
-
-            tableBody.innerHTML = ''; // Clear previous data
+            tableBody.innerHTML = '';
             if (data.history && data.history.length > 0) {
                 data.history.forEach(item => {
                     const row = `
@@ -430,24 +420,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No transactions found for this supplier.</td></tr>';
             }
 
-            // Show modal
-            if (transactionModal.show) {
-                transactionModal.show();
-            } else if (transactionModal.modal) {
-                transactionModal.modal('show');
-            }
+            if (transactionModal.show) transactionModal.show();
+            else if (transactionModal.modal) transactionModal.modal('show');
         })
         .catch(error => {
             console.error('Error fetching transaction history:', error);
             tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading data.</td></tr>';
-            // Still attempt to show modal with error
-             if (transactionModal.show) {
-                transactionModal.show();
-            } else if (transactionModal.modal) {
-                transactionModal.modal('show');
-            }
+            if (transactionModal.show) transactionModal.show();
+            else if (transactionModal.modal) transactionModal.modal('show');
         });
     }
 });
 </script>
+
 @endsection

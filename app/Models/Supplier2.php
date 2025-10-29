@@ -10,7 +10,7 @@ class Supplier2 extends Model
     // Assuming your table name is 'supplier2s' (Laravel default pluralization)
     protected $table = 'supplier2s'; 
     
-    protected $fillable = ['supplier_code', 'supplier_name', 'grn_id', 'total_amount', 'description'];
+    protected $fillable = ['supplier_code', 'supplier_name', 'grn_id', 'total_amount', 'description', 'date'];
 
     /**
      * Get the GRN entry associated with the supplier record.

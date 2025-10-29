@@ -29,7 +29,7 @@ class SupplierController2 extends Controller
 
         return $suppliersWithBalance;
     }
-   public function index()
+    public function index()
     {
         // Get all transactions for the records table
         $suppliers = Supplier2::with('grn')->orderBy('id', 'desc')->get(); // Added eager loading and ordering
@@ -56,7 +56,7 @@ class SupplierController2 extends Controller
             ->get();
 
         if ($transactions->isEmpty()) {
-             return response()->json([
+            return response()->json([
                 'supplier_code' => $supplierCode,
                 'supplier_name' => 'N/A',
                 'total_purchases' => number_format(0, 2),
@@ -65,7 +65,7 @@ class SupplierController2 extends Controller
                 'history' => [],
             ]);
         }
-        
+
         // Calculate the running balance and separate purchases/payments
         $runningBalance = 0;
         $totalPurchases = 0;
@@ -109,31 +109,51 @@ class SupplierController2 extends Controller
 
     // ... other methods (index, create, etc.)
 
- public function store(Request $request)
+    public function store(Request $request)
     {
-        // This is the Purchase/Add Supplier logic
         $request->validate([
             'supplier_code' => 'required|string',
             'supplier_name' => 'nullable|string',
-            'grn_id' => 'required|exists:grn_entries,id',
-            'total_amount' => 'required|numeric|min:0.01', // Must be positive purchase amount
+            'grn_id' => 'nullable|exists:grn_entries,id',
+            'total_amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:500',
         ]);
 
         try {
-            // Create new record for the purchase transaction
-            Supplier2::create([
-                'supplier_code' => $request->supplier_code,
-                'supplier_name' => $request->supplier_name,
-                'grn_id' => $request->grn_id,
-                'total_amount' => $request->total_amount, // Store as positive amount
-                'description' => $request->description ?? 'Purchase/GRN ' . $request->grn_id,
-            ]);
+            // ✅ Get date from Setting
+            $setting = \App\Models\Setting::first();
+            $currentValue = $setting ? $setting->value : null;
 
-            return redirect()
-                ->route('suppliers2.index')
-                ->with('success', 'New supplier purchase recorded successfully.');
+            // ✅ Check if a record already exists for this supplier_code
+            $existingSupplier = Supplier2::where('supplier_code', $request->supplier_code)->first();
 
+            if ($existingSupplier) {
+                // ✅ Update existing record: add new total_amount
+                $existingSupplier->update([
+                    'total_amount' => $existingSupplier->total_amount + $request->total_amount,
+                    'description' => $request->description ?? ('Updated Purchase / GRN ' . $request->grn_id),
+                    'grn_id' => $request->grn_id,
+                    'date' => $currentValue, // update the date too
+                ]);
+
+                return redirect()
+                    ->route('suppliers2.index')
+                    ->with('success', 'Existing supplier record updated successfully.');
+            } else {
+                // ✅ Otherwise create a new record
+                Supplier2::create([
+                    'supplier_code' => $request->supplier_code,
+                    'supplier_name' => $request->supplier_name,
+                    'grn_id' => $request->grn_id,
+                    'total_amount' => $request->total_amount,
+                    'description' => $request->description ?? ('Purchase / GRN ' . $request->grn_id),
+                    'date' => $currentValue,
+                ]);
+
+                return redirect()
+                    ->route('suppliers2.index')
+                    ->with('success', 'New supplier purchase recorded successfully.');
+            }
         } catch (\Exception $e) {
             \Log::error('Failed to store supplier purchase transaction', [
                 'error' => $e->getMessage(),
@@ -147,11 +167,11 @@ class SupplierController2 extends Controller
         }
     }
 
-   public function payment(Request $request)
+    public function payment(Request $request)
     {
         // Validate supplier_code instead of supplier_id
         $request->validate([
-            'supplier_code' => 'required|string', 
+            'supplier_code' => 'required|string',
             'payment_amount' => 'required|numeric|min:0.01',
         ]);
 
@@ -160,16 +180,21 @@ class SupplierController2 extends Controller
             $sampleSupplier = Supplier2::where('supplier_code', $request->supplier_code)->first();
 
             if (!$sampleSupplier) {
-                 return redirect()->back()->with('error', 'Supplier not found for payment processing.');
+                return redirect()->back()->with('error', 'Supplier not found for payment processing.');
             }
 
-            // Create a new record to log the payment
+            // ✅ Get the current value from Setting model's 'value' column
+            $setting = \App\Models\Setting::first();
+            $currentValue = $setting ? $setting->value : null;
+
+            // ✅ Create a new record to log the payment
             Supplier2::create([
                 'supplier_code' => $sampleSupplier->supplier_code,
                 'supplier_name' => $sampleSupplier->supplier_name,
                 'grn_id' => null, // Payments aren't linked to GRNs
                 'total_amount' => -abs($request->payment_amount), // Always store as NEGATIVE amount
-                'description' => 'Payment', // Payment record
+                'description' => 'Payment',
+                'date' => $currentValue, // ✅ Store the Setting value in 'date' column
             ]);
 
             return redirect()
@@ -188,7 +213,6 @@ class SupplierController2 extends Controller
                 ->with('error', 'Failed to submit payment transaction. Check logs for details.');
         }
     }
-
     public function edit($id)
     {
         $supplier = Supplier2::findOrFail($id);
