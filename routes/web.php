@@ -209,4 +209,5 @@ Route::delete('/suppliers2/{id}', [SupplierController2::class, 'destroy'])->name
 Route::post('suppliers2/payment', [SupplierController2::class, 'payment'])->name('suppliers2.payment');
 Route::get('/suppliers2/balance', [App\Http\Controllers\SupplierController2::class, 'getBalance'])->name('suppliers2.balance');
 Route::get('/suppliers/transactions', [SupplierController2::class, 'getSupplierTransactions'])->name('suppliers2.transactions');   
+
 require __DIR__.'/auth.php';

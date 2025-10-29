@@ -1,6 +1,5 @@
 <?php
 
-// app/Http/Controllers/SupplierController.php
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
@@ -19,23 +18,23 @@ class SupplierController extends Controller
         return view('dashboard.suppliers.create');
     }
 
-   public function store(Request $request)
-{
-    $request->validate([
-        'code'    => 'required|unique:suppliers',
-        'name'    => 'required',
-        'address' => 'required',
-    ]);
+    public function store(Request $request)
+    {
+        $request->validate([
+            'code'    => 'required|unique:suppliers',
+            'name'    => 'required',
+            'address' => 'required',
+            'phone'   => 'nullable|string|max:20',
+            'email'   => 'nullable|email|max:100',
+        ]);
 
-    // Force 'code' to uppercase
-    $data = $request->all();
-    $data['code'] = strtoupper($data['code']);
+        $data = $request->all();
+        $data['code'] = strtoupper($data['code']); // force uppercase
 
-    Supplier::create($data);
+        Supplier::create($data);
 
-    return redirect()->route('suppliers.index')->with('success', 'Supplier added successfully!');
-}
-
+        return redirect()->route('suppliers.index')->with('success', 'Supplier added successfully!');
+    }
 
     public function edit(Supplier $supplier)
     {
@@ -45,12 +44,18 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier)
     {
         $request->validate([
-            'code' => 'required|unique:suppliers,code,' . $supplier->id,
-            'name' => 'required',
+            'code'    => 'required|unique:suppliers,code,' . $supplier->id,
+            'name'    => 'required',
             'address' => 'required',
+            'phone'   => 'nullable|string|max:20',
+            'email'   => 'nullable|email|max:100',
         ]);
 
-        $supplier->update($request->all());
+        $data = $request->all();
+        $data['code'] = strtoupper($data['code']);
+
+        $supplier->update($data);
+
         return redirect()->route('suppliers.index')->with('success', 'Supplier updated successfully!');
     }
 

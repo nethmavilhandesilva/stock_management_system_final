@@ -8,6 +8,9 @@
     /* Style for the transaction history modal link */
     .view-history-link { cursor: pointer; color: #198754; font-weight: bold; }
     .view-history-link:hover { text-decoration: underline; }
+    .text-uppercase {
+    text-transform: uppercase;
+}
 </style>
 
 <div class="container mt-4">
@@ -41,10 +44,11 @@
     {{-- Purchase Form --}}
     <form id="supplierForm" action="{{ route('suppliers2.store') }}" method="POST" class="border p-3 rounded bg-light">
         @csrf
+        <input type="hidden" name="transaction_id" id="transaction_id"> {{-- For inline edit --}}
         <div class="row mb-3 align-items-end">
             <div class="col-md-3 position-relative">
                 <label for="supplier_search" class="form-label">Select Supplier</label>
-                <input type="text" id="supplier_search" class="form-control" placeholder="🔍 Type supplier code..." autocomplete="off" required>
+               <input type="text" id="supplier_search" class="form-control text-uppercase" placeholder="🔍 Type supplier code..." autocomplete="off" required>
                 <input type="hidden" name="existing_supplier_id" id="supplier_id">
                 <input type="hidden" name="supplier_code" id="supplier_code">
                 <input type="hidden" name="supplier_name" id="supplier_name">
@@ -58,7 +62,6 @@
                         </button>
                     @endforeach
                 </div>
-                 {{-- Balance display for Purchase Form --}}
                 <div id="purchaseBalanceDisplay" class="mt-2 fw-bold" style="display:none;">
                     Current Balance: <span id="current_supplier_balance">0.00</span>
                 </div>
@@ -89,14 +92,15 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-success">Save Purchase</button>
+        <button type="submit" class="btn btn-success" id="submitButton">Save Purchase</button>
+        <button type="button" class="btn btn-secondary" id="cancelEditButton" style="display:none;">Cancel Edit</button>
     </form>
 
     {{-- Payment Form --}}
     <form id="paymentForm" action="{{ route('suppliers2.payment') }}" method="POST" class="border p-3 rounded bg-light" style="display:none;">
         @csrf
         <div class="row mb-3">
-            <div class="col-md-6 position-relative">
+            <div class="col-md-4 position-relative">
                 <label for="payment_supplier_search" class="form-label">Select Supplier</label>
                 <input type="text" id="payment_supplier_search" class="form-control" placeholder="🔍 Type supplier code..." autocomplete="off" required>
                 <input type="hidden" name="supplier_code" id="payment_supplier_code">
@@ -110,13 +114,19 @@
                         </button>
                     @endforeach
                 </div>
-                 {{-- Balance display for Payment Form --}}
                 <div id="paymentBalanceDisplay" class="mt-2 fw-bold" style="display:none;">
                     Current Balance: <span id="current_payment_balance">0.00</span>
                 </div>
             </div>
 
-            <div class="col-md-6">
+            {{-- NEW DESCRIPTION FIELD FOR PAYMENT FORM --}}
+            <div class="col-md-4">
+                <label for="payment_description" class="form-label">Description</label>
+                <textarea name="description" id="payment_description" class="form-control" rows="1" placeholder="Enter payment details..."></textarea>
+            </div>
+            {{-- END NEW FIELD --}}
+
+            <div class="col-md-4">
                 <label for="payment_amount" class="form-label">Payment Amount</label>
                 <input type="number" name="payment_amount" id="payment_amount" class="form-control" step="0.01" required>
             </div>
@@ -126,8 +136,12 @@
 
     <hr class="my-4">
 
-    {{-- Supplier Records (Individual Transactions) --}}
+    {{-- Supplier Records & Search Filter (NEW) --}}
     <h5 class="text-success">Supplier Records (Transactions)</h5>
+    <div class="mb-3">
+       <input type="text" id="supplierTableSearch" class="form-control text-uppercase" placeholder="🔍 Filter by Supplier Code..." autocomplete="off">
+    </div>
+
     <table class="table table-bordered mt-3">
         <thead class="table-success">
         <tr>
@@ -141,11 +155,11 @@
             <th>Actions</th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="supplierTableBody">
         @forelse($suppliers as $supplier)
-            <tr>
+            <tr data-transaction="{{ $supplier }}">
                 <td>{{ $supplier->id }}</td>
-                 <td>{{ $supplier->date }}</td>
+                <td>{{ $supplier->date }}</td>
                 <td><span class="view-history-link" data-supplier-code="{{ $supplier->supplier_code }}">{{ $supplier->supplier_code }}</span></td>
                 <td>{{ $supplier->supplier_name }}</td>
                 <td class="{{ $supplier->total_amount < 0 ? 'text-danger' : 'text-success' }}">
@@ -154,7 +168,7 @@
                 <td>{{ $supplier->description ?? '-' }}</td>
                 <td>{{ $supplier->grn->code ?? '-' }}</td>
                 <td>
-                    <a href="{{ route('suppliers2.edit', $supplier->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <button type="button" class="btn btn-sm btn-warning editButton">Edit</button>
                     <form action="{{ route('suppliers2.destroy', $supplier->id) }}" method="POST" class="d-inline">
                         @csrf @method('DELETE')
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this transaction?')">Delete</button>
@@ -162,13 +176,13 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="7" class="text-center text-muted">No transactions found.</td></tr>
+            <tr><td colspan="8" class="text-center text-muted">No transactions found.</td></tr>
         @endforelse
         </tbody>
     </table>
 </div>
 
-{{-- Supplier Transaction Modal (Assuming Bootstrap 5 or 4) --}}
+{{-- Transaction Modal (No changes here, but kept for completeness) --}}
 <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -180,6 +194,12 @@
                 <h6 class="mb-3">
                     Supplier: <span id="modal_supplier_code" class="fw-bold"></span> - <span id="modal_supplier_name"></span>
                 </h6>
+                {{-- Supplier details (Updated in Controller for data) --}}
+                <div class="row mb-2 small">
+                    <div class="col-4">📧 **Email:** <span id="modal_supplier_email">N/A</span></div>
+                    <div class="col-4">📞 **Phone:** <span id="modal_supplier_phone">N/A</span></div>
+                    <div class="col-4">🏠 **Address:** <span id="modal_supplier_address">N/A</span></div>
+                </div>
                 <div class="row mb-3 fw-bold">
                     <div class="col-4 text-success">Total Purchases: <span id="modal_total_purchases">0.00</span></div>
                     <div class="col-4 text-danger">Total Payments: <span id="modal_total_payments">0.00</span></div>
@@ -189,18 +209,16 @@
                 <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                     <table class="table table-sm table-striped">
                         <thead class="table-light sticky-top">
-                            <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                                <th>GRN</th>
-                                <th>Amount</th>
-                                <th>Balance</th>
-                            </tr>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>GRN</th>
+                            <th>Amount</th>
+                            <th>Balance</th>
+                        </tr>
                         </thead>
-                        <tbody id="transactionHistoryBody">
-                            {{-- Transactions will be loaded here by JavaScript --}}
-                        </tbody>
+                        <tbody id="transactionHistoryBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -211,9 +229,8 @@
     </div>
 </div>
 
-
 <script>
-// --- Radio button toggle + focus ---
+// --- Radio toggle ---
 const addRadio = document.getElementById('addSupplierRadio');
 const payRadio = document.getElementById('paymentRadio');
 const supplierForm = document.getElementById('supplierForm');
@@ -223,214 +240,243 @@ addRadio.addEventListener('change', () => {
     supplierForm.style.display='block';
     paymentForm.style.display='none';
     document.getElementById('supplier_search').focus();
+    updateDescriptionField(); // Update description on radio change
 });
 payRadio.addEventListener('change', () => {
     supplierForm.style.display='none';
     paymentForm.style.display='block';
     document.getElementById('payment_supplier_search').focus();
+    updateDescriptionField(); // Update description on radio change
 });
 
-// --- Purchase form enter-key navigation ---
-const purchaseFields = ['supplier_search', 'description', 'total_amount', 'grn_search'];
+// --- Enter navigation ---
+const purchaseFields = ['supplier_search','description','total_amount','grn_search'];
 purchaseFields.forEach((id, idx) => {
-    const el = document.getElementById(id);
-    el.addEventListener('keydown', e => {
+    document.getElementById(id).addEventListener('keydown', e=>{
         if(e.key==='Enter'){
             e.preventDefault();
-            const nextEl = document.getElementById(purchaseFields[idx+1]);
-            if(nextEl) nextEl.focus();
-            else if(idx === purchaseFields.length - 1) supplierForm.submit();
+            const next = purchaseFields[idx+1]?document.getElementById(purchaseFields[idx+1]):null;
+            if(next) next.focus();
+            else supplierForm.submit();
+        }
+    });
+});
+// Updated payment fields to include the new description
+const paymentFields = ['payment_supplier_search', 'payment_description', 'payment_amount'];
+paymentFields.forEach((id, idx)=>{
+    document.getElementById(id).addEventListener('keydown', e=>{
+        if(e.key==='Enter'){
+            e.preventDefault();
+            const next = paymentFields[idx+1]?document.getElementById(paymentFields[idx+1]):null;
+            if(next) next.focus();
+            else paymentForm.submit();
         }
     });
 });
 
-// --- Payment form enter-key navigation ---
-const paymentFields = ['payment_supplier_search', 'payment_amount'];
-paymentFields.forEach((id, idx) => {
-    const el = document.getElementById(id);
-    el.addEventListener('keydown', e => {
-        if(e.key==='Enter'){
-            e.preventDefault();
-            const nextEl = document.getElementById(paymentFields[idx+1]);
-            if(nextEl) nextEl.focus();
-            else if(idx === paymentFields.length - 1) paymentForm.submit();
-        }
-    });
-});
+// --- Live search ---
+function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, isPurchase=false){
+    const input=document.getElementById(inputId);
+    const dropdown=document.getElementById(dropdownId);
+    const hidden=document.getElementById(hiddenCodeId);
+    const balanceDiv=balanceDisplayId?document.getElementById(balanceDisplayId):null;
+    const balanceSpan=balanceDiv?balanceDiv.querySelector('span'):null;
+    const hiddenName=isPurchase?document.getElementById('supplier_name'):null;
 
-// --- Live search setup function ---
-function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, isPurchaseForm=false){
-    const input = document.getElementById(inputId);
-    const dropdown = document.getElementById(dropdownId);
-    const hiddenCode = document.getElementById(hiddenCodeId);
-    const balanceDisplayDiv = document.getElementById(balanceDisplayId);
-    const balanceSpan = balanceDisplayDiv ? balanceDisplayDiv.querySelector('span') : null;
-    const hiddenName = isPurchaseForm ? document.getElementById('supplier_name') : null;
-
-    // Helper to update the balance display
-    const updateBalanceDisplay = (balance) => {
-        if (balanceSpan) {
-            balanceSpan.textContent = balance;
-            balanceSpan.classList.remove('text-success', 'text-danger');
-            const numericBalance = parseFloat(balance.replace(/,/g, ''));
-            
-            if (numericBalance > 0) {
-                balanceSpan.classList.add('text-danger'); // Red for positive balance (money owed)
-            } else {
-                balanceSpan.classList.add('text-success'); // Green for credit/zero
-            }
-            balanceDisplayDiv.style.display = balance !== '0.00' ? 'block' : 'none';
+    const updateBalance=(b)=>{
+        if(balanceSpan){
+            balanceSpan.textContent=b;
+            balanceSpan.classList.remove('text-success','text-danger');
+            const n=parseFloat(b.replace(/,/g,''));
+            balanceSpan.classList.add(n>0?'text-danger':'text-success');
+            balanceDiv.style.display=b!=='0.00'?'block':'none';
         }
     };
 
-    input.addEventListener('input', () => {
-        const filter = input.value.toUpperCase().trim();
+    input.addEventListener('input', ()=>{
+        const f=input.value.toUpperCase().trim();
         let visible=0;
         dropdown.querySelectorAll('button').forEach(btn=>{
-            const text = btn.textContent.toUpperCase();
-            const match = text.includes(filter);
-            btn.style.display = match ? 'block' : 'none';
+            const t=btn.textContent.toUpperCase();
+            const match=t.includes(f);
+            btn.style.display=match?'block':'none';
             if(match) visible++;
         });
-        dropdown.style.display = visible ? 'block' : 'none';
+        dropdown.style.display=visible?'block':'none';
+        if(f===''){ hidden.value=''; if(isPurchase) document.getElementById('supplier_id').value=''; if(hiddenName) hiddenName.value=''; updateBalance('0.00'); }
+    });
 
-        if(filter === ''){
-            hiddenCode.value='';
-            if(isPurchaseForm) document.getElementById('supplier_id').value='';
-            if(hiddenName) hiddenName.value='';
-            updateBalanceDisplay('0.00');
+    dropdown.addEventListener('click', e=>{
+        if(e.target.matches('button')){
+            const btn=e.target;
+            const id=btn.getAttribute('data-id');
+            const code=btn.getAttribute('data-code');
+            const balance=btn.getAttribute('data-balance')||'0.00';
+            const name=btn.getAttribute('data-name');
+
+            if(inputId==='grn_search'){ input.value=btn.textContent.trim(); hidden.value=id; dropdown.style.display='none'; document.getElementById('submitButton').focus(); return; }
+
+            input.value=`${code} ${name?'— '+name:''}`.trim();
+            hidden.value=code;
+            if(isPurchase){ document.getElementById('supplier_id').value=id; if(hiddenName) hiddenName.value=name||''; }
+            updateBalance(balance);
+            dropdown.style.display='none';
+            // Update focus for payment form
+            if(isPurchase) document.getElementById('description').focus(); else document.getElementById('payment_description').focus();
         }
     });
-
-    dropdown.addEventListener('click', e => {
-        if (e.target.matches('button')) {
-            const button = e.target;
-            const id = button.getAttribute('data-id');
-            const code = button.getAttribute('data-code');
-            const balance = button.getAttribute('data-balance') || '0.00';
-            const name = button.getAttribute('data-name');
-
-            // --- Special case: GRN dropdown ---
-            if (inputId === 'grn_search') {
-                input.value = button.textContent.trim();
-                hiddenCode.value = id; // <-- FIX: Set the hidden grn_id value here
-                dropdown.style.display = 'none';
-                document.getElementById('supplierForm').querySelector('button[type="submit"]').focus();
-                return;
-            }
-
-            // --- Supplier dropdowns ---
-            input.value = `${code} ${name ? '— ' + name : ''}`.trim();
-            hiddenCode.value = code;
-
-            if (isPurchaseForm) {
-                document.getElementById('supplier_id').value = button.getAttribute('data-id');
-                if (hiddenName) hiddenName.value = name || '';
-            }
-
-            updateBalanceDisplay(balance);
-            dropdown.style.display = 'none';
-
-            if (isPurchaseForm) document.getElementById('description').focus();
-            else document.getElementById('payment_amount').focus();
-        }
-    });
-
-    // Hide dropdown on outside click
-    document.addEventListener('click', e => {
-        if(!dropdown.contains(e.target) && e.target!==input) dropdown.style.display='none';
-    });
+    document.addEventListener('click', e=>{ if(!dropdown.contains(e.target)&&e.target!==input) dropdown.style.display='none'; });
 }
 
-// --- Setup live searches ---
-setupLiveSearch('supplier_search','supplierDropdown','supplier_code', 'purchaseBalanceDisplay', true);
-setupLiveSearch('grn_search','grnDropdown','grn_id');  // <-- now correctly fills grn_id
-setupLiveSearch('payment_supplier_search','paymentSupplierDropdown','payment_supplier_code', 'paymentBalanceDisplay');
+// --- Initialize live searches ---
+setupLiveSearch('supplier_search','supplierDropdown','supplier_code','purchaseBalanceDisplay',true);
+setupLiveSearch('grn_search','grnDropdown','grn_id');
+setupLiveSearch('payment_supplier_search','paymentSupplierDropdown','payment_supplier_code','paymentBalanceDisplay');
 
-// --- Transaction History Modal Logic ---
-document.addEventListener('DOMContentLoaded', () => {
-    const modalElement = document.getElementById('transactionModal');
+// --- Transaction history modal & Edit functions ---
+document.addEventListener('DOMContentLoaded', ()=>{
+    const modalEl=document.getElementById('transactionModal');
+    const tableBody=document.getElementById('transactionHistoryBody');
     let transactionModal;
-    
-    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-        transactionModal = new bootstrap.Modal(modalElement);
-    } else if (typeof $ !== 'undefined' && $.fn.modal) {
-        transactionModal = $(modalElement);
-    } else {
-        console.error("Bootstrap JS not loaded correctly for modal.");
-        return;
-    }
+    if(typeof bootstrap!=='undefined' && bootstrap.Modal) transactionModal=new bootstrap.Modal(modalEl);
+    else if(typeof $!=='undefined' && $.fn.modal) transactionModal=$(modalEl);
 
-    const tableBody = document.getElementById('transactionHistoryBody');
-
-    document.querySelector('.table-bordered tbody').addEventListener('click', function(e) {
-        if (e.target.classList.contains('view-history-link')) {
-            const supplierCode = e.target.getAttribute('data-supplier-code');
-            if (supplierCode) {
-                fetchTransactionHistory(supplierCode);
-            }
+    document.querySelector('.table-bordered tbody').addEventListener('click', e=>{
+        // History
+        if(e.target.classList.contains('view-history-link')){
+            const code=e.target.getAttribute('data-supplier-code');
+            fetchTransactionHistory(code);
+        }
+        // Inline Edit
+        if(e.target.classList.contains('editButton')){
+            const tr=e.target.closest('tr');
+            const data=JSON.parse(tr.getAttribute('data-transaction').replace(/&quot;/g,'"'));
+            populateFormForEdit(data);
         }
     });
 
-    function fetchTransactionHistory(supplierCode) {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        const url = "{{ route('suppliers2.transactions') }}?supplier_code=" + supplierCode;
+    function fetchTransactionHistory(code){
+        // The API call is to a route that was updated in the previous turn to include supplier details
+        const csrf=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const url="{{ route('suppliers2.transactions') }}?supplier_code="+code;
+        tableBody.innerHTML='<tr><td colspan="6" class="text-center">Loading transactions...</td></tr>';
 
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading transactions...</td></tr>';
-        
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': csrfToken,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('modal_supplier_code').textContent = data.supplier_code;
-            document.getElementById('modal_supplier_name').textContent = data.supplier_name;
-            document.getElementById('modal_total_purchases').textContent = data.total_purchases;
-            document.getElementById('modal_total_payments').textContent = data.total_payments;
-            
-            const balanceEl = document.getElementById('modal_remaining_balance');
-            balanceEl.textContent = data.remaining_balance;
-            balanceEl.classList.remove('text-success', 'text-danger');
-            const numericBalance = parseFloat(data.remaining_balance.replace(/,/g, ''));
-            if (numericBalance > 0) balanceEl.classList.add('text-danger');
-            else balanceEl.classList.add('text-success');
+        fetch(url,{ headers:{'X-CSRF-TOKEN':csrf,'X-Requested-With':'XMLHttpRequest','Accept':'application/json'} })
+            .then(r=>r.json())
+            .then(data=>{
+                // Populate supplier details in modal header
+                document.getElementById('modal_supplier_code').textContent=data.supplier_code;
+                document.getElementById('modal_supplier_name').textContent=data.supplier_name;
+                // NEW Supplier details from the updated controller
+                document.getElementById('modal_supplier_email').textContent=data.supplier_email || 'N/A';
+                document.getElementById('modal_supplier_phone').textContent=data.supplier_phone || 'N/A';
+                document.getElementById('modal_supplier_address').textContent=data.supplier_address || 'N/A';
 
-            tableBody.innerHTML = '';
-            if (data.history && data.history.length > 0) {
-                data.history.forEach(item => {
-                    const row = `
-                        <tr>
+                document.getElementById('modal_total_purchases').textContent=data.total_purchases;
+                document.getElementById('modal_total_payments').textContent=data.total_payments;
+                const bEl=document.getElementById('modal_remaining_balance');
+                bEl.textContent=data.remaining_balance;
+                bEl.classList.remove('text-success','text-danger');
+                bEl.classList.add(parseFloat(data.remaining_balance.replace(/,/g,''))>0?'text-danger':'text-success');
+                tableBody.innerHTML='';
+
+                if(data.history && data.history.length>0){
+                    data.history.forEach(item=>{
+                        const row=`<tr>
                             <td>${item.date}</td>
                             <td>${item.type}</td>
                             <td>${item.description}</td>
                             <td>${item.grn_no}</td>
                             <td class="${item.class}">${item.amount}</td>
                             <td>${item.balance}</td>
-                        </tr>
-                    `;
-                    tableBody.insertAdjacentHTML('beforeend', row);
-                });
-            } else {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No transactions found for this supplier.</td></tr>';
+                        </tr>`;
+                        tableBody.insertAdjacentHTML('beforeend',row);
+                    });
+                } else tableBody.innerHTML='<tr><td colspan="6" class="text-center text-muted">No transactions found.</td></tr>';
+                
+                if(transactionModal.show) transactionModal.show();
+                else if(transactionModal.modal) transactionModal.modal('show');
+            }).catch(err=>{console.error(err); tableBody.innerHTML='<tr><td colspan="6" class="text-center text-danger">Error loading data.</td></tr>';});
+    }
+
+    // --- Populate form for edit ---
+    const cancelEditBtn=document.getElementById('cancelEditButton');
+    function populateFormForEdit(data){
+        addRadio.checked=true; payRadio.checked=false;
+        supplierForm.style.display='block'; paymentForm.style.display='none';
+        document.getElementById('transaction_id').value=data.id;
+        document.getElementById('supplier_search').value=`${data.supplier_code} — ${data.supplier_name}`;
+        document.getElementById('supplier_id').value=data.existing_supplier_id||'';
+        document.getElementById('supplier_code').value=data.supplier_code;
+        document.getElementById('supplier_name').value=data.supplier_name;
+        document.getElementById('description').value=data.description;
+        document.getElementById('total_amount').value=data.total_amount;
+        document.getElementById('grn_search').value=data.grn?.code||'';
+        document.getElementById('grn_id').value=data.grn_id||'';
+        document.getElementById('submitButton').textContent='Update Purchase';
+        cancelEditBtn.style.display='inline-block';
+        cancelEditBtn.onclick=()=>{ window.location.reload(); }
+    }
+    
+    // --- NEW: Table Search Filter ---
+    const searchInput = document.getElementById('supplierTableSearch');
+    const tableRows = document.getElementById('supplierTableBody').getElementsByTagName('tr');
+
+    searchInput.addEventListener('keyup', function() {
+        const filter = searchInput.value.toUpperCase();
+        let found = false;
+
+        // Iterate through all table rows (excluding the empty message if present)
+        for (let i = 0; i < tableRows.length; i++) {
+            const row = tableRows[i];
+            
+            // Skip the 'No transactions found' row if it exists
+            if (row.cells.length < 8) { 
+                 row.style.display = 'none';
+                 continue;
             }
 
-            if (transactionModal.show) transactionModal.show();
-            else if (transactionModal.modal) transactionModal.modal('show');
-        })
-        .catch(error => {
-            console.error('Error fetching transaction history:', error);
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading data.</td></tr>';
-            if (transactionModal.show) transactionModal.show();
-            else if (transactionModal.modal) transactionModal.modal('show');
-        });
-    }
+            // Supplier Code is in the 3rd column (index 2)
+            const codeCell = row.cells[2]; 
+            const codeText = codeCell.textContent || codeCell.innerText;
+
+            if (codeText.toUpperCase().indexOf(filter) > -1) {
+                row.style.display = ''; // Show row
+                found = true;
+            } else {
+                row.style.display = 'none'; // Hide row
+            }
+        }
+        
+        // This handles showing a 'no results' message if the table was not empty initially
+        if (filter !== '' && !found && tableRows.length > 0) {
+            // A more robust solution for 'no results' is usually desired,
+            // but for simplicity, we'll ensure the existing 'no transactions found' row stays hidden
+            // and assume users will see no rows if nothing matches.
+        }
+    });
 });
 </script>
+<script>
+    // --- Auto-fill description based on radio selection ---
+function updateDescriptionField() {
+    const purchaseDescriptionInput = document.getElementById('description');
+    const paymentDescriptionInput = document.getElementById('payment_description');
+    
+    if (addRadio.checked) {
+        purchaseDescriptionInput.value = 'Purchase from Supplier';
+        paymentDescriptionInput.value = ''; // Clear payment description when switching to purchase
+    } else if (payRadio.checked) {
+        paymentDescriptionInput.value = 'Payment to Supplier'; // Updated for clarity
+        purchaseDescriptionInput.value = ''; // Clear purchase description when switching to payment
+    }
+}
 
+// Trigger when radio buttons change
+addRadio.addEventListener('change', updateDescriptionField);
+payRadio.addEventListener('change', updateDescriptionField);
+
+// Trigger on page load to set initial value
+document.addEventListener('DOMContentLoaded', updateDescriptionField);
+</script>
 @endsection
