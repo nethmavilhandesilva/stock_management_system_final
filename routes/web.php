@@ -42,11 +42,8 @@ Route::resource('items', ItemController::class);
 Route::resource('customers', CustomerController::class);
 Route::get('/customers/export/pdf', [App\Http\Controllers\CustomerController::class, 'exportPdf']) ->name('customers.export.pdf');
 Route::get('/customers/export/excel', [App\Http\Controllers\CustomerController::class, 'exportExcel']) ->name('customers.export.excel');
-   
-
 // Suppliers
-Route::resource('suppliers', SupplierController::class);
-
+Route::resource('suppliers', SupplierController::class)->except(['show']);
 // GRN
 Route::resource('grn', GrnEntryController::class) ->except(['show']);
 Route::post('/grn/store', [GrnEntryController::class, 'store'])->name('grn.store2');
