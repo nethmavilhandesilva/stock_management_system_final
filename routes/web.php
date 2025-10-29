@@ -211,5 +211,6 @@ Route::get('/suppliers2/{id}/edit', [SupplierController2::class, 'edit'])->name(
 Route::put('/suppliers2/{id}', [SupplierController2::class, 'update'])->name('suppliers2.update');
 Route::delete('/suppliers2/{id}', [SupplierController2::class, 'destroy'])->name('suppliers2.destroy');
 Route::post('suppliers2/payment', [SupplierController2::class, 'payment'])->name('suppliers2.payment');
-
+Route::get('/suppliers2/balance', [App\Http\Controllers\SupplierController2::class, 'getBalance'])->name('suppliers2.balance');
+Route::get('/suppliers/transactions', [SupplierController2::class, 'getSupplierTransactions'])->name('suppliers2.transactions');   
 require __DIR__.'/auth.php';
