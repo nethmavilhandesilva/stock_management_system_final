@@ -220,7 +220,7 @@
                         <td>{{ $entry->item_name }}</td>
                         <td>{{ $entry->packs }}</td>
                         <td>{{ $entry->weight }}</td>
-                        <td>{{ \Carbon\Carbon::parse($entry->txn_date)->format('Y-m-d') }}</td>
+                        <td>{{ $entry->txn_date }}</td>
                         <td>{{ $entry->original_packs }}</td>
                         <td>{{ $entry->original_weight }}</td>
                         <td>{{ $entry->grn_no }}</td>

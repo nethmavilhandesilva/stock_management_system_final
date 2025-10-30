@@ -614,4 +614,25 @@ payRadio.addEventListener('change', updateDescriptionField);
 // Trigger on page load to set initial value
 document.addEventListener('DOMContentLoaded', updateDescriptionField);
 </script>
+<script>
+document.getElementById('supplierTableSearch').addEventListener('input', function() {
+    const keyword = this.value.trim();
+
+    // Build the URL dynamically
+    const url = "{{ route('suppliers2.index') }}" + (keyword ? `?search=${encodeURIComponent(keyword)}` : '');
+
+    fetch(url)
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newBody = doc.querySelector('#supplierTableBody');
+
+            if (newBody) {
+                document.querySelector('#supplierTableBody').innerHTML = newBody.innerHTML;
+            }
+        });
+});
+</script>
+
 @endsection

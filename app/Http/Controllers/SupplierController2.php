@@ -30,20 +30,39 @@ class SupplierController2 extends Controller
         return $suppliersWithBalance;
     }
 
-    public function index()
-    {
-        // Get all transactions for the records table
-        $suppliers = Supplier2::with('grn')->orderBy('id', 'desc')->get(); // Added eager loading and ordering
+   public function index(Request $request)
+{
+    // ✅ Get active date(s) from settings
+    $dates = \App\Models\Setting::pluck('value')->toArray();
 
-        // Get GRN options
-        $grnOptions = GrnEntry::select('id', DB::raw("CONCAT(code,' - ',item_code,' - ',item_name) as display_name"))
-            ->pluck('display_name', 'id');
+    // ✅ Base query
+    $query = Supplier2::with('grn')->orderBy('id', 'desc');
 
-        // Get suppliers with their current balance for the dropdowns
-        $existingSuppliersWithBalance = $this->getSupplierBalances();
-
-        return view('dashboard.suppliers2.index', compact('suppliers', 'grnOptions', 'existingSuppliersWithBalance'));
+    // ✅ Apply date filter only when NOT searching
+    if (!$request->has('search') || empty($request->search)) {
+        $query->whereIn('date', $dates);
     }
+
+    // ✅ If searching, ignore date filter and show all matches
+    if ($request->has('search') && !empty($request->search)) {
+        $search = strtoupper($request->search); // make case-insensitive
+        $query->where(DB::raw('UPPER(supplier_code)'), 'like', "%{$search}%");
+    }
+
+    $suppliers = $query->get();
+
+    // ✅ GRN options
+    $grnOptions = GrnEntry::select('id', DB::raw("CONCAT(code,' - ',item_code,' - ',item_name) as display_name"))
+        ->pluck('display_name', 'id');
+
+    // ✅ Supplier balances
+    $existingSuppliersWithBalance = $this->getSupplierBalances();
+
+    // ✅ Return view
+    return view('dashboard.suppliers2.index', compact('suppliers', 'grnOptions', 'existingSuppliersWithBalance'));
+}
+
+
 
     /**
      * UPDATED: Fetches transactions, supplier details, and GRN payment summary for the modal.
