@@ -97,42 +97,64 @@
     </form>
 
     {{-- Payment Form --}}
-    <form id="paymentForm" action="{{ route('suppliers2.payment') }}" method="POST" class="border p-3 rounded bg-light" style="display:none;">
-        @csrf
-        <div class="row mb-3">
-            <div class="col-md-4 position-relative">
-                <label for="payment_supplier_search" class="form-label">Select Supplier</label>
-                <input type="text" id="payment_supplier_search" class="form-control" placeholder="🔍 Type supplier code..." autocomplete="off" required>
-                <input type="hidden" name="supplier_code" id="payment_supplier_code">
+    <form id="paymentForm" action="{{ route('suppliers2.payment') }}" method="POST" 
+      class="border p-3 rounded bg-light" style="display:none;">
+    @csrf
 
-                <div id="paymentSupplierDropdown" class="list-group position-absolute w-100 shadow-sm"
-                     style="z-index:10; display:none; max-height:200px; overflow-y:auto;">
-                    @foreach($existingSuppliersWithBalance as $supplier)
-                        <button type="button" class="list-group-item list-group-item-action"
-                                data-code="{{ $supplier->code }}" data-balance="{{ number_format($supplier->balance, 2) }}">
-                            {{ $supplier->code }} — {{ $supplier->name }} (Bal: {{ number_format($supplier->balance, 2) }})
-                        </button>
-                    @endforeach
-                </div>
-                <div id="paymentBalanceDisplay" class="mt-2 fw-bold" style="display:none;">
-                    Current Balance: <span id="current_payment_balance">0.00</span>
-                </div>
+    <div class="row g-3 align-items-end">
+        {{-- Supplier --}}
+        <div class="col-md-3 position-relative">
+            <label for="payment_supplier_search" class="form-label">Select Supplier</label>
+            <input type="text" id="payment_supplier_search" class="form-control" placeholder="🔍 Type supplier code..." autocomplete="off" required>
+            <input type="hidden" name="supplier_code" id="payment_supplier_code">
+
+            <div id="paymentSupplierDropdown" class="list-group position-absolute w-100 shadow-sm"
+                 style="z-index:10; display:none; max-height:200px; overflow-y:auto;">
+                @foreach($existingSuppliersWithBalance as $supplier)
+                    <button type="button" class="list-group-item list-group-item-action"
+                            data-code="{{ $supplier->code }}" data-balance="{{ number_format($supplier->balance, 2) }}">
+                        {{ $supplier->code }} — {{ $supplier->name }} (Bal: {{ number_format($supplier->balance, 2) }})
+                    </button>
+                @endforeach
             </div>
-
-            {{-- NEW DESCRIPTION FIELD FOR PAYMENT FORM --}}
-            <div class="col-md-4">
-                <label for="payment_description" class="form-label">Description</label>
-                <textarea name="description" id="payment_description" class="form-control" rows="1" placeholder="Enter payment details..."></textarea>
-            </div>
-            {{-- END NEW FIELD --}}
-
-            <div class="col-md-4">
-                <label for="payment_amount" class="form-label">Payment Amount</label>
-                <input type="number" name="payment_amount" id="payment_amount" class="form-control" step="0.01" required>
+            <div id="paymentBalanceDisplay" class="mt-2 fw-bold" style="display:none;">
+                Current Balance: <span id="current_payment_balance">0.00</span>
             </div>
         </div>
+
+        {{-- Description --}}
+        <div class="col-md-3">
+            <label for="payment_description" class="form-label">Description</label>
+            <textarea name="description" id="payment_description" class="form-control" rows="1" placeholder="Enter payment details..."></textarea>
+        </div>
+
+        {{-- GRN Search --}}
+        <div class="col-md-3 position-relative">
+            <label for="payment_grn_search" class="form-label">Search GRN</label>
+            <input type="text" id="payment_grn_search" class="form-control" placeholder="🔍 Type GRN code or item name..." autocomplete="off">
+            <input type="hidden" name="grn_id" id="payment_grn_id">
+
+            <div id="paymentGrnDropdown" class="list-group position-absolute w-100 shadow-sm"
+                 style="z-index:10; display:none; max-height:200px; overflow-y:auto;">
+                @foreach($grnOptions as $id => $grnNo)
+                    <button type="button" class="list-group-item list-group-item-action"
+                            data-id="{{ $id }}" data-name="{{ $grnNo }}">{{ $grnNo }}</button>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Payment Amount --}}
+        <div class="col-md-3">
+            <label for="payment_amount" class="form-label">Payment Amount</label>
+            <input type="number" name="payment_amount" id="payment_amount" class="form-control" step="0.01" required>
+        </div>
+    </div>
+
+    <div class="mt-3 text-end">
         <button type="submit" class="btn btn-primary">Submit Payment</button>
-    </form>
+    </div>
+</form>
+
 
     <hr class="my-4">
 
@@ -184,52 +206,112 @@
     </table>
 </div>
 
-{{-- Transaction Modal (No changes here, but kept for completeness) --}}
+{{-- Transaction Modal (Optimized & Organized Layout) --}}
 <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"> {{-- Reduced width from modal-xl to modal-lg --}}
+        <div class="modal-content shadow-lg">
+            
+            <!-- Header -->
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="transactionModalLabel">Supplier Transaction History</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <h6 class="mb-3">
-                    Supplier: <span id="modal_supplier_code" class="fw-bold"></span> - <span id="modal_supplier_name"></span>
-                </h6>
-                {{-- Supplier details (Updated in Controller for data) --}}
-                <div class="row mb-2 small">
-                    <div class="col-4">📧 **Email:** <span id="modal_supplier_email">N/A</span></div>
-                    <div class="col-4">📞 **Phone:** <span id="modal_supplier_phone">N/A</span></div>
-                    <div class="col-4">🏠 **Address:** <span id="modal_supplier_address">N/A</span></div>
+
+            <!-- Body -->
+            <div class="modal-body bg-light">
+                
+                <!-- Supplier Info Card -->
+                <div class="border rounded p-3 mb-3 bg-white shadow-sm">
+                    <h6 class="fw-bold mb-2">
+                        Supplier: 
+                        <span id="modal_supplier_code" class="text-success"></span> - 
+                        <span id="modal_supplier_name"></span>
+                    </h6>
+                    <div class="row small text-muted">
+                        <div class="col-md-4"><strong>📧 Email:</strong> <span id="modal_supplier_email">N/A</span></div>
+                        <div class="col-md-4"><strong>📞 Phone:</strong> <span id="modal_supplier_phone">N/A</span></div>
+                        <div class="col-md-4"><strong>🏠 Address:</strong> <span id="modal_supplier_address">N/A</span></div>
+                    </div>
                 </div>
-                <div class="row mb-3 fw-bold">
-                    <div class="col-4 text-success">Total Purchases: <span id="modal_total_purchases">0.00</span></div>
-                    <div class="col-4 text-danger">Total Payments: <span id="modal_total_payments">0.00</span></div>
-                    <div class="col-4">Remaining Balance: <span id="modal_remaining_balance" class="text-danger">0.00</span></div>
+
+                <!-- Summary Cards -->
+                <div class="row g-3 mb-4 text-center">
+                    <div class="col-md-4">
+                        <div class="card border-success">
+                            <div class="card-body p-2">
+                                <h6 class="text-success mb-1">Total Purchases</h6>
+                                <h5 id="modal_total_purchases" class="fw-bold">0.00</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-danger">
+                            <div class="card-body p-2">
+                                <h6 class="text-danger mb-1">Total Payments</h6>
+                                <h5 id="modal_total_payments" class="fw-bold">0.00</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-secondary">
+                            <div class="card-body p-2">
+                                <h6 class="text-dark mb-1">Remaining Balance</h6>
+                                <h5 id="modal_remaining_balance" class="fw-bold text-danger">0.00</h5>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <hr>
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-sm table-striped">
-                        <thead class="table-light sticky-top">
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                            <th>GRN</th>
-                            <th>Amount</th>
-                            <th>Balance</th>
-                        </tr>
+
+                <!-- Transaction History Table -->
+              <!-- Transaction History Table -->
+<h6 class="text-success mb-2">All Transactions</h6>
+<div class="table-responsive border rounded bg-white shadow-sm">
+                    <table class="table table-sm table-striped table-hover align-middle mb-0">
+          <thead class="table-primary sticky-top">
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>GRN</th>
+                <th class="text-end">Amount</th>
+                <th class="text-end">Balance</th>
+            </tr>
+        </thead>
+        <tbody id="transactionHistoryBody">
+            {{-- Populated dynamically --}}
+        </tbody>
+    </table>
+</div>
+                <!-- GRN Payment Breakdown -->
+                <h6 class="text-primary mb-2">GRN Payment Breakdown</h6>
+                <div class="table-responsive border rounded bg-white shadow-sm">
+                    <table class="table table-sm table-striped table-hover align-middle mb-0">
+                        <thead class="table-primary sticky-top">
+                            <tr>
+                                <th>GRN No</th>
+                                <th class="text-end">GRN Total</th>
+                                <th class="text-end">Total Paid</th>
+                                <th class="text-end">Remaining</th>
+                                <th>Last Payment Date</th>
+                            </tr>
                         </thead>
-                        <tbody id="transactionHistoryBody"></tbody>
+                        <tbody id="grnPaymentSummaryBody">
+                            {{-- Populated dynamically --}}
+                        </tbody>
                     </table>
                 </div>
+
             </div>
-            <div class="modal-footer">
+
+            <!-- Footer -->
+            <div class="modal-footer bg-white">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
+
         </div>
     </div>
 </div>
+
 
 <script>
 // --- Radio toggle ---
@@ -239,239 +321,287 @@ const supplierForm = document.getElementById('supplierForm');
 const paymentForm = document.getElementById('paymentForm');
 
 addRadio.addEventListener('change', () => {
-    supplierForm.style.display='block';
-    paymentForm.style.display='none';
-    document.getElementById('supplier_search').focus();
-    updateDescriptionField(); // Update description on radio change
+    supplierForm.style.display='block';
+    paymentForm.style.display='none';
+    document.getElementById('supplier_search').focus();
+    updateDescriptionField(); // Update description on radio change
 });
 payRadio.addEventListener('change', () => {
-    supplierForm.style.display='none';
-    paymentForm.style.display='block';
-    document.getElementById('payment_supplier_search').focus();
-    updateDescriptionField(); // Update description on radio change
+    supplierForm.style.display='none';
+    paymentForm.style.display='block';
+    document.getElementById('payment_supplier_search').focus();
+    updateDescriptionField(); // Update description on radio change
 });
 
 // --- Enter navigation ---
 const purchaseFields = ['supplier_search','description','total_amount','grn_search'];
 purchaseFields.forEach((id, idx) => {
-    document.getElementById(id).addEventListener('keydown', e=>{
-        if(e.key==='Enter'){
-            e.preventDefault();
-            const next = purchaseFields[idx+1]?document.getElementById(purchaseFields[idx+1]):null;
-            if(next) next.focus();
-            else supplierForm.submit();
-        }
-    });
+    document.getElementById(id).addEventListener('keydown', e=>{
+        if(e.key==='Enter'){
+            e.preventDefault();
+            const next = purchaseFields[idx+1]?document.getElementById(purchaseFields[idx+1]):null;
+            if(next) next.focus();
+            else supplierForm.submit();
+        }
+    });
 });
-// Updated payment fields to include the new description
-const paymentFields = ['payment_supplier_search', 'payment_description', 'payment_amount'];
+// MODIFIED: Updated payment fields to include the new GRN search field
+const paymentFields = ['payment_supplier_search', 'payment_description', 'payment_grn_search', 'payment_amount'];
 paymentFields.forEach((id, idx)=>{
-    document.getElementById(id).addEventListener('keydown', e=>{
-        if(e.key==='Enter'){
-            e.preventDefault();
-            const next = paymentFields[idx+1]?document.getElementById(paymentFields[idx+1]):null;
-            if(next) next.focus();
-            else paymentForm.submit();
-        }
-    });
+    document.getElementById(id).addEventListener('keydown', e=>{
+        if(e.key==='Enter'){
+            e.preventDefault();
+            const next = paymentFields[idx+1]?document.getElementById(paymentFields[idx+1]):null;
+            if(next) next.focus();
+            else paymentForm.submit();
+        }
+    });
 });
 
 // --- Live search ---
-function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, isPurchase=false){
-    const input=document.getElementById(inputId);
-    const dropdown=document.getElementById(dropdownId);
-    const hidden=document.getElementById(hiddenCodeId);
-    const balanceDiv=balanceDisplayId?document.getElementById(balanceDisplayId):null;
-    const balanceSpan=balanceDiv?balanceDiv.querySelector('span'):null;
-    const hiddenName=isPurchase?document.getElementById('supplier_name'):null;
+function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, isPurchase=false, isPaymentGrn=false){ // MODIFIED: Added isPaymentGrn flag
+    const input=document.getElementById(inputId);
+    const dropdown=document.getElementById(dropdownId);
+    const hidden=document.getElementById(hiddenCodeId);
+    const balanceDiv=balanceDisplayId?document.getElementById(balanceDisplayId):null;
+    const balanceSpan=balanceDiv?balanceDiv.querySelector('span'):null;
+    const hiddenName=isPurchase?document.getElementById('supplier_name'):null;
 
-    const updateBalance=(b)=>{
-        if(balanceSpan){
-            balanceSpan.textContent=b;
-            balanceSpan.classList.remove('text-success','text-danger');
-            const n=parseFloat(b.replace(/,/g,''));
-            balanceSpan.classList.add(n>0?'text-danger':'text-success');
-            balanceDiv.style.display=b!=='0.00'?'block':'none';
-        }
-    };
+    const updateBalance=(b)=>{
+        if(balanceSpan){
+            balanceSpan.textContent=b;
+            balanceSpan.classList.remove('text-success','text-danger');
+            const n=parseFloat(b.replace(/,/g,''));
+            balanceSpan.classList.add(n>0?'text-danger':'text-success');
+            balanceDiv.style.display=b!=='0.00'?'block':'none';
+        }
+    };
 
-    input.addEventListener('input', ()=>{
-        const f=input.value.toUpperCase().trim();
-        let visible=0;
-        dropdown.querySelectorAll('button').forEach(btn=>{
-            const t=btn.textContent.toUpperCase();
-            const match=t.includes(f);
-            btn.style.display=match?'block':'none';
-            if(match) visible++;
-        });
-        dropdown.style.display=visible?'block':'none';
-        if(f===''){ hidden.value=''; if(isPurchase) document.getElementById('supplier_id').value=''; if(hiddenName) hiddenName.value=''; updateBalance('0.00'); }
-    });
+    input.addEventListener('input', ()=>{
+        const f=input.value.toUpperCase().trim();
+        let visible=0;
+        dropdown.querySelectorAll('button').forEach(btn=>{
+            const t=btn.textContent.toUpperCase();
+            const match=t.includes(f);
+            btn.style.display=match?'block':'none';
+            if(match) visible++;
+        });
+        dropdown.style.display=visible?'block':'none';
+        
+        if(f===''){ 
+            hidden.value=''; 
+            if(isPurchase) document.getElementById('supplier_id').value=''; 
+            if(hiddenName) hiddenName.value=''; 
+            if(!isPaymentGrn) updateBalance('0.00'); // Prevent balance clear for GRN searches
+        }
+    });
 
-    dropdown.addEventListener('click', e=>{
-        if(e.target.matches('button')){
-            const btn=e.target;
-            const id=btn.getAttribute('data-id');
-            const code=btn.getAttribute('data-code');
-            const balance=btn.getAttribute('data-balance')||'0.00';
-            const name=btn.getAttribute('data-name');
+    dropdown.addEventListener('click', e=>{
+        if(e.target.matches('button')){
+            const btn=e.target;
+            const id=btn.getAttribute('data-id');
+            const code=btn.getAttribute('data-code');
+            const balance=btn.getAttribute('data-balance')||'0.00';
+            const name=btn.getAttribute('data-name');
 
-            if(inputId==='grn_search'){ input.value=btn.textContent.trim(); hidden.value=id; dropdown.style.display='none'; document.getElementById('submitButton').focus(); return; }
+            // Handle GRN selection for both forms
+            if(inputId==='grn_search'||inputId==='payment_grn_search'){ // MODIFIED: Added payment_grn_search
+                input.value=btn.textContent.trim(); 
+                hidden.value=id; 
+                dropdown.style.display='none'; 
+                // Direct focus to the next logical field
+                if(inputId==='grn_search') document.getElementById('submitButton').focus();
+                else if(inputId==='payment_grn_search') document.getElementById('payment_amount').focus(); // MODIFIED
+                return; 
+            }
 
-            input.value=`${code} ${name?'— '+name:''}`.trim();
-            hidden.value=code;
-            if(isPurchase){ document.getElementById('supplier_id').value=id; if(hiddenName) hiddenName.value=name||''; }
-            updateBalance(balance);
-            dropdown.style.display='none';
-            // Update focus for payment form
-            if(isPurchase) document.getElementById('description').focus(); else document.getElementById('payment_description').focus();
-        }
-    });
-    document.addEventListener('click', e=>{ if(!dropdown.contains(e.target)&&e.target!==input) dropdown.style.display='none'; });
+            // Handle Supplier selection
+            input.value=`${code} ${name?'— '+name:''}`.trim();
+            hidden.value=code;
+            if(isPurchase){ document.getElementById('supplier_id').value=id; if(hiddenName) hiddenName.value=name||''; }
+            updateBalance(balance);
+            dropdown.style.display='none';
+            // Update focus
+            if(isPurchase) document.getElementById('description').focus(); else document.getElementById('payment_description').focus();
+        }
+    });
+    document.addEventListener('click', e=>{ if(!dropdown.contains(e.target)&&e.target!==input) dropdown.style.display='none'; });
 }
 
 // --- Initialize live searches ---
 setupLiveSearch('supplier_search','supplierDropdown','supplier_code','purchaseBalanceDisplay',true);
 setupLiveSearch('grn_search','grnDropdown','grn_id');
 setupLiveSearch('payment_supplier_search','paymentSupplierDropdown','payment_supplier_code','paymentBalanceDisplay');
+setupLiveSearch('payment_grn_search','paymentGrnDropdown','payment_grn_id', null, false, true); // NEW: Initialized payment GRN search
 
 // --- Transaction history modal & Edit functions ---
 document.addEventListener('DOMContentLoaded', ()=>{
-    const modalEl=document.getElementById('transactionModal');
-    const tableBody=document.getElementById('transactionHistoryBody');
-    let transactionModal;
-    if(typeof bootstrap!=='undefined' && bootstrap.Modal) transactionModal=new bootstrap.Modal(modalEl);
-    else if(typeof $!=='undefined' && $.fn.modal) transactionModal=$(modalEl);
+    const modalEl=document.getElementById('transactionModal');
+    const tableBody=document.getElementById('transactionHistoryBody');
+    // NEW: Reference to the new table body
+    const grnSummaryBody=document.getElementById('grnPaymentSummaryBody'); 
 
-    document.querySelector('.table-bordered tbody').addEventListener('click', e=>{
-        // History
-        if(e.target.classList.contains('view-history-link')){
-            const code=e.target.getAttribute('data-supplier-code');
-            fetchTransactionHistory(code);
-        }
-        // Inline Edit
-        if(e.target.classList.contains('editButton')){
-            const tr=e.target.closest('tr');
-            const data=JSON.parse(tr.getAttribute('data-transaction').replace(/&quot;/g,'"'));
-            populateFormForEdit(data);
-        }
-    });
+    let transactionModal;
+    if(typeof bootstrap!=='undefined' && bootstrap.Modal) transactionModal=new bootstrap.Modal(modalEl);
+    else if(typeof $!=='undefined' && $.fn.modal) transactionModal=$(modalEl);
 
-    function fetchTransactionHistory(code){
-        // The API call is to a route that was updated in the previous turn to include supplier details
-        const csrf=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        const url="{{ route('suppliers2.transactions') }}?supplier_code="+code;
-        tableBody.innerHTML='<tr><td colspan="6" class="text-center">Loading transactions...</td></tr>';
+    document.querySelector('.table-bordered tbody').addEventListener('click', e=>{
+        // History
+        if(e.target.classList.contains('view-history-link')){
+            const code=e.target.getAttribute('data-supplier-code');
+            fetchTransactionHistory(code);
+        }
+        // Inline Edit
+        if(e.target.classList.contains('editButton')){
+            const tr=e.target.closest('tr');
+            const data=JSON.parse(tr.getAttribute('data-transaction').replace(/&quot;/g,'"'));
+            populateFormForEdit(data);
+        }
+    });
 
-        fetch(url,{ headers:{'X-CSRF-TOKEN':csrf,'X-Requested-With':'XMLHttpRequest','Accept':'application/json'} })
-            .then(r=>r.json())
-            .then(data=>{
-                // Populate supplier details in modal header
-                document.getElementById('modal_supplier_code').textContent=data.supplier_code;
-                document.getElementById('modal_supplier_name').textContent=data.supplier_name;
-                // NEW Supplier details from the updated controller
-                document.getElementById('modal_supplier_email').textContent=data.supplier_email || 'N/A';
-                document.getElementById('modal_supplier_phone').textContent=data.supplier_phone || 'N/A';
-                document.getElementById('modal_supplier_address').textContent=data.supplier_address || 'N/A';
+    function fetchTransactionHistory(code){
+        // The API call is to a route that was updated in the previous turn to include supplier details
+        const csrf=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const url="{{ route('suppliers2.transactions') }}?supplier_code="+code;
+        tableBody.innerHTML='<tr><td colspan="6" class="text-center">Loading transactions...</td></tr>';
+        grnSummaryBody.innerHTML='<tr><td colspan="5" class="text-center">Loading GRN payments...</td></tr>'; // NEW loading
 
-                document.getElementById('modal_total_purchases').textContent=data.total_purchases;
-                document.getElementById('modal_total_payments').textContent=data.total_payments;
-                const bEl=document.getElementById('modal_remaining_balance');
-                bEl.textContent=data.remaining_balance;
-                bEl.classList.remove('text-success','text-danger');
-                bEl.classList.add(parseFloat(data.remaining_balance.replace(/,/g,''))>0?'text-danger':'text-success');
+        fetch(url,{ headers:{'X-CSRF-TOKEN':csrf,'X-Requested-With':'XMLHttpRequest','Accept':'application/json'} })
+            .then(r=>r.json())
+            .then(data=>{
+                // Populate supplier details in modal header
+                document.getElementById('modal_supplier_code').textContent=data.supplier_code;
+                document.getElementById('modal_supplier_name').textContent=data.supplier_name;
+                // NEW Supplier details from the updated controller
+                document.getElementById('modal_supplier_email').textContent=data.supplier_email || 'N/A';
+                document.getElementById('modal_supplier_phone').textContent=data.supplier_phone || 'N/A';
+                document.getElementById('modal_supplier_address').textContent=data.supplier_address || 'N/A';
+
+                document.getElementById('modal_total_purchases').textContent=data.total_purchases;
+                document.getElementById('modal_total_payments').textContent=data.total_payments;
+                const bEl=document.getElementById('modal_remaining_balance');
+                bEl.textContent=data.remaining_balance;
+                bEl.classList.remove('text-success','text-danger');
+                bEl.classList.add(parseFloat(data.remaining_balance.replace(/,/g,''))>0?'text-danger':'text-success');
+                
+                // 1. Populate All Transactions Table
                 tableBody.innerHTML='';
-
-                if(data.history && data.history.length>0){
-                    data.history.forEach(item=>{
-                        const row=`<tr>
-                            <td>${item.date}</td>
-                            <td>${item.type}</td>
-                            <td>${item.description}</td>
-                            <td>${item.grn_no}</td>
-                            <td class="${item.class}">${item.amount}</td>
-                            <td>${item.balance}</td>
-                        </tr>`;
-                        tableBody.insertAdjacentHTML('beforeend',row);
-                    });
-                } else tableBody.innerHTML='<tr><td colspan="6" class="text-center text-muted">No transactions found.</td></tr>';
-                
-                if(transactionModal.show) transactionModal.show();
-                else if(transactionModal.modal) transactionModal.modal('show');
-            }).catch(err=>{console.error(err); tableBody.innerHTML='<tr><td colspan="6" class="text-center text-danger">Error loading data.</td></tr>';});
-    }
-
-    // --- Populate form for edit ---
-    const cancelEditBtn=document.getElementById('cancelEditButton');
-    function populateFormForEdit(data){
-        addRadio.checked=true; payRadio.checked=false;
-        supplierForm.style.display='block'; paymentForm.style.display='none';
-        document.getElementById('transaction_id').value=data.id;
-        document.getElementById('supplier_search').value=`${data.supplier_code} — ${data.supplier_name}`;
-        document.getElementById('supplier_id').value=data.existing_supplier_id||'';
-        document.getElementById('supplier_code').value=data.supplier_code;
-        document.getElementById('supplier_name').value=data.supplier_name;
-        document.getElementById('description').value=data.description;
-        document.getElementById('total_amount').value=data.total_amount;
-        document.getElementById('grn_search').value=data.grn?.code||'';
-        document.getElementById('grn_id').value=data.grn_id||'';
-        document.getElementById('submitButton').textContent='Update Purchase';
-        cancelEditBtn.style.display='inline-block';
-        cancelEditBtn.onclick=()=>{ window.location.reload(); }
-    }
-    
-    // --- NEW: Table Search Filter ---
-    const searchInput = document.getElementById('supplierTableSearch');
-    const tableRows = document.getElementById('supplierTableBody').getElementsByTagName('tr');
-
-    searchInput.addEventListener('keyup', function() {
-        const filter = searchInput.value.toUpperCase();
-        let found = false;
-
-        // Iterate through all table rows (excluding the empty message if present)
-        for (let i = 0; i < tableRows.length; i++) {
-            const row = tableRows[i];
-            
-            // Skip the 'No transactions found' row if it exists
-            if (row.cells.length < 8) { 
-                 row.style.display = 'none';
-                 continue;
-            }
-
-            // Supplier Code is in the 3rd column (index 2)
-            const codeCell = row.cells[2]; 
-            const codeText = codeCell.textContent || codeCell.innerText;
-
-            if (codeText.toUpperCase().indexOf(filter) > -1) {
-                row.style.display = ''; // Show row
-                found = true;
-            } else {
-                row.style.display = 'none'; // Hide row
-            }
-        }
-        
-        // This handles showing a 'no results' message if the table was not empty initially
-        if (filter !== '' && !found && tableRows.length > 0) {
-            // A more robust solution for 'no results' is usually desired,
-            // but for simplicity, we'll ensure the existing 'no transactions found' row stays hidden
-            // and assume users will see no rows if nothing matches.
-        }
+               if (data.history && data.history.length > 0) {
+    data.history.forEach(item => {
+        const row = `
+        <tr style="line-height: 1; padding: 0; margin: 0;">
+            <td style="padding: 2px 6px;">${item.date}</td>
+            <td style="padding: 2px 6px;">${item.type}</td>
+            <td style="padding: 2px 6px;">${item.description}</td>
+            <td style="padding: 2px 6px;">${item.grn_no}</td>
+            <td class="${item.class}" style="padding: 2px 6px;">${item.amount}</td>
+            <td style="padding: 2px 6px;">${item.balance}</td>
+        </tr>`;
+        tableBody.insertAdjacentHTML('beforeend', row);
     });
+} else {
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No transactions found.</td></tr>';
+}
+
+
+                // 2. Populate NEW GRN Payment Summary Table (NEW LOGIC)
+                grnSummaryBody.innerHTML = '';
+                if(data.grn_payment_summary && data.grn_payment_summary.length > 0) {
+                    data.grn_payment_summary.forEach(item => {
+                        const remainingClass = parseFloat(item.remaining.replace(/,/g,'')) > 0 ? 'text-danger' : 'text-success';
+                        const summaryRow = `<tr>
+                            <td>${item.grn_code}</td>
+                            <td class="text-end text-primary">Rs. ${item.grn_total}</td>
+                            <td class="text-end text-success">Rs. ${item.total_paid}</td>
+                            <td class="text-end ${remainingClass}">Rs. ${item.remaining}</td>
+                            <td>${item.last_payment_date}</td>
+                        </tr>`;
+                        grnSummaryBody.insertAdjacentHTML('beforeend', summaryRow);
+                    });
+                } else {
+                    grnSummaryBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No GRN payments recorded.</td></tr>';
+                }
+                
+                if(transactionModal.show) transactionModal.show();
+                else if(transactionModal.modal) transactionModal.modal('show');
+            }).catch(err=>{
+                console.error(err); 
+                tableBody.innerHTML='<tr><td colspan="6" class="text-center text-danger">Error loading data.</td></tr>';
+                grnSummaryBody.innerHTML='<tr><td colspan="5" class="text-center text-danger">Error loading GRN summary data.</td></tr>'; 
+            });
+    }
+
+    // --- Populate form for edit ---
+    const cancelEditBtn=document.getElementById('cancelEditButton');
+    function populateFormForEdit(data){
+        addRadio.checked=true; payRadio.checked=false;
+        supplierForm.style.display='block'; paymentForm.style.display='none';
+        document.getElementById('transaction_id').value=data.id;
+        document.getElementById('supplier_search').value=`${data.supplier_code} — ${data.supplier_name}`;
+        document.getElementById('supplier_id').value=data.existing_supplier_id||'';
+        document.getElementById('supplier_code').value=data.supplier_code;
+        document.getElementById('supplier_name').value=data.supplier_name;
+        document.getElementById('description').value=data.description;
+        document.getElementById('total_amount').value=data.total_amount;
+        document.getElementById('grn_search').value=data.grn?.code||'';
+        document.getElementById('grn_id').value=data.grn_id||'';
+        document.getElementById('submitButton').textContent='Update Purchase';
+        cancelEditBtn.style.display='inline-block';
+        cancelEditBtn.onclick=()=>{ window.location.reload(); }
+    }
+    
+    // --- NEW: Table Search Filter ---
+    const searchInput = document.getElementById('supplierTableSearch');
+    const tableRows = document.getElementById('supplierTableBody').getElementsByTagName('tr');
+
+    searchInput.addEventListener('keyup', function() {
+        const filter = searchInput.value.toUpperCase();
+        let found = false;
+
+        // Iterate through all table rows (excluding the empty message if present)
+        for (let i = 0; i < tableRows.length; i++) {
+            const row = tableRows[i];
+            
+            // Skip the 'No transactions found' row if it exists
+            if (row.cells.length < 8) { 
+                 row.style.display = 'none';
+                 continue;
+            }
+
+            // Supplier Code is in the 3rd column (index 2)
+            const codeCell = row.cells[2]; 
+            const codeText = codeCell.textContent || codeCell.innerText;
+
+            if (codeText.toUpperCase().indexOf(filter) > -1) {
+                row.style.display = ''; // Show row
+                found = true;
+            } else {
+                row.style.display = 'none'; // Hide row
+            }
+        }
+        
+        // This handles showing a 'no results' message if the table was not empty initially
+        if (filter !== '' && !found && tableRows.length > 0) {
+            // A more robust solution for 'no results' is usually desired,
+            // but for simplicity, we'll ensure the existing 'no transactions found' row stays hidden
+            // and assume users will see no rows if nothing matches.
+        }
+    });
 });
 </script>
 <script>
-    // --- Auto-fill description based on radio selection ---
+    // --- Auto-fill description based on radio selection ---
 function updateDescriptionField() {
-    const purchaseDescriptionInput = document.getElementById('description');
-    const paymentDescriptionInput = document.getElementById('payment_description');
-    
-    if (addRadio.checked) {
-        purchaseDescriptionInput.value = 'Purchase from Supplier';
-        paymentDescriptionInput.value = ''; // Clear payment description when switching to purchase
-    } else if (payRadio.checked) {
-        paymentDescriptionInput.value = 'Payment to Supplier'; // Updated for clarity
-        purchaseDescriptionInput.value = ''; // Clear purchase description when switching to payment
-    }
+    const purchaseDescriptionInput = document.getElementById('description');
+    const paymentDescriptionInput = document.getElementById('payment_description');
+    
+    if (addRadio.checked) {
+        purchaseDescriptionInput.value = 'Purchase from Supplier';
+        paymentDescriptionInput.value = ''; // Clear payment description when switching to purchase
+    } else if (payRadio.checked) {
+        paymentDescriptionInput.value = 'Payment to Supplier'; // Updated for clarity
+        purchaseDescriptionInput.value = ''; // Clear purchase description when switching to payment
+    }
 }
 
 // Trigger when radio buttons change

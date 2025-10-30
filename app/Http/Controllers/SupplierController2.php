@@ -46,169 +46,200 @@ class SupplierController2 extends Controller
     }
 
     /**
-     * UPDATED: Fetches transactions and supplier details for the modal.
+     * UPDATED: Fetches transactions, supplier details, and GRN payment summary for the modal.
      */
     public function getSupplierTransactions(Request $request)
     {
         $request->validate(['supplier_code' => 'required|string']);
-
         $supplierCode = $request->input('supplier_code');
 
-        // NEW: Fetch supplier details from the main Supplier model
-        $supplierDetails = Supplier::where('code', $supplierCode)->first(['name', 'email', 'phone', 'address']);
-        
-        $supplierName = $supplierDetails->name ?? 'N/A';
-        $supplierEmail = $supplierDetails->email ?? 'N/A';
-        $supplierPhone = $supplierDetails->phone ?? 'N/A';
-        $supplierAddress = $supplierDetails->address ?? 'N/A';
+        // Fetch supplier info
+        $supplier = Supplier::where('code', $supplierCode)->first();
 
-
-        // Fetch all transactions for the given supplier code
-        $transactions = Supplier2::where('supplier_code', $supplierCode)
-            ->with('grn')
-            ->orderBy('created_at', 'asc') // Order by time for history
+        // Fetch all transactions for that supplier
+        $transactions = Supplier2::with('grn')
+            ->where('supplier_code', $supplierCode)
+            ->orderBy('date', 'asc')
             ->get();
 
-        if ($transactions->isEmpty()) {
-            return response()->json([
-                'supplier_code' => $supplierCode,
-                'supplier_name' => $supplierName,
-                // NEW: Supplier details for the modal
-                'supplier_email' => $supplierEmail,
-                'supplier_phone' => $supplierPhone,
-                'supplier_address' => $supplierAddress,
-                
-                'total_purchases' => number_format(0, 2),
-                'total_payments' => number_format(0, 2),
-                'remaining_balance' => number_format(0, 2),
-                'history' => [],
-            ]);
-        }
+        // Calculate totals
+        $totalPurchases = $transactions->where('total_amount', '>', 0)->sum('total_amount');
+        $totalPayments  = abs($transactions->where('total_amount', '<', 0)->sum('total_amount'));
+        $remainingBalance = $totalPurchases - $totalPayments;
 
-        // Calculate the running balance and separate purchases/payments
+        // Running balance calculation for history table
         $runningBalance = 0;
-        $totalPurchases = 0;
-        $totalPayments = 0;
-        $history = [];
 
-        foreach ($transactions as $transaction) {
-            $amount = $transaction->total_amount;
-            // Check if it's a payment, assuming payment transactions have negative amount 
-            // and the description is either 'Payment' or similar (based on your 'payment' method logic)
-            $isPayment = $amount < 0 || str_contains(strtolower($transaction->description), 'payment');
+        $history = $transactions->map(function ($txn) use (&$runningBalance) {
+            $type = $txn->total_amount >= 0 ? 'Purchase' : 'Payment';
+            $amountClass = $txn->total_amount >= 0 ? 'text-success text-end' : 'text-danger text-end';
 
-            if ($isPayment) {
-                // Payment transactions are stored as negative in total_amount
-                $totalPayments += abs($amount);
-            } else {
-                // Purchase/GRN transactions are stored as positive
-                $totalPurchases += $amount;
+            // Update running balance
+            $runningBalance += $txn->total_amount;
+
+            // Default GRN info
+            $grnNo = $txn->grn->code ?? '-';
+            $relatedTotal = null;
+            if (stripos($txn->description, 'Payment to Supplier') !== false && $txn->grn_id) {
+                $grn = GrnEntry::find($txn->grn_id);
+                if ($grn) {
+                    $relatedTotal = number_format($grn->total_grn, 2);
+                    $grnNo = $grn->code ;
+                }
             }
 
-            $runningBalance += $amount;
-
-            $history[] = [
-                'date' => $transaction->created_at->format('Y-m-d H:i'),
-                'type' => $isPayment ? 'Payment' : 'Purchase',
-                'description' => $transaction->description,
-                'grn_no' => $transaction->grn->code ?? '-',
-                'amount' => number_format($amount, 2),
-                'balance' => number_format($runningBalance, 2),
-                'class' => $isPayment ? 'text-danger' : 'text-success',
+            return [
+                'date'          => $txn->date,
+                'type'          => $type,
+                'description'   => $txn->description ?? '-',
+                'grn_no'        => $grnNo,
+                'amount'        => number_format(abs($txn->total_amount), 2),
+                'balance'       => number_format($runningBalance, 2),
+                'class'         => $amountClass,
             ];
+        });
+
+        // 🆕 NEW LOGIC: Calculate GRN Payment Breakdown Summary
+        // 1. Get all GRN entries for this supplier (Purchases)
+        $grnEntries = Supplier2::with('grn')
+            ->where('supplier_code', $supplierCode)
+            ->where('total_amount', '>', 0) // Only look at purchase transactions
+            ->whereNotNull('grn_id')
+            ->get()
+            ->keyBy('grn_id'); // Group by grn_id
+
+        $grnSummary = [];
+        
+        foreach ($grnEntries as $grnId => $purchaseTxn) {
+            // Find the full GRN details
+            $grn = $purchaseTxn->grn;
+
+            if ($grn) {
+                // 2. Calculate total payments against this specific GRN
+                $totalPaid = Supplier2::where('supplier_code', $supplierCode)
+                    ->where('grn_id', $grnId)
+                    ->where('total_amount', '<', 0) // Only payments (negative amounts)
+                    ->where('description', 'LIKE', '%Payment to Supplier%') // Optional: Filter for payment descriptions
+                    ->sum('total_amount');
+                
+                // 3. Find the date of the last payment against this GRN
+                $lastPaymentDate = Supplier2::where('supplier_code', $supplierCode)
+                    ->where('grn_id', $grnId)
+                    ->where('total_amount', '<', 0)
+                    ->where('description', 'LIKE', '%Payment to Supplier%')
+                    ->latest('date')
+                    ->value('date');
+
+                $grnTotal = $purchaseTxn->total_amount;
+                $totalPaidAbs = abs($totalPaid); // Total paid is stored as negative
+                $remaining = $grnTotal - $totalPaidAbs;
+                
+                // Add to summary array
+                $grnSummary[] = [
+                    'grn_code'          => $grn->code,
+                    'grn_total'         => number_format($grnTotal, 2),
+                    'total_paid'        => number_format($totalPaidAbs, 2),
+                    'remaining'         => number_format($remaining, 2),
+                    'last_payment_date' => $lastPaymentDate ?? 'N/A',
+                ];
+            }
         }
+        // -------------------------------------------------------------
 
         return response()->json([
-            'supplier_code' => $supplierCode,
-            'supplier_name' => $supplierName, // Use name from Supplier model
-            // NEW: Supplier details for the modal
-            'supplier_email' => $supplierEmail,
-            'supplier_phone' => $supplierPhone,
-            'supplier_address' => $supplierAddress,
-
-            'total_purchases' => number_format($totalPurchases, 2),
-            'total_payments' => number_format($totalPayments, 2),
-            'remaining_balance' => number_format($runningBalance, 2),
-            'history' => $history,
+            'supplier_code'       => $supplierCode,
+            'supplier_name'       => $supplier->name ?? 'Unknown',
+            'supplier_email'      => $supplier->email ?? null,
+            'supplier_phone'      => $supplier->phone ?? null,
+            'supplier_address'    => $supplier->address ?? null,
+            'total_purchases'     => number_format($totalPurchases, 2),
+            'total_payments'      => number_format($totalPayments, 2),
+            'remaining_balance'   => number_format($remainingBalance, 2),
+            'history'             => $history,
+            'grn_payment_summary' => $grnSummary, // 🆕 NEW DATA FOR THE BREAKDOWN TABLE
         ]);
     }
 
-   public function store(Request $request)
-{
-    $request->validate([
-        'supplier_code' => 'required|string',
-        'supplier_name' => 'nullable|string',
-        'grn_id' => 'nullable|exists:grn_entries,id',
-        'total_amount' => 'required|numeric',
-        'description' => 'nullable|string|max:500',
-        'transaction_id' => 'nullable|exists:supplier2s,id', // for edit
-    ]);
 
-    try {
-        // ✅ Get current date from Setting
-        $setting = \App\Models\Setting::first();
-        $currentDate = $setting ? $setting->value : now();
+    public function store(Request $request)
+    {
+        // ... (Keep existing store method logic) ...
+        $request->validate([
+            'supplier_code' => 'required|string',
+            'supplier_name' => 'nullable|string',
+            'grn_id' => 'nullable|exists:grn_entries,id',
+            'total_amount' => 'required|numeric',
+            'description' => 'nullable|string|max:500',
+            'transaction_id' => 'nullable|exists:supplier2s,id', // for edit
+        ]);
 
-        if ($request->transaction_id) {
-            // --- Editing an existing transaction by transaction_id ---
-            $transaction = Supplier2::find($request->transaction_id);
-            $transaction->update([
-                'supplier_code' => $request->supplier_code,
-                'supplier_name' => $request->supplier_name,
-                'grn_id' => $request->grn_id,
-                'total_amount' => $request->total_amount, // replace old amount
-                'description' => $request->description ?? ('Updated Purchase / GRN ' . $request->grn_id),
-                'date' => $currentDate,
-            ]);
+        try {
+            // ✅ Get current date from Setting
+            $setting = \App\Models\Setting::first();
+            $currentDate = $setting ? $setting->value : now();
 
-            return redirect()
-                ->route('suppliers2.index')
-                ->with('success', 'Transaction updated successfully.');
-        } else {
-            // --- Check if a supplier record with the same code exists ---
-            $existing = Supplier2::where('supplier_code', $request->supplier_code)->first();
-
-            if ($existing) {
-                // Update existing record: add new total_amount to old total_amount
-                $existing->update([
-                    'supplier_name' => $request->supplier_name,
-                    'grn_id' => $request->grn_id,
-                    'total_amount' => $existing->total_amount + $request->total_amount,
-                    'description' => $request->description ?? ('Purchase / GRN ' . $request->grn_id),
-                    'date' => $currentDate,
-                ]);
-
-                return redirect()
-                    ->route('suppliers2.index')
-                    ->with('success', 'Existing supplier record updated with new amount.');
-            } else {
-                // --- Create new supplier record if no existing record ---
-                Supplier2::create([
+            if ($request->transaction_id) {
+                // --- Editing an existing transaction by transaction_id ---
+                $transaction = Supplier2::find($request->transaction_id);
+                $transaction->update([
                     'supplier_code' => $request->supplier_code,
                     'supplier_name' => $request->supplier_name,
                     'grn_id' => $request->grn_id,
-                    'total_amount' => $request->total_amount,
-                    'description' => $request->description ?? ('Purchase / GRN ' . $request->grn_id),
+                    'total_amount' => $request->total_amount, // replace old amount
+                    'description' => $request->description ?? ('Updated Purchase / GRN ' . $request->grn_id),
                     'date' => $currentDate,
                 ]);
 
                 return redirect()
                     ->route('suppliers2.index')
-                    ->with('success', 'New supplier purchase recorded successfully.');
-            }
-        }
-    } catch (\Exception $e) {
-        \Log::error('Failed to store supplier purchase transaction', [
-            'error' => $e->getMessage(),
-            'request_data' => $request->all(),
-        ]);
+                    ->with('success', 'Transaction updated successfully.');
+            } else {
+                // --- Check if a record exists with SAME supplier_code and SAME grn_id ---
+                $existing = Supplier2::where('supplier_code', $request->supplier_code)
+                    ->where('grn_id', $request->grn_id)
+                    ->where('total_amount', '>', 0) // Only match against a previous purchase record
+                    ->first();
 
-        return redirect()
-            ->back()
-            ->withInput()
-            ->with('error', 'Failed to record purchase transaction. Check logs for details.');
+                if ($existing) {
+                    // ✅ Update only that matching record
+                    $existing->update([
+                        'supplier_name' => $request->supplier_name,
+                        'total_amount' => $existing->total_amount + $request->total_amount,
+                        'description' => $request->description ?? ('Updated Purchase / GRN ' . $request->grn_id),
+                        'date' => $currentDate,
+                    ]);
+
+                    return redirect()
+                        ->route('suppliers2.index')
+                        ->with('success', 'Existing record (same supplier & GRN) updated successfully.');
+                } else {
+                    // 🆕 Create new record if no match for same supplier_code + grn_id
+                    Supplier2::create([
+                        'supplier_code' => $request->supplier_code,
+                        'supplier_name' => $request->supplier_name,
+                        'grn_id' => $request->grn_id,
+                        'total_amount' => $request->total_amount,
+                        'description' => $request->description ?? ('Purchase / GRN ' . $request->grn_id),
+                        'date' => $currentDate,
+                    ]);
+
+                    return redirect()
+                        ->route('suppliers2.index')
+                        ->with('success', 'New supplier purchase recorded successfully.');
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to store supplier purchase transaction', [
+                'error' => $e->getMessage(),
+                'request_data' => $request->all(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to record purchase transaction. Check logs for details.');
+        }
     }
-}
 
 
     /**
@@ -220,7 +251,8 @@ class SupplierController2 extends Controller
         $request->validate([
             'supplier_code' => 'required|string',
             'payment_amount' => 'required|numeric|min:0.01',
-            'description' => 'nullable|string|max:500', // NEW VALIDATION
+            'description' => 'nullable|string|max:500', 
+            'grn_id' => 'nullable|integer', // NEW VALIDATION: GRN is optional
         ]);
 
         try {
@@ -228,16 +260,22 @@ class SupplierController2 extends Controller
             $supplier = Supplier::where('code', $request->supplier_code)->first();
             
             if (!$supplier) {
-                 // Fallback to Supplier2 if not found in Supplier (for supplier_name)
-                 $sampleSupplier2 = Supplier2::where('supplier_code', $request->supplier_code)->first();
-                 if (!$sampleSupplier2) {
-                     return redirect()->back()->with('error', 'Supplier not found for payment processing.');
-                 }
-                 $supplierName = $sampleSupplier2->supplier_name;
+                // Fallback to Supplier2 if not found in Supplier (for supplier_name)
+                $sampleSupplier2 = Supplier2::where('supplier_code', $request->supplier_code)->first();
+                if (!$sampleSupplier2) {
+                    return redirect()->back()->with('error', 'Supplier not found for payment processing.');
+                }
+                $supplierName = $sampleSupplier2->supplier_name;
             } else {
                 $supplierName = $supplier->name;
             }
             
+            // Use the GRN ID from the request, default to null if it's not present (empty string)
+            $grnId = $request->input('grn_id');
+            if (empty($grnId)) {
+                $grnId = null;
+            }
+
             // ✅ Get the current value from Setting model's 'value' column
             $setting = \App\Models\Setting::first();
             $currentValue = $setting ? $setting->value : null;
@@ -246,9 +284,9 @@ class SupplierController2 extends Controller
             Supplier2::create([
                 'supplier_code' => $request->supplier_code,
                 'supplier_name' => $supplierName,
-                'grn_id' => null, // Payments aren't linked to GRNs
+                'grn_id' => $grnId, // UPDATED: Pass the optional GRN ID
                 'total_amount' => -abs($request->payment_amount), // Always store as NEGATIVE amount
-                'description' => $request->description ?? 'Payment to Supplier', // NEW: Use the description from the form
+                'description' => $request->description ?? 'Payment to Supplier', // Use the description from the form
                 'date' => $currentValue, // ✅ Store the Setting value in 'date' column
             ]);
 
