@@ -94,6 +94,7 @@ Route::get('/grn-report', [ReportController::class, 'grnReport'])->name('grn.rep
 Route::get('/returns-report', [ReportController::class, 'returnsReport']) ->name('returns.report');
 Route::get('items/export/excel', [ReportController::class, 'exportItemsExcel'])->name('items.export.excel');
 Route::get('items/export/pdf', [ReportController::class, 'exportItemsPdf'])->name('items.export.pdf');
+Route::get('/supplier-report', [ReportController::class, 'supplierpaymentreport'])->name('supplier.report');
 // Customer loans
 Route::get('/customers/{id}/loans-total', [CustomersLoanController::class, 'getTotalLoanAmount']);
 Route::post('/get-loan-amount', [SalesEntryController::class, 'getLoanAmount'])->name('get.loan.amount');

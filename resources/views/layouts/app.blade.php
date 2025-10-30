@@ -16,6 +16,7 @@
     @stack('styles')
 </head>
 <body>
+   
 
 @include('layouts.partials.header')
 

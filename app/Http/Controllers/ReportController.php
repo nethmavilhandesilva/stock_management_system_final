@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 use Mpdf\Mpdf;
 use App\Models\CustomersLoan;
+use App\Models\Supplier;
 use App\Models\IncomeExpenses;
 use App\Models\SalesHistory;
 use Illuminate\Http\Request;
@@ -2549,6 +2550,29 @@ public function downloadGrnOverviewReport2(Request $request)
 
     return view('dashboard.reports.income_expenses', compact('reportData', 'totalDr', 'totalCr', 'startDate', 'endDate'));
 }
+  public function supplierpaymentreport()
+    {
+        $suppliers = Supplier::with('transactions')->get()->map(function ($supplier) {
+            $transactions = $supplier->transactions;
+
+            $totalPurchases = $transactions->where('total_amount', '>', 0)->sum('total_amount');
+            $totalPayments  = abs($transactions->where('total_amount', '<', 0)->sum('total_amount'));
+            $remainingBalance = $totalPurchases - $totalPayments;
+
+            return [
+                'code' => $supplier->code,
+                'name' => $supplier->name,
+                'phone' => $supplier->phone,
+                'email' => $supplier->email,
+                'address' => $supplier->address,
+                'total_purchases' => $totalPurchases,
+                'total_payments' => $totalPayments,
+                'balance' => $remainingBalance,
+            ];
+        });
+
+        return view('dashboard.suppliers2.suppliers', compact('suppliers'));
+    }
 
 
 

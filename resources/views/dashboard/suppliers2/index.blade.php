@@ -204,6 +204,9 @@
         @endforelse
         </tbody>
     </table>
+       <a href="{{ route('supplier.report') }}" class="btn btn-dark">
+                       සියලු සැපයුම්කරුවන්ගේ වාර්තාව
+                    </a>
 </div>
 
 {{-- Transaction Modal (Optimized & Organized Layout) --}}
