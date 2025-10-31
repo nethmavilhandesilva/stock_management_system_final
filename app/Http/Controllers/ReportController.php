@@ -2573,15 +2573,16 @@ public function downloadGrnOverviewReport2(Request $request)
 
         return view('dashboard.suppliers2.suppliers', compact('suppliers'));
     }
-  public function grnSalesReport(Request $request)
+ public function grnSalesReport(Request $request)
 {
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
+    $supplierCode = $request->input('supplier_code'); // ✅ New filter
 
     // 🧩 Decide which model to use
     if ($startDate && $endDate) {
         // --- Use SalesHistory when date range is selected ---
-        $salesAggQuery = SalesHistory::select(
+        $salesAggQuery = \App\Models\SalesHistory::select(
                 'code',
                 DB::raw('SUM(weight) AS sold_weight'),
                 DB::raw('SUM(packs) AS sold_packs'),
@@ -2600,8 +2601,8 @@ public function downloadGrnOverviewReport2(Request $request)
             ->groupBy('code');
     }
 
-    // 🧮 Build report
-    $report = GrnEntry::select([
+    // 🧮 Build main query
+    $report = \App\Models\GrnEntry::select([
             'grn_entries.code',
             'grn_entries.item_name',
             DB::raw('COALESCE(s.sold_weight, 0) AS sold_weight'),
@@ -2612,16 +2613,49 @@ public function downloadGrnOverviewReport2(Request $request)
         ])
         ->leftJoinSub($salesAggQuery, 's', function($join) {
             $join->on('s.code', '=', 'grn_entries.code');
-        })
-        ->orderBy('grn_entries.code')
-        ->get();
+        });
+
+    // ✅ Apply supplier code filter (L / A)
+    if (!empty($supplierCode)) {
+        $report->where('grn_entries.supplier_code', $supplierCode);
+    }
+
+    $report = $report->orderBy('grn_entries.code')->get();
 
     return view('dashboard.reports.grn_sales', [
         'report' => $report,
         'start_date' => $startDate,
-        'end_date' => $endDate
+        'end_date' => $endDate,
+        'supplier_code' => $supplierCode
     ]);
 }
+public function fetchSalesByCode(Request $request)
+{
+    $code = $request->input('code'); // clicked GRN code
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+
+    // 1️⃣ Fetch GRN entry info
+    $grn = \App\Models\GrnEntry::where('code', $code)
+        ->first(['code', 'item_name', 'packs', 'weight']);
+
+    // 2️⃣ Fetch sales records
+    if ($startDate && $endDate) {
+        $sales = \App\Models\SalesHistory::where('code', $code)
+            ->whereBetween('Date', [$startDate, $endDate])
+            ->get(['code', 'item_name', 'weight', 'price_per_kg', 'total', 'packs', 'bill_no']);
+    } else {
+        $sales = \App\Models\Sale::where('code', $code)
+            ->get(['code', 'item_name', 'weight', 'price_per_kg', 'total', 'packs', 'bill_no']);
+    }
+
+    return response()->json([
+        'grn' => $grn,
+        'sales' => $sales
+    ]);
+}
+
+
 
 
 

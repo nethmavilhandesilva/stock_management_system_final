@@ -137,6 +137,8 @@ Route::get('/grn/send-email', [ReportController::class, 'sendGrnEmail'])->name('
 Route::get('/loan-report2', [ReportController::class, 'showReport'])->name('loan.report');
 Route::get('/expenses-report', [ReportController::class, 'expensereport'])->name('expenses.report');
 Route::get('/grn-sales-report', [ReportController::class, 'grnSalesReport'])->name('grn.sales.report');
+Route::get('/grn-sales-fetch', [ReportController::class, 'fetchSalesByCode']) ->name('grn.sales.fetch');
+   
 //exports
 Route::get('/sales-adjustment-report/excel', [ReportController::class, 'exportToExcel'])->name('sales-adjustment.export.excel');
 Route::get('/sales-adjustment-report/pdf', [ReportController::class, 'exportToPdf'])->name('sales-adjustment.export.pdf');

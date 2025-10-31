@@ -212,6 +212,7 @@
                             <a class="dropdown-item" href="supplierSelectModal2" data-bs-toggle="modal" data-bs-target="#supplierSelectModal2">
                                සියලු දින අනුව GRN වාර්තාව</a>
                             <a class="dropdown-item" href="{{ route('income.expenses.report') }}">සියලු දින අනුව ආදායම් / වියදම් වාර්තාව</a>
+                             <a class="dropdown-item" href="{{ route('grn.sales.report') }}">  සියලු විකුණුම් අනුව GRN වාර්තාව</a>
                         </div>
                     </div>
 
