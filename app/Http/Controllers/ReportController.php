@@ -2573,6 +2573,56 @@ public function downloadGrnOverviewReport2(Request $request)
 
         return view('dashboard.suppliers2.suppliers', compact('suppliers'));
     }
+  public function grnSalesReport(Request $request)
+{
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+
+    // 🧩 Decide which model to use
+    if ($startDate && $endDate) {
+        // --- Use SalesHistory when date range is selected ---
+        $salesAggQuery = SalesHistory::select(
+                'code',
+                DB::raw('SUM(weight) AS sold_weight'),
+                DB::raw('SUM(packs) AS sold_packs'),
+                DB::raw('SUM(price_per_kg * weight) AS total_cost')
+            )
+            ->whereBetween('Date', [$startDate, $endDate])
+            ->groupBy('code');
+    } else {
+        // --- Use Sale when no date range ---
+        $salesAggQuery = \App\Models\Sale::select(
+                'code',
+                DB::raw('SUM(weight) AS sold_weight'),
+                DB::raw('SUM(packs) AS sold_packs'),
+                DB::raw('SUM(PerKGPrice * weight) AS total_cost')
+            )
+            ->groupBy('code');
+    }
+
+    // 🧮 Build report
+    $report = GrnEntry::select([
+            'grn_entries.code',
+            'grn_entries.item_name',
+            DB::raw('COALESCE(s.sold_weight, 0) AS sold_weight'),
+            DB::raw('COALESCE(s.sold_packs, 0) AS sold_packs'),
+            'grn_entries.SalesKGPrice AS selling_price',
+            DB::raw('COALESCE(s.total_cost, 0) AS total_cost'),
+            DB::raw('COALESCE(grn_entries.SalesKGPrice, 0) * COALESCE(s.sold_weight, 0) AS netsale')
+        ])
+        ->leftJoinSub($salesAggQuery, 's', function($join) {
+            $join->on('s.code', '=', 'grn_entries.code');
+        })
+        ->orderBy('grn_entries.code')
+        ->get();
+
+    return view('dashboard.reports.grn_sales', [
+        'report' => $report,
+        'start_date' => $startDate,
+        'end_date' => $endDate
+    ]);
+}
+
 
 
 
