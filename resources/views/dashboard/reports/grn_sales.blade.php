@@ -60,7 +60,6 @@
     .table-secondary {
         background-color: #f0f0f0 !important;
     }
-
 </style>
 
 <div class="container">
@@ -102,7 +101,7 @@
 
     {{-- GRN Table --}}
     <table class="table table-sm table-bordered" id="grnTable">
-         <thead style="background-color: #cce5ff; color: #004085; font-weight: bold;">
+        <thead style="background-color: #cce5ff; color: #004085; font-weight: bold;">
             <tr>
                 <th>Code / Item</th>
                 <th>Sold Weight</th>
@@ -129,10 +128,84 @@
                 </tr>
             @endforeach
         </tbody>
-    </table>
-</div>
 
-{{-- Modal --}}
+        {{-- Totals row --}}
+        <tfoot class="fw-bold table-secondary">
+            <tr>
+                <td class="text-end">Totals:</td>
+                <td></td>
+                <td></td>
+                <td id="totalSellingPrice">0.00</td>
+                <td id="totalCost">0.00</td>
+                <td id="totalNetSale">0.00</td>
+                <td id="totalProfitLoss">0.00</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    {{-- 💰 Loan Summary Section --}}
+    <div class="card my-4 shadow-sm">
+        <div class="card-header fw-bold bg-light">
+            Loan Summary
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-6 border-end">
+                    <h5 class="card-title text-muted">Today's Loans</h5>
+                    <p class="card-text fs-3 fw-bold text-primary" 
+                       id="todayLoanTotal" 
+                       data-bs-toggle="modal" 
+                       data-bs-target="#loanModal" 
+                       data-type="today" 
+                       style="cursor: pointer; text-decoration: underline;">
+                        {{ number_format(abs($todayLoanTotal), 2) }}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="card-title text-muted">Old Loans</h5>
+                    <p class="card-text fs-3 fw-bold text-danger" 
+                       id="oldLoanTotal" 
+                       data-bs-toggle="modal" 
+                       data-bs-target="#loanModal" 
+                       data-type="old" 
+                       style="cursor: pointer; text-decoration: underline;">
+                        {{ number_format(abs($oldLoanTotal), 2) }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- 💸 NEW: Expense Summary Section --}}
+    <div class="card my-4 shadow-sm">
+        <div class="card-header fw-bold bg-light">
+            Expenses Summary
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                @forelse($expenseCategories as $expense)
+                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                        data-bs-toggle="modal"
+                        data-bs-target="#expenseModal"
+                        data-category="{{ $expense->category }}"
+                        style="cursor: pointer;">
+                        
+                        <span class="text-capitalize">{{ $expense->category }}</span>
+                        
+                        <span class="badge bg-danger rounded-pill fs-6">
+                            {{ number_format(abs($expense->total_amount), 2) }}
+                        </span>
+                    </li>
+                @empty
+                    <li class="list-group-item text-muted">No expenses found for this period.</li>
+                @endforelse
+            </ul>
+        </div>
+    </div>
+
+</div> {{-- End of .container --}}
+
+{{-- Sales Modal --}}
 <div class="modal fade" id="salesModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
@@ -164,16 +237,115 @@
   </div>
 </div>
 
+{{-- 💰 Loan Details Modal --}}
+<div class="modal fade" id="loanModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title" id="loanModalTitle">Loan Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm table-bordered" id="loanDetailsTable">
+          <thead>
+            <tr>
+              <th>Customer Name</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{-- JS will populate this --}}
+            <tr><td colspan="2">Loading...</td></tr>
+          </tbody>
+          <tfoot class="fw-bold table-secondary">
+              <tr>
+                  <td class="text-end">Total:</td>
+                  <td id="loanModalTotal">0.00</td>
+              </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{-- 💸 NEW: Expense Details Modal --}}
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="expenseModalTitle">Expense Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm table-bordered" id="expenseDetailsTable">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{-- JS will populate this --}}
+            <tr><td colspan="2" class="text-center">Loading...</td></tr>
+          </tbody>
+          <tfoot class="fw-bold table-secondary">
+              <tr>
+                  <td class="text-end">Total:</td>
+                  <td id="expenseModalTotal">0.00</td>
+              </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 {{-- JS --}}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-    // --- Code Search ---
     const searchInput = document.getElementById("codeSearch");
     const suggestionsBox = document.getElementById("codeSuggestions");
     const tableRows = document.querySelectorAll("#grnTable tbody tr");
     const codes = Array.from(document.querySelectorAll(".code")).map(td => td.textContent.trim().toUpperCase()).filter((v,i,a)=>a.indexOf(v)===i);
 
+    // --- Calculate totals function ---
+    function calculateTotals() {
+        let totalSelling = 0, totalCost = 0, totalNet = 0, totalProfit = 0;
+
+        document.querySelectorAll("#grnTable tbody tr").forEach(row => {
+            if (row.style.display !== "none") {
+                const sellingPrice = parseFloat(row.children[3].textContent.replace(/,/g, '')) || 0;
+                const cost = parseFloat(row.children[4].textContent.replace(/,/g, '')) || 0;
+                const netSale = parseFloat(row.children[5].textContent.replace(/,/g, '')) || 0;
+                // Corrected profit calculation: it should use the sign from the cell
+                const profitText = row.children[6].textContent.replace(/,/g, '');
+                const isNegative = row.children[6].style.color === 'red';
+                const profitLoss = parseFloat(profitText) * (isNegative ? -1 : 1) || 0;
+
+                totalSelling += sellingPrice;
+                totalCost += cost;
+                totalNet += netSale;
+                totalProfit += profitLoss; // Use the signed value
+            }
+        });
+
+        document.getElementById("totalSellingPrice").textContent = totalSelling.toFixed(2);
+        document.getElementById("totalCost").textContent = totalCost.toFixed(2);
+        document.getElementById("totalNetSale").textContent = totalNet.toFixed(2);
+        
+        // Format total profit/loss with color
+        const totalProfitEl = document.getElementById("totalProfitLoss");
+        totalProfitEl.textContent = Math.abs(totalProfit).toFixed(2);
+        totalProfitEl.style.color = totalProfit < 0 ? 'red' : 'green';
+    }
+
+    // Initial totals on page load
+    calculateTotals();
+
+    // --- Code Search ---
     searchInput.addEventListener("input", () => {
         const searchValue = searchInput.value.trim().toUpperCase();
         const matches = codes.filter(code => code.startsWith(searchValue));
@@ -187,12 +359,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     searchInput.value = code;
                     suggestionsBox.style.display = "none";
                     filterTable(code);
+                    calculateTotals(); // Recalculate after filtering
                 };
                 suggestionsBox.appendChild(li);
             });
             suggestionsBox.style.display = "block";
-        } else suggestionsBox.style.display = "none";
+        } else {
+            suggestionsBox.style.display = "none";
+        }
         filterTable(searchValue);
+        calculateTotals(); // Recalculate after filtering
     });
 
     document.addEventListener("click", e=>{
@@ -217,13 +393,11 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch(`{{ route('grn.sales.fetch') }}?code=${code}&start_date=${startDate}&end_date=${endDate}`)
                 .then(res => res.json())
                 .then(data => {
-                    // Update GRN info at top
                     if(data.grn){
                         const grn = data.grn;
                         document.getElementById('modalGrnInfo').textContent = `${grn.code} - ${grn.item_name} | Total Packs: ${grn.packs} | Total Weight: ${parseFloat(grn.weight).toFixed(3)}`;
                     }
 
-                    // Populate sales table with totals
                     const tbody = document.querySelector("#salesTable tbody");
                     tbody.innerHTML = "";
 
@@ -253,7 +427,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         `;
                     });
 
-                    // Add Totals row
                     tbody.innerHTML += `
                         <tr class="fw-bold table-secondary">
                             <td colspan="2" class="text-end">Totals:</td>
@@ -269,6 +442,128 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         });
     });
+
+    // --- 💰 NEW: Loan Modal Logic ---
+    const loanModal = document.getElementById('loanModal');
+    if (loanModal) {
+        loanModal.addEventListener('show.bs.modal', event => {
+            const triggerElement = event.relatedTarget; // The <p> tag that was clicked
+            const loanType = triggerElement.dataset.type; // 'today' or 'old'
+            
+            const modalTitle = loanModal.querySelector('#loanModalTitle');
+            const modalTbody = loanModal.querySelector('#loanDetailsTable tbody');
+            const modalTotal = loanModal.querySelector('#loanModalTotal');
+
+            // Set title and loading state
+            modalTitle.textContent = `${loanType.charAt(0).toUpperCase() + loanType.slice(1)} Loan Details`;
+            modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
+            modalTotal.textContent = '0.00';
+
+            // Get dates from the form
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+
+            // Build URL for fetching data
+            const url = new URL('{{ route('grn.sales.fetchLoans') }}');
+            url.searchParams.append('loan_type', loanType);
+            if (startDate) url.searchParams.append('start_date', startDate);
+            if (endDate) url.searchParams.append('end_date', endDate);
+
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.json();
+                })
+                .then(data => {
+                    modalTbody.innerHTML = ""; // Clear loading
+                    let totalAmount = 0;
+
+                    if (data.length === 0) {
+                         modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">No records found.</td></tr>';
+                    } else {
+                        data.forEach(item => {
+                            const amount = parseFloat(item.amount) || 0;
+                            totalAmount += amount;
+                            modalTbody.innerHTML += `
+                                <tr>
+                                    <td>${item.short_name || 'N/A'}</td>
+                                    <td>${Math.abs(amount).toFixed(2)}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    // Update the modal's total
+                    modalTotal.textContent = Math.abs(totalAmount).toFixed(2);
+                })
+                .catch(error => {
+                    console.error('Error fetching loan details:', error);
+                    modalTbody.innerHTML = '<tr><td colspan="2" class="text-center text-danger">Error loading data.</td></tr>';
+                });
+        });
+    }
+    // --- End of new Loan Modal Logic ---
+
+
+    // --- 💸 NEW: Expense Modal Logic ---
+    const expenseModal = document.getElementById('expenseModal');
+    if (expenseModal) {
+        expenseModal.addEventListener('show.bs.modal', event => {
+            const triggerElement = event.relatedTarget; // The <li> that was clicked
+            const category = triggerElement.dataset.category; // 'salary', 'rent', etc.
+            
+            const modalTitle = expenseModal.querySelector('#expenseModalTitle');
+            const modalTbody = expenseModal.querySelector('#expenseDetailsTable tbody');
+            const modalTotal = expenseModal.querySelector('#expenseModalTotal');
+
+            // Set title and loading state
+            modalTitle.textContent = `Details for: ${category}`;
+            modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
+            modalTotal.textContent = '0.00';
+
+            // Get dates from the form
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+
+            // Build URL for fetching data
+            const url = new URL('{{ route('grn.sales.fetchExpenses') }}');
+            url.searchParams.append('category', category);
+            if (startDate) url.searchParams.append('start_date', startDate);
+            if (endDate) url.searchParams.append('end_date', endDate);
+
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.json();
+                })
+                .then(data => {
+                    modalTbody.innerHTML = ""; // Clear loading
+                    let totalAmount = 0;
+
+                    if (data.length === 0) {
+                         modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">No records found.</td></tr>';
+                    } else {
+                        data.forEach(item => {
+                            const amount = parseFloat(item.amount) || 0;
+                            totalAmount += amount;
+                            modalTbody.innerHTML += `
+                                <tr>
+                                    <td>${item.description || 'N/A'}</td>
+                                    <td>${Math.abs(amount).toFixed(2)}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    // Update the modal's total
+                    modalTotal.textContent = Math.abs(totalAmount).toFixed(2);
+                })
+                .catch(error => {
+                    console.error('Error fetching expense details:', error);
+                    modalTbody.innerHTML = '<tr><td colspan="2" class="text-center text-danger">Error loading data.</td></tr>';
+                });
+        });
+    }
+    // --- End of new Expense Modal Logic ---
+
 
 });
 </script>

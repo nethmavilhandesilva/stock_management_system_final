@@ -53,57 +53,57 @@
         @method('PUT')
 
         <div class="row g-3">
-             {{-- ✅ Editable GRN Code --}}
-           {{-- GRN Code --}}
-    <div class="col-md-3">
-        <label for="code" class="form-label">GRN කේතය (Code)</label>
-        <input type="text" name="code" id="code"
-               class="form-control form-control-sm text-uppercase"
-               value="{{ old('code', $entry->code) }}"
-               style="text-transform: uppercase;">
-    </div>
+            {{-- ✅ Editable GRN Code --}}
+            <div class="col-md-3">
+                <label for="code" class="form-label">GRN කේතය (Code)</label>
+                <input type="text" name="code" id="code"
+                       class="form-control form-control-sm text-uppercase"
+                       value="{{ old('code', $entry->code) }}"
+                       style="text-transform: uppercase;">
+            </div>
 
-    {{-- Item Code --}}
-    <div class="col-md-3">
-        <label for="item_code" class="form-label">භාණ්ඩය (Item)</label>
-        <select name="item_code" id="item_code" class="form-select form-select-sm" required>
-            @foreach($items as $item)
-                <option value="{{ $item->no }}" {{ $entry->item_code == $item->no ? 'selected' : '' }}>
-                    {{ $item->no }} - {{ $item->type }}
-                </option>
-            @endforeach
-        </select>
-    </div>
+            {{-- Item Code --}}
+            <div class="col-md-3">
+                <label for="item_code" class="form-label">භාණ්ඩය (Item)</label>
+                <select name="item_code" id="item_code" class="form-select form-select-sm" required>
+                    @foreach($items as $item)
+                        <option value="{{ $item->no }}" {{ $entry->item_code == $item->no ? 'selected' : '' }}>
+                            {{ $item->no }} - {{ $item->type }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
-    {{-- Item Name --}}
-    <div class="col-md-3">
-        <label for="item_name" class="form-label">භාණ්ඩ නාමය</label>
-        <input type="text" name="item_name" id="item_name" 
-               class="form-control form-control-sm" 
-               value="{{ $entry->item_name }}">
-    </div>
+            {{-- Item Name --}}
+            <div class="col-md-3">
+                <label for="item_name" class="form-label">භාණ්ඩ නාමය</label>
+                <input type="text" name="item_name" id="item_name" 
+                       class="form-control form-control-sm" 
+                       value="{{ $entry->item_name }}">
+            </div>
 
-    {{-- Supplier --}}
-    <div class="col-md-3">
-        <label for="supplier_name" class="form-label">සැපයුම්කරු <span class="text-danger">*</span></label>
-        <input list="suppliers_list" id="supplier_name" name="supplier_code"
-               class="form-control form-control-sm @error('supplier_code') is-invalid @enderror" required
-               value="{{ old('supplier_code', $entry->supplier_code) }}"
-               style="text-transform: uppercase;"
-               oninput="this.value = this.value.toUpperCase();">
+            {{-- Supplier --}}
+            <div class="col-md-3">
+                <label for="supplier_name" class="form-label">සැපයුම්කරු <span class="text-danger">*</span></label>
+                <input list="suppliers_list" id="supplier_name" name="supplier_code"
+                       class="form-control form-control-sm @error('supplier_code') is-invalid @enderror" required
+                       value="{{ old('supplier_code', $entry->supplier_code) }}"
+                       style="text-transform: uppercase;"
+                       oninput="this.value = this.value.toUpperCase();">
 
-        <datalist id="suppliers_list">
-            @foreach($suppliers as $supplier)
-                <option value="{{ $supplier->code }}">
-                    {{ $supplier->name ?? $supplier->code }}
-                </option>
-            @endforeach
-        </datalist>
+                <datalist id="suppliers_list">
+                    @foreach($suppliers as $supplier)
+                        <option value="{{ $supplier->code }}">
+                            {{ $supplier->name ?? $supplier->code }}
+                        </option>
+                    @endforeach
+                </datalist>
 
-        @error('supplier_code')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
+                @error('supplier_code')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
             {{-- GRN No --}}
             <div class="col-md-3">
                 <label for="grn_no" class="form-label">GRN අංකය</label>
@@ -120,7 +120,6 @@
                        value="{{ $entry->warehouse_no }}">
             </div>
 
-           
             {{-- Packs --}}
             <div class="col-md-3">
                 <label for="packs" class="form-label">පැක්</label>
@@ -161,6 +160,14 @@
                        value="{{ old('per_kg_price', $entry->PerKGPrice) }}" step="0.01">
             </div>
 
+            {{-- ✅ BP Field --}}
+            <div class="col-md-4">
+                <label for="BP" class="form-label">BP</label>
+                <input type="number" id="BP" name="BP" 
+                       class="form-control form-control-sm" 
+                       value="{{ old('BP', $entry->BP) }}" 
+                       step="0.01">
+            </div>
         </div>
 
         {{-- Buttons --}}
@@ -183,6 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const totalGrnInput = document.getElementById('total_grn');
     const weightInput = document.getElementById('weight');
     const perKgInput = document.getElementById('per_kg_price');
+    const bpInput = document.getElementById('BP');
 
     function calculatePerKg() {
         const totalGrn = parseFloat(totalGrnInput.value) || 0;
@@ -191,8 +199,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (totalGrn > 0 && weight > 0) {
             const perKg = (totalGrn / weight).toFixed(2);
             perKgInput.value = perKg;
+            bpInput.value = perKg; // ✅ Optional: auto-fill BP same as per kg
         } else {
             perKgInput.value = '';
+            bpInput.value = '';
         }
     }
 
