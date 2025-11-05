@@ -20,16 +20,17 @@ class GrnEntry extends Model
         'original_packs',
         'original_weight',
         'sequence_no',
-         'is_hidden' ,
-         'total_grn',
-         'PerKGPrice',
+        'is_hidden',
+        'total_grn',
+        'PerKGPrice',
         'wasted_packs',
         'wasted_weight',
         'total_wasted_weight',
-         'show_status',
-          'grn_status', 
-          'SalesKGPrice',
-          'BP'
+        'show_status',
+        'grn_status',
+        'SalesKGPrice',
+        'BP',
+        'Real_Supplier_code',
     ];
 
     // Optional: If you don't want timestamps (created_at, updated_at)

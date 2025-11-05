@@ -2786,10 +2786,83 @@ public function fetchLoanDetails(Request $request)
             'sales' => $sales
         ]);
     }
+     public function grnfinal(Request $request)
+    {
+        $query = GrnEntry::query();
 
+    // Filter by date range
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $query->whereBetween('txn_date', [$request->start_date, $request->end_date]);
+    }
 
+    // Filter by code
+    if ($request->filled('code')) {
+        $query->where('code', 'like', "%{$request->code}%");
+    }
 
+    // Filter by Supplier Code (L or A)
+    if ($request->filled('supplier_filter')) {
+        if ($request->supplier_filter === 'L') {
+            $query->where('supplier_code', 'like', 'L%');
+        } elseif ($request->supplier_filter === 'A') {
+            $query->where('supplier_code', 'like', 'A%');
+        }
+    }
 
+    $entries = $query->orderBy('txn_date', 'desc')->get();
 
+        return view('dashboard.reports.grn_reportfinal', compact('entries'));
+    }
+
+    // AJAX autocomplete for code
+    public function searchCodes(Request $request)
+    {
+        $term = $request->get('term', '');
+        $codes = GrnEntry::where('code', 'like', $term . '%')
+            ->distinct()
+            ->limit(10)
+            ->pluck('code');
+        return response()->json($codes);
+    }
+     public function update(Request $request, $id)
+{
+    $entry = GrnEntry::findOrFail($id);
+
+    // Add the entered values to existing ones
+    $entry->packs += $request->packs;
+    $entry->weight += $request->weight;
+    $entry->original_packs += $request->packs;
+    $entry->original_weight += $request->weight;
+
+    // Replace these as normal (not added)
+    $entry->total_grn = $request->total_grn;
+    $entry->BP = $request->BP;
+    $entry->Real_Supplier_code = $request->Real_Supplier_code;
+
+    $entry->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Record updated successfully! Values added to existing totals.'
+    ]);
+}
+public function searchSuppliers(Request $request)
+    {
+        $term = $request->get('term');
+
+        if (empty($term)) {
+            return response()->json([]);
+        }
+
+        // Find suppliers where the 'code' STARTS WITH the term
+        // OR where the 'name' CONTAINS the term.
+        $suppliers = Supplier::where('code', 'LIKE', $term . '%') 
+                           ->orWhere('name', 'LIKE', '%' . $term . '%')
+                           ->select('code', 'name') // Only select the fields we need
+                           ->limit(15) // Limit results for performance
+                           ->get();
+
+        return response()->json($suppliers);
+    }
 
 }

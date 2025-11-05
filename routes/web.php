@@ -152,6 +152,10 @@ Route::get('/reports/cheque-payments', [ReportController::class, 'chequePayments
 Route::post('/reports/update-status/{id}', [ReportController::class, 'updateStatus'])  ->name('reports.update-status');
 Route::get('/generate-report', [ReportController::class, 'generateReport']) ->name('generate.report');//returns
 Route::get('/income-expenses-report', [ReportController::class, 'incomeExpensesReport'])->name('income.expenses.report');
+Route::get('/grn-report3', [ReportController::class, 'grnfinal'])->name('grn.report');
+Route::get('/search-codes', [ReportController::class, 'searchCodes'])->name('search.codes');
+Route::post('/grn-report/update/{id}', [ReportController::class, 'update'])->name('grn.update');
+Route::get('/search-suppliers', [ReportController::class, 'searchSuppliers'])->name('suppliers.search');
 Route::get('/grn-entry/{code}/remaining', [App\Http\Controllers\GrnEntryController::class, 'getRemaining']);
 //returns
 Route::get('/api/grn-entry/{code}', function ($code) {
