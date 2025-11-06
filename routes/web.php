@@ -219,5 +219,11 @@ Route::delete('/suppliers2/{id}', [SupplierController2::class, 'destroy'])->name
 Route::post('suppliers2/payment', [SupplierController2::class, 'payment'])->name('suppliers2.payment');
 Route::get('/suppliers2/balance', [App\Http\Controllers\SupplierController2::class, 'getBalance'])->name('suppliers2.balance');
 Route::get('/suppliers/transactions', [SupplierController2::class, 'getSupplierTransactions'])->name('suppliers2.transactions');   
+//supplier2
+Route::post('/suppliers2/payment-many', [App\Http\Controllers\SupplierController2::class, 'storeManyPayment'])
+     ->name('suppliers2.payment.many');
 
+// 2. This route is used by JavaScript to fetch unpaid GRNs for a supplier
+Route::get('/suppliers/get-unpaid-grns/{supplier_code}', [App\Http\Controllers\SupplierController2::class, 'getUnpaidGrns'])
+     ->name('suppliers.getUnpaidGrns');
 require __DIR__.'/auth.php';

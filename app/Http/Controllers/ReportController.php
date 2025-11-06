@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Mpdf\Mpdf;
 use App\Models\CustomersLoan;
 use App\Models\Supplier;
+use App\Models\Supplier2;
 use App\Models\IncomeExpenses;
 use App\Models\SalesHistory;
 use Illuminate\Http\Request;
@@ -2867,28 +2868,71 @@ public function fetchLoanDetails(Request $request)
         }
     }
 
-     public function update(Request $request, $id)
+   public function update(Request $request, $id)
 {
-    $entry = GrnEntry::findOrFail($id);
-
-    // Add the entered values to existing ones
-    $entry->packs = $request->packs;
-    $entry->weight = $request->weight;
-    $entry->original_packs = $request->packs;
-    $entry->original_weight = $request->weight;
-
-    // Replace these as normal (not added)
-    $entry->total_grn = $request->total_grn;
-    $entry->BP = $request->BP;
-    $entry->Real_Supplier_code = $request->Real_Supplier_code;
-
-    $entry->save();
-    $this->updateGrnRemainingStock();
-
-    return response()->json([
-        'success' => true
-       
+    Log::info("GRN Update Started", [
+        'grn_id' => $id,
+        'request_data' => $request->all()
     ]);
+
+    try {
+        Log::info("Finding GRN Entry", ['grn_id' => $id]);
+        $entry = GrnEntry::findOrFail($id);
+
+        Log::info("GRN Entry Found", ['entry' => $entry]);
+
+        // Updating values
+        $entry->packs = $request->packs;
+        $entry->weight = $request->weight;
+        $entry->original_packs = $request->packs;
+        $entry->original_weight = $request->weight;
+
+        $entry->total_grn = $request->total_grn;
+        $entry->BP = $request->BP;
+        $entry->Real_Supplier_code = $request->Real_Supplier_code;
+
+        Log::info("Saving updated GRN entry", [
+            'updated_entry' => $entry
+        ]);
+
+        $entry->save();
+
+        Log::info("Updating Supplier2 Table");
+
+        Supplier2::updateOrCreate(
+            [
+                'grn_id' => $id
+            ],
+            [
+                'supplier_code' => $request->Real_Supplier_code,
+                'supplier_name' => $request->supplier_name,
+                'total_amount'  => $request->total_grn,
+                'description'   => 'Purchase from Supplier',
+                'date'          => Setting::value('value')
+            ]
+        );
+
+        Log::info("Supplier2 Update Completed Successfully");
+
+        return response()->json([
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+
+        Log::error("GRN Update FAILED", [
+            'grn_id' => $id,
+            'error_message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString() // FULL ERROR TRACE
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'An error occurred while updating.'
+        ], 500);
+    }
 }
 
 public function searchSuppliers(Request $request)
