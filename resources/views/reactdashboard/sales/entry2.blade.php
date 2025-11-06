@@ -213,6 +213,7 @@
                                සියලු දින අනුව GRN වාර්තාව</a>
                             <a class="dropdown-item" href="{{ route('income.expenses.report') }}">සියලු දින අනුව ආදායම් / වියදම් වාර්තාව</a>
                              <a class="dropdown-item" href="{{ route('grn.sales.report') }}">  සියලු විකුණුම් අනුව GRN වාර්තාව</a>
+                              <a class="dropdown-item" href="{{ route('grn.reportfinal') }}">   GRN වෙනස්කිරීම</a>
                         </div>
                     </div>
 

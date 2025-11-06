@@ -5,275 +5,270 @@
     body {
         background-color: #99ff99 !important;
     }
+
     .table-row:hover {
-        background-color: #f1f1f1; /* A neutral hover is cleaner */
+        background-color: #f1f1f1;
+        /* A neutral hover is cleaner */
         cursor: pointer;
     }
 </style>
 
 
 @section('content')
-<div class="container mt-4">
+    <div class="container mt-4">
 
-    <h2 class="text-center mb-4 fw-bold text-dark opacity-75">GRN Entry Report</h2>
+        <h2 class="text-center mb-4 fw-bold text-dark opacity-75">GRN Entry Report</h2>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ route('grn.report') }}" class="row g-3 mb-2">
-                <div class="col-md-2">
-                    <label class="form-label">Start Date</label>
-                    <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">End Date</label>
-                    <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
-                </div>
-                <div class="col-md-3 position-relative">
-                    <label class="form-label">Search by Code</label>
-                    <input type="text" name="code" id="codeSearch" class="form-control" autocomplete="off" placeholder="Type code...">
-                    <ul id="codeList" class="list-group position-absolute w-100"
-                        style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></ul>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Supplier Code</label>
-                    <select name="supplier_filter" class="form-select">
-                        <option value="">All</option>
-                        <option value="L" {{ request('supplier_filter') == 'L' ? 'selected' : '' }}>L</option>
-                        <option value="A" {{ request('supplier_filter') == 'A' ? 'selected' : '' }}>A</option>
-                    </select>
-                </div>
-                <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-success w-50">Filter</button>
-                    <a href="{{ route('grn.report') }}" class="btn btn-secondary w-50">Clear</a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="card shadow-lg border-0">
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-striped text-center align-middle" id="grnTable">
-                
-                <thead class="bg-success text-white">
-                    <tr>
-                        <th>Code</th>
-                        <th>Item Name</th>
-                        <th>Supplier Code</th>
-                        <th>Packs</th>
-                        <th>Weight</th>
-                        <th>Txn Date</th>
-                        <th>OP</th>
-                        <th>OW</th>
-                        <th>Total GRN</th>
-                        <th>BP</th>
-                        <th>Real Supplier Code</th>
-                        <th>GRN No</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($entries as $entry)
-                        <tr class="table-row" data-id="{{ $entry->id }}"
-                            data-packs="{{ $entry->packs }}"
-                            data-weight="{{ $entry->weight }}"
-                            data-total_grn="{{ $entry->total_grn }}"
-                            data-bp="{{ $entry->BP }}"
-                            data-real_supplier_code="{{ $entry->Real_Supplier_code }}">
-                            
-                            <td>{{ $entry->code }}</td>
-                            <td>{{ $entry->item_name }}</td>
-                            <td>{{ $entry->supplier_code }}</td>
-                            <td>{{ $entry->packs }}</td>
-                            <td>{{ $entry->weight }}</td>
-                            <td>{{ $entry->txn_date }}</td>
-                            <td>{{ $entry->original_packs }}</td>
-                            <td>{{ $entry->original_weight }}</td>
-                            <td>{{ $entry->total_grn }}</td>
-                            <td>{{ $entry->BP }}</td>
-                            <td>{{ $entry->Real_Supplier_code }}</td>
-                            <td>{{ $entry->grn_no }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="12" class="text-muted">No records found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content shadow-lg border-0">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="editModalLabel">Edit GRN Entry</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            
-            <div class="modal-body bg-light">
-                <form id="updateForm">
-                    @csrf
-                    <input type="hidden" id="recordId">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Packs</label>
-                        <input type="number" id="packs" class="form-control" step="any">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ route('grn.reportfinal') }}" class="row g-3 mb-2">
+                    <div class="col-md-2">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Weight</label>
-                        <input type="number" id="weight" class="form-control" step="any">
+                    <div class="col-md-2">
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Total GRN</label>
-                        <input type="number" id="total_grn" class="form-control" step="any">
+                    <div class="col-md-3 position-relative">
+                        <label class="form-label">Search by Code</label>
+                      <input type="text" name="code" id="codeSearch" class="form-control" autocomplete="off" placeholder="Type code..." style="text-transform: uppercase;">
+                        <ul id="codeList" class="list-group position-absolute w-100"
+                            style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></ul>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">BP</label>
-                        <input type="text" id="bp" class="form-control">
+                    <div class="col-md-2">
+                        <label class="form-label">තොග/සිල්ලර</label>
+                        <select name="supplier_filter" class="form-select">
+                            <option value="">All</option>
+                            <option value="L" {{ request('supplier_filter') == 'L' ? 'selected' : '' }}>L</option>
+                            <option value="A" {{ request('supplier_filter') == 'A' ? 'selected' : '' }}>A</option>
+                        </select>
                     </div>
-
-                    <div class="mb-3 position-relative">
-                        <label class="form-label fw-bold">Real Supplier Code</label>
-                        
-                        <input type="text" id="real_supplier_search" class="form-control" 
-                               placeholder="Type code or name to search..." autocomplete="off">
-                               
-                        <input type="hidden" id="real_supplier_code">
-
-                        <ul id="supplierList" class="list-group position-absolute w-100"
-                            style="z-index: 1051; display:none; max-height:200px; overflow-y:auto;"></ul>
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-success w-50">Filter</button>
+                        <a href="{{ route('grn.reportfinal') }}" class="btn btn-secondary w-50">Clear</a>
                     </div>
                 </form>
             </div>
-            
-            <div class="modal-footer border-top-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="saveChanges" class="btn btn-success">Save Changes</button>
+        </div>
+
+        <div class="card shadow-lg border-0">
+            <div class="card-body table-responsive">
+                <table class="table table-bordered table-striped text-center align-middle" id="grnTable">
+
+                    <thead class="bg-success text-white">
+                        <tr>
+                            <th>Code</th>
+                            <th>SupCode</th>
+                            <th>Item Name</th>
+                            <th>Packs</th>
+                            <th>Weight</th>
+                            <th>OP</th>
+                            <th>OW</th>
+                            <th>Total GRN</th>
+                            <th>BP</th>
+                            <th>Txn Date</th>
+
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($entries as $entry)
+                            <tr class="table-row" data-id="{{ $entry->id }}" data-packs="{{ $entry->packs }}"
+                                data-weight="{{ $entry->weight }}" data-total_grn="{{ $entry->total_grn }}"
+                                data-bp="{{ $entry->BP }}" data-real_supplier_code="{{ $entry->Real_Supplier_code }}">
+
+                                <td>{{ $entry->code }}</td>
+                                <td>{{ $entry->Real_Supplier_code }}</td>
+                                <td>{{ $entry->item_name }}</td>
+                                <td>{{ $entry->packs }}</td>
+                                <td>{{ $entry->weight }}</td>
+                                <td>{{ $entry->original_packs }}</td>
+                                <td>{{ $entry->original_weight }}</td>
+                                <td>{{ $entry->total_grn }}</td>
+                                <td>{{ $entry->BP }}</td>
+                                <td>{{ $entry->txn_date }}</td>
+
+
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="12" class="text-muted">No records found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const codeSearch = document.getElementById("codeSearch");
-    const codeList = document.getElementById("codeList");
-    const tableRows = document.querySelectorAll(".table-row");
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="editModalLabel">Edit GRN Entry</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
 
-    const supplierSearch = document.getElementById("real_supplier_search");
-    const supplierList = document.getElementById("supplierList");
-    const realSupplierCodeInput = document.getElementById("real_supplier_code"); 
+                <div class="modal-body bg-light">
+                    <form id="updateForm">
+                        @csrf
+                        <input type="hidden" id="recordId">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Packs</label>
+                            <input type="number" id="packs" class="form-control" step="any">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Weight</label>
+                            <input type="number" id="weight" class="form-control" step="any">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Total GRN</label>
+                            <input type="number" id="total_grn" class="form-control" step="any">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">BP</label>
+                            <input type="text" id="bp" class="form-control">
+                        </div>
 
-    codeSearch.addEventListener("keyup", function () {
-        const term = this.value.trim();
-        if (term.length === 0) {
-            codeList.style.display = "none";
-            return;
-        }
-        fetch(`/search-codes?term=${term}`)
-            .then(res => res.json())
-            .then(data => {
-                codeList.innerHTML = "";
-                if (data.length > 0) {
-                    data.forEach(code => {
-                        const li = document.createElement("li");
-                        li.textContent = code;
-                        li.classList.add("list-group-item", "list-group-item-action");
-                        li.addEventListener("click", function () {
-                            codeSearch.value = code;
+                        <div class="mb-3 position-relative">
+                            <label class="form-label fw-bold">Real Supplier Code</label>
+                            <input type="text" id="real_supplier_search" class="form-control" placeholder="TYPE CODE OR NAME TO SEARCH..." autocomplete="off" oninput="this.value = this.value.toUpperCase();">
+                            <input type="hidden" id="real_supplier_code">
+                            <ul id="supplierList" class="list-group position-absolute w-100"
+                                style="z-index: 1051; display:none; max-height:200px; overflow-y:auto;"></ul>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="saveChanges" class="btn btn-success">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const codeSearch = document.getElementById("codeSearch");
+            const codeList = document.getElementById("codeList");
+            const tableRows = document.querySelectorAll(".table-row");
+
+            const supplierSearch = document.getElementById("real_supplier_search");
+            const supplierList = document.getElementById("supplierList");
+            const realSupplierCodeInput = document.getElementById("real_supplier_code");
+
+            codeSearch.addEventListener("keyup", function () {
+                const term = this.value.trim();
+                if (term.length === 0) {
+                    codeList.style.display = "none";
+                    return;
+                }
+                fetch(`/search-codes?term=${term}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        codeList.innerHTML = "";
+                        if (data.length > 0) {
+                            data.forEach(code => {
+                                const li = document.createElement("li");
+                                li.textContent = code;
+                                li.classList.add("list-group-item", "list-group-item-action");
+                                li.addEventListener("click", function () {
+                                    codeSearch.value = code;
+                                    codeList.style.display = "none";
+                                });
+                                codeList.appendChild(li);
+                            });
+                            codeList.style.display = "block";
+                        } else {
                             codeList.style.display = "none";
-                        });
-                        codeList.appendChild(li);
+                        }
                     });
-                    codeList.style.display = "block";
-                } else {
+            });
+
+            supplierSearch.addEventListener("keyup", function () {
+                const term = this.value.trim();
+                if (term.length === 0) {
+                    supplierList.style.display = "none";
+                    return;
+                }
+
+                fetch(`/search-suppliers?term=${term}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        supplierList.innerHTML = "";
+                        if (data.length > 0) {
+                            data.forEach(supplier => {
+                                const li = document.createElement("li");
+                                li.textContent = `${supplier.code} - ${supplier.name}`;
+                                li.classList.add("list-group-item", "list-group-item-action");
+                                li.addEventListener("click", function () {
+                                    supplierSearch.value = `${supplier.code} - ${supplier.name}`;
+                                    realSupplierCodeInput.value = supplier.code;
+                                    supplierList.style.display = "none";
+                                });
+                                supplierList.appendChild(li);
+                            });
+                            supplierList.style.display = "block";
+                        } else {
+                            supplierList.style.display = "none";
+                        }
+                    });
+            });
+
+            document.addEventListener("click", function (e) {
+                if (!codeList.contains(e.target) && e.target !== codeSearch) {
                     codeList.style.display = "none";
                 }
-            });
-    });
-
-    supplierSearch.addEventListener("keyup", function () {
-        const term = this.value.trim();
-        if (term.length === 0) {
-            supplierList.style.display = "none";
-            return;
-        }
-
-        fetch(`/search-suppliers?term=${term}`)
-            .then(res => res.json())
-            .then(data => {
-                supplierList.innerHTML = "";
-                if (data.length > 0) {
-                    data.forEach(supplier => {
-                        const li = document.createElement("li");
-                        li.textContent = `${supplier.code} - ${supplier.name}`;
-                        li.classList.add("list-group-item", "list-group-item-action");
-                        li.addEventListener("click", function () {
-                            supplierSearch.value = `${supplier.code} - ${supplier.name}`;
-                            realSupplierCodeInput.value = supplier.code;
-                            supplierList.style.display = "none";
-                        });
-                        supplierList.appendChild(li);
-                    });
-                    supplierList.style.display = "block";
-                } else {
+                if (!supplierList.contains(e.target) && e.target !== supplierSearch) {
                     supplierList.style.display = "none";
                 }
             });
-    });
 
-    document.addEventListener("click", function (e) {
-        if (!codeList.contains(e.target) && e.target !== codeSearch) {
-            codeList.style.display = "none";
-        }
-        if (!supplierList.contains(e.target) && e.target !== supplierSearch) {
-            supplierList.style.display = "none";
-        }
-    });
+            tableRows.forEach(row => {
+                row.addEventListener("click", function () {
+                    const id = this.dataset.id;
+                    document.getElementById("recordId").value = id;
+                    document.getElementById("packs").value = this.dataset.packs;
+                    document.getElementById("weight").value = this.dataset.weight;
+                    document.getElementById("total_grn").value = this.dataset.total_grn;
+                    document.getElementById("bp").value = this.dataset.bp;
 
-    tableRows.forEach(row => {
-        row.addEventListener("click", function () {
-            const id = this.dataset.id;
-            document.getElementById("recordId").value = id;
-            document.getElementById("packs").value = this.dataset.packs;
-            document.getElementById("weight").value = this.dataset.weight;
-            document.getElementById("total_grn").value = this.dataset.total_grn;
-            document.getElementById("bp").value = this.dataset.bp;
+                    const currentSupplierCode = this.dataset.real_supplier_code;
+                    document.getElementById("real_supplier_code").value = currentSupplierCode;
+                    document.getElementById("real_supplier_search").value = currentSupplierCode;
 
-            const currentSupplierCode = this.dataset.real_supplier_code;
-            document.getElementById("real_supplier_code").value = currentSupplierCode;
-            document.getElementById("real_supplier_search").value = currentSupplierCode;
-
-            new bootstrap.Modal(document.getElementById('editModal')).show();
-        });
-    });
-
-    document.getElementById("saveChanges").addEventListener("click", function () {
-        const id = document.getElementById("recordId").value;
-        const data = {
-            _token: "{{ csrf_token() }}",
-            packs: document.getElementById("packs").value,
-            weight: document.getElementById("weight").value,
-            total_grn: document.getElementById("total_grn").value,
-            BP: document.getElementById("bp").value,
-            Real_Supplier_code: document.getElementById("real_supplier_code").value, 
-        };
-
-        fetch(`/grn-report/update/${id}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        })
-            .then(res => res.json())
-            .then(resp => {
-                if (resp.success) {
-                    alert(resp.message);
-                    location.reload();
-                } else {
-                    alert("Error updating record.");
-                }
+                    new bootstrap.Modal(document.getElementById('editModal')).show();
+                });
             });
-    });
-});
-</script>
+
+            document.getElementById("saveChanges").addEventListener("click", function () {
+                const id = document.getElementById("recordId").value;
+                const data = {
+                    _token: "{{ csrf_token() }}",
+                    packs: document.getElementById("packs").value,
+                    weight: document.getElementById("weight").value,
+                    total_grn: document.getElementById("total_grn").value,
+                    BP: document.getElementById("bp").value,
+                    Real_Supplier_code: document.getElementById("real_supplier_code").value,
+                };
+
+                fetch(`/grn-report/update/${id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                })
+                    .then(res => res.json())
+                    .then(resp => {
+                        if (resp.success) {
+                            location.reload();
+                        } else {
+                            alert("Error updating record.");
+                        }
+                    });
+            });
+        });
+    </script>
 @endsection

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers;
 use Mpdf\Mpdf;
 use App\Models\CustomersLoan;
@@ -42,8 +41,6 @@ use App\Models\GrnEntry2;
 use App\Exports\GrnOverviewExport;
 use App\Models\Item;
 use App\Exports\ItemsExport;
-
-
 
 class ReportController extends Controller
 {
@@ -2824,15 +2821,61 @@ public function fetchLoanDetails(Request $request)
             ->pluck('code');
         return response()->json($codes);
     }
+       public function updateGrnRemainingStock(): void
+    {
+        // Fetch all GRN entries and group them by their unique 'code'
+        $grnEntriesByCode = GrnEntry::all()->groupBy('code');
+
+        // Fetch all sales and sales history entries
+        $currentSales = Sale::all()->groupBy('code');
+        $historicalSales = SalesHistory::all()->groupBy('code');
+
+        foreach ($grnEntriesByCode as $grnCode => $entries) {
+            // Calculate the total original packs and weight for the current GRN code
+            $totalOriginalPacks = $entries->sum('original_packs');
+            $totalOriginalWeight = $entries->sum('original_weight');
+            $totalWastedPacks = $entries->sum('wasted_packs');
+            $totalWastedWeight = $entries->sum('wasted_weight');
+
+            // Sum up packs and weight from sales for this specific GRN code
+            $totalSoldPacks = 0;
+            if (isset($currentSales[$grnCode])) {
+                $totalSoldPacks += $currentSales[$grnCode]->sum('packs');
+            }
+            if (isset($historicalSales[$grnCode])) {
+                $totalSoldPacks += $historicalSales[$grnCode]->sum('packs');
+            }
+
+            $totalSoldWeight = 0;
+            if (isset($currentSales[$grnCode])) {
+                $totalSoldWeight += $currentSales[$grnCode]->sum('weight');
+            }
+            if (isset($historicalSales[$grnCode])) {
+                $totalSoldWeight += $historicalSales[$grnCode]->sum('weight');
+            }
+
+            // Calculate remaining stock based on all original, sold, and wasted amounts
+            $remainingPacks = $totalOriginalPacks - $totalSoldPacks - $totalWastedPacks;
+            $remainingWeight = $totalOriginalWeight - $totalSoldWeight - $totalWastedWeight;
+
+            // Update each individual GRN entry with the new remaining values
+            foreach ($entries as $grnEntry) {
+                $grnEntry->packs = max($remainingPacks, 0);
+                $grnEntry->weight = max($remainingWeight, 0);
+                $grnEntry->save();
+            }
+        }
+    }
+
      public function update(Request $request, $id)
 {
     $entry = GrnEntry::findOrFail($id);
 
     // Add the entered values to existing ones
-    $entry->packs += $request->packs;
-    $entry->weight += $request->weight;
-    $entry->original_packs += $request->packs;
-    $entry->original_weight += $request->weight;
+    $entry->packs = $request->packs;
+    $entry->weight = $request->weight;
+    $entry->original_packs = $request->packs;
+    $entry->original_weight = $request->weight;
 
     // Replace these as normal (not added)
     $entry->total_grn = $request->total_grn;
@@ -2840,12 +2883,14 @@ public function fetchLoanDetails(Request $request)
     $entry->Real_Supplier_code = $request->Real_Supplier_code;
 
     $entry->save();
+    $this->updateGrnRemainingStock();
 
     return response()->json([
-        'success' => true,
-        'message' => 'Record updated successfully! Values added to existing totals.'
+        'success' => true
+       
     ]);
 }
+
 public function searchSuppliers(Request $request)
     {
         $term = $request->get('term');
