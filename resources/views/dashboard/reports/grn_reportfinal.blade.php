@@ -19,6 +19,7 @@
 
         <h2 class="text-center mb-4 fw-bold text-dark opacity-75">GRN Entry Report</h2>
 
+        {{-- Filter Card --}}
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <form method="GET" action="{{ route('grn.reportfinal') }}" class="row g-3 mb-2">
@@ -52,6 +53,7 @@
             </div>
         </div>
 
+        {{-- Data Table Card --}}
         <div class="card shadow-lg border-0">
             <div class="card-body table-responsive">
                 <table class="table table-bordered table-striped text-center align-middle" id="grnTable">
@@ -68,15 +70,23 @@
                             <th>Total GRN</th>
                             <th>BP</th>
                             <th>Txn Date</th>
-
-
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($entries as $entry)
-                            <tr class="table-row" data-id="{{ $entry->id }}" data-packs="{{ $entry->packs }}"
-                                data-weight="{{ $entry->weight }}" data-total_grn="{{ $entry->total_grn }}"
-                                data-bp="{{ $entry->BP }}" data-real_supplier_code="{{ $entry->Real_Supplier_code }}">
+                            {{-- 
+                              *** 1. UPDATE HERE ***
+                              Added data-code and data-item_name 
+                            --}}
+                            <tr class="table-row"
+                                data-id="{{ $entry->id }}"
+                                data-code="{{ $entry->code }}"
+                                data-item_name="{{ $entry->item_name }}"
+                                data-packs="{{ $entry->packs }}"
+                                data-weight="{{ $entry->weight }}"
+                                data-total_grn="{{ $entry->total_grn }}"
+                                data-bp="{{ $entry->BP }}"
+                                data-real_supplier_code="{{ $entry->Real_Supplier_code }}">
 
                                 <td>{{ $entry->code }}</td>
                                 <td>{{ $entry->Real_Supplier_code }}</td>
@@ -88,8 +98,6 @@
                                 <td>{{ $entry->total_grn }}</td>
                                 <td>{{ $entry->BP }}</td>
                                 <td>{{ $entry->txn_date }}</td>
-
-
                             </tr>
                         @empty
                             <tr>
@@ -102,6 +110,7 @@
         </div>
     </div>
 
+    {{-- Edit Modal --}}
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content shadow-lg border-0">
@@ -112,6 +121,19 @@
                 </div>
 
                 <div class="modal-body bg-light">
+
+                    {{-- 
+                      *** 2. UPDATE HERE ***
+                      Added the display block for selected item details
+                    --}}
+                    <div class="mb-3 p-3 bg-white rounded border shadow-sm">
+                        <h5 class="fw-bold text-success mb-2" id="modalItemName"></h5>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted"><strong>Code:</strong> <span id="modalItemCode"></span></span>
+                            <span class="text-muted"><strong>SupCode:</strong> <span id="modalSupplierCode"></span></span>
+                        </div>
+                    </div>
+
                     <form id="updateForm">
                         @csrf
                         <input type="hidden" id="recordId">
@@ -160,6 +182,7 @@
             const supplierList = document.getElementById("supplierList");
             const realSupplierCodeInput = document.getElementById("real_supplier_code");
 
+            // --- Code Search ---
             codeSearch.addEventListener("keyup", function () {
                 const term = this.value.trim();
                 if (term.length === 0) {
@@ -188,6 +211,7 @@
                     });
             });
 
+            // --- Supplier Search ---
             supplierSearch.addEventListener("keyup", function () {
                 const term = this.value.trim();
                 if (term.length === 0) {
@@ -218,6 +242,7 @@
                     });
             });
 
+            // --- Hide dropdowns on outside click ---
             document.addEventListener("click", function (e) {
                 if (!codeList.contains(e.target) && e.target !== codeSearch) {
                     codeList.style.display = "none";
@@ -227,10 +252,20 @@
                 }
             });
 
+            // --- Table Row Click (to open modal) ---
             tableRows.forEach(row => {
                 row.addEventListener("click", function () {
-                    const id = this.dataset.id;
-                    document.getElementById("recordId").value = id;
+                    
+                    {{-- 
+                      *** 3. UPDATE HERE ***
+                      Added lines to populate the new display elements
+                    --}}
+                    document.getElementById("modalItemName").textContent = this.dataset.item_name;
+                    document.getElementById("modalItemCode").textContent = this.dataset.code;
+                    document.getElementById("modalSupplierCode").textContent = this.dataset.real_supplier_code;
+
+                    // --- Populate form inputs ---
+                    document.getElementById("recordId").value = this.dataset.id;
                     document.getElementById("packs").value = this.dataset.packs;
                     document.getElementById("weight").value = this.dataset.weight;
                     document.getElementById("total_grn").value = this.dataset.total_grn;
@@ -244,6 +279,7 @@
                 });
             });
 
+            // --- Save Changes Button ---
             document.getElementById("saveChanges").addEventListener("click", function () {
                 const id = document.getElementById("recordId").value;
                 const data = {
