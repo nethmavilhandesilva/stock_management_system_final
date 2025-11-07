@@ -2896,6 +2896,7 @@ public function fetchLoanDetails(Request $request)
         ]);
 
         $entry->save();
+        $this->updateGrnRemainingStock();
 
         Log::info("Updating Supplier2 Table");
 
