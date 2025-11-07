@@ -172,6 +172,43 @@
         </div>
     </div>
 
+    {{-- *** NEW: Payment Method *** --}}
+    <div class="row g-3 mt-2">
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Payment Method</label>
+            <div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="payment_method" id="payment_method_cash" value="cash" checked>
+                    <label class="form-check-label" for="payment_method_cash">Cash</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="payment_method" id="payment_method_cheque" value="cheque">
+                    <label class="form-check-label" for="payment_method_cheque">Cheque</label>
+                </div>
+            </div>
+        </div>
+
+        {{-- Cheque Details (Hidden by default) --}}
+        <div class="col-md-9" id="payment_cheque_details" style="display:none;">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="payment_cheque_no" class="form-label">Cheque No</label>
+                    <input type="text" name="payment_cheque_no" id="payment_cheque_no" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label for="payment_cheque_date" class="form-label">Cheque Date</label>
+                    <input type="date" name="payment_cheque_date" id="payment_cheque_date" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label for="payment_bank_name" class="form-label">Bank Name</label>
+                    <input type="text" name="payment_bank_name" id="payment_bank_name" class="form-control">
+                </div>
+            </div>
+        </div>
+    </div>
+    {{-- *** END NEW *** --}}
+
+
     <div class="mt-3 text-end">
         <button type="submit" class="btn btn-primary">Submit Payment</button>
     </div>
@@ -210,6 +247,43 @@
                           placeholder="e.g., Bulk payment for selected GRNs"></textarea>
             </div>
         </div>
+
+        {{-- *** NEW: Payment Method (Many) *** --}}
+        <div class="row g-3 mt-2">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Payment Method</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="many_payment_method" id="many_payment_method_cash" value="cash" checked>
+                        <label class="form-check-label" for="many_payment_method_cash">Cash</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="many_payment_method" id="many_payment_method_cheque" value="cheque">
+                        <label class="form-check-label" for="many_payment_method_cheque">Cheque</label>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Cheque Details (Hidden by default) --}}
+            <div class="col-md-8" id="many_cheque_details" style="display:none;">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="many_cheque_no" class="form-label">Cheque No</label>
+                        <input type="text" name="many_cheque_no" id="many_cheque_no" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="many_cheque_date" class="form-label">Cheque Date</label>
+                        <input type="date" name="many_cheque_date" id="many_cheque_date" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="many_bank_name" class="form-label">Bank Name</label>
+                        <input type="text" name="many_bank_name" id="many_bank_name" class="form-control">
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{-- *** END NEW *** --}}
+
 
         {{-- GRN Selection Area (Populated by JS) --}}
         <div id="grnSelectionContainer" class="mt-3" style="display:none;">
@@ -262,7 +336,7 @@
                 <td>{{ $supplier->date }}</td>
                 <td><span class="view-history-link" data-supplier-code="{{ $supplier->supplier_code }}">{{ $supplier->supplier_code }}</span></td>
                 <td>{{ $supplier->supplier_name }}</td>
-               <td class="text-end {{ $supplier->total_amount < 0 ? 'text-danger' : 'text-success' }}">
+                <td class="text-end {{ $supplier->total_amount < 0 ? 'text-danger' : 'text-success' }}">
     {{ number_format(abs($supplier->total_amount), 2) }}
 </td>
 
@@ -283,7 +357,7 @@
         </tbody>
     </table>
         <a href="{{ route('supplier.report') }}" class="btn btn-dark">
-                    සියලු සැපයුම්කරුවන්ගේ වාර්තාව
+                     සියලු සැપයුම්කරුවන්ගේ වාර්තාව
                 </a>
 </div>
 
@@ -292,16 +366,13 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content shadow-lg">
             
-            <!-- Header -->
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="transactionModalLabel">Supplier Transaction History</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <!-- Body -->
             <div class="modal-body bg-light">
                 
-                <!-- Supplier Info Card -->
                 <div class="border rounded p-3 mb-3 bg-white shadow-sm">
                     <h6 class="fw-bold mb-2">
                         Supplier: 
@@ -315,7 +386,6 @@
                     </div>
                 </div>
 
-                <!-- Summary Cards -->
                 <div class="row g-3 mb-4 text-center">
                     <div class="col-md-4">
                         <div class="card border-success">
@@ -343,26 +413,24 @@
                     </div>
                 </div>
 
-                <!-- Transaction History Table -->
-<h6 class="text-success mb-2">All Transactions</h6>
+                <h6 class="text-success mb-2">All Transactions</h6>
 <div class="table-responsive border rounded bg-white shadow-sm" style="max-height: 250px; overflow-y: auto;">
-        <table class="table table-sm table-striped table-hover align-middle mb-0">
-        <thead class="table-light sticky-top" style="z-index: 1;">
-            <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Description</th>
-                <th>GRN</th>
-                <th class="text-end">Amount</th>
-                <th class="text-end">Balance</th>
-            </tr>
+    <table class="table table-sm table-striped table-hover align-middle mb-0">
+    <thead class="table-light sticky-top" style="z-index: 1;">
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>GRN</th>
+            <th class="text-end">Amount</th>
+            <th class="text-end">Balance</th>
+        </tr>
     </thead>
     <tbody id="transactionHistoryBody">
         {{-- Populated dynamically --}}
     </tbody>
 </table>
 </div>
-                <!-- GRN Payment Breakdown -->
                 <h6 class="text-primary mb-2 mt-3">GRN Payment Breakdown</h6>
                 <div class="table-responsive border rounded bg-white shadow-sm" style="max-height: 250px; overflow-y: auto;">
                     <table class="table table-sm table-striped table-hover align-middle mb-0">
@@ -383,7 +451,6 @@
 
             </div>
 
-            <!-- Footer -->
             <div class="modal-footer bg-light border-top-0 pt-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -651,14 +718,12 @@ function updateTotalSelected() {
         totalSelectedSpan.textContent = total.toFixed(2);
         totalSelectedDisplay.style.display = 'block';
         manyPaymentSubmitButton.disabled = false;
-        // Auto-fill description
-        const descInput = document.getElementById('many_payment_description');
-        if (descInput) descInput.value = `Payment for  selected GRN(s)`;
+        // Auto-fill description (will be refined by updateDescriptionField)
+        updateDescriptionField(); 
     } else {
         totalSelectedDisplay.style.display = 'none';
         manyPaymentSubmitButton.disabled = true;
-        const descInput = document.getElementById('many_payment_description');
-        if (descInput) descInput.value = '';
+        updateDescriptionField();
     }
 }
 
@@ -861,26 +926,55 @@ document.addEventListener('DOMContentLoaded', ()=>{
     toggleForms();
 });
 
+// --- *** NEW: Payment Method Toggles *** ---
+// For "Settle to Supplier" form
+const paymentChequeDetails = document.getElementById('payment_cheque_details');
+const paymentMethodRadios = document.querySelectorAll('input[name="payment_method"]');
+paymentMethodRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (paymentChequeDetails) {
+            paymentChequeDetails.style.display = this.value === 'cheque' ? 'block' : 'none';
+        }
+        updateDescriptionField(); // Update description on change
+    });
+});
+
+// For "Many Payments" form
+const manyChequeDetails = document.getElementById('many_cheque_details');
+const manyPaymentMethodRadios = document.querySelectorAll('input[name="many_payment_method"]');
+manyPaymentMethodRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (manyChequeDetails) {
+            manyChequeDetails.style.display = this.value === 'cheque' ? 'block' : 'none';
+        }
+        updateDescriptionField(); // Update description on change
+    });
+});
+
+
 // --- Auto-fill description based on radio selection ---
 function updateDescriptionField() {
     const purchaseDescriptionInput = document.getElementById('description');
     const paymentDescriptionInput = document.getElementById('payment_description');
-    const manyPaymentDescriptionInput = document.getElementById('many_payment_description'); // NEW
+    const manyPaymentDescriptionInput = document.getElementById('many_payment_description');
     
-    // Only set if the input exists
     if (addRadio.checked) {
-        if(purchaseDescriptionInput) purchaseDescriptionInput.value = 'Purchase from Supplier';
-        if(paymentDescriptionInput) paymentDescriptionInput.value = ''; 
-        if(manyPaymentDescriptionInput) manyPaymentDescriptionInput.value = ''; // NEW
+        if(purchaseDescriptionInput && purchaseDescriptionInput.value === '') purchaseDescriptionInput.value = 'Purchase from Supplier';
     } else if (payRadio.checked) {
-        if(paymentDescriptionInput) paymentDescriptionInput.value = 'Payment to Supplier';
-        if(purchaseDescriptionInput) purchaseDescriptionInput.value = ''; 
-        if(manyPaymentDescriptionInput) manyPaymentDescriptionInput.value = ''; // NEW
-    } else if (manyPayRadio.checked) { // NEW
-        // This will be set by the GRN selection logic, but we clear the others
-        if(purchaseDescriptionInput) purchaseDescriptionInput.value = ''; 
-        if(paymentDescriptionInput) paymentDescriptionInput.value = ''; 
-        // Don't clear manyPaymentDescriptionInput, it's handled by updateTotalSelected
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+        if(paymentDescriptionInput) {
+            paymentDescriptionInput.value = paymentMethod === 'cheque' ? 'Cheque Payment to Supplier' : 'Cash Payment to Supplier';
+        }
+    } else if (manyPayRadio.checked) {
+        const paymentMethod = document.querySelector('input[name="many_payment_method"]:checked').value;
+        const anySelected = document.querySelectorAll('.grn-select-checkbox:checked').length > 0;
+        if(manyPaymentDescriptionInput) {
+            if (anySelected) {
+                manyPaymentDescriptionInput.value = paymentMethod === 'cheque' ? 'Cheque Payment for selected GRNs' : 'Cash Payment for selected GRNs';
+            } else {
+                 manyPaymentDescriptionInput.value = ''; // Clear if nothing is selected
+            }
+        }
     }
 }
 </script>

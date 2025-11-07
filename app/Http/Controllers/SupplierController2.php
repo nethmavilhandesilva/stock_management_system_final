@@ -127,6 +127,9 @@ class SupplierController2 extends Controller
         return response()->json([
             'supplier_code' => $supplierCode,
             'supplier_name' => $supplier->name ?? 'Unknown',
+            'supplier_email' => $supplier->email ?? null, // Added for modal
+            'supplier_phone' => $supplier->phone ?? null, // Added for modal
+            'supplier_address' => $supplier->address ?? null, // Added for modal
             'total_purchases' => number_format($totalPurchases, 2),
             'total_payments' => number_format($totalPayments, 2),
             'remaining_balance' => number_format($remainingBalance, 2),
@@ -202,6 +205,11 @@ class SupplierController2 extends Controller
             'payment_amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:500',
             'grn_id' => 'nullable|integer',
+            // *** NEW Validation ***
+            'payment_method' => 'required|in:cash,cheque',
+            'payment_cheque_no' => 'required_if:payment_method,cheque|nullable|string',
+            'payment_cheque_date' => 'required_if:payment_method,cheque|nullable|date',
+            'payment_bank_name' => 'required_if:payment_method,cheque|nullable|string',
         ]);
 
         try {
@@ -211,12 +219,25 @@ class SupplierController2 extends Controller
             $grnId = $request->grn_id ?: null;
             $currentDate = \App\Models\Setting::value('value');
 
+            // *** NEW: Build Description ***
+            $description = $request->description ?? 'Payment to Supplier';
+            if ($request->payment_method === 'cheque') {
+                $description = sprintf(
+                    '%s (Cheque No: %s, Date: %s, Bank: %s)',
+                    $description,
+                    $request->payment_cheque_no,
+                    $request->payment_cheque_date,
+                    $request->payment_bank_name
+                );
+            }
+            // *** END NEW ***
+
             Supplier2::create([
                 'supplier_code' => $request->supplier_code,
                 'supplier_name' => $supplierName,
                 'grn_id' => $grnId,
                 'total_amount' => -abs($request->payment_amount),
-                'description' => $request->description ?? 'Payment to Supplier',
+                'description' => $description, // Use the new description
                 'date' => $currentDate,
             ]);
 
@@ -228,7 +249,7 @@ class SupplierController2 extends Controller
         }
     }
 
-
+    // *** This method is REQUIRED by your blade file ***
     public function getUnpaidGrns($supplier_code)
     {
         try {
@@ -267,7 +288,7 @@ class SupplierController2 extends Controller
         }
     }
 
-
+    // *** This method is REQUIRED by your blade file ***
     public function storeManyPayment(Request $request)
     {
         $request->validate([
@@ -275,6 +296,11 @@ class SupplierController2 extends Controller
             'description' => 'nullable|string|max:255',
             'grn_ids_to_pay' => 'required|array|min:1',
             'grn_ids_to_pay.*' => 'integer|exists:grn_entries,id',
+            // *** NEW Validation ***
+            'many_payment_method' => 'required|in:cash,cheque',
+            'many_cheque_no' => 'required_if:many_payment_method,cheque|nullable|string',
+            'many_cheque_date' => 'required_if:many_payment_method,cheque|nullable|date',
+            'many_bank_name' => 'required_if:many_payment_method,cheque|nullable|string',
         ]);
 
         try {
@@ -282,12 +308,20 @@ class SupplierController2 extends Controller
 
             $supplier = Supplier::where('code', $request->supplier_code)->firstOrFail();
             $grnIds = $request->grn_ids_to_pay;
-
-            // ✅ FIXED missing default value
-            $paymentDescription = $request->description ?? 'Payment to Supplier';
-
-            // ✅ FIXED missing variable (your error)
             $currentDate = \App\Models\Setting::value('value');
+
+            // *** NEW: Build Base Description ***
+            $baseDescription = $request->description ?? 'Payment to Supplier';
+            if ($request->many_payment_method === 'cheque') {
+                $baseDescription = sprintf(
+                    '%s (Cheque No: %s, Date: %s, Bank: %s)',
+                    $baseDescription,
+                    $request->many_cheque_no,
+                    $request->many_cheque_date,
+                    $request->many_bank_name
+                );
+            }
+            // *** END NEW ***
 
             foreach ($grnIds as $grn_id) {
                 $purchase = Supplier2::where('supplier_code', $supplier->code)
@@ -312,7 +346,8 @@ class SupplierController2 extends Controller
                         'existing_supplier_id' => $supplier->id,
                         'grn_id' => $grn_id,
                         'date' => $currentDate,
-                        'description' => $paymentDescription . ' (GRN: ' . ($purchase->grn->code ?? $grn_id) . ')',
+                        // Use the new base description and append GRN info
+                        'description' => $baseDescription . ' (GRN: ' . ($purchase->grn->code ?? $grn_id) . ')',
                         'total_amount' => -1 * $remaining,
                     ]);
                 }
@@ -367,4 +402,3 @@ class SupplierController2 extends Controller
         return redirect()->route('suppliers2.index')->with('success', 'Supplier deleted.');
     }
 }
-
