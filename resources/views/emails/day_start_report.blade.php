@@ -392,6 +392,84 @@
                 color: #333 !important;
             }
         }
+        
+        /* === STYLES MOVED FROM THE BOTTOM === */
+        .custom-card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            overflow: hidden;
+            margin: 20px auto;
+            max-width: 800px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .report-title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(90deg, #4b79a1, #283e51);
+            color: #fff;
+            border-bottom: 2px solid #ccc;
+        }
+
+        .company-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .fw-bold {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .right-info {
+            font-size: 0.95rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 3px 8px;
+            border-radius: 5px;
+        }
+
+        .print-btn {
+            background-color: #ff9800;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .print-btn:hover {
+            background-color: #e68900;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        thead th {
+            font-size: 1rem;
+            text-align: left;
+            padding: 10px;
+        }
+
+        tbody td {
+            padding: 10px;
+            font-size: 0.95rem;
+        }
+
+        tfoot th,
+        tfoot td {
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 10px;
+        }
     </style>
 
 </head>
@@ -539,35 +617,35 @@
                             $grnGrandTotalRemainingPacks = 0;
 
                         @endphp
-              @forelse($dayStartReportData as $item)
-                @php
-                    $grnGrandTotalOriginalWeight += $item['original_weight'];
-                    $grnGrandTotalOriginalPacks += $item['original_packs'];
-                    $grnGrandTotalSoldWeight += $item['sold_weight'];
-                    $grnGrandTotalSoldPacks += $item['sold_packs'];
+                  @forelse($dayStartReportData as $item)
+                    @php
+                        $grnGrandTotalOriginalWeight += $item['original_weight'];
+                        $grnGrandTotalOriginalPacks += $item['original_packs'];
+                        $grnGrandTotalSoldWeight += $item['sold_weight'];
+                        $grnGrandTotalSoldPacks += $item['sold_packs'];
 
-                    $grnGrandTotalSalesValue += $item['total_sales_value'];
-                    $grnGrandTotalRemainingWeight += $item['remaining_weight'];
-                    $grnGrandTotalRemainingPacks += $item['remaining_packs'];
+                        $grnGrandTotalSalesValue += $item['total_sales_value'];
+                        $grnGrandTotalRemainingWeight += $item['remaining_weight'];
+                        $grnGrandTotalRemainingPacks += $item['remaining_packs'];
 
-                @endphp
-                <tr>
-    <td>
-        {{ $item['item_name'] }} 
-        @if(isset($item['grn_code']))
-            ({{ $item['grn_code'] }})
-        @endif
-    </td>
-    <td>{{ number_format($item['original_weight'], 2) }}</td>
-    <td>{{ number_format($item['original_packs']) }}</td>
-    <td>{{ number_format($item['sold_weight'], 2) }}</td>
-    <td>{{ number_format($item['sold_packs']) }}</td>
-    <td>Rs. {{ number_format($item['total_sales_value'], 2) }}</td>
-    <td>{{ number_format($item['remaining_weight'], 2) }}</td>
-    <td>{{ number_format($item['remaining_packs']) }}</td>
+                    @endphp
+                    <tr>
+  <td>
+      {{ $item['item_name'] }} 
+      @if(isset($item['grn_code']))
+          ({{ $item['grn_code'] }})
+      @endif
+  </td>
+  <td>{{ number_format($item['original_weight'], 2) }}</td>
+  <td>{{ number_format($item['original_packs']) }}</td>
+  <td>{{ number_format($item['sold_weight'], 2) }}</td>
+  <td>{{ number_format($item['sold_packs']) }}</td>
+  <td>Rs. {{ number_format($item['total_sales_value'], 2) }}</td>
+  <td>{{ number_format($item['remaining_weight'], 2) }}</td>
+  <td>{{ number_format($item['remaining_packs']) }}</td>
 </tr>
 
-            @empty
+                @empty
                             <tr>
                                 <td colspan="8" class="text-center text-muted py-4">GRN දත්ත නොමැත.</td>
                             </tr>
@@ -622,41 +700,41 @@
                     </thead>
                     <tbody>
                         @forelse ($salesadjustments as $entry)
-                                    <tr class="@if($entry->type == 'original') table-success 
-                                       @elseif($entry->type == 'updated') table-warning 
-                               @elseif($entry->type == 'deleted') table-danger 
-                               @endif">
-                                        <td>{{ $entry->code }}</td>
-                                        <td>{{ $entry->item_name }}</td>
+                                <tr class="@if($entry->type == 'original') table-success 
+                                    @elseif($entry->type == 'updated') table-warning 
+                                @elseif($entry->type == 'deleted') table-danger 
+                                @endif">
+                                    <td>{{ $entry->code }}</td>
+                                    <td>{{ $entry->item_name }}</td>
 
-                                        {{-- Highlighted columns for updated records --}}
-                                        <td @if($entry->type == 'updated') style="color: orange; font-weight:bold;" @endif>
-                                            {{ $entry->weight }}
-                                        </td>
-                                        <td @if($entry->type == 'updated') style="color: orange; font-weight:bold;" @endif>
-                                            {{ number_format($entry->price_per_kg, 2) }}
-                                        </td>
-                                        <td @if($entry->type == 'updated') style="color: orange; font-weight:bold;" @endif>
-                                            {{ $entry->packs }}
-                                        </td>
-                                        <td @if($entry->type == 'updated') style="color: orange; font-weight:bold;" @endif>
-                                            {{ number_format($entry->total, 2) }}
-                                        </td>
+                                    {{-- Highlighted columns for updated records --}}
+                                    <td @if($entry->type == 'updated') style="color: orange; font-weight:bold;" @endif>
+                                        {{ $entry->weight }}
+                                    </td>
+                                    <td @if($entry->type == 'updated') style="color: orange; font-weight:bold;" @endif>
+                                        {{ number_format($entry->price_per_kg, 2) }}
+                                    </td>
+                                    <td @if($entry->type == 'updated') style="color: orange; font-weight:bold;" @endif>
+                                        {{ $entry->packs }}
+                                    </td>
+                                    <td @if($entry->type == 'updated') style="color: orange; font-weight:bold;" @endif>
+                                        {{ number_format($entry->total, 2) }}
+                                    </td>
 
-                                        <td>{{ $entry->bill_no }}</td>
-                                        <td>{{ strtoupper($entry->customer_code) }}</td>
-                                        <td>{{ $entry->type }}</td>
-                                        <td>
-                                            @if($entry->type == 'original')
-                                                                    {{ \Carbon\Carbon::parse($entry->original_created_at)
-                                                ->timezone('Asia/Colombo')
-                                                ->format('Y-m-d H:i:s') }}
-                                            @else
-                                                {{ $entry->Date }}
-                                                {{ \Carbon\Carbon::parse($entry->created_at)->setTimezone('Asia/Colombo')->format('H:i:s') }}
-                                            @endif
-                                        </td>
-                                    </tr>
+                                    <td>{{ $entry->bill_no }}</td>
+                                    <td>{{ strtoupper($entry->customer_code) }}</td>
+                                    <td>{{ $entry->type }}</td>
+                                    <td>
+                                        @if($entry->type == 'original')
+                                                    {{ \Carbon\Carbon::parse($entry->original_created_at)
+                                        ->timezone('Asia/Colombo')
+                                        ->format('Y-m-d H:i:s') }}
+                                        @else
+                                            {{ $entry->Date }}
+                                            {{ \Carbon\Carbon::parse($entry->created_at)->setTimezone('Asia/Colombo')->format('H:i:s') }}
+                                        @endif
+                                    </td>
+                                </tr>
                         @empty
                             <tr>
                                 <td colspan="10" class="text-center">සටහන් කිසිවක් සොයාගෙන නොමැත</td>
@@ -667,90 +745,9 @@
             </div>
         </div>
 
+    </div>
 
-
-        <style>
-            .custom-card {
-                border-radius: 12px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                background-color: #ffffff;
-                overflow: hidden;
-                margin: 20px auto;
-                max-width: 800px;
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            }
-
-            .report-title-bar {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 15px 20px;
-                background: linear-gradient(90deg, #4b79a1, #283e51);
-                color: #fff;
-                border-bottom: 2px solid #ccc;
-            }
-
-            .company-name {
-                font-size: 1.8rem;
-                font-weight: bold;
-                margin: 0;
-            }
-
-            .fw-bold {
-                margin: 0;
-                font-size: 1.1rem;
-            }
-
-            .right-info {
-                font-size: 0.95rem;
-                background-color: rgba(255, 255, 255, 0.2);
-                padding: 3px 8px;
-                border-radius: 5px;
-            }
-
-            .print-btn {
-                background-color: #ff9800;
-                color: #fff;
-                border: none;
-                padding: 6px 12px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 0.9rem;
-                transition: background 0.3s;
-            }
-
-            .print-btn:hover {
-                background-color: #e68900;
-            }
-
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 15px;
-            }
-
-            thead th {
-                font-size: 1rem;
-                text-align: left;
-                padding: 10px;
-            }
-
-            tbody td {
-                padding: 10px;
-                font-size: 0.95rem;
-            }
-
-            tfoot th,
-            tfoot td {
-                font-size: 1rem;
-                font-weight: 600;
-                padding: 10px;
-            }
-        </style>
-
-
-
-
+    {{-- The second <style> block that was here has been removed --}}
 
 </body>
 

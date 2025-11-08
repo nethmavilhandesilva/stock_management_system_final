@@ -832,7 +832,7 @@ public function dayStart(Request $request)
             ->get();
 
         // --- Financial Report Data ---
-        $financialRecords = IncomeExpenses::select(
+      $financialRecords = IncomeExpenses::select(
             'customer_short_name',
             'bill_no',
             'description',
@@ -873,8 +873,16 @@ public function dayStart(Request $request)
             }
         }
 
-        // Always add Sales Total (even if no IncomeExpenses)
-        $salesTotal = Sale::sum('total');
+        // --- Sales and Profit (Filtered by $settingDate) ---
+
+        // 1. Get all sales for the specific date
+        // (Assuming 'Date' column exists. If not, use 'created_at')
+        $sales = Sale::whereDate('Date', $settingDate)->get();
+
+        // 2. Get Sales Total from the collection (efficient)
+        $salesTotal = $sales->sum('total');
+
+        // 3. Add Sales Total to the report
         if ($salesTotal > 0) {
             $totalDr += $salesTotal;
             $financialReportData[] = [
@@ -883,10 +891,62 @@ public function dayStart(Request $request)
                 'cr' => null
             ];
         }
+        
+        // 4. Get unique codes from *these* sales to fetch GRN data
+        $saleCodes = $sales->pluck('code')->unique()->filter();
 
-        // Profit and Damages
-        $profitTotal = Sale::sum('SellingKGTotal') ?? 0;
-        $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
+        // 5. Fetch all matching GrnEntries in ONE query and map them
+        $grnEntriesMap = collect(); // Initialize empty
+        if ($saleCodes->isNotEmpty()) {
+            $grnEntriesMap = GrnEntry::whereIn('code', $saleCodes)
+                ->get()
+                ->keyBy('code');
+        }
+
+        // 6. Loop through each sale to calculate profit
+        $totalProfit = 0;
+        $profitDetails = []; // You can pass this to the view if needed
+
+        foreach ($sales as $sale) {
+            
+            // 7. Find the matching GrnEntry from our map
+            $grnEntry = $grnEntriesMap->get($sale->code);
+
+            // 8. Get the cost price (BP)
+            $costPrice = $grnEntry ? $grnEntry->BP : null;
+
+            // 9. Skip records with invalid data
+            if (
+                !is_null($sale->price_per_kg) &&
+                $sale->price_per_kg > 0 &&
+                !is_null($costPrice) &&
+                $costPrice > 0 &&
+                !is_null($sale->weight) &&
+                $sale->weight > 0
+            ) {
+                // 10. Calculate profit: (selling - cost) × weight
+                $profitPerRecord = abs($sale->price_per_kg - $costPrice) * $sale->weight;
+                $totalProfit += $profitPerRecord;
+
+                // (Optional: You can still build this array if your view needs it)
+                $profitDetails[] = [
+                    'bill_no' => $sale->bill_no,
+                    'item_name' => $sale->item_name,
+                    'weight' => $sale->weight,
+                    'selling_price_per_kg' => $sale->price_per_kg,
+                    'cost_price_per_kg' => $costPrice,
+                    'profit' => $profitPerRecord
+                ];
+            }
+        }
+
+        // 11. Assign the calculated profit to the $profitTotal variable
+        $profitTotal = $totalProfit;
+
+        // 12. Corrected Damages to also use the date filter
+        // (Assuming damage is recorded on 'created_at'. Adjust if you have a 'Date' column)
+        $totalDamages = GrnEntry::whereDate('created_at', $settingDate)
+            ->select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
             ->value(DB::raw('SUM(wasted_weight * PerKGPrice)')) ?? 0;
 
         // --- Customers Loans ---

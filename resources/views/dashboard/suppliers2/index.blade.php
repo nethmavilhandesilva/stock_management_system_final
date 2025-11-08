@@ -673,7 +673,7 @@ function fetchUnpaidGrns(supplierCode) {
                 
                 const grnRow = `
                 <div class="form-check">
-                    <input class="form-check-input grn-select-checkbox" type="checkbox" name="grn_ids_to_pay[]" 
+                    <input class="form-check-input grn-select-checkbox" type="checkbox" style="margin-left: 10px;" name="grn_ids_to_pay[]" 
                            value="${grn.grn_id}" data-remaining="${remaining.toFixed(2)}">
                     <label class="form-check-label d-flex justify-content-between flex-wrap">
                         <span class="me-3">
