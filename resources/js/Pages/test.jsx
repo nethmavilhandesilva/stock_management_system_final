@@ -703,6 +703,20 @@ export default function SalesEntry() {
       }
 
       const isEditing = editingSaleId !== null;
+      
+      if (!isEditing && selectedPrintedCustomer) {
+    updateState({ 
+        errors: { form: "Cannot add new entries to printed bills. Please edit existing records or select an unprinted customer." },
+        isSubmitting: false
+    });
+    
+    // Auto-clear error after 5 seconds
+    setTimeout(() => {
+        updateState({ errors: {} });
+    }, 1000);
+    
+    return;
+}
 
       let billPrintedStatus = undefined;
       let billNoToUse = null;

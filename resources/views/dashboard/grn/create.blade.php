@@ -158,7 +158,40 @@
             <div class="col-lg-10">
                 <div class="custom-card">
                     <h2 class="text-primary mb-4 text-center">📝 නව GRN ඇතුළත් කිරීම & GRN ලැයිස්තුව</h2>
+                    
+                    {{-- ============================================= --}}
+                    {{-- ADDED: BLOCK TO SHOW ERRORS AND SUCCESS --}}
+                    {{-- ============================================= --}}
+                    @if (session('success'))
+                        <div class="alert alert-success text-center" role="alert">
+                            {{ session('success') }}
+                        </div>
+                    @endif
 
+                    @if (session('error'))
+                        <div class="alert alert-danger text-center" role="alert">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="alert alert-danger" role="alert">
+                            <strong class="d-block text-center">Please fix the following errors:</strong>
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    {{-- ============================================= --}}
+                    {{-- END OF ERROR BLOCK --}}
+                    {{-- ============================================= --}}
+
+
+                    {{-- =================================================== --}}
+                    {{-- 1. FIXED: Form action MUST point to 'grn.store' --}}
+                    {{-- =================================================== --}}
                     <form method="POST" action="{{ route('grn.store2') }}">
                         @csrf
                         <div class="row g-3">
@@ -187,7 +220,7 @@
 
                             {{-- Supplier --}}
                             <div class="col-md-3">
-                                <label for="supplier_name" class="form-label">සැපයුම්කරු <span
+                                <label for="supplier_name" class="form-label">තොග/සිල්ලර <span
                                         class="text-danger">*</span></label>
                                 <input list="suppliers_list" id="supplier_name" name="supplier_name"
                                     class="form-control form-control-sm @error('supplier_name') is-invalid @enderror"
@@ -244,6 +277,16 @@
                                     class="form-control form-control-sm" value="{{ old('per_kg_price') }}" step="0.01">
                             </div>
 
+                            {{-- ============================================= --}}
+                            {{-- 2. ADDED: Real Supplier Code Field --}}
+                            {{-- ============================================= --}}
+                            <div class="col-md-3">
+                                <label for="Real_Supplier_code" class="form-label">Real Supplier Code</label>
+                                <input type="text" id="Real_Supplier_code" name="Real_Supplier_code"
+                                    class="form-control form-control-sm" value="{{ old('Real_Supplier_code') }}"
+                                    oninput="this.value = this.value.toUpperCase();" style="text-transform: uppercase;">
+                            </div>
+                            
                             {{-- Transaction Date --}}
                             <div class="col-md-2">
                                 <label for="txn_date" class="form-label">දිනය <span class="text-danger">*</span></label>
@@ -272,7 +315,7 @@
                         <input type="password" id="list_password" class="form-control form-control-sm">
                     </div>
                     <input type="text" id="searchInput" class="form-control form-control-sm mb-3"
-                        placeholder="Search by Code, Supplier, Item Code, or Name" style="text-transform: uppercase;">
+                           placeholder="Search by Code, Supplier, Item Code, or Name" style="text-transform: uppercase;">
 
 
                     @if($entries->isEmpty())
@@ -312,30 +355,28 @@
                                             <td>{{ $entry->grn_no }}</td>
                                             <td class="total-grn-column">{{ $entry->total_grn }}</td>
                                             <td class="per-kg-price-column">{{ $entry->PerKGPrice }}</td>
-                                           <td>
-    <a href="{{ route('grn.edit', $entry->id) }}" 
-       class="btn btn-sm btn-info me-1"
-       @if(Auth::user()->role === 'Level2') 
-           onclick="return false;" 
-           style="pointer-events: none; opacity: 0.6;" 
-       @endif>
-        <i class="material-icons">edit</i>
-    </a>
+                                            <td>
+                                                <a href="{{ route('grn.edit', $entry->id) }}" 
+                                                   class="btn btn-sm btn-info me-1"
+                                                   @if(Auth::user()->role === 'Level2') 
+                                                       onclick="return false;" 
+                                                       style="pointer-events: none; opacity: 0.6;" 
+                                                   @endif>
+                                                    <i class="material-icons">edit</i>
+                                                </a>
 
-    <button type="button" 
-            class="btn btn-sm btn-danger delete-btn"
-            data-entry-id="{{ $entry->id }}"
-            @if(Auth::user()->role === 'Level2') 
-                disabled 
-                style="opacity: 0.6; cursor: not-allowed;" 
-            @endif>
-        <i class="material-icons">delete</i>
-    </button>
-</td>
-
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-danger delete-btn"
+                                                        data-entry-id="{{ $entry->id }}"
+                                                        @if(Auth::user()->role === 'Level2') 
+                                                            disabled 
+                                                            style="opacity: 0.6; cursor: not-allowed;" 
+                                                        @endif>
+                                                    <i class="material-icons">delete</i>
+                                                </button>
+                                            </td>
                                         </tr>
                                     @endforeach
-
                                 </tbody>
                             </table>
                         </div>
@@ -369,386 +410,401 @@
                         <li id="unhideOption">Don't Hide</li>
                     </ul>
 
-                    {{-- ===================== Scripts ===================== --}}
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            // Auto-calculate Per KG Price
-                            const totalGrnInput = document.getElementById('total_grn');
-                            const weightInput = document.getElementById('weight');
-                            const perKgPriceInput = document.getElementById('per_kg_price');
+                </div>
+            </div>
+        </div>
+    </div>
 
-                            function calculatePerKgPrice() {
-                                const totalGrn = parseFloat(totalGrnInput.value) || 0;
-                                const weight = parseFloat(weightInput.value) || 0;
+    {{-- ===================== Scripts ===================== --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Auto-calculate Per KG Price
+            const totalGrnInput = document.getElementById('total_grn');
+            const weightInput = document.getElementById('weight');
+            const perKgPriceInput = document.getElementById('per_kg_price');
 
-                                if (totalGrn > 0 && weight > 0) {
-                                    const perKgPrice = (totalGrn / weight).toFixed(2);
-                                    perKgPriceInput.value = perKgPrice;
-                                } else {
-                                    perKgPriceInput.value = '';
-                                }
+            function calculatePerKgPrice() {
+                const totalGrn = parseFloat(totalGrnInput.value) || 0;
+                const weight = parseFloat(weightInput.value) || 0;
+
+                if (totalGrn > 0 && weight > 0) {
+                    const perKgPrice = (totalGrn / weight).toFixed(2);
+                    perKgPriceInput.value = perKgPrice;
+                } else {
+                    perKgPriceInput.value = '';
+                }
+            }
+
+            // Calculate when either total GRN or weight changes
+            totalGrnInput.addEventListener('input', calculatePerKgPrice);
+            weightInput.addEventListener('input', calculatePerKgPrice);
+
+            // Auto-focus on item_search field after page load
+            const itemSearch = document.getElementById('item_search');
+            if (itemSearch) {
+                // Small timeout to ensure everything is loaded
+                setTimeout(() => {
+                    itemSearch.focus();
+                }, 100);
+            }
+
+            // Item Search Dropdown Functionality
+            const itemCode = document.getElementById('item_code');
+            const itemType = document.getElementById('item_type');
+            const itemOptions = document.getElementById('item_options');
+            const options = itemOptions.querySelectorAll('.dropdown-option');
+            let currentHighlight = -1;
+            let isOptionSelected = false;
+
+            // Filter options based on search input - ONLY FIRST LETTER MATCH
+            function filterOptions() {
+                const searchTerm = itemSearch.value.toLowerCase();
+                let hasVisibleOptions = false;
+                let firstMatchIndex = -1;
+
+                options.forEach((option, index) => {
+                    const itemNo = option.dataset.value.toLowerCase();
+                    const fullText = option.dataset.fulltext.toLowerCase();
+
+                    // Show options ONLY where the first letter exactly matches
+                    // Remove the fullText.includes(searchTerm) part to only match by first letter
+                    const shouldShow = itemNo.startsWith(searchTerm) || searchTerm === '';
+
+                    option.style.display = shouldShow ? 'block' : 'none';
+
+                    if (shouldShow && firstMatchIndex === -1) {
+                        firstMatchIndex = index;
+                    }
+                    if (shouldShow) hasVisibleOptions = true;
+                });
+
+                // Show/hide dropdown
+                itemOptions.style.display = hasVisibleOptions ? 'block' : 'none';
+
+                // Reset highlight
+                currentHighlight = -1;
+                removeHighlights();
+
+                // Auto-highlight first option
+                if (firstMatchIndex !== -1 && !isOptionSelected) {
+                    highlightOption(firstMatchIndex);
+                }
+            }
+
+            // Highlight an option
+            function highlightOption(index) {
+                removeHighlights();
+                if (options[index] && options[index].style.display === 'block') {
+                    options[index].classList.add('highlighted');
+                    currentHighlight = index;
+                }
+            }
+
+            // Remove all highlights
+            function removeHighlights() {
+                options.forEach(option => {
+                    option.classList.remove('highlighted');
+                });
+            }
+
+            // Select an option
+            function selectOption(option) {
+                itemSearch.value = option.dataset.fulltext;
+                itemCode.value = option.dataset.value;
+                itemType.value = option.dataset.type;
+                itemOptions.style.display = 'none';
+                currentHighlight = -1;
+                isOptionSelected = true;
+            }
+
+            // Clear selection and allow editing
+            function clearSelection() {
+                itemCode.value = '';
+                itemType.value = '';
+                isOptionSelected = false;
+                // Don't clear the search field - let user edit what's there
+            }
+
+            // Event Listeners for Item Search
+            itemSearch.addEventListener('input', function () {
+                // Clear selection when user starts typing again
+                if (isOptionSelected) {
+                    clearSelection();
+                }
+                filterOptions();
+            });
+
+            itemSearch.addEventListener('focus', function () {
+                filterOptions();
+            });
+
+            // Allow backspace and other keys to work normally
+            itemSearch.addEventListener('keydown', function (e) {
+                // If backspace is pressed and there's a selection, clear it first
+                if (e.key === 'Backspace' && isOptionSelected) {
+                    clearSelection();
+                    // Don't prevent default - allow backspace to work normally
+                    return;
+                }
+
+                // If delete key is pressed and there's a selection, clear it first
+                if (e.key === 'Delete' && isOptionSelected) {
+                    clearSelection();
+                    // Don't prevent default - allow delete to work normally
+                    return;
+                }
+
+                const visibleOptions = Array.from(options).filter(opt =>
+                    opt.style.display === 'block'
+                );
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let nextHighlight = currentHighlight + 1;
+                    while (nextHighlight < options.length &&
+                        options[nextHighlight].style.display !== 'block') {
+                        nextHighlight++;
+                    }
+                    if (nextHighlight < options.length) {
+                        highlightOption(nextHighlight);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    let prevHighlight = currentHighlight - 1;
+                    while (prevHighlight >= 0 &&
+                        options[prevHighlight].style.display !== 'block') {
+                        prevHighlight--;
+                    }
+                    if (prevHighlight >= 0) {
+                        highlightOption(prevHighlight);
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (currentHighlight !== -1 &&
+                        options[currentHighlight].style.display === 'block') {
+                        selectOption(options[currentHighlight]);
+                        // Move to next field after selection
+                        document.getElementById('supplier_name').focus();
+                    } else if (itemSearch.value.trim() !== '') {
+                        // Try to find exact match
+                        const exactMatch = Array.from(options).find(opt =>
+                            opt.dataset.fulltext === itemSearch.value ||
+                            opt.dataset.value === itemSearch.value
+                        );
+                        if (exactMatch) {
+                            selectOption(exactMatch);
+                            document.getElementById('supplier_name').focus();
+                        } else {
+                            // If no exact match and user presses enter, just move to next field
+                            document.getElementById('supplier_name').focus();
+                        }
+                    }
+                } else if (e.key === 'Escape') {
+                    itemOptions.style.display = 'none';
+                    currentHighlight = -1;
+                }
+            });
+
+            // Click on option to select
+            options.forEach(option => {
+                option.addEventListener('click', function () {
+                    selectOption(this);
+                    document.getElementById('supplier_name').focus();
+                });
+            });
+
+            // Click outside to close dropdown
+            document.addEventListener('click', function (e) {
+                if (!itemSearch.contains(e.target) && !itemOptions.contains(e.target)) {
+                    itemOptions.style.display = 'none';
+                    currentHighlight = -1;
+                }
+            });
+
+            // Double click or select all to allow editing
+            itemSearch.addEventListener('dblclick', function () {
+                if (isOptionSelected) {
+                    clearSelection();
+                    // Select all text for easy replacement
+                    this.select();
+                }
+            });
+
+            // Click to select all text when field has a selected value
+            itemSearch.addEventListener('click', function () {
+                if (isOptionSelected) {
+                    this.select();
+                }
+            });
+
+            const listPasswordField = document.getElementById('list_password');
+            const totalGrnCells = document.querySelectorAll('.total-grn-column');
+            const totalGrnHeader = document.querySelector('.total-grn-header');
+            const perKgCells = document.querySelectorAll('.per-kg-price-column');
+            const perKgHeader = document.querySelector('.per-kg-price-header');
+
+            function toggleHiddenColumns(show) {
+                const displayStyle = show ? 'table-cell' : 'none';
+                if (totalGrnHeader) totalGrnHeader.style.display = displayStyle;
+                if (perKgHeader) perKgHeader.style.display = displayStyle;
+                totalGrnCells.forEach(cell => cell.style.display = displayStyle);
+                perKgCells.forEach(cell => cell.style.display = displayStyle);
+            }
+
+            listPasswordField.addEventListener('input', function () {
+                const isCorrect = this.value === 'nethma123';
+                toggleHiddenColumns(isCorrect);
+                if (isCorrect) {
+                    this.style.backgroundColor = '#d4edda';
+                    this.style.borderColor = '#28a745';
+                } else {
+                    this.style.backgroundColor = '#f8d7da';
+                    this.style.borderColor = '#dc3545';
+                }
+                if (this.value === '') {
+                    this.style.backgroundColor = '';
+                    this.style.borderColor = '';
+                }
+            });
+
+            // ===================== Search filter =====================
+            const searchInput = document.getElementById('searchInput');
+            const rows = document.querySelectorAll('#entriesTable tbody tr');
+            searchInput.addEventListener('keyup', function () {
+                const filter = this.value.toLowerCase();
+                rows.forEach(row => {
+                    const code = row.querySelector('.search-code')?.textContent.toLowerCase() || '';
+                    const supplierCode = row.querySelector('.search-supplier-code')?.textContent.toLowerCase() || '';
+                    const itemCode = row.querySelector('.search-item-code')?.textContent.toLowerCase() || '';
+                    const itemName = row.querySelector('.search-item-name')?.textContent.toLowerCase() || '';
+                    row.style.display = (code.includes(filter) || supplierCode.includes(filter) || itemCode.includes(filter) || itemName.includes(filter)) ? '' : 'none';
+                });
+            });
+
+            // Delete modal functionality
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            const deleteForm = document.getElementById('deleteForm');
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const entryId = this.dataset.entryId;
+                    deleteForm.action = `/grn/${entryId}`;
+                    deleteModal.show();
+                });
+            });
+
+            // =================================================== --}}
+            // 3. FIXED: Form navigation JS --}}
+            // =================================================== --}}
+            
+            // Fixed the selector to point to the correct form
+            const form = document.querySelector('form[action="{{ route('grn.store') }}"]'); 
+            
+            // Added 'Real_Supplier_code' to the fields array
+            const fields = [
+                'item_search',
+                'supplier_name',
+                'grn_no',
+                'warehouse_no',
+                'packs',
+                'weight',
+                'total_grn',
+                'per_kg_price',
+                'Real_Supplier_code', // <-- ADDED
+                'txn_date'
+            ];
+
+            fields.forEach((fieldId, index) => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+
+                            // Fixed submit logic to trigger on the ACTUAL last field
+                            if (fieldId === 'txn_date') { 
+                                form.submit();
+                                return;
                             }
 
-                            // Calculate when either total GRN or weight changes
-                            totalGrnInput.addEventListener('input', calculatePerKgPrice);
-                            weightInput.addEventListener('input', calculatePerKgPrice);
-
-                            // Auto-focus on item_search field after page load
-                            const itemSearch = document.getElementById('item_search');
-                            if (itemSearch) {
-                                // Small timeout to ensure everything is loaded
-                                setTimeout(() => {
-                                    itemSearch.focus();
-                                }, 100);
-                            }
-
-                            // Item Search Dropdown Functionality
-                            const itemCode = document.getElementById('item_code');
-                            const itemType = document.getElementById('item_type');
-                            const itemOptions = document.getElementById('item_options');
-                            const options = itemOptions.querySelectorAll('.dropdown-option');
-                            let currentHighlight = -1;
-                            let isOptionSelected = false;
-
-                            // Filter options based on search input - ONLY FIRST LETTER MATCH
-                            function filterOptions() {
-                                const searchTerm = itemSearch.value.toLowerCase();
-                                let hasVisibleOptions = false;
-                                let firstMatchIndex = -1;
-
-                                options.forEach((option, index) => {
-                                    const itemNo = option.dataset.value.toLowerCase();
-                                    const fullText = option.dataset.fulltext.toLowerCase();
-
-                                    // Show options ONLY where the first letter exactly matches
-                                    // Remove the fullText.includes(searchTerm) part to only match by first letter
-                                    const shouldShow = itemNo.startsWith(searchTerm) || searchTerm === '';
-
-                                    option.style.display = shouldShow ? 'block' : 'none';
-
-                                    if (shouldShow && firstMatchIndex === -1) {
-                                        firstMatchIndex = index;
-                                    }
-                                    if (shouldShow) hasVisibleOptions = true;
-                                });
-
-                                // Show/hide dropdown
-                                itemOptions.style.display = hasVisibleOptions ? 'block' : 'none';
-
-                                // Reset highlight
-                                currentHighlight = -1;
-                                removeHighlights();
-
-                                // Auto-highlight first option
-                                if (firstMatchIndex !== -1 && !isOptionSelected) {
-                                    highlightOption(firstMatchIndex);
+                            const nextFieldId = fields[index + 1];
+                            if (nextFieldId) {
+                                const nextField = document.getElementById(nextFieldId);
+                                if (nextField) {
+                                    nextField.focus();
                                 }
                             }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const contextMenu = document.getElementById('contextMenu');
+            let currentRow = null;
 
-                            // Highlight an option
-                            function highlightOption(index) {
-                                removeHighlights();
-                                if (options[index] && options[index].style.display === 'block') {
-                                    options[index].classList.add('highlighted');
-                                    currentHighlight = index;
-                                }
+            // Show context menu on right click
+            document.querySelectorAll('.grn-row').forEach(row => {
+                row.addEventListener('contextmenu', function (e) {
+                    e.preventDefault();
+                    currentRow = this;
+                    contextMenu.style.top = `${e.pageY}px`;
+                    contextMenu.style.left = `${e.pageX}px`;
+                    contextMenu.style.display = 'block';
+                });
+            });
+
+            // Hide context menu on click elsewhere
+            document.addEventListener('click', function () {
+                contextMenu.style.display = 'none';
+            });
+
+            // AJAX call to hide/unhide
+            function updateHideStatus(action) {
+                if (!currentRow) return;
+                const entryId = currentRow.dataset.entryId;
+                
+                // FIXED: Changed hardcoded URL to relative path
+                const url = action === 'hide'
+                    ? `/grn/${entryId}/hide` 
+                    : `/grn/${entryId}/unhide`;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status) {
+                            // Visually mark row as hidden/unhidden
+                            if (data.status === 'hidden') {
+                                currentRow.style.opacity = 0.5; // mark as hidden
+                            } else {
+                                currentRow.style.opacity = 1; // mark as visible
                             }
+                        }
+                    })
+                    .catch(err => console.error(err));
+            }
 
-                            // Remove all highlights
-                            function removeHighlights() {
-                                options.forEach(option => {
-                                    option.classList.remove('highlighted');
-                                });
-                            }
+            // Click on Hide
+            document.getElementById('hideOption').addEventListener('click', function () {
+                updateHideStatus('hide');
+                contextMenu.style.display = 'none';
+            });
 
-                            // Select an option
-                            function selectOption(option) {
-                                itemSearch.value = option.dataset.fulltext;
-                                itemCode.value = option.dataset.value;
-                                itemType.value = option.dataset.type;
-                                itemOptions.style.display = 'none';
-                                currentHighlight = -1;
-                                isOptionSelected = true;
-                            }
+            // Click on Don't Hide
+            document.getElementById('unhideOption').addEventListener('click', function () {
+                updateHideStatus('unhide');
+                contextMenu.style.display = 'none';
+            });
+        });
 
-                            // Clear selection and allow editing
-                            function clearSelection() {
-                                itemCode.value = '';
-                                itemType.value = '';
-                                isOptionSelected = false;
-                                // Don't clear the search field - let user edit what's there
-                            }
-
-                            // Event Listeners for Item Search
-                            itemSearch.addEventListener('input', function () {
-                                // Clear selection when user starts typing again
-                                if (isOptionSelected) {
-                                    clearSelection();
-                                }
-                                filterOptions();
-                            });
-
-                            itemSearch.addEventListener('focus', function () {
-                                filterOptions();
-                            });
-
-                            // Allow backspace and other keys to work normally
-                            itemSearch.addEventListener('keydown', function (e) {
-                                // If backspace is pressed and there's a selection, clear it first
-                                if (e.key === 'Backspace' && isOptionSelected) {
-                                    clearSelection();
-                                    // Don't prevent default - allow backspace to work normally
-                                    return;
-                                }
-
-                                // If delete key is pressed and there's a selection, clear it first
-                                if (e.key === 'Delete' && isOptionSelected) {
-                                    clearSelection();
-                                    // Don't prevent default - allow delete to work normally
-                                    return;
-                                }
-
-                                const visibleOptions = Array.from(options).filter(opt =>
-                                    opt.style.display === 'block'
-                                );
-
-                                if (e.key === 'ArrowDown') {
-                                    e.preventDefault();
-                                    let nextHighlight = currentHighlight + 1;
-                                    while (nextHighlight < options.length &&
-                                        options[nextHighlight].style.display !== 'block') {
-                                        nextHighlight++;
-                                    }
-                                    if (nextHighlight < options.length) {
-                                        highlightOption(nextHighlight);
-                                    }
-                                } else if (e.key === 'ArrowUp') {
-                                    e.preventDefault();
-                                    let prevHighlight = currentHighlight - 1;
-                                    while (prevHighlight >= 0 &&
-                                        options[prevHighlight].style.display !== 'block') {
-                                        prevHighlight--;
-                                    }
-                                    if (prevHighlight >= 0) {
-                                        highlightOption(prevHighlight);
-                                    }
-                                } else if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    if (currentHighlight !== -1 &&
-                                        options[currentHighlight].style.display === 'block') {
-                                        selectOption(options[currentHighlight]);
-                                        // Move to next field after selection
-                                        document.getElementById('supplier_name').focus();
-                                    } else if (itemSearch.value.trim() !== '') {
-                                        // Try to find exact match
-                                        const exactMatch = Array.from(options).find(opt =>
-                                            opt.dataset.fulltext === itemSearch.value ||
-                                            opt.dataset.value === itemSearch.value
-                                        );
-                                        if (exactMatch) {
-                                            selectOption(exactMatch);
-                                            document.getElementById('supplier_name').focus();
-                                        } else {
-                                            // If no exact match and user presses enter, just move to next field
-                                            document.getElementById('supplier_name').focus();
-                                        }
-                                    }
-                                } else if (e.key === 'Escape') {
-                                    itemOptions.style.display = 'none';
-                                    currentHighlight = -1;
-                                }
-                            });
-
-                            // Click on option to select
-                            options.forEach(option => {
-                                option.addEventListener('click', function () {
-                                    selectOption(this);
-                                    document.getElementById('supplier_name').focus();
-                                });
-                            });
-
-                            // Click outside to close dropdown
-                            document.addEventListener('click', function (e) {
-                                if (!itemSearch.contains(e.target) && !itemOptions.contains(e.target)) {
-                                    itemOptions.style.display = 'none';
-                                    currentHighlight = -1;
-                                }
-                            });
-
-                            // Double click or select all to allow editing
-                            itemSearch.addEventListener('dblclick', function () {
-                                if (isOptionSelected) {
-                                    clearSelection();
-                                    // Select all text for easy replacement
-                                    this.select();
-                                }
-                            });
-
-                            // Click to select all text when field has a selected value
-                            itemSearch.addEventListener('click', function () {
-                                if (isOptionSelected) {
-                                    this.select();
-                                }
-                            });
-
-                            const listPasswordField = document.getElementById('list_password');
-                            const totalGrnCells = document.querySelectorAll('.total-grn-column');
-                            const totalGrnHeader = document.querySelector('.total-grn-header');
-                            const perKgCells = document.querySelectorAll('.per-kg-price-column');
-                            const perKgHeader = document.querySelector('.per-kg-price-header');
-
-                            function toggleHiddenColumns(show) {
-                                const displayStyle = show ? 'table-cell' : 'none';
-                                if (totalGrnHeader) totalGrnHeader.style.display = displayStyle;
-                                if (perKgHeader) perKgHeader.style.display = displayStyle;
-                                totalGrnCells.forEach(cell => cell.style.display = displayStyle);
-                                perKgCells.forEach(cell => cell.style.display = displayStyle);
-                            }
-
-                            listPasswordField.addEventListener('input', function () {
-                                const isCorrect = this.value === 'nethma123';
-                                toggleHiddenColumns(isCorrect);
-                                if (isCorrect) {
-                                    this.style.backgroundColor = '#d4edda';
-                                    this.style.borderColor = '#28a745';
-                                } else {
-                                    this.style.backgroundColor = '#f8d7da';
-                                    this.style.borderColor = '#dc3545';
-                                }
-                                if (this.value === '') {
-                                    this.style.backgroundColor = '';
-                                    this.style.borderColor = '';
-                                }
-                            });
-
-                            // ===================== Search filter =====================
-                            const searchInput = document.getElementById('searchInput');
-                            const rows = document.querySelectorAll('#entriesTable tbody tr');
-                            searchInput.addEventListener('keyup', function () {
-                                const filter = this.value.toLowerCase();
-                                rows.forEach(row => {
-                                    const code = row.querySelector('.search-code')?.textContent.toLowerCase() || '';
-                                    const supplierCode = row.querySelector('.search-supplier-code')?.textContent.toLowerCase() || '';
-                                    const itemCode = row.querySelector('.search-item-code')?.textContent.toLowerCase() || '';
-                                    const itemName = row.querySelector('.search-item-name')?.textContent.toLowerCase() || '';
-                                    row.style.display = (code.includes(filter) || supplierCode.includes(filter) || itemCode.includes(filter) || itemName.includes(filter)) ? '' : 'none';
-                                });
-                            });
-
-                            // Delete modal functionality
-                            const deleteButtons = document.querySelectorAll('.delete-btn');
-                            const deleteForm = document.getElementById('deleteForm');
-                            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
-
-                            deleteButtons.forEach(button => {
-                                button.addEventListener('click', function () {
-                                    const entryId = this.dataset.entryId;
-                                    deleteForm.action = `/grn/${entryId}`;
-                                    deleteModal.show();
-                                });
-                            });
-
-                            // Form navigation with Enter key
-                            const form = document.querySelector('form[action="{{ route('grn.store2') }}"]');
-                            const fields = [
-                                'item_search',
-                                'supplier_name',
-                                'grn_no',
-                                'warehouse_no',
-                                'packs',
-                                'weight',
-                                'total_grn',
-                                'per_kg_price',
-                                'txn_date'
-                            ];
-
-                            fields.forEach((fieldId, index) => {
-                                const field = document.getElementById(fieldId);
-                                if (field) {
-                                    field.addEventListener('keydown', function (e) {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-
-                                            if (fieldId === 'per_kg_price') {
-                                                form.submit();
-                                                return;
-                                            }
-
-                                            const nextFieldId = fields[index + 1];
-                                            if (nextFieldId) {
-                                                const nextField = document.getElementById(nextFieldId);
-                                                if (nextField) {
-                                                    nextField.focus();
-                                                }
-                                            }
-                                        }
-                                    });
-                                }
-                            });
-                        });
-                    </script>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            const contextMenu = document.getElementById('contextMenu');
-                            let currentRow = null;
-
-                            // Show context menu on right click
-                            document.querySelectorAll('.grn-row').forEach(row => {
-                                row.addEventListener('contextmenu', function (e) {
-                                    e.preventDefault();
-                                    currentRow = this;
-                                    contextMenu.style.top = `${e.pageY}px`;
-                                    contextMenu.style.left = `${e.pageX}px`;
-                                    contextMenu.style.display = 'block';
-                                });
-                            });
-
-                            // Hide context menu on click elsewhere
-                            document.addEventListener('click', function () {
-                                contextMenu.style.display = 'none';
-                            });
-
-                            // AJAX call to hide/unhide
-                            function updateHideStatus(action) {
-                                if (!currentRow) return;
-                                const entryId = currentRow.dataset.entryId;
-                                const url = action === 'hide'
-                                    ? `/grn/${entryId}/hide`
-                                    : `/grn/${entryId}/unhide`;
-
-                                fetch(url, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                })
-                                    .then(res => res.json())
-                                    .then(data => {
-                                        if (data.status) {
-                                            // Visually mark row as hidden/unhidden
-                                            if (data.status === 'hidden') {
-                                                currentRow.style.opacity = 0.5; // mark as hidden
-                                            } else {
-                                                currentRow.style.opacity = 1; // mark as visible
-                                            }
-                                        }
-                                    })
-                                    .catch(err => console.error(err));
-                            }
-
-                            // Click on Hide
-                            document.getElementById('hideOption').addEventListener('click', function () {
-                                updateHideStatus('hide');
-                                contextMenu.style.display = 'none';
-                            });
-
-                            // Click on Don't Hide
-                            document.getElementById('unhideOption').addEventListener('click', function () {
-                                updateHideStatus('unhide');
-                                contextMenu.style.display = 'none';
-                            });
-                        });
-
-                    </script>
+    </script>
 @endsection

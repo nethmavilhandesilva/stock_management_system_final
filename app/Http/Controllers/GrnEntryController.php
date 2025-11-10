@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\GrnEntry;
 use App\Models\Item;
+use App\Models\Setting;
 use App\Models\Supplier;
 use App\Models\Sale;
 use App\Models\SalesHistory;
+use App\Models\Supplier2;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\GrnEntry2;
@@ -15,6 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\GrnEntriesExport;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
+
 
 class GrnEntryController extends Controller
 {
@@ -31,99 +34,125 @@ class GrnEntryController extends Controller
         $entries = GrnEntry::orderBy('id', 'asc')->get();
         return view('dashboard.grn.create', compact('items', 'suppliers','entries'));
     }
- public function store(Request $request)
+
+
+public function store(Request $request)
 {
-    // 1. Validate the incoming request (all fields optional)
-    $request->validate([
-        'item_code' => 'nullable|string',
-        'supplier_name' => 'nullable|string|max:255',
-        'packs' => 'nullable|integer|min:1',
-        'weight' => 'nullable|numeric|min:0.01',
-        'txn_date' => 'nullable|date',
-        'grn_no' => 'nullable|string',
-        'warehouse_no' => 'nullable|string',
-        'total_grn' => 'nullable|numeric|min:0',
-        'per_kg_price' => 'nullable|numeric|min:0',
-        'wasted_weight' => 'nullable|numeric|min:0',
-        'wasted_packs' => 'nullable|numeric|min:0',
-    ]);
+    try {
+        // 1. Validate the incoming request (all fields optional)
+        $request->validate([
+            'item_code' => 'nullable|string',
+            'supplier_name' => 'nullable|string|max:255',
+            'packs' => 'nullable|integer|min:1',
+            'weight' => 'nullable|numeric|min:0.01',
+            'txn_date' => 'nullable|date',
+            'grn_no' => 'nullable|string',
+            'warehouse_no' => 'nullable|string',
+            'total_grn' => 'nullable|numeric|min:0',
+            'per_kg_price' => 'nullable|numeric|min:0',
+            'wasted_weight' => 'nullable|numeric|min:0',
+            'wasted_packs' => 'nullable|numeric|min:0',
+            'Real_Supplier_code' => 'nullable|string|max:255',
+        ]);
 
-    // 2. Fetch item if provided
-    $item = null;
-    $itemName = null;
-    $packCost = null; // ✅ new variable for pack_cost
+        // 2. Fetch item if provided
+        $item = null;
+        $itemName = null;
+        $packCost = null;
 
-    if ($request->filled('item_code')) {
-        $item = Item::where('no', $request->item_code)->first();
-        if (!$item) {
-            return back()->withErrors(['item_code' => 'Invalid item selected.']);
+        if ($request->filled('item_code')) {
+            $item = Item::where('no', $request->item_code)->first();
+            if (!$item) {
+                return back()->withErrors(['item_code' => 'Invalid item selected.']);
+            }
+            $itemName = $item->type;
+            $packCost = $item->pack_cost;
         }
-        $itemName = $item->type;
-        $packCost = $item->pack_cost; // ✅ fetch pack_cost from Item table
+
+        // 3. Find or create supplier
+        $supplierName = $request->input('supplier_name', '');
+        $supplier = Supplier::firstOrCreate(
+            ['code' => $supplierName],
+            ['name' => '']
+        );
+        $supplierCode = $supplier->code;
+
+        // 4. Auto generate auto_purchase_no
+        $last = GrnEntry::latest()->first();
+        $autoNo = $last ? $last->id + 1 : 1;
+        $autoPurchaseNo = str_pad($autoNo, 4, '0', STR_PAD_LEFT);
+
+        // 5. Sequential number logic
+        $lastGrnEntry = GrnEntry::orderBy('sequence_no', 'desc')->first();
+        $nextSequentialNumber = (!$lastGrnEntry || $lastGrnEntry->sequence_no < 1125)
+            ? 1126
+            : $lastGrnEntry->sequence_no + 1;
+
+        // 6. Build code string
+        $itemCode = $item ? $item->no : 'ITEM';
+        $code = strtoupper($itemCode . '-' . $supplierCode . '-' . $nextSequentialNumber);
+
+        // 7. Calculate total wasted weight
+        $wastedWeight = $request->input('wasted_weight', 0);
+        $perKgPrice = $request->input('per_kg_price', 0);
+        $totalWastedWeightValue = $wastedWeight * $perKgPrice;
+
+        // 8. Determine grn_status
+        $showstatus = 1;
+        if ($itemName && (str_contains($itemName, 'අල') || str_contains($itemName, 'ලුණු'))) {
+            $showstatus = 0;
+        }
+
+        // 9. Create GRN entry
+        $grnEntry = GrnEntry::create([
+            'auto_purchase_no' => $autoPurchaseNo,
+            'code' => $code,
+            'supplier_code' => strtoupper($supplierCode),
+            'item_code' => $request->input('item_code', null),
+            'item_name' => $itemName,
+            'packs' => $request->input('packs', null),
+            'weight' => $request->input('weight', null),
+            'txn_date' => $request->input('txn_date', null),
+            'grn_no' => $request->input('grn_no', null),
+            'warehouse_no' => $request->input('warehouse_no', null),
+            'original_packs' => $request->input('packs', null),
+            'original_weight' => $request->input('weight', null),
+            'sequence_no' => $nextSequentialNumber,
+            'total_grn' => $request->input('total_grn', null),
+           
+            'wasted_packs' => $request->input('wasted_packs', 0),
+            'wasted_weight' => $wastedWeight,
+            'total_wasted_weight' => $totalWastedWeightValue,
+            'show_status' => $showstatus,
+            'BP' => $perKgPrice,
+            'Real_Supplier_code' => $request->input('Real_Supplier_code', null),
+        ]);
+
+        // 10. Create/Update Supplier2 record if Real_Supplier_code is provided
+        if ($request->filled('Real_Supplier_code')) {
+            Supplier2::updateOrCreate(
+                ['grn_id' => $grnEntry->id],
+                [
+                    'supplier_code' => $request->Real_Supplier_code,
+                    'total_amount' => $request->total_grn,
+                    'description' => 'Purchase from Supplier',
+                    'date' => Setting::value('value') ?? $request->input('txn_date', date('Y-m-d'))
+                ]
+            );
+        }
+
+        // 11. Redirect with success
+        return redirect()->route('grn.create')->with('success', 'GRN Entry added successfully.');
+
+    } catch (\Exception $e) {
+        // Log error with date
+        Log::error('GRN store failed on ' . now()->format('Y-m-d H:i:s') . ': ' . $e->getMessage(), [
+            'stack' => $e->getTraceAsString(),
+            'request_data' => $request->all()
+        ]);
+
+        return back()->with('error', 'Failed to add GRN Entry. Please check the logs.');
     }
-
-    // 3. Find or create supplier
-    $supplierName = $request->input('supplier_name', '');
-    $supplier = Supplier::firstOrCreate(
-        ['code' => $supplierName],
-        ['name' => '']
-    );
-    $supplierCode = $supplier->code;
-
-    // 4. Auto generate auto_purchase_no
-    $last = GrnEntry::latest()->first();
-    $autoNo = $last ? $last->id + 1 : 1;
-    $autoPurchaseNo = str_pad($autoNo, 4, '0', STR_PAD_LEFT);
-
-    // 5. Sequential number logic
-    $lastGrnEntry = GrnEntry::orderBy('sequence_no', 'desc')->first();
-    if (!$lastGrnEntry || $lastGrnEntry->sequence_no < 1125) {
-        $nextSequentialNumber = 1126;
-    } else {
-        $nextSequentialNumber = $lastGrnEntry->sequence_no + 1;
-    }
-
-    // 6. Build code string
-    $itemCode = $item ? $item->no : 'ITEM';
-    $code = strtoupper($itemCode . '-' . $supplierCode . '-' . $nextSequentialNumber);
-
-    // 7. Calculate total wasted weight
-    $wastedWeight = $request->input('wasted_weight', 0);
-    $perKgPrice = $request->input('per_kg_price', 0);
-    $totalWastedWeightValue = $wastedWeight * $perKgPrice;
-
-    // 8. Determine grn_status
-    $showstatus = 1;
-    if ($itemName && (str_contains($itemName, 'අල') || str_contains($itemName, 'ලුණු'))) {
-        $showstatus = 0;
-    }
-
-    // 9. Create GRN entry
-    GrnEntry::create([
-        'auto_purchase_no' => $autoPurchaseNo,
-        'code' => $code,
-        'supplier_code' => strtoupper($supplierCode),
-        'item_code' => $request->input('item_code', null),
-        'item_name' => $itemName,
-        'packs' => $request->input('packs', null),
-        'weight' => $request->input('weight', null),
-        'txn_date' => $request->input('txn_date', null),
-        'grn_no' => $request->input('grn_no', null),
-        'warehouse_no' => $request->input('warehouse_no', null),
-        'original_packs' => $request->input('packs', null),
-        'original_weight' => $request->input('weight', null),
-        'sequence_no' => $nextSequentialNumber,
-        'total_grn' => $request->input('total_grn', null),
-        'PerKGPrice' => $perKgPrice,
-        'wasted_packs' => $request->input('wasted_packs', 0),
-        'wasted_weight' => $wastedWeight,
-        'total_wasted_weight' => $totalWastedWeightValue,
-        'show_status' => $showstatus,
-        'BP' => $packCost, // ✅ store pack_cost value into BP column
-    ]);
-
-    // 10. Redirect with success
-    return redirect()->route('grn.create')->with('success', 'GRN Entry added successfully.');
 }
 
  public function store2(Request $request)
