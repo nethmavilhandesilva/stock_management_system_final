@@ -2688,8 +2688,10 @@ public function supplierpaymentreport()
             'sales_history.code', // Specify table
             DB::raw('SUM(sales_history.weight) AS sold_weight'),
             DB::raw('SUM(sales_history.packs) AS sold_packs'),
-            // *** MODIFIED HERE: Joined to get grn_entries.BP ***
-            DB::raw('SUM(grn_entries.BP * sales_history.weight) AS total_cost') 
+            DB::raw('SUM(grn_entries.BP * sales_history.weight) AS total_cost'),
+            // --- NEW CALCULATION ADDED ---
+            // This calculates Net Sale based on actual sales records
+            DB::raw('SUM(sales_history.weight * sales_history.price_per_kg) AS calculated_netsale') 
         )
             ->join('grn_entries', 'sales_history.code', '=', 'grn_entries.code') // Added JOIN
             ->whereBetween('sales_history.Date', [$startDate, $endDate]) // Specify table
@@ -2701,8 +2703,10 @@ public function supplierpaymentreport()
             'sales.code', // Specify table
             DB::raw('SUM(sales.weight) AS sold_weight'),
             DB::raw('SUM(sales.packs) AS sold_packs'),
-            // *** MODIFIED HERE: Joined to get grn_entries.BP ***
-            DB::raw('SUM(grn_entries.BP * sales.weight) AS total_cost') 
+            DB::raw('SUM(grn_entries.BP * sales.weight) AS total_cost'),
+            // --- NEW CALCULATION ADDED ---
+            // This calculates Net Sale based on actual sales records
+            DB::raw('SUM(sales.weight * sales.price_per_kg) AS calculated_netsale') 
         )
             ->join('grn_entries', 'sales.code', '=', 'grn_entries.code') // Added JOIN
             ->groupBy('sales.code'); // Specify table
@@ -2716,7 +2720,12 @@ public function supplierpaymentreport()
         DB::raw('COALESCE(s.sold_packs, 0) AS sold_packs'),
         'grn_entries.SalesKGPrice AS selling_price',
         DB::raw('COALESCE(s.total_cost, 0) AS total_cost'),
-        DB::raw('COALESCE(grn_entries.SalesKGPrice, 0) * COALESCE(s.sold_weight, 0) AS netsale')
+        
+        // --- THIS LINE IS REPLACED ---
+        // Old calculation: DB::raw('COALESCE(grn_entries.SalesKGPrice, 0) * COALESCE(s.sold_weight, 0) AS netsale')
+        
+        // --- NEW VALUE FROM SUBQUERY ---
+        DB::raw('COALESCE(s.calculated_netsale, 0) AS netsale')
     ])
         ->leftJoinSub($salesAggQuery, 's', function ($join) {
             $join->on('s.code', '=', 'grn_entries.code');

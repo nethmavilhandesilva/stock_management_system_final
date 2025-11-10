@@ -114,7 +114,9 @@
         </thead>
         <tbody>
             @foreach($report as $row)
-                @php $profitLoss = $row->netsale - $row->total_cost; @endphp
+                {{-- *** THIS IS THE MODIFIED LINE *** --}}
+                @php $profitLoss = ($row->total_cost == 0) ? 0 : ($row->netsale - $row->total_cost); @endphp
+                
                 <tr class="clickable-row" data-code="{{ $row->code }}">
                     <td class="code">{{ $row->code }} - {{ $row->item_name }}</td>
                     <td>{{ number_format($row->sold_weight, 3) }}</td>
@@ -158,7 +160,7 @@
                        data-bs-target="#loanModal" 
                        data-type="today" 
                        style="cursor: pointer; text-decoration: underline;">
-                        {{ number_format(abs($todayLoanTotal), 2) }}
+                         {{ number_format(abs($todayLoanTotal), 2) }}
                     </p>
                 </div>
                 <div class="col-md-6">
@@ -169,7 +171,7 @@
                        data-bs-target="#loanModal" 
                        data-type="old" 
                        style="cursor: pointer; text-decoration: underline;">
-                        {{ number_format(abs($oldLoanTotal), 2) }}
+                         {{ number_format(abs($oldLoanTotal), 2) }}
                     </p>
                 </div>
             </div>
