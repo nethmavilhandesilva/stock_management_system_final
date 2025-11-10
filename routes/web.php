@@ -177,6 +177,7 @@ Route::post('/grn/update-status/{id}', [GrnEntryController::class, 'updateStatus
 Route::post('/grn/{id}/hide', [GrnEntryController::class, 'hide'])->name('grn.hide');
 Route::post('/grn/{id}/unhide', [GrnEntryController::class, 'unhide'])->name('grn.unhide');
 Route::get('/grn/fetch-details', [GrnEntryController::class, 'fetchGrnDetails'])->name('grn.fetch.details');
+Route::post('/grn-report/mark-read/{id}', [GrnEntryController::class, 'markAsRead']);
 // web.php
 Route::get('/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntry'])->name('grn.entry.fetch');
 Route::post('/settings/update-balance', [SalesEntryController::class, 'updateBalance'])->name('settings.updateBalance');

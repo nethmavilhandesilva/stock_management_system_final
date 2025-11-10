@@ -2897,8 +2897,9 @@ public function fetchLoanDetails(Request $request)
     }
 
     $entries = $query->orderBy('txn_date', 'desc')->get();
+    $unreadCount = GrnEntry::where('is_read', 0)->count();
 
-        return view('dashboard.reports.grn_reportfinal', compact('entries'));
+        return view('dashboard.reports.grn_reportfinal', compact('entries','unreadCount'));
     }
 
     // AJAX autocomplete for code

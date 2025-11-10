@@ -11,6 +11,18 @@
         /* A neutral hover is cleaner */
         cursor: pointer;
     }
+
+    /* *** UNREAD GRN UPDATE *** */
+    .table-unread {
+        /* Highlighting unread rows */
+        background-color: #fff3cd !important; /* A light yellow/gold for visibility */
+        border-left: 5px solid #ffc107; /* A strong visual cue */
+        font-weight: bold;
+    }
+    .unread-count-badge {
+        font-size: 1.2rem;
+        padding: 0.25em 0.6em;
+    }
 </style>
 
 
@@ -18,6 +30,13 @@
     <div class="container mt-4">
 
         <h2 class="text-center mb-4 fw-bold text-dark opacity-75">GRN Entry Report</h2>
+
+        {{-- *** UNREAD GRN UPDATE *** Display Unread Count at the top *** --}}
+        <div class="d-flex justify-content-center mb-4">
+            <span class="badge bg-warning text-dark shadow-sm unread-count-badge">
+                Unread GRNs: <span id="unreadCount">{{ $unreadCount ?? count($entries->where('is_read', 0)) }}</span>
+            </span>
+        </div>
 
         {{-- Filter Card --}}
         <div class="card shadow-sm mb-4">
@@ -33,7 +52,7 @@
                     </div>
                     <div class="col-md-3 position-relative">
                         <label class="form-label">Search by Code</label>
-                      <input type="text" name="code" id="codeSearch" class="form-control" autocomplete="off" placeholder="Type code..." style="text-transform: uppercase;">
+                        <input type="text" name="code" id="codeSearch" class="form-control" autocomplete="off" placeholder="Type code..." style="text-transform: uppercase;">
                         <ul id="codeList" class="list-group position-absolute w-100"
                             style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></ul>
                     </div>
@@ -74,11 +93,8 @@
                     </thead>
                     <tbody>
                         @forelse($entries as $entry)
-                            {{-- 
-                              *** 1. UPDATE HERE ***
-                              Added data-code and data-item_name 
-                            --}}
-                            <tr class="table-row"
+                            {{-- *** UNREAD GRN UPDATE *** Added conditional class and data-is_read *** --}}
+                            <tr class="table-row {{ $entry->is_read == 0 ? 'table-unread' : '' }}"
                                 data-id="{{ $entry->id }}"
                                 data-code="{{ $entry->code }}"
                                 data-item_name="{{ $entry->item_name }}"
@@ -86,7 +102,8 @@
                                 data-weight="{{ $entry->weight }}"
                                 data-total_grn="{{ $entry->total_grn }}"
                                 data-bp="{{ $entry->BP }}"
-                                data-real_supplier_code="{{ $entry->Real_Supplier_code }}">
+                                data-real_supplier_code="{{ $entry->Real_Supplier_code }}"
+                                data-is_read="{{ $entry->is_read }}"> {{-- *** UNREAD GRN UPDATE *** --}}
 
                                 <td>{{ $entry->code }}</td>
                                 <td>{{ $entry->Real_Supplier_code }}</td>
@@ -182,6 +199,11 @@
             const supplierList = document.getElementById("supplierList");
             const realSupplierCodeInput = document.getElementById("real_supplier_code");
 
+            // *** UNREAD GRN UPDATE *** Get initial count element ***
+            const unreadCountElement = document.getElementById("unreadCount");
+            let unreadCount = parseInt(unreadCountElement.textContent);
+
+
             // --- Code Search ---
             codeSearch.addEventListener("keyup", function () {
                 const term = this.value.trim();
@@ -275,7 +297,41 @@
                     document.getElementById("real_supplier_code").value = currentSupplierCode;
                     document.getElementById("real_supplier_search").value = currentSupplierCode;
 
-                    new bootstrap.Modal(document.getElementById('editModal')).show();
+                    
+                    // *** UNREAD GRN UPDATE *** Logic to mark as read and update UI ***
+                    const recordId = this.dataset.id;
+                    const isRead = this.dataset.is_read;
+
+                    if (isRead === '0') {
+                        // Mark the record as read in the database
+                        fetch(`/grn-report/mark-read/${recordId}`, { // *** YOU MUST IMPLEMENT THIS ROUTE/CONTROLLER METHOD ***
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ _token: "{{ csrf_token() }}" }),
+                        })
+                        .then(res => res.json())
+                        .then(resp => {
+                            if (resp.success) {
+                                // Update UI locally
+                                row.classList.remove("table-unread");
+                                row.dataset.is_read = '1';
+                                unreadCount--;
+                                unreadCountElement.textContent = unreadCount;
+                            }
+                            // Show the modal regardless of the API call's success, 
+                            // as the primary action is editing.
+                            new bootstrap.Modal(document.getElementById('editModal')).show();
+                        })
+                        .catch(error => {
+                            console.error('Error marking as read:', error);
+                            // Show the modal even if the update failed
+                            new bootstrap.Modal(document.getElementById('editModal')).show();
+                        });
+                    } else {
+                         // If already read, just show the modal
+                        new bootstrap.Modal(document.getElementById('editModal')).show();
+                    }
+                    
                 });
             });
 

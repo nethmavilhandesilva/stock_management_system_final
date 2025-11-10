@@ -852,6 +852,18 @@ public function fetchGrnDetails(Request $request)
         'sales' => $saleData,
     ]);
 }
+public function markAsRead($id)
+{
+    $entry = GrnEntry::find($id);
+
+    if ($entry) {
+        $entry->is_read = 1;
+        $entry->save();
+        return response()->json(['success' => true]);
+    }
+
+    return response()->json(['success' => false, 'message' => 'Record not found'], 404);
+}
 
 
 }
