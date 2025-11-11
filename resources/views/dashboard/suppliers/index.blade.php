@@ -82,6 +82,7 @@
                         <th>ලිපිනය</th>
                         <th>දුරකථන අංකය</th>
                         <th>ඊමේල්</th>
+                        <th>ගිණුම් අංකය</th> {{-- NEW COLUMN HEADER --}}
                         <th>මෙහෙයුම්</th>
                     </tr>
                 </thead>
@@ -93,6 +94,7 @@
                             <td>{{ $supplier->address }}</td>
                             <td>{{ $supplier->phone ?? '-' }}</td>
                             <td>{{ $supplier->email ?? '-' }}</td>
+                            <td>{{ $supplier->account_no ?? '-' }}</td> {{-- NEW COLUMN DATA --}}
                             <td>
                                 <a href="{{ route('suppliers.edit', $supplier->id) }}" class="btn btn-warning btn-sm">යාවත්කාලීන</a>
                                 <form action="{{ route('suppliers.destroy', $supplier->id) }}" method="POST" class="d-inline">
@@ -103,7 +105,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted">සැපයුම්කරුවන් නොමැත</td>
+                            <td colspan="7" class="text-center text-muted">සැපයුම්කරුවන් නොමැත</td> {{-- COLSPAN UPDATED TO 7 --}}
                         </tr>
                     @endforelse
                 </tbody>

@@ -21,11 +21,12 @@ class SupplierController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'code'    => 'required|unique:suppliers',
-            'name'    => 'required',
-            'address' => 'required',
-            'phone'   => 'nullable|string|max:20',
-            'email'   => 'nullable|email|max:100',
+            'code'        => 'required|unique:suppliers',
+            'name'        => 'required',
+            'address'     => 'required',
+            'phone'       => 'nullable|string|max:20',
+            'email'       => 'nullable|email|max:100',
+            'account_no'  => 'nullable|string|max:100', // <-- ADDED
         ]);
 
         $data = $request->all();
@@ -44,11 +45,12 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier)
     {
         $request->validate([
-            'code'    => 'required|unique:suppliers,code,' . $supplier->id,
-            'name'    => 'required',
-            'address' => 'required',
-            'phone'   => 'nullable|string|max:20',
-            'email'   => 'nullable|email|max:100',
+            'code'        => 'required|unique:suppliers,code,' . $supplier->id,
+            'name'        => 'required',
+            'address'     => 'required',
+            'phone'       => 'nullable|string|max:20',
+            'email'       => 'nullable|email|max:100',
+            'account_no'  => 'nullable|string|max:100', // <-- ADDED
         ]);
 
         $data = $request->all();

@@ -137,8 +137,10 @@
             <div id="paymentSupplierDropdown" class="list-group position-absolute w-100 shadow-sm"
                  style="z-index:10; display:none; max-height:200px; overflow-y:auto;">
                 @foreach($existingSuppliersWithBalance as $supplier)
+                    {{-- *** UPDATED: Added data-account *** --}}
                     <button type="button" class="list-group-item list-group-item-action"
-                            data-code="{{ $supplier->code }}" data-name="{{ $supplier->name }}" data-balance="{{ number_format($supplier->balance, 2) }}">
+                            data-code="{{ $supplier->code }}" data-name="{{ $supplier->name }}" data-balance="{{ number_format($supplier->balance, 2) }}"
+                            data-account="{{ $supplier->account_no ?? '' }}">
                         {{ $supplier->code }} — {{ $supplier->name }} (Bal: {{ number_format($supplier->balance, 2) }})
                     </button>
                 @endforeach
@@ -224,6 +226,7 @@
                 </div>
                 <div class="col-md-3">
                     <label for="payment_account_no" class="form-label">Account No</label>
+                    {{-- This is the target field --}}
                     <input type="text" name="payment_account_no" id="payment_account_no" class="form-control">
                 </div>
                 <div class="col-md-6">
@@ -259,8 +262,10 @@
                 <div id="manySupplierDropdown" class="list-group position-absolute w-100 shadow-sm"
                      style="z-index:10; display:none; max-height:200px; overflow-y:auto;">
                     @foreach($existingSuppliersWithBalance as $supplier)
+                        {{-- *** UPDATED: Added data-account *** --}}
                         <button type="button" class="list-group-item list-group-item-action"
-                                data-code="{{ $supplier->code }}" data-name="{{ $supplier->name }}" data-balance="{{ number_format($supplier->balance, 2) }}">
+                                data-code="{{ $supplier->code }}" data-name="{{ $supplier->name }}" data-balance="{{ number_format($supplier->balance, 2) }}"
+                                data-account="{{ $supplier->account_no ?? '' }}">
                             {{ $supplier->code }} — {{ $supplier->name }} (Bal: {{ number_format($supplier->balance, 2) }})
                         </button>
                     @endforeach
@@ -335,6 +340,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="many_account_no" class="form-label">Account No</label>
+                        {{-- This is the second target field --}}
                         <input type="text" name="many_account_no" id="many_account_no" class="form-control">
                     </div>
                     <div class="col-md-6">
@@ -602,6 +608,7 @@ document.getElementById('many_payment_amount')?.addEventListener('keydown', e =>
 
 
 // --- Live search ---
+// *** UPDATED: This function now auto-fills the account_no ***
 function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, isPurchase=false, isPaymentGrn=false, isManyPayments=false){
     const input=document.getElementById(inputId);
     const dropdown=document.getElementById(dropdownId);
@@ -650,7 +657,6 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
                 const grnArea = document.getElementById('grnSelectionArea');
                 if (grnContainer) grnContainer.style.display = 'none';
                 if (grnArea) grnArea.innerHTML = '<p class="text-muted text-center">Select a supplier to see partially paid GRNs.</p>';
-                // Clear selection array
                 grnSelectionOrder = [];
                 recalculateAllocations();
             }
@@ -664,6 +670,7 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
             const code=btn.getAttribute('data-code');
             const balance=btn.getAttribute('data-balance')||'0.00';
             const name=btn.getAttribute('data-name');
+            const account = btn.getAttribute('data-account') || ''; // *** Get account_no ***
 
             if(inputId==='grn_search'||inputId==='payment_grn_search'){
                 input.value=btn.textContent.trim(); 
@@ -681,6 +688,17 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
                 if(supplierIdEl) supplierIdEl.value=id; 
                 if(hiddenName) hiddenName.value=name||''; 
             }
+
+            // *** UPDATED: Auto-fill account number ***
+            if (inputId === 'payment_supplier_search') {
+                const accountInput = document.getElementById('payment_account_no');
+                if (accountInput) accountInput.value = account;
+            } else if (inputId === 'many_supplier_search') {
+                 const accountInput = document.getElementById('many_account_no');
+                if (accountInput) accountInput.value = account;
+            }
+            // *** END OF UPDATE ***
+            
             updateBalance(balance);
             dropdown.style.display='none';
             
@@ -688,7 +706,6 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
             else if(isManyPayments) {
                 document.getElementById('many_payment_description').focus();
                 fetchUnpaidGrns(code);
-                // Clear old selections
                 grnSelectionOrder = [];
                 recalculateAllocations();
             }
@@ -721,8 +738,7 @@ const paymentRemainingDisplay = document.getElementById('paymentRemainingDisplay
 const paymentRemainingSpan = paymentRemainingDisplay.querySelector('span');
 const grnPaymentInputsContainer = document.getElementById('grnPaymentInputsContainer');
 
-// This array tracks the *order* of selection
-let grnSelectionOrder = [];
+let grnSelectionOrder = []; // This array tracks the *order* of selection
 
 function fetchUnpaidGrns(supplierCode) {
     if (!grnSelectionContainer || !grnSelectionArea) return;
@@ -797,7 +813,6 @@ grnSelectionArea?.addEventListener('change', e => {
 // Event listener for typing in the payment amount field
 manyPaymentAmountInput?.addEventListener('input', recalculateAllocations);
 
-// *** NEW MASTER FUNCTION for allocation ***
 function recalculateAllocations() {
     if (!grnSelectionArea || !manyPaymentAmountInput || !grnPaymentInputsContainer) return;
 
@@ -907,7 +922,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
         if (!tableBody || !grnSummaryBody) return;
         
         const url = `{{ route('suppliers2.transactions') }}?supplier_code=${encodeURIComponent(code)}`;
-        // UPDATED: colspan="7"
         tableBody.innerHTML='<tr><td colspan="7" class="text-center">Loading transactions...</td></tr>';
         grnSummaryBody.innerHTML='<tr><td colspan="5" class="text-center">Loading GRN payments...</td></tr>';
 
@@ -937,12 +951,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
                if (data.history && data.history.length > 0) {
                     data.history.forEach(item => {
                         
-                        // NEW: Create a link if bank_slip_path exists
                         const slipLink = item.bank_slip_path 
                             ? `<a href="${item.bank_slip_path}" target="_blank" class="btn btn-sm btn-outline-success">View Slip</a>` 
                             : 'N/A';
 
-                        // UPDATED: Added slipLink
                         const row = `
                         <tr>
                             <td>${item.date}</td>
@@ -956,7 +968,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
                         tableBody.insertAdjacentHTML('beforeend', row);
                     });
                 } else {
-                    // UPDATED: colspan="7"
                     tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No transactions found.</td></tr>';
                 }
 
@@ -980,7 +991,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
                 if(transactionModal) transactionModal.show();
             }).catch(err=>{
                 console.error(err); 
-                // UPDATED: colspan="7"
                 tableBody.innerHTML='<tr><td colspan="7" class="text-center text-danger">Error loading data.</td></tr>';
                 grnSummaryBody.innerHTML='<tr><td colspan="5" class="text-center text-danger">Error loading GRN summary data.</td></tr>'; 
             });

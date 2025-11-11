@@ -107,6 +107,12 @@
             <input type="email" id="email_field" name="email" value="{{ $supplier->email }}" class="form-control">
         </div>
 
+        {{-- NEW FIELD ADDED HERE --}}
+        <div class="mb-3">
+            <label for="account_no_field" class="form-label">ගිණුම් අංකය (Account No)</label>
+            <input type="text" id="account_no_field" name="account_no" value="{{ $supplier->account_no }}" class="form-control">
+        </div>
+
         <div class="text-center mt-4">
             <button type="submit" class="btn btn-success">
                 <i class="material-icons align-middle me-1">save</i> යාවත්කාලීන කරන්න

@@ -18,7 +18,8 @@ class SupplierController2 extends Controller
             ->groupBy('supplier_code')
             ->pluck('total_balance', 'supplier_code');
 
-        $existingSuppliers = Supplier::select('id', 'code', 'name')->get();
+         $existingSuppliers = Supplier::select('id', 'code', 'name', 'account_no')->get();
+
 
         $suppliersWithBalance = $existingSuppliers->map(function ($supplier) use ($balances) {
             $supplier->balance = $balances->get($supplier->code, 0);
