@@ -27,6 +27,10 @@
     #grnSelectionArea .form-check:last-child {
         border-bottom: none;
     }
+    /* Style for the allocation amount display */
+    .allocated-amount {
+        font-weight: bold;
+    }
 </style>
 
 <div class="container mt-4">
@@ -101,7 +105,6 @@
             <div class="col-md-3 position-relative">
                 <label for="grn_search" class="form-label">Search GRN</label>
                 <input type="text" id="grn_search" class="form-control" placeholder="🔍 Type GRN code or item name..." autocomplete="off">
-                {{-- This 'required' was correct for this form, as a purchase should have a GRN --}}
                 <input type="hidden" name="grn_id" id="grn_id" required> 
 
                 <div id="grnDropdown" class="list-group position-absolute w-100 shadow-sm"
@@ -172,7 +175,7 @@
         </div>
     </div>
 
-    {{-- *** NEW: Payment Method *** --}}
+    {{-- Payment Method --}}
     <div class="row g-3 mt-2">
         <div class="col-md-3">
             <label class="form-label fw-bold">Payment Method</label>
@@ -206,8 +209,6 @@
             </div>
         </div>
     </div>
-    {{-- *** END NEW *** --}}
-
 
     <div class="mt-3 text-end">
         <button type="submit" class="btn btn-primary">Submit Payment</button>
@@ -218,6 +219,10 @@
     <form id="manyPaymentsForm" action="{{ route('suppliers2.payment.many') }}" method="POST" 
           class="border p-3 rounded bg-light" style="display:none;">
         @csrf
+        
+        {{-- This container will hold our dynamically generated payment inputs --}}
+        <div id="grnPaymentInputsContainer"></div>
+
         <div class="row">
             {{-- Supplier Selection --}}
             <div class="col-md-4 position-relative">
@@ -228,7 +233,6 @@
                 <div id="manySupplierDropdown" class="list-group position-absolute w-100 shadow-sm"
                      style="z-index:10; display:none; max-height:200px; overflow-y:auto;">
                     @foreach($existingSuppliersWithBalance as $supplier)
-                        {{-- Using code and name as per your request --}}
                         <button type="button" class="list-group-item list-group-item-action"
                                 data-code="{{ $supplier->code }}" data-name="{{ $supplier->name }}" data-balance="{{ number_format($supplier->balance, 2) }}">
                             {{ $supplier->code }} — {{ $supplier->name }} (Bal: {{ number_format($supplier->balance, 2) }})
@@ -248,7 +252,16 @@
             </div>
         </div>
 
-        {{-- *** NEW: Payment Method (Many) *** --}}
+        {{-- Payment Amount Field --}}
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <label for="many_payment_amount" class="form-label fw-bold text-primary">Payment Amount</label>
+                <input type="number" name="many_payment_amount" id="many_payment_amount" class="form-control" 
+                       step="0.01" required placeholder="Enter total amount...">
+            </div>
+        </div>
+
+        {{-- Payment Method (Many) --}}
         <div class="row g-3 mt-2">
             <div class="col-md-4">
                 <label class="form-label fw-bold">Payment Method</label>
@@ -282,12 +295,10 @@
                 </div>
             </div>
         </div>
-        {{-- *** END NEW *** --}}
-
-
+        
         {{-- GRN Selection Area (Populated by JS) --}}
         <div id="grnSelectionContainer" class="mt-3" style="display:none;">
-            <label class="form-label fw-bold">Select Partially Paid GRNs to Pay:</label>
+            <label class="form-label fw-bold">Select Partially Paid GRNs to Pay (in order):</label>
             <div id="grnSelectionArea">
                 {{-- Content will be loaded via AJAX --}}
                 <p class="text-muted text-center">Select a supplier to see partially paid GRNs.</p>
@@ -298,7 +309,10 @@
         <div class="row mt-3 align-items-center">
             <div class="col-md-8">
                 <h5 id="totalSelectedDisplay" class="fw-bold text-success" style="display:none;">
-                    Total Selected: <span>0.00</span>
+                    Total Allocated: <span>0.00</span>
+                </h5>
+                <h5 id="paymentRemainingDisplay" class="fw-bold" style="display:none;">
+                    Remaining: <span>0.00</span>
                 </h5>
             </div>
             <div class="col-md-4 text-end">
@@ -337,9 +351,7 @@
                 <td><span class="view-history-link" data-supplier-code="{{ $supplier->supplier_code }}">{{ $supplier->supplier_code }}</span></td>
                 <td>{{ $supplier->supplier_name }}</td>
                 <td class="text-end {{ $supplier->total_amount < 0 ? 'text-danger' : 'text-success' }}">
-    {{ number_format(abs($supplier->total_amount), 2) }}
-</td>
-
+                    {{ number_format(abs($supplier->total_amount), 2) }}
                 </td>
                 <td>{{ $supplier->description ?? '-' }}</td>
                 <td>{{ $supplier->grn->code ?? '-' }}</td>
@@ -357,7 +369,7 @@
         </tbody>
     </table>
         <a href="{{ route('supplier.report') }}" class="btn btn-dark">
-                     සියලු සැપයුම්කරුවන්ගේ වාර්තාව
+                    සියලු සැපයුම්කරුවන්ගේ වාර්තාව
                 </a>
 </div>
 
@@ -414,23 +426,23 @@
                 </div>
 
                 <h6 class="text-success mb-2">All Transactions</h6>
-<div class="table-responsive border rounded bg-white shadow-sm" style="max-height: 250px; overflow-y: auto;">
-    <table class="table table-sm table-striped table-hover align-middle mb-0">
-    <thead class="table-light sticky-top" style="z-index: 1;">
-        <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>GRN</th>
-            <th class="text-end">Amount</th>
-            <th class="text-end">Balance</th>
-        </tr>
-    </thead>
-    <tbody id="transactionHistoryBody">
-        {{-- Populated dynamically --}}
-    </tbody>
-</table>
-</div>
+                <div class="table-responsive border rounded bg-white shadow-sm" style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-sm table-striped table-hover align-middle mb-0">
+                    <thead class="table-light sticky-top" style="z-index: 1;">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>GRN</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-end">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionHistoryBody">
+                        {{-- Populated dynamically --}}
+                    </tbody>
+                </table>
+                </div>
                 <h6 class="text-primary mb-2 mt-3">GRN Payment Breakdown</h6>
                 <div class="table-responsive border rounded bg-white shadow-sm" style="max-height: 250px; overflow-y: auto;">
                     <table class="table table-sm table-striped table-hover align-middle mb-0">
@@ -467,27 +479,27 @@ const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribut
 // --- Form Toggles ---
 const addRadio = document.getElementById('addSupplierRadio');
 const payRadio = document.getElementById('paymentRadio');
-const manyPayRadio = document.getElementById('manyPaymentsRadio'); // NEW
+const manyPayRadio = document.getElementById('manyPaymentsRadio');
 const supplierForm = document.getElementById('supplierForm');
 const paymentForm = document.getElementById('paymentForm');
-const manyPaymentsForm = document.getElementById('manyPaymentsForm'); // NEW
+const manyPaymentsForm = document.getElementById('manyPaymentsForm');
 
 function toggleForms() {
     supplierForm.style.display = addRadio.checked ? 'block' : 'none';
     paymentForm.style.display = payRadio.checked ? 'block' : 'none';
-    manyPaymentsForm.style.display = manyPayRadio.checked ? 'block' : 'none'; // NEW
+    manyPaymentsForm.style.display = manyPayRadio.checked ? 'block' : 'none';
 
     updateDescriptionField(); // Update description on radio change
 
     // Set focus
     if (addRadio.checked) document.getElementById('supplier_search').focus();
     if (payRadio.checked) document.getElementById('payment_supplier_search').focus();
-    if (manyPayRadio.checked) document.getElementById('many_supplier_search').focus(); // NEW
+    if (manyPayRadio.checked) document.getElementById('many_supplier_search').focus();
 }
 
 addRadio.addEventListener('change', toggleForms);
 payRadio.addEventListener('change', toggleForms);
-manyPayRadio.addEventListener('change', toggleForms); // NEW
+manyPayRadio.addEventListener('change', toggleForms);
 
 // --- Enter navigation ---
 const purchaseFields = ['supplier_search','description','total_amount','grn_search'];
@@ -515,27 +527,37 @@ paymentFields.forEach((id, idx)=>{
         }
     });
 });
-// NEW: Enter nav for Many Payments form (simplified)
+// NEW: Enter nav for Many Payments form
 document.getElementById('many_supplier_search')?.addEventListener('keydown', e => {
     if(e.key === 'Enter') e.preventDefault(); // Prevent submit, wait for selection
 });
 document.getElementById('many_payment_description')?.addEventListener('keydown', e => {
     if(e.key === 'Enter') {
         e.preventDefault();
-        document.getElementById('manyPaymentSubmitButton').focus();
+        document.getElementById('many_payment_amount').focus(); // Focus on payment amount
+    }
+});
+document.getElementById('many_payment_amount')?.addEventListener('keydown', e => {
+    if(e.key === 'Enter') {
+        e.preventDefault();
+        const firstCheckbox = document.querySelector('#grnSelectionArea .grn-select-checkbox');
+        if (firstCheckbox) {
+            firstCheckbox.focus();
+        } else {
+            document.getElementById('manyPaymentSubmitButton').focus();
+        }
     }
 });
 
 
 // --- Live search ---
-function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, isPurchase=false, isPaymentGrn=false, isManyPayments=false){ // MODIFIED
+function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, isPurchase=false, isPaymentGrn=false, isManyPayments=false){
     const input=document.getElementById(inputId);
     const dropdown=document.getElementById(dropdownId);
     const hidden=document.getElementById(hiddenCodeId);
     
     if (!input || !dropdown || !hidden) {
-        // console.warn('LiveSearch setup skipped, element missing:', inputId, dropdownId, hiddenCodeId);
-        return; // Exit if essential elements are missing
+        return; 
     }
 
     const balanceDiv=balanceDisplayId?document.getElementById(balanceDisplayId):null;
@@ -547,7 +569,7 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
             balanceSpan.textContent=b;
             balanceSpan.classList.remove('text-success','text-danger');
             const n=parseFloat(b.replace(/,/g,''));
-            balanceSpan.classList.add(n>0?'text-danger':'text-success'); // Assuming positive balance is debt
+            balanceSpan.classList.add(n>0?'text-danger':'text-success');
             balanceDiv.style.display = 'block';
         }
     };
@@ -570,14 +592,16 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
                 if(supplierIdEl) supplierIdEl.value=''; 
             }
             if(hiddenName) hiddenName.value=''; 
-            if(!isPaymentGrn && balanceDiv) balanceDiv.style.display = 'none'; // Hide balance if empty
+            if(!isPaymentGrn && balanceDiv) balanceDiv.style.display = 'none';
             
-            // NEW: Hide GRN selection if supplier is cleared
             if(isManyPayments) {
                 const grnContainer = document.getElementById('grnSelectionContainer');
                 const grnArea = document.getElementById('grnSelectionArea');
                 if (grnContainer) grnContainer.style.display = 'none';
                 if (grnArea) grnArea.innerHTML = '<p class="text-muted text-center">Select a supplier to see partially paid GRNs.</p>';
+                // Clear selection array
+                grnSelectionOrder = [];
+                recalculateAllocations();
             }
         }
     });
@@ -590,7 +614,6 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
             const balance=btn.getAttribute('data-balance')||'0.00';
             const name=btn.getAttribute('data-name');
 
-            // Handle GRN selection for both forms
             if(inputId==='grn_search'||inputId==='payment_grn_search'){
                 input.value=btn.textContent.trim(); 
                 hidden.value=id; 
@@ -600,7 +623,6 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
                 return; 
             }
 
-            // Handle Supplier selection
             input.value=`${code || ''} ${name?'— '+name:''}`.trim();
             hidden.value=code;
             if(isPurchase){ 
@@ -611,12 +633,13 @@ function setupLiveSearch(inputId, dropdownId, hiddenCodeId, balanceDisplayId, is
             updateBalance(balance);
             dropdown.style.display='none';
             
-            // Update focus or trigger AJAX for Many Payments
             if(isPurchase) document.getElementById('description').focus();
             else if(isManyPayments) {
-                // NEW: Trigger AJAX call for "Many Payments" form
                 document.getElementById('many_payment_description').focus();
                 fetchUnpaidGrns(code);
+                // Clear old selections
+                grnSelectionOrder = [];
+                recalculateAllocations();
             }
             else document.getElementById('payment_description').focus();
         }
@@ -633,16 +656,22 @@ setupLiveSearch('supplier_search','supplierDropdown','supplier_code','purchaseBa
 setupLiveSearch('grn_search','grnDropdown','grn_id');
 setupLiveSearch('payment_supplier_search','paymentSupplierDropdown','payment_supplier_code','paymentBalanceDisplay');
 setupLiveSearch('payment_grn_search','paymentGrnDropdown','payment_grn_id', null, false, true);
-// NEW: Initialize "Many Payments" supplier search
 setupLiveSearch('many_supplier_search', 'manySupplierDropdown', 'many_supplier_code', 'manyBalanceDisplay', false, false, true);
 
 
-// --- NEW: "Many Payments" Logic ---
+// --- NEW: "Many Payments" Logic (Allocation Model) ---
 const grnSelectionContainer = document.getElementById('grnSelectionContainer');
 const grnSelectionArea = document.getElementById('grnSelectionArea');
 const totalSelectedDisplay = document.getElementById('totalSelectedDisplay');
 const totalSelectedSpan = totalSelectedDisplay.querySelector('span');
 const manyPaymentSubmitButton = document.getElementById('manyPaymentSubmitButton');
+const manyPaymentAmountInput = document.getElementById('many_payment_amount');
+const paymentRemainingDisplay = document.getElementById('paymentRemainingDisplay');
+const paymentRemainingSpan = paymentRemainingDisplay.querySelector('span');
+const grnPaymentInputsContainer = document.getElementById('grnPaymentInputsContainer');
+
+// This array tracks the *order* of selection
+let grnSelectionOrder = [];
 
 function fetchUnpaidGrns(supplierCode) {
     if (!grnSelectionContainer || !grnSelectionArea) return;
@@ -650,7 +679,6 @@ function fetchUnpaidGrns(supplierCode) {
     grnSelectionContainer.style.display = 'block';
     grnSelectionArea.innerHTML = '<p class="text-info text-center">Fetching partially paid GRNs...</p>';
     
-    // IMPORTANT: This route name comes from your web.php file
     const url = `{{ route('suppliers.getUnpaidGrns', ['supplier_code' => '_PLACEHOLDER_']) }}`.replace('_PLACEHOLDER_', encodeURIComponent(supplierCode)); 
 
     fetch(url, {
@@ -671,9 +699,12 @@ function fetchUnpaidGrns(supplierCode) {
                 const remaining = parseFloat(grn.remaining_balance);
                 const total = parseFloat(grn.total_amount);
                 
+                // ** HTML Change Here: **
+                // 1. Removed `name="grn_ids_to_pay[]"` from the checkbox.
+                // 2. Added `<strong class="text-primary allocated-amount"></strong>` to the label.
                 const grnRow = `
                 <div class="form-check">
-                    <input class="form-check-input grn-select-checkbox" type="checkbox" style="margin-left: 10px;" name="grn_ids_to_pay[]" 
+                    <input class="form-check-input grn-select-checkbox" type="checkbox" style="margin-left: 10px;"
                            value="${grn.grn_id}" data-remaining="${remaining.toFixed(2)}">
                     <label class="form-check-label d-flex justify-content-between flex-wrap">
                         <span class="me-3">
@@ -682,6 +713,7 @@ function fetchUnpaidGrns(supplierCode) {
                         <span class="text-nowrap">
                             Total: ${total.toFixed(2)} | 
                             <strong class="text-danger">Remaining: ${remaining.toFixed(2)}</strong>
+                            <strong class="text-primary allocated-amount ms-2"></strong>
                         </span>
                     </label>
                 </div>`;
@@ -700,31 +732,117 @@ function fetchUnpaidGrns(supplierCode) {
 // Event listener for checkbox changes
 grnSelectionArea?.addEventListener('change', e => {
     if (e.target.classList.contains('grn-select-checkbox')) {
-        updateTotalSelected();
+        const checkbox = e.target;
+        const grnId = checkbox.value;
+
+        if (checkbox.checked) {
+            // Add to our selection order
+            if (!grnSelectionOrder.includes(grnId)) {
+                grnSelectionOrder.push(grnId);
+            }
+        } else {
+            // Remove from our selection order
+            grnSelectionOrder = grnSelectionOrder.filter(id => id !== grnId);
+        }
+        // Recalculate everything
+        recalculateAllocations();
     }
 });
 
-function updateTotalSelected() {
-    if (!grnSelectionArea || !totalSelectedDisplay || !totalSelectedSpan || !manyPaymentSubmitButton) return;
+// Event listener for typing in the payment amount field
+manyPaymentAmountInput?.addEventListener('input', recalculateAllocations);
 
-    let total = 0;
-    const checkboxes = grnSelectionArea.querySelectorAll('.grn-select-checkbox:checked');
-    
-    checkboxes.forEach(cb => {
-        total += parseFloat(cb.dataset.remaining);
+// *** NEW MASTER FUNCTION for allocation ***
+function recalculateAllocations() {
+    if (!grnSelectionArea || !manyPaymentAmountInput || !grnPaymentInputsContainer) return;
+
+    let paymentPool = parseFloat(manyPaymentAmountInput.value) || 0;
+    let totalAllocated = 0;
+
+    // Clear all existing hidden payment inputs
+    grnPaymentInputsContainer.innerHTML = '';
+    // Reset all allocation display text
+    document.querySelectorAll('#grnSelectionArea .allocated-amount').forEach(span => {
+        span.textContent = '';
     });
 
-    if (total > 0) {
-        totalSelectedSpan.textContent = total.toFixed(2);
+    // Loop through the GRNs *in the order they were selected*
+    for (const grnId of grnSelectionOrder) {
+        const checkbox = grnSelectionArea.querySelector(`input.grn-select-checkbox[value="${grnId}"]`);
+        
+        // Find the display span in this checkbox's label
+        const label = checkbox.nextElementSibling;
+        const displaySpan = label.querySelector('.allocated-amount');
+        
+        const grnRemaining = parseFloat(checkbox.dataset.remaining);
+        let amountToPay = 0;
+
+        if (paymentPool > 0) {
+            if (paymentPool >= grnRemaining) {
+                // We have enough to pay this GRN in full
+                amountToPay = grnRemaining;
+            } else {
+                // We only have enough to partially pay
+                amountToPay = paymentPool;
+            }
+
+            paymentPool -= amountToPay; // Subtract from our payment pool
+            totalAllocated += amountToPay;
+
+            // Update the UI to show what we're paying
+            displaySpan.textContent = `(Allocating: ${amountToPay.toFixed(2)})`;
+
+            // Create a new hidden input to submit this payment
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            // This name creates an associative array in PHP/Laravel
+            hiddenInput.name = `grn_payments[${grnId}]`; 
+            hiddenInput.value = amountToPay.toFixed(2);
+            grnPaymentInputsContainer.appendChild(hiddenInput);
+
+        } else {
+            // No money left in the pool
+            displaySpan.textContent = '(No payment left)';
+        }
+    }
+
+    // --- Update the totals at the bottom ---
+    
+    // 1. Update "Total Allocated"
+    if (totalAllocated > 0) {
+        totalSelectedSpan.textContent = totalAllocated.toFixed(2);
         totalSelectedDisplay.style.display = 'block';
-        manyPaymentSubmitButton.disabled = false;
-        // Auto-fill description (will be refined by updateDescriptionField)
-        updateDescriptionField(); 
     } else {
         totalSelectedDisplay.style.display = 'none';
-        manyPaymentSubmitButton.disabled = true;
-        updateDescriptionField();
     }
+
+    // 2. Update "Remaining" (this is what's left of the *original* payment)
+    const originalPayment = parseFloat(manyPaymentAmountInput.value) || 0;
+    const finalRemaining = originalPayment - totalAllocated;
+
+    if (originalPayment > 0) {
+        paymentRemainingSpan.textContent = finalRemaining.toFixed(2);
+        paymentRemainingDisplay.style.display = 'block';
+
+        paymentRemainingSpan.classList.remove('text-success', 'text-danger', 'text-info');
+        if (finalRemaining < 0) {
+            // This shouldn't happen with this logic, but good to have
+            paymentRemainingSpan.classList.add('text-danger'); 
+        } else if (finalRemaining > 0) {
+            paymentRemainingSpan.classList.add('text-success'); // Money left over
+        } else {
+            paymentRemainingSpan.classList.add('text-info'); // Perfect allocation
+        }
+    } else {
+        paymentRemainingDisplay.style.display = 'none';
+    }
+
+    // 3. Enable/Disable Submit Button
+    // Only enable if we have actually allocated some money
+    manyPaymentSubmitButton.disabled = (totalAllocated <= 0);
+
+    // 4. Update Description
+    updateDescriptionField();
 }
 
 
@@ -741,12 +859,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
 
     mainTableBody?.addEventListener('click', e=>{
-        // History
         if(e.target.classList.contains('view-history-link')){
             const code=e.target.getAttribute('data-supplier-code');
             fetchTransactionHistory(code);
         }
-        // Inline Edit
         if(e.target.classList.contains('editButton')){
             const tr=e.target.closest('tr');
             if (!tr) return;
@@ -764,7 +880,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     function fetchTransactionHistory(code){
         if (!tableBody || !grnSummaryBody) return;
         
-        // The API call route name
         const url = `{{ route('suppliers2.transactions') }}?supplier_code=${encodeURIComponent(code)}`;
         tableBody.innerHTML='<tr><td colspan="6" class="text-center">Loading transactions...</td></tr>';
         grnSummaryBody.innerHTML='<tr><td colspan-"5" class="text-center">Loading GRN payments...</td></tr>';
@@ -791,26 +906,24 @@ document.addEventListener('DOMContentLoaded', ()=>{
                 bEl.classList.remove('text-success','text-danger');
                 bEl.classList.add(parseFloat(data.remaining_balance.replace(/,/g,''))>0?'text-danger':'text-success');
                 
-                // 1. Populate All Transactions Table
                 tableBody.innerHTML='';
                if (data.history && data.history.length > 0) {
-    data.history.forEach(item => {
-        const row = `
-        <tr>
-            <td>${item.date}</td>
-            <td>${item.type}</td>
-            <td>${item.description}</td>
-            <td>${item.grn_no}</td>
-            <td class="${item.class}">${item.amount}</td>
-            <td class="text-end">${item.balance}</td>
-        </tr>`;
-        tableBody.insertAdjacentHTML('beforeend', row);
-    });
-} else {
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No transactions found.</td></tr>';
-}
+                    data.history.forEach(item => {
+                        const row = `
+                        <tr>
+                            <td>${item.date}</td>
+                            <td>${item.type}</td>
+                            <td>${item.description}</td>
+                            <td>${item.grn_no}</td>
+                            <td class="${item.class}">${item.amount}</td>
+                            <td class="text-end">${item.balance}</td>
+                        </tr>`;
+                        tableBody.insertAdjacentHTML('beforeend', row);
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No transactions found.</td></tr>';
+                }
 
-                // 2. Populate NEW GRN Payment Summary Table
                 grnSummaryBody.innerHTML = '';
                 if(data.grn_payment_summary && data.grn_payment_summary.length > 0) {
                     data.grn_payment_summary.forEach(item => {
@@ -836,7 +949,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
             });
     }
 
-    // --- Populate form for edit ---
     const cancelEditBtn=document.getElementById('cancelEditButton');
     function populateFormForEdit(data){
         if (!data) return;
@@ -844,7 +956,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         addRadio.checked=true; 
         payRadio.checked=false; 
         manyPayRadio.checked = false;
-        toggleForms(); // Use the toggle function
+        toggleForms();
         
         document.getElementById('transaction_id').value=data.id;
         document.getElementById('supplier_search').value=`${data.supplier_code || ''} ${data.supplier_name ? '— '+data.supplier_name : ''}`;
@@ -857,17 +969,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
         const grnSearch = document.getElementById('grn_search');
         const grnId = document.getElementById('grn_id');
         
-        // Find the GRN's full display text from the dropdown options
         let grnDisplayText = '';
         if (data.grn_id && data.grn) {
             grnDisplayText = data.grn.code || '';
         } else if (data.grn_id) {
-            // Fallback: try to find in dropdown options
             const grnOption = document.querySelector(`#grnDropdown button[data-id="${data.grn_id}"]`);
             if (grnOption) {
                 grnDisplayText = grnOption.textContent.trim();
             } else {
-                grnDisplayText = `GRN ID: ${data.grn_id}`; // Fallback if not in list
+                grnDisplayText = `GRN ID: ${data.grn_id}`;
             }
         }
 
@@ -878,14 +988,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
         if(cancelEditBtn) {
             cancelEditBtn.style.display='inline-block';
             cancelEditBtn.onclick=()=>{ 
-                // A full reload is safer to reset all states
                 window.location.href = `{{ route('suppliers2.index') }}`; 
             }
         }
-        window.scrollTo(0, 0); // Scroll to top
+        window.scrollTo(0, 0);
     }
     
-    // --- Table Search Filter (AJAX) ---
     const searchInput = document.getElementById('supplierTableSearch');
     let searchTimeout;
 
@@ -893,20 +1001,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
         clearTimeout(searchTimeout);
         const keyword = this.value.trim();
         
-        // Use a timeout to avoid spamming the server on every keypress
         searchTimeout = setTimeout(() => {
             fetchTableData(keyword);
-        }, 300); // 300ms delay
+        }, 300);
     });
 
     function fetchTableData(keyword) {
-        // This route name comes from your web.php file
         const url = `{{ route('suppliers2.index') }}` + (keyword ? `?search=${encodeURIComponent(keyword)}` : '');
 
         fetch(url, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'text/html' // We expect HTML back
+                'Accept': 'text/html'
             }
         })
         .then(res => res.text())
@@ -926,8 +1032,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     toggleForms();
 });
 
-// --- *** NEW: Payment Method Toggles *** ---
-// For "Settle to Supplier" form
+// --- Payment Method Toggles ---
 const paymentChequeDetails = document.getElementById('payment_cheque_details');
 const paymentMethodRadios = document.querySelectorAll('input[name="payment_method"]');
 paymentMethodRadios.forEach(radio => {
@@ -935,11 +1040,11 @@ paymentMethodRadios.forEach(radio => {
         if (paymentChequeDetails) {
             paymentChequeDetails.style.display = this.value === 'cheque' ? 'block' : 'none';
         }
-        updateDescriptionField(); // Update description on change
+        updateDescriptionField();
     });
 });
 
-// For "Many Payments" form
+// This is the part that was cut off
 const manyChequeDetails = document.getElementById('many_cheque_details');
 const manyPaymentMethodRadios = document.querySelectorAll('input[name="many_payment_method"]');
 manyPaymentMethodRadios.forEach(radio => {
@@ -953,6 +1058,7 @@ manyPaymentMethodRadios.forEach(radio => {
 
 
 // --- Auto-fill description based on radio selection ---
+// This was also cut off
 function updateDescriptionField() {
     const purchaseDescriptionInput = document.getElementById('description');
     const paymentDescriptionInput = document.getElementById('payment_description');
@@ -967,12 +1073,14 @@ function updateDescriptionField() {
         }
     } else if (manyPayRadio.checked) {
         const paymentMethod = document.querySelector('input[name="many_payment_method"]:checked').value;
-        const anySelected = document.querySelectorAll('.grn-select-checkbox:checked').length > 0;
+        // Check if any GRNs are selected *by looking at the hidden inputs we generated*
+        const anySelected = document.querySelectorAll('#grnPaymentInputsContainer input[type="hidden"]').length > 0;
+        
         if(manyPaymentDescriptionInput) {
             if (anySelected) {
                 manyPaymentDescriptionInput.value = paymentMethod === 'cheque' ? 'Cheque Payment for selected GRNs' : 'Cash Payment for selected GRNs';
             } else {
-                 manyPaymentDescriptionInput.value = ''; // Clear if nothing is selected
+                 // Don't clear it if the user is typing
             }
         }
     }

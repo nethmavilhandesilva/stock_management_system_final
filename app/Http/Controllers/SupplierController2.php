@@ -288,15 +288,16 @@ class SupplierController2 extends Controller
         }
     }
 
-    // *** This method is REQUIRED by your blade file ***
+    // *** THIS IS THE UPDATED METHOD ***
     public function storeManyPayment(Request $request)
     {
+        // 1. Validation - Replaced 'grn_ids_to_pay' with 'grn_payments'
         $request->validate([
             'supplier_code' => 'required|string|exists:suppliers,code',
             'description' => 'nullable|string|max:255',
-            'grn_ids_to_pay' => 'required|array|min:1',
-            'grn_ids_to_pay.*' => 'integer|exists:grn_entries,id',
-            // *** NEW Validation ***
+            'many_payment_amount' => 'required|numeric|min:0.01',
+            'grn_payments' => 'required|array|min:1', // The array of [grn_id => amount]
+            'grn_payments.*' => 'required|numeric|min:0.01', // Validates all the *amounts*
             'many_payment_method' => 'required|in:cash,cheque',
             'many_cheque_no' => 'required_if:many_payment_method,cheque|nullable|string',
             'many_cheque_date' => 'required_if:many_payment_method,cheque|nullable|date',
@@ -307,10 +308,9 @@ class SupplierController2 extends Controller
             DB::beginTransaction();
 
             $supplier = Supplier::where('code', $request->supplier_code)->firstOrFail();
-            $grnIds = $request->grn_ids_to_pay;
             $currentDate = \App\Models\Setting::value('value');
 
-            // *** NEW: Build Base Description ***
+            // Build Base Description - This logic is unchanged
             $baseDescription = $request->description ?? 'Payment to Supplier';
             if ($request->many_payment_method === 'cheque') {
                 $baseDescription = sprintf(
@@ -321,40 +321,47 @@ class SupplierController2 extends Controller
                     $request->many_bank_name
                 );
             }
-            // *** END NEW ***
 
-            foreach ($grnIds as $grn_id) {
-                $purchase = Supplier2::where('supplier_code', $supplier->code)
-                    ->where('grn_id', $grn_id)
-                    ->where('total_amount', '>', 0)
-                    ->with('grn')
-                    ->first();
+            $totalAllocated = 0;
 
-                if (!$purchase) continue;
-
-                $totalPaid = Supplier2::where('supplier_code', $supplier->code)
-                    ->where('grn_id', $grn_id)
-                    ->where('total_amount', '<', 0)
-                    ->sum('total_amount');
-
-                $remaining = $purchase->total_amount + $totalPaid;
-
-                if ($remaining > 0.01) {
-                    Supplier2::create([
-                        'supplier_code' => $supplier->code,
-                        'supplier_name' => $supplier->name,
-                        'existing_supplier_id' => $supplier->id,
-                        'grn_id' => $grn_id,
-                        'date' => $currentDate,
-                        // Use the new base description and append GRN info
-                        'description' => $baseDescription . ' (GRN: ' . ($purchase->grn->code ?? $grn_id) . ')',
-                        'total_amount' => -1 * $remaining,
-                    ]);
+            // 2. Logic - Loop through the new 'grn_payments' array
+            // The $grn_id is the 'key' and $payment_amount is the 'value'
+            foreach ($request->grn_payments as $grn_id => $payment_amount) {
+                
+                if ($payment_amount <= 0) {
+                    continue; // Skip if amount is zero or negative
                 }
+                
+                $totalAllocated += $payment_amount;
+
+                // Find the GRN code for a better description
+                $grn = GrnEntry::find($grn_id);
+                $grnCode = $grn ? $grn->code : $grn_id;
+                
+                // Create a separate payment transaction for the *exact* allocated amount
+                Supplier2::create([
+                    'supplier_code' => $supplier->code,
+                    'supplier_name' => $supplier->name,
+                    'existing_supplier_id' => $supplier->id,
+                    'grn_id' => $grn_id,
+                    'date' => $currentDate,
+                    'description' => $baseDescription . ' (GRN: ' . $grnCode . ')',
+                    'total_amount' => -1 * abs($payment_amount), // Use the specific allocated amount
+                ]);
+            }
+
+            // 3. Sanity check (Good practice)
+            // Check if the total allocated amount matches the total payment amount sent
+            if (abs($totalAllocated - $request->many_payment_amount) > 0.01) {
+                // This means the user's Javascript calculation was different from the server's.
+                // We roll back to prevent a mismatch in payment.
+                DB::rollBack();
+                return redirect()->route('suppliers2.index')
+                    ->with('error', 'Payment allocation mismatch. Please refresh and try again.');
             }
 
             DB::commit();
-            return redirect()->route('suppliers2.index')->with('success', 'Payments updated successfully.');
+            return redirect()->route('suppliers2.index')->with('success', 'Payments allocated and processed successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -368,6 +375,7 @@ class SupplierController2 extends Controller
                 ->with('error', 'Error processing payments: ' . $e->getMessage());
         }
     }
+    // *** END OF UPDATED METHOD ***
 
 
     public function edit($id)
