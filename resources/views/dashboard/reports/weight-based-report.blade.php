@@ -1,6 +1,20 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+.compact-table thead th {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.compact-table tfoot tr {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+</style>
     <style>
         body {
             background-color: #99ff99;

@@ -2,6 +2,30 @@
 
 @section('content')
 <style>
+.table-responsive {
+    max-height: 80vh; /* 80% of the screen height */
+    overflow-y: auto;
+}
+
+.table-responsive > table > thead th,
+.custom-card > table > thead th {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+   /* Inherits the thead's background color */
+}
+
+/* This rule targets the footers in BOTH report styles */
+.table-responsive > table > tfoot tr,
+.custom-card > table > tfoot tr {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+</style>
+<style>
     body {
         background-color: #99ff99;
     }

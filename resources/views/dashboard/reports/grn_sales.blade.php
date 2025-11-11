@@ -61,6 +61,41 @@
         background-color: #f0f0f0 !important;
     }
 </style>
+<style>
+/* =========================================
+   COMMON STICKY TABLE CODE (HANDLES ALL REPORTS)
+   ========================================= */
+
+/* This gives tables inside .table-responsive a scrollbar */
+.table-responsive {
+    max-height: 80vh; /* 80% of the screen height */
+    overflow-y: auto;
+}
+
+/* This selector now targets tables in ALL your report types:
+  1. .table-responsive > table (like your Adjustments report)
+  2. .custom-card > table (like your first GRN Sales report)
+  3. .container > table (like this new report)
+*/
+.table-responsive > table > thead th,
+.custom-card > table > thead th,
+.container > table > thead th {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* This rule targets the footers in all report styles */
+.table-responsive > table > tfoot tr,
+.custom-card > table > tfoot tr,
+.container > table > tfoot tr {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+</style>
 
 <div class="container">
     <h3>GRN Sales Report</h3>

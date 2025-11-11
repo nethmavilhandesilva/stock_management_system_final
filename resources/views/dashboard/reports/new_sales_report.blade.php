@@ -2,6 +2,7 @@
 
 @section('content')
 
+
 @php
 use Illuminate\Support\Str;
 @endphp
