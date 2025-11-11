@@ -122,8 +122,9 @@
     </form>
 
     {{-- Payment Form --}}
+    {{-- *** IMPORTANT: Added enctype for file uploads *** --}}
     <form id="paymentForm" action="{{ route('suppliers2.payment') }}" method="POST" 
-      class="border p-3 rounded bg-light" style="display:none;">
+      class="border p-3 rounded bg-light" style="display:none;" enctype="multipart/form-data">
     @csrf
 
     <div class="row g-3 align-items-end">
@@ -188,6 +189,11 @@
                     <input class="form-check-input" type="radio" name="payment_method" id="payment_method_cheque" value="cheque">
                     <label class="form-check-label" for="payment_method_cheque">Cheque</label>
                 </div>
+                {{-- NEW: Bank Deposit Radio --}}
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="payment_method" id="payment_method_bank" value="bank_deposit">
+                    <label class="form-check-label" for="payment_method_bank">Bank Deposit</label>
+                </div>
             </div>
         </div>
 
@@ -208,6 +214,25 @@
                 </div>
             </div>
         </div>
+        
+        {{-- NEW: Bank Deposit Details (Hidden by default) --}}
+        <div class="col-md-9" id="payment_bank_deposit_details" style="display:none;">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="payment_bank_name_deposit" class="form-label">Bank Name</label>
+                    <input type="text" name="payment_bank_name_deposit" id="payment_bank_name_deposit" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label for="payment_account_no" class="form-label">Account No</label>
+                    <input type="text" name="payment_account_no" id="payment_account_no" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label for="payment_bank_slip" class="form-label">Bank Slip (Image)</label>
+                    <input type="file" name="payment_bank_slip" id="payment_bank_slip" class="form-control" accept="image/*">
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div class="mt-3 text-end">
@@ -216,8 +241,9 @@
 </form>
 
     {{-- NEW "Many Payments" Form --}}
+    {{-- *** IMPORTANT: Added enctype for file uploads *** --}}
     <form id="manyPaymentsForm" action="{{ route('suppliers2.payment.many') }}" method="POST" 
-          class="border p-3 rounded bg-light" style="display:none;">
+          class="border p-3 rounded bg-light" style="display:none;" enctype="multipart/form-data">
         @csrf
         
         {{-- This container will hold our dynamically generated payment inputs --}}
@@ -274,6 +300,11 @@
                         <input class="form-check-input" type="radio" name="many_payment_method" id="many_payment_method_cheque" value="cheque">
                         <label class="form-check-label" for="many_payment_method_cheque">Cheque</label>
                     </div>
+                    {{-- NEW: Bank Deposit Radio --}}
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="many_payment_method" id="many_payment_method_bank" value="bank_deposit">
+                        <label class="form-check-label" for="many_payment_method_bank">Bank Deposit</label>
+                    </div>
                 </div>
             </div>
 
@@ -294,6 +325,25 @@
                     </div>
                 </div>
             </div>
+
+            {{-- NEW: Bank Deposit Details (Hidden by default) --}}
+            <div class="col-md-8" id="many_bank_deposit_details" style="display:none;">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="many_bank_name_deposit" class="form-label">Bank Name</label>
+                        <input type="text" name="many_bank_name_deposit" id="many_bank_name_deposit" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="many_account_no" class="form-label">Account No</label>
+                        <input type="text" name="many_account_no" id="many_account_no" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="many_bank_slip" class="form-label">Bank Slip (Image)</label>
+                        <input type="file" name="many_bank_slip" id="many_bank_slip" class="form-control" accept="image/*">
+                    </div>
+                </div>
+            </div>
+
         </div>
         
         {{-- GRN Selection Area (Populated by JS) --}}
@@ -436,6 +486,7 @@
                             <th>GRN</th>
                             <th class="text-end">Amount</th>
                             <th class="text-end">Balance</th>
+                            <th>Attachment</th> {{-- NEW COLUMN --}}
                         </tr>
                     </thead>
                     <tbody id="transactionHistoryBody">
@@ -699,9 +750,6 @@ function fetchUnpaidGrns(supplierCode) {
                 const remaining = parseFloat(grn.remaining_balance);
                 const total = parseFloat(grn.total_amount);
                 
-                // ** HTML Change Here: **
-                // 1. Removed `name="grn_ids_to_pay[]"` from the checkbox.
-                // 2. Added `<strong class="text-primary allocated-amount"></strong>` to the label.
                 const grnRow = `
                 <div class="form-check">
                     <input class="form-check-input grn-select-checkbox" type="checkbox" style="margin-left: 10px;"
@@ -736,15 +784,12 @@ grnSelectionArea?.addEventListener('change', e => {
         const grnId = checkbox.value;
 
         if (checkbox.checked) {
-            // Add to our selection order
             if (!grnSelectionOrder.includes(grnId)) {
                 grnSelectionOrder.push(grnId);
             }
         } else {
-            // Remove from our selection order
             grnSelectionOrder = grnSelectionOrder.filter(id => id !== grnId);
         }
-        // Recalculate everything
         recalculateAllocations();
     }
 });
@@ -759,18 +804,14 @@ function recalculateAllocations() {
     let paymentPool = parseFloat(manyPaymentAmountInput.value) || 0;
     let totalAllocated = 0;
 
-    // Clear all existing hidden payment inputs
     grnPaymentInputsContainer.innerHTML = '';
-    // Reset all allocation display text
     document.querySelectorAll('#grnSelectionArea .allocated-amount').forEach(span => {
         span.textContent = '';
     });
 
-    // Loop through the GRNs *in the order they were selected*
     for (const grnId of grnSelectionOrder) {
         const checkbox = grnSelectionArea.querySelector(`input.grn-select-checkbox[value="${grnId}"]`);
         
-        // Find the display span in this checkbox's label
         const label = checkbox.nextElementSibling;
         const displaySpan = label.querySelector('.allocated-amount');
         
@@ -779,36 +820,27 @@ function recalculateAllocations() {
 
         if (paymentPool > 0) {
             if (paymentPool >= grnRemaining) {
-                // We have enough to pay this GRN in full
                 amountToPay = grnRemaining;
             } else {
-                // We only have enough to partially pay
                 amountToPay = paymentPool;
             }
 
-            paymentPool -= amountToPay; // Subtract from our payment pool
+            paymentPool -= amountToPay;
             totalAllocated += amountToPay;
 
-            // Update the UI to show what we're paying
             displaySpan.textContent = `(Allocating: ${amountToPay.toFixed(2)})`;
 
-            // Create a new hidden input to submit this payment
             const hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
-            // This name creates an associative array in PHP/Laravel
             hiddenInput.name = `grn_payments[${grnId}]`; 
             hiddenInput.value = amountToPay.toFixed(2);
             grnPaymentInputsContainer.appendChild(hiddenInput);
 
         } else {
-            // No money left in the pool
             displaySpan.textContent = '(No payment left)';
         }
     }
-
-    // --- Update the totals at the bottom ---
     
-    // 1. Update "Total Allocated"
     if (totalAllocated > 0) {
         totalSelectedSpan.textContent = totalAllocated.toFixed(2);
         totalSelectedDisplay.style.display = 'block';
@@ -816,7 +848,6 @@ function recalculateAllocations() {
         totalSelectedDisplay.style.display = 'none';
     }
 
-    // 2. Update "Remaining" (this is what's left of the *original* payment)
     const originalPayment = parseFloat(manyPaymentAmountInput.value) || 0;
     const finalRemaining = originalPayment - totalAllocated;
 
@@ -826,22 +857,17 @@ function recalculateAllocations() {
 
         paymentRemainingSpan.classList.remove('text-success', 'text-danger', 'text-info');
         if (finalRemaining < 0) {
-            // This shouldn't happen with this logic, but good to have
             paymentRemainingSpan.classList.add('text-danger'); 
         } else if (finalRemaining > 0) {
-            paymentRemainingSpan.classList.add('text-success'); // Money left over
+            paymentRemainingSpan.classList.add('text-success');
         } else {
-            paymentRemainingSpan.classList.add('text-info'); // Perfect allocation
+            paymentRemainingSpan.classList.add('text-info');
         }
     } else {
         paymentRemainingDisplay.style.display = 'none';
     }
 
-    // 3. Enable/Disable Submit Button
-    // Only enable if we have actually allocated some money
     manyPaymentSubmitButton.disabled = (totalAllocated <= 0);
-
-    // 4. Update Description
     updateDescriptionField();
 }
 
@@ -881,8 +907,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
         if (!tableBody || !grnSummaryBody) return;
         
         const url = `{{ route('suppliers2.transactions') }}?supplier_code=${encodeURIComponent(code)}`;
-        tableBody.innerHTML='<tr><td colspan="6" class="text-center">Loading transactions...</td></tr>';
-        grnSummaryBody.innerHTML='<tr><td colspan-"5" class="text-center">Loading GRN payments...</td></tr>';
+        // UPDATED: colspan="7"
+        tableBody.innerHTML='<tr><td colspan="7" class="text-center">Loading transactions...</td></tr>';
+        grnSummaryBody.innerHTML='<tr><td colspan="5" class="text-center">Loading GRN payments...</td></tr>';
 
         fetch(url,{ 
             headers:{
@@ -909,6 +936,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
                 tableBody.innerHTML='';
                if (data.history && data.history.length > 0) {
                     data.history.forEach(item => {
+                        
+                        // NEW: Create a link if bank_slip_path exists
+                        const slipLink = item.bank_slip_path 
+                            ? `<a href="${item.bank_slip_path}" target="_blank" class="btn btn-sm btn-outline-success">View Slip</a>` 
+                            : 'N/A';
+
+                        // UPDATED: Added slipLink
                         const row = `
                         <tr>
                             <td>${item.date}</td>
@@ -917,11 +951,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
                             <td>${item.grn_no}</td>
                             <td class="${item.class}">${item.amount}</td>
                             <td class="text-end">${item.balance}</td>
+                            <td>${slipLink}</td>
                         </tr>`;
                         tableBody.insertAdjacentHTML('beforeend', row);
                     });
                 } else {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No transactions found.</td></tr>';
+                    // UPDATED: colspan="7"
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No transactions found.</td></tr>';
                 }
 
                 grnSummaryBody.innerHTML = '';
@@ -944,7 +980,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
                 if(transactionModal) transactionModal.show();
             }).catch(err=>{
                 console.error(err); 
-                tableBody.innerHTML='<tr><td colspan="6" class="text-center text-danger">Error loading data.</td></tr>';
+                // UPDATED: colspan="7"
+                tableBody.innerHTML='<tr><td colspan="7" class="text-center text-danger">Error loading data.</td></tr>';
                 grnSummaryBody.innerHTML='<tr><td colspan="5" class="text-center text-danger">Error loading GRN summary data.</td></tr>'; 
             });
     }
@@ -1034,23 +1071,38 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 // --- Payment Method Toggles ---
 const paymentChequeDetails = document.getElementById('payment_cheque_details');
+const paymentBankDepositDetails = document.getElementById('payment_bank_deposit_details'); // NEW
 const paymentMethodRadios = document.querySelectorAll('input[name="payment_method"]');
+
 paymentMethodRadios.forEach(radio => {
     radio.addEventListener('change', function() {
+        const isCheque = this.value === 'cheque';
+        const isBankDeposit = this.value === 'bank_deposit';
+        
         if (paymentChequeDetails) {
-            paymentChequeDetails.style.display = this.value === 'cheque' ? 'block' : 'none';
+            paymentChequeDetails.style.display = isCheque ? 'block' : 'none';
+        }
+        if (paymentBankDepositDetails) {
+            paymentBankDepositDetails.style.display = isBankDeposit ? 'block' : 'none';
         }
         updateDescriptionField();
     });
 });
 
-// This is the part that was cut off
 const manyChequeDetails = document.getElementById('many_cheque_details');
+const manyBankDepositDetails = document.getElementById('many_bank_deposit_details'); // NEW
 const manyPaymentMethodRadios = document.querySelectorAll('input[name="many_payment_method"]');
+
 manyPaymentMethodRadios.forEach(radio => {
     radio.addEventListener('change', function() {
+        const isCheque = this.value === 'cheque';
+        const isBankDeposit = this.value === 'bank_deposit';
+
         if (manyChequeDetails) {
-            manyChequeDetails.style.display = this.value === 'cheque' ? 'block' : 'none';
+            manyChequeDetails.style.display = isCheque ? 'block' : 'none';
+        }
+        if (manyBankDepositDetails) {
+            manyBankDepositDetails.style.display = isBankDeposit ? 'block' : 'none';
         }
         updateDescriptionField(); // Update description on change
     });
@@ -1058,27 +1110,39 @@ manyPaymentMethodRadios.forEach(radio => {
 
 
 // --- Auto-fill description based on radio selection ---
-// This was also cut off
 function updateDescriptionField() {
     const purchaseDescriptionInput = document.getElementById('description');
     const paymentDescriptionInput = document.getElementById('payment_description');
     const manyPaymentDescriptionInput = document.getElementById('many_payment_description');
     
     if (addRadio.checked) {
-        if(purchaseDescriptionInput && purchaseDescriptionInput.value === '') purchaseDescriptionInput.value = 'Purchase from Supplier';
+        if(purchaseDescriptionInput && purchaseDescriptionInput.value === '') {
+            purchaseDescriptionInput.value = 'Purchase from Supplier';
+        }
     } else if (payRadio.checked) {
         const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
         if(paymentDescriptionInput) {
-            paymentDescriptionInput.value = paymentMethod === 'cheque' ? 'Cheque Payment to Supplier' : 'Cash Payment to Supplier';
+            if (paymentMethod === 'cheque') {
+                paymentDescriptionInput.value = 'Cheque Payment to Supplier';
+            } else if (paymentMethod === 'bank_deposit') {
+                paymentDescriptionInput.value = 'Bank Deposit to Supplier';
+            } else {
+                paymentDescriptionInput.value = 'Cash Payment to Supplier';
+            }
         }
     } else if (manyPayRadio.checked) {
         const paymentMethod = document.querySelector('input[name="many_payment_method"]:checked').value;
-        // Check if any GRNs are selected *by looking at the hidden inputs we generated*
         const anySelected = document.querySelectorAll('#grnPaymentInputsContainer input[type="hidden"]').length > 0;
         
         if(manyPaymentDescriptionInput) {
             if (anySelected) {
-                manyPaymentDescriptionInput.value = paymentMethod === 'cheque' ? 'Cheque Payment for selected GRNs' : 'Cash Payment for selected GRNs';
+                if (paymentMethod === 'cheque') {
+                    manyPaymentDescriptionInput.value = 'Cheque Payment for selected GRNs';
+                } else if (paymentMethod === 'bank_deposit') {
+                    manyPaymentDescriptionInput.value = 'Bank Deposit for selected GRNs';
+                } else {
+                    manyPaymentDescriptionInput.value = 'Cash Payment for selected GRNs';
+                }
             } else {
                  // Don't clear it if the user is typing
             }

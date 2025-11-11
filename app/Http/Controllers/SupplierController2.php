@@ -8,6 +8,7 @@ use App\Models\GrnEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class SupplierController2 extends Controller
 {
@@ -52,7 +53,6 @@ class SupplierController2 extends Controller
         return view('dashboard.suppliers2.index', compact('suppliers', 'grnOptions', 'existingSuppliersWithBalance'));
     }
 
-
     public function getSupplierTransactions(Request $request)
     {
         $request->validate(['supplier_code' => 'required|string']);
@@ -73,10 +73,14 @@ class SupplierController2 extends Controller
 
         $history = $transactions->map(function ($txn) use (&$runningBalance) {
             $type = $txn->total_amount >= 0 ? 'Purchase' : 'Payment';
-
             $runningBalance += $txn->total_amount;
 
             $grnNo = $txn->grn->code ?? '-';
+
+            $slipUrl = null;
+            if ($txn->bank_slip_path) {
+                $slipUrl = Storage::url($txn->bank_slip_path);
+            }
 
             return [
                 'date' => $txn->date,
@@ -86,10 +90,10 @@ class SupplierController2 extends Controller
                 'amount' => number_format(abs($txn->total_amount), 2),
                 'balance' => number_format($runningBalance, 2),
                 'class' => $txn->total_amount >= 0 ? 'text-success text-end' : 'text-danger text-end',
+                'bank_slip_path' => $slipUrl
             ];
         });
 
-        // GRN breakdown summary
         $purchases = Supplier2::with('grn')
             ->where('supplier_code', $supplierCode)
             ->where('total_amount', '>', 0)
@@ -127,9 +131,9 @@ class SupplierController2 extends Controller
         return response()->json([
             'supplier_code' => $supplierCode,
             'supplier_name' => $supplier->name ?? 'Unknown',
-            'supplier_email' => $supplier->email ?? null, // Added for modal
-            'supplier_phone' => $supplier->phone ?? null, // Added for modal
-            'supplier_address' => $supplier->address ?? null, // Added for modal
+            'supplier_email' => $supplier->email ?? null,
+            'supplier_phone' => $supplier->phone ?? null,
+            'supplier_address' => $supplier->address ?? null,
             'total_purchases' => number_format($totalPurchases, 2),
             'total_payments' => number_format($totalPayments, 2),
             'remaining_balance' => number_format($remainingBalance, 2),
@@ -137,7 +141,6 @@ class SupplierController2 extends Controller
             'grn_payment_summary' => $grnSummary,
         ]);
     }
-
 
     public function store(Request $request)
     {
@@ -197,7 +200,6 @@ class SupplierController2 extends Controller
         }
     }
 
-
     public function payment(Request $request)
     {
         $request->validate([
@@ -205,22 +207,34 @@ class SupplierController2 extends Controller
             'payment_amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:500',
             'grn_id' => 'nullable|integer',
-            // *** NEW Validation ***
-            'payment_method' => 'required|in:cash,cheque',
+            'payment_method' => 'required|in:cash,cheque,bank_deposit',
+
             'payment_cheque_no' => 'required_if:payment_method,cheque|nullable|string',
             'payment_cheque_date' => 'required_if:payment_method,cheque|nullable|date',
             'payment_bank_name' => 'required_if:payment_method,cheque|nullable|string',
+
+            'payment_bank_name_deposit' => 'required_if:payment_method,bank_deposit|nullable|string',
+            'payment_account_no' => 'required_if:payment_method,bank_deposit|nullable|string',
+            'payment_bank_slip' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         try {
             $supplier = Supplier::where('code', $request->supplier_code)->first();
             $supplierName = $supplier->name ?? Supplier2::where('supplier_code', $request->supplier_code)->value('supplier_name');
-
             $grnId = $request->grn_id ?: null;
             $currentDate = \App\Models\Setting::value('value');
 
-            // *** NEW: Build Description ***
+            $data = [
+                'supplier_code' => $request->supplier_code,
+                'supplier_name' => $supplierName,
+                'grn_id' => $grnId,
+                'total_amount' => -abs($request->payment_amount),
+                'date' => $currentDate,
+                'payment_method' => $request->payment_method,
+            ];
+
             $description = $request->description ?? 'Payment to Supplier';
+
             if ($request->payment_method === 'cheque') {
                 $description = sprintf(
                     '%s (Cheque No: %s, Date: %s, Bank: %s)',
@@ -229,27 +243,41 @@ class SupplierController2 extends Controller
                     $request->payment_cheque_date,
                     $request->payment_bank_name
                 );
-            }
-            // *** END NEW ***
 
-            Supplier2::create([
-                'supplier_code' => $request->supplier_code,
-                'supplier_name' => $supplierName,
-                'grn_id' => $grnId,
-                'total_amount' => -abs($request->payment_amount),
-                'description' => $description, // Use the new description
-                'date' => $currentDate,
-            ]);
+                $data['cheque_no'] = $request->payment_cheque_no;
+                $data['cheque_date'] = $request->payment_cheque_date;
+                $data['bank_name'] = $request->payment_bank_name;
+
+            } elseif ($request->payment_method === 'bank_deposit') {
+
+                if ($request->hasFile('payment_bank_slip')) {
+                    $path = $request->file('payment_bank_slip')->store('public/bank_slips/suppliers');
+                    $data['bank_slip_path'] = $path;
+                }
+
+                $description = sprintf(
+                    '%s (Bank Deposit: %s, Acc: %s)',
+                    $description,
+                    $request->payment_bank_name_deposit,
+                    $request->payment_account_no
+                );
+
+                $data['bank_name'] = $request->payment_bank_name_deposit;
+                $data['account_no'] = $request->payment_account_no;
+            }
+
+            $data['description'] = $description;
+
+            Supplier2::create($data);
 
             return back()->with('success', 'Payment recorded.');
 
         } catch (\Exception $e) {
             Log::error("Payment Error", ['e' => $e->getMessage()]);
-            return back()->with('error', 'Payment failed.');
+            return back()->with('error', 'Payment failed: ' . $e->getMessage());
         }
     }
 
-    // *** This method is REQUIRED by your blade file ***
     public function getUnpaidGrns($supplier_code)
     {
         try {
@@ -288,20 +316,24 @@ class SupplierController2 extends Controller
         }
     }
 
-    // *** THIS IS THE UPDATED METHOD ***
     public function storeManyPayment(Request $request)
     {
-        // 1. Validation - Replaced 'grn_ids_to_pay' with 'grn_payments'
         $request->validate([
             'supplier_code' => 'required|string|exists:suppliers,code',
             'description' => 'nullable|string|max:255',
             'many_payment_amount' => 'required|numeric|min:0.01',
-            'grn_payments' => 'required|array|min:1', // The array of [grn_id => amount]
-            'grn_payments.*' => 'required|numeric|min:0.01', // Validates all the *amounts*
-            'many_payment_method' => 'required|in:cash,cheque',
+            'grn_payments' => 'required|array|min:1',
+            'grn_payments.*' => 'required|numeric|min:0.01',
+
+            'many_payment_method' => 'required|in:cash,cheque,bank_deposit',
+
             'many_cheque_no' => 'required_if:many_payment_method,cheque|nullable|string',
             'many_cheque_date' => 'required_if:many_payment_method,cheque|nullable|date',
             'many_bank_name' => 'required_if:many_payment_method,cheque|nullable|string',
+
+            'many_bank_name_deposit' => 'required_if:many_payment_method,bank_deposit|nullable|string',
+            'many_account_no' => 'required_if:many_payment_method,bank_deposit|nullable|string',
+            'many_bank_slip' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         try {
@@ -310,9 +342,15 @@ class SupplierController2 extends Controller
             $supplier = Supplier::where('code', $request->supplier_code)->firstOrFail();
             $currentDate = \App\Models\Setting::value('value');
 
-            // Build Base Description - This logic is unchanged
             $baseDescription = $request->description ?? 'Payment to Supplier';
+            $bankSlipPath = null;
+
+            $baseData = [
+                'payment_method' => $request->many_payment_method,
+            ];
+
             if ($request->many_payment_method === 'cheque') {
+
                 $baseDescription = sprintf(
                     '%s (Cheque No: %s, Date: %s, Bank: %s)',
                     $baseDescription,
@@ -320,42 +358,55 @@ class SupplierController2 extends Controller
                     $request->many_cheque_date,
                     $request->many_bank_name
                 );
+
+                $baseData['cheque_no'] = $request->many_cheque_no;
+                $baseData['cheque_date'] = $request->many_cheque_date;
+                $baseData['bank_name'] = $request->many_bank_name;
+
+            } elseif ($request->many_payment_method === 'bank_deposit') {
+
+                if ($request->hasFile('many_bank_slip')) {
+                    $bankSlipPath = $request->file('many_bank_slip')->store('public/bank_slips/suppliers');
+                }
+
+                $baseDescription = sprintf(
+                    '%s (Bank Deposit: %s, Acc: %s)',
+                    $baseDescription,
+                    $request->many_bank_name_deposit,
+                    $request->many_account_no
+                );
+
+                $baseData['bank_name'] = $request->many_bank_name_deposit;
+                $baseData['account_no'] = $request->many_account_no;
+                $baseData['bank_slip_path'] = $bankSlipPath;
             }
 
             $totalAllocated = 0;
 
-            // 2. Logic - Loop through the new 'grn_payments' array
-            // The $grn_id is the 'key' and $payment_amount is the 'value'
             foreach ($request->grn_payments as $grn_id => $payment_amount) {
-                
-                if ($payment_amount <= 0) {
-                    continue; // Skip if amount is zero or negative
-                }
-                
+
+                if ($payment_amount <= 0) continue;
+
                 $totalAllocated += $payment_amount;
 
-                // Find the GRN code for a better description
                 $grn = GrnEntry::find($grn_id);
                 $grnCode = $grn ? $grn->code : $grn_id;
-                
-                // Create a separate payment transaction for the *exact* allocated amount
-                Supplier2::create([
+
+                Supplier2::create(array_merge($baseData, [
                     'supplier_code' => $supplier->code,
                     'supplier_name' => $supplier->name,
                     'existing_supplier_id' => $supplier->id,
                     'grn_id' => $grn_id,
                     'date' => $currentDate,
                     'description' => $baseDescription . ' (GRN: ' . $grnCode . ')',
-                    'total_amount' => -1 * abs($payment_amount), // Use the specific allocated amount
-                ]);
+                    'total_amount' => -1 * abs($payment_amount),
+                ]));
             }
 
-            // 3. Sanity check (Good practice)
-            // Check if the total allocated amount matches the total payment amount sent
             if (abs($totalAllocated - $request->many_payment_amount) > 0.01) {
-                // This means the user's Javascript calculation was different from the server's.
-                // We roll back to prevent a mismatch in payment.
                 DB::rollBack();
+                if ($bankSlipPath) Storage::delete($bankSlipPath);
+
                 return redirect()->route('suppliers2.index')
                     ->with('error', 'Payment allocation mismatch. Please refresh and try again.');
             }
@@ -366,6 +417,8 @@ class SupplierController2 extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
+            if (isset($bankSlipPath) && $bankSlipPath) Storage::delete($bankSlipPath);
+
             Log::error("Many Payment Error", [
                 'error' => $e->getMessage(),
                 'request' => $request->all()
@@ -375,12 +428,11 @@ class SupplierController2 extends Controller
                 ->with('error', 'Error processing payments: ' . $e->getMessage());
         }
     }
-    // *** END OF UPDATED METHOD ***
-
 
     public function edit($id)
     {
         $supplier = Supplier2::findOrFail($id);
+
         $grnOptions = GrnEntry::select(
             'id',
             DB::raw("CONCAT(code, ' - ', item_code, ' - ', item_name) as display_name")
@@ -401,6 +453,7 @@ class SupplierController2 extends Controller
         ]);
 
         $supplier->update($request->only(['supplier_code', 'supplier_name', 'grn_id', 'total_amount', 'description']));
+
         return redirect()->route('suppliers2.index')->with('success', 'Supplier updated successfully.');
     }
 
