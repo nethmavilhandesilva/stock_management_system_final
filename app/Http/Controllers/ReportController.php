@@ -985,7 +985,7 @@ class ReportController extends Controller
                 $sale->weight > 0
             ) {
                 // 8. Calculate profit: (selling - cost) × weight
-                $profitPerRecord = abs($sale->price_per_kg - $costPrice) * $sale->weight;
+                $profitPerRecord = ($sale->price_per_kg - $costPrice) * $sale->weight;
                 $totalProfit += $profitPerRecord;
 
 
