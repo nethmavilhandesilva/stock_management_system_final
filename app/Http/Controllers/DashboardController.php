@@ -25,17 +25,20 @@ class DashboardController extends Controller
     $items = Item::select('no', 'pack_due','pack_cost')->get(); // Add this line
 
     // 1. Fetch all sales with basic validation (must have ID and weight)
-    $allSales = Sale::whereNotNull('id')
-        ->whereNotNull('weight')
-        ->get();
+   $allSales = Sale::whereNotNull('id')
+    ->whereNotNull('weight')
+    ->where('bill_no', 'NOT LIKE', '%BAL%')
+    ->get();
 
     // 2. Split into groups
 
     // "New" sales: not processed and not bill_printed
-    $sales = $allSales->filter(function ($sale) {
-        return ($sale->processed === 'N' || is_null($sale->processed))
-            && is_null($sale->bill_printed);
-    })->values();
+   $sales = $allSales->filter(function ($sale) {
+    return ($sale->processed === 'N' || is_null($sale->processed))
+        && is_null($sale->bill_printed)
+        && stripos($sale->bill_no, 'BAL') === false; // excludes bill_no containing 'BAL'
+})->values();
+
 
     // Printed & unprinted groups
     $printedSales   = $allSales->where('bill_printed', 'Y')->values();

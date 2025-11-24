@@ -63,8 +63,8 @@
 </style>
 <style>
 /* =========================================
-   COMMON STICKY TABLE CODE (HANDLES ALL REPORTS)
-   ========================================= */
+    COMMON STICKY TABLE CODE (HANDLES ALL REPORTS)
+    ========================================= */
 
 /* This gives tables inside .table-responsive a scrollbar */
 .table-responsive {
@@ -73,9 +73,9 @@
 }
 
 /* This selector now targets tables in ALL your report types:
-  1. .table-responsive > table (like your Adjustments report)
-  2. .custom-card > table (like your first GRN Sales report)
-  3. .container > table (like this new report)
+   1. .table-responsive > table (like your Adjustments report)
+   2. .custom-card > table (like your first GRN Sales report)
+   3. .container > table (like this new report)
 */
 .table-responsive > table > thead th,
 .custom-card > table > thead th,
@@ -135,50 +135,54 @@
     </form>
 
     {{-- GRN Table --}}
-    <table class="table table-sm table-bordered" id="grnTable">
-        <thead style="background-color: #cce5ff; color: #004085; font-weight: bold;">
-            <tr>
-                <th>Code / Item</th>
-                <th>Sold Weight</th>
-                <th>Sold Packs</th>
-                <th>Selling Price</th>
-                <th>Total Cost</th>
-                <th>Net Sale</th>
-                <th>Profit / Loss</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($report as $row)
-                {{-- *** THIS IS THE MODIFIED LINE *** --}}
-                @php $profitLoss = ($row->total_cost == 0) ? 0 : ($row->netsale - $row->total_cost); @endphp
-                
-                <tr class="clickable-row" data-code="{{ $row->code }}">
-                    <td class="code">{{ $row->code }} - {{ $row->item_name }}</td>
-                    <td>{{ number_format($row->sold_weight, 3) }}</td>
-                    <td>{{ number_format($row->sold_packs, 0) }}</td>
-                    <td>{{ number_format($row->selling_price, 2) }}</td>
-                    <td>{{ number_format($row->total_cost, 2) }}</td>
-                    <td>{{ number_format($row->netsale, 2) }}</td>
-                    <td style="color: {{ $profitLoss < 0 ? 'red' : 'green' }}">
-                        {{ number_format(abs($profitLoss), 2) }}
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
+<table class="table table-sm table-bordered" id="grnTable">
+    <thead style="background-color: #cce5ff; color: #004085; font-weight: bold;">
+        <tr>
+            <th>Code / Item</th>
+            <th>Sold Weight</th>
+            <th>Sold Packs</th>
+            <th>Selling Price</th>
+            <th>Total Cost</th>
+            <th>Net Sale</th>
+            <th>Profit / Loss</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($report as $row)
+            {{-- *** NEW: Check if sold_packs is zero and skip the row *** --}}
+            @if ($row->sold_packs == 0)
+                @continue
+            @endif
 
-        {{-- Totals row --}}
-        <tfoot class="fw-bold table-secondary">
-            <tr>
-                <td class="text-end">Totals:</td>
-                <td></td>
-                <td></td>
-                <td id="totalSellingPrice">0.00</td>
-                <td id="totalCost">0.00</td>
-                <td id="totalNetSale">0.00</td>
-                <td id="totalProfitLoss">0.00</td>
+            @php $profitLoss = ($row->total_cost == 0) ? 0 : ($row->netsale - $row->total_cost); @endphp
+            
+            <tr class="clickable-row" data-code="{{ $row->code }}">
+                <td class="code">{{ $row->code }} - {{ $row->item_name }}</td>
+                <td>{{ number_format($row->sold_weight, 3) }}</td>
+                <td>{{ number_format($row->sold_packs, 0) }}</td>
+                <td>{{ number_format($row->selling_price, 2) }}</td>
+                <td>{{ number_format($row->total_cost, 2) }}</td>
+                <td>{{ number_format($row->netsale, 2) }}</td>
+                <td style="color: {{ $profitLoss < 0 ? 'red' : 'green' }}">
+                    {{ number_format(abs($profitLoss), 2) }}
+                </td>
             </tr>
-        </tfoot>
-    </table>
+        @endforeach
+    </tbody>
+
+    {{-- Totals row --}}
+    <tfoot class="fw-bold table-secondary">
+        <tr>
+            <td class="text-end">Totals:</td>
+            <td></td>
+            <td></td>
+            <td id="totalSellingPrice">0.00</td>
+            <td id="totalCost">0.00</td>
+            <td id="totalNetSale">0.00</td>
+            <td id="totalProfitLoss">0.00</td>
+        </tr>
+    </tfoot>
+</table>
 
     {{-- 💰 Loan Summary Section --}}
     <div class="card my-4 shadow-sm">
@@ -190,23 +194,23 @@
                 <div class="col-md-6 border-end">
                     <h5 class="card-title text-muted">Today's Loans</h5>
                     <p class="card-text fs-3 fw-bold text-primary" 
-                       id="todayLoanTotal" 
-                       data-bs-toggle="modal" 
-                       data-bs-target="#loanModal" 
-                       data-type="today" 
-                       style="cursor: pointer; text-decoration: underline;">
-                         {{ number_format(abs($todayLoanTotal), 2) }}
+                        id="todayLoanTotal" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#loanModal" 
+                        data-type="today" 
+                        style="cursor: pointer; text-decoration: underline;">
+                           {{ number_format(abs($todayLoanTotal), 2) }}
                     </p>
                 </div>
                 <div class="col-md-6">
                     <h5 class="card-title text-muted">Old Loans</h5>
                     <p class="card-text fs-3 fw-bold text-danger" 
-                       id="oldLoanTotal" 
-                       data-bs-toggle="modal" 
-                       data-bs-target="#loanModal" 
-                       data-type="old" 
-                       style="cursor: pointer; text-decoration: underline;">
-                         {{ number_format(abs($oldLoanTotal), 2) }}
+                        id="oldLoanTotal" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#loanModal" 
+                        data-type="old" 
+                        style="cursor: pointer; text-decoration: underline;">
+                           {{ number_format(abs($oldLoanTotal), 2) }}
                     </p>
                 </div>
             </div>
@@ -280,6 +284,8 @@
     <div class="modal-content">
       <div class="modal-header bg-dark text-white">
         <h5 class="modal-title" id="loanModalTitle">Loan Details</h5>
+        {{-- ADDED: Date range display for Loan Modal --}}
+        <span id="loanModalDateRange" class="fw-light small ms-auto me-3"></span> 
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -312,6 +318,8 @@
     <div class="modal-content">
       <div class="modal-header bg-danger text-white">
         <h5 class="modal-title" id="expenseModalTitle">Expense Details</h5>
+        {{-- ADDED: Date range display for Expense Modal --}}
+        <span id="expenseModalDateRange" class="fw-light small ms-auto me-3"></span> 
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -480,25 +488,37 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // --- 💰 NEW: Loan Modal Logic ---
+    // --- Helper function to format date range ---
+    function formatDateRange(startDate, endDate) {
+        if (startDate && endDate) {
+            return `Filter: ${startDate} to ${endDate}`;
+        }
+        return "Showing default allowed dates";
+    }
+
+    // --- 💰 Loan Modal Logic ---
     const loanModal = document.getElementById('loanModal');
     if (loanModal) {
         loanModal.addEventListener('show.bs.modal', event => {
-            const triggerElement = event.relatedTarget; // The <p> tag that was clicked
-            const loanType = triggerElement.dataset.type; // 'today' or 'old'
+            const triggerElement = event.relatedTarget;
+            const loanType = triggerElement.dataset.type;
             
             const modalTitle = loanModal.querySelector('#loanModalTitle');
+            const modalDateRange = loanModal.querySelector('#loanModalDateRange'); // Select the new element
             const modalTbody = loanModal.querySelector('#loanDetailsTable tbody');
             const modalTotal = loanModal.querySelector('#loanModalTotal');
-
-            // Set title and loading state
-            modalTitle.textContent = `${loanType.charAt(0).toUpperCase() + loanType.slice(1)} Loan Details`;
-            modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
-            modalTotal.textContent = '0.00';
 
             // Get dates from the form
             const startDate = document.getElementById('start_date').value;
             const endDate = document.getElementById('end_date').value;
+
+            // SET THE DATE RANGE DISPLAY
+            modalDateRange.textContent = formatDateRange(startDate, endDate);
+            
+            // Set title and loading state
+            modalTitle.textContent = `${loanType.charAt(0).toUpperCase() + loanType.slice(1)} Loan Details`;
+            modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
+            modalTotal.textContent = '0.00';
 
             // Build URL for fetching data
             const url = new URL('{{ route('grn.sales.fetchLoans') }}');
@@ -512,11 +532,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     return res.json();
                 })
                 .then(data => {
-                    modalTbody.innerHTML = ""; // Clear loading
+                    modalTbody.innerHTML = "";
                     let totalAmount = 0;
 
                     if (data.length === 0) {
-                         modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">No records found.</td></tr>';
+                           modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">No records found.</td></tr>';
                     } else {
                         data.forEach(item => {
                             const amount = parseFloat(item.amount) || 0;
@@ -538,7 +558,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         });
     }
-    // --- End of new Loan Modal Logic ---
+    // --- End of Loan Modal Logic ---
 
 
     // --- 💸 NEW: Expense Modal Logic ---
@@ -549,17 +569,21 @@ document.addEventListener("DOMContentLoaded", () => {
             const category = triggerElement.dataset.category; // 'salary', 'rent', etc.
             
             const modalTitle = expenseModal.querySelector('#expenseModalTitle');
+            const modalDateRange = expenseModal.querySelector('#expenseModalDateRange'); // Select the new element
             const modalTbody = expenseModal.querySelector('#expenseDetailsTable tbody');
             const modalTotal = expenseModal.querySelector('#expenseModalTotal');
-
-            // Set title and loading state
-            modalTitle.textContent = `Details for: ${category}`;
-            modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
-            modalTotal.textContent = '0.00';
 
             // Get dates from the form
             const startDate = document.getElementById('start_date').value;
             const endDate = document.getElementById('end_date').value;
+
+            // SET THE DATE RANGE DISPLAY
+            modalDateRange.textContent = formatDateRange(startDate, endDate);
+            
+            // Set title and loading state
+            modalTitle.textContent = `Details for: ${category}`;
+            modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
+            modalTotal.textContent = '0.00';
 
             // Build URL for fetching data
             const url = new URL('{{ route('grn.sales.fetchExpenses') }}');
@@ -577,7 +601,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     let totalAmount = 0;
 
                     if (data.length === 0) {
-                         modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">No records found.</td></tr>';
+                           modalTbody.innerHTML = '<tr><td colspan="2" class="text-center">No records found.</td></tr>';
                     } else {
                         data.forEach(item => {
                             const amount = parseFloat(item.amount) || 0;
@@ -599,7 +623,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         });
     }
-    // --- End of new Expense Modal Logic ---
+    // --- End of Expense Modal Logic ---
 
 
 });

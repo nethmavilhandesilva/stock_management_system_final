@@ -8,45 +8,41 @@
 
     .table-row:hover {
         background-color: #f1f1f1;
-        /* A neutral hover is cleaner */
         cursor: pointer;
     }
 
-    /* *** UNREAD GRN UPDATE *** */
     .table-unread {
-        /* Highlighting unread rows */
-        background-color: #fff3cd !important; /* A light yellow/gold for visibility */
-        border-left: 5px solid #ffc107; /* A strong visual cue */
+        background-color: #fff3cd !important;
+        border-left: 5px solid #ffc107;
         font-weight: bold;
     }
+
     .unread-count-badge {
         font-size: 1.2rem;
         padding: 0.25em 0.6em;
     }
 </style>
 <style>
-.table-responsive {
-    max-height: 80vh; /* 80% of the screen height */
-    overflow-y: auto;
-}
+    .table-responsive {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
 
-.table-responsive > table > thead th,
-.custom-card > table > thead th {
-    position: -webkit-sticky; /* For Safari */
-    position: sticky;
-    top: 0;
-    z-index: 10;
-   /* Inherits the thead's background color */
-}
+    .table-responsive>table>thead th,
+    .custom-card>table>thead th {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
 
-/* This rule targets the footers in BOTH report styles */
-.table-responsive > table > tfoot tr,
-.custom-card > table > tfoot tr {
-    position: -webkit-sticky; /* For Safari */
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-}
+    .table-responsive>table>tfoot tr,
+    .custom-card>table>tfoot tr {
+        position: -webkit-sticky;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+    }
 </style>
 
 
@@ -55,7 +51,6 @@
 
         <h2 class="text-center mb-4 fw-bold text-dark opacity-75">GRN Entry Report</h2>
 
-        {{-- *** UNREAD GRN UPDATE *** Display Unread Count at the top *** --}}
         <div class="d-flex justify-content-center mb-4">
             <span class="badge bg-warning text-dark shadow-sm unread-count-badge">
                 Unread GRNs: <span id="unreadCount">{{ $unreadCount ?? count($entries->where('is_read', 0)) }}</span>
@@ -76,7 +71,8 @@
                     </div>
                     <div class="col-md-3 position-relative">
                         <label class="form-label">Search by Code</label>
-                        <input type="text" name="code" id="codeSearch" class="form-control" autocomplete="off" placeholder="Type code..." style="text-transform: uppercase;">
+                        <input type="text" name="code" id="codeSearch" class="form-control" autocomplete="off"
+                            placeholder="Type code..." style="text-transform: uppercase;">
                         <ul id="codeList" class="list-group position-absolute w-100"
                             style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></ul>
                     </div>
@@ -98,7 +94,7 @@
 
         {{-- Data Table Card --}}
         <div class="card shadow-lg border-0">
-            <div class="card-body table-responsive p-0"> 
+            <div class="card-body table-responsive p-0">
                 <table class="table table-bordered table-striped text-center align-middle" id="grnTable">
 
                     <thead class="bg-success text-white">
@@ -113,21 +109,22 @@
                             <th>Total GRN</th>
                             <th>BP</th>
                             <th>Txn Date</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($entries as $entry)
-                            {{-- *** UNREAD GRN UPDATE *** Added conditional class and data-is_read *** --}}
                             <tr class="table-row {{ $entry->is_read == 0 ? 'table-unread' : '' }}"
-                                data-id="{{ $entry->id }}"
+                                data-id="{{ $entry->id }}" 
                                 data-code="{{ $entry->code }}"
-                                data-item_name="{{ $entry->item_name }}"
+                                data-item_code="{{ $entry->item_code }}"
+                                data-item_name="{{ $entry->item_name }}" 
                                 data-packs="{{ $entry->packs }}"
-                                data-weight="{{ $entry->weight }}"
+                                data-weight="{{ $entry->weight }}" 
                                 data-total_grn="{{ $entry->total_grn }}"
-                                data-bp="{{ $entry->BP }}"
+                                data-bp="{{ $entry->BP }}" 
                                 data-real_supplier_code="{{ $entry->Real_Supplier_code }}"
-                                data-is_read="{{ $entry->is_read }}"> {{-- *** UNREAD GRN UPDATE *** --}}
+                                data-is_read="{{ $entry->is_read }}">
 
                                 <td>{{ $entry->code }}</td>
                                 <td>{{ $entry->Real_Supplier_code }}</td>
@@ -139,6 +136,13 @@
                                 <td>{{ $entry->total_grn }}</td>
                                 <td>{{ $entry->BP }}</td>
                                 <td>{{ $entry->txn_date }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-info balance-grn-btn"
+                                        data-bs-toggle="modal" data-bs-target="#balanceModal"
+                                        data-row-id="{{ $entry->id }}">
+                                        Balance GRN
+                                    </button>
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -151,7 +155,7 @@
         </div>
     </div>
 
-    {{-- Edit Modal --}}
+    {{-- Edit Modal - Existing (No changes needed) --}}
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content shadow-lg border-0">
@@ -162,11 +166,6 @@
                 </div>
 
                 <div class="modal-body bg-light">
-
-                    {{-- 
-                      *** 2. UPDATE HERE ***
-                      Added the display block for selected item details
-                    --}}
                     <div class="mb-3 p-3 bg-white rounded border shadow-sm">
                         <h5 class="fw-bold text-success mb-2" id="modalItemName"></h5>
                         <div class="d-flex justify-content-between">
@@ -174,7 +173,6 @@
                             <span class="text-muted"><strong>SupCode:</strong> <span id="modalSupplierCode"></span></span>
                         </div>
                     </div>
-
                     <form id="updateForm">
                         @csrf
                         <input type="hidden" id="recordId">
@@ -194,17 +192,17 @@
                             <label class="form-label fw-bold">BP</label>
                             <input type="text" id="bp" class="form-control">
                         </div>
-
                         <div class="mb-3 position-relative">
                             <label class="form-label fw-bold">Real Supplier Code</label>
-                            <input type="text" id="real_supplier_search" class="form-control" placeholder="TYPE CODE OR NAME TO SEARCH..." autocomplete="off" oninput="this.value = this.value.toUpperCase();">
+                            <input type="text" id="real_supplier_search" class="form-control"
+                                placeholder="TYPE CODE OR NAME TO SEARCH..." autocomplete="off"
+                                oninput="this.value = this.value.toUpperCase();">
                             <input type="hidden" id="real_supplier_code">
                             <ul id="supplierList" class="list-group position-absolute w-100"
                                 style="z-index: 1051; display:none; max-height:200px; overflow-y:auto;"></ul>
                         </div>
                     </form>
                 </div>
-
                 <div class="modal-footer border-top-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" id="saveChanges" class="btn btn-success">Save Changes</button>
@@ -213,8 +211,79 @@
         </div>
     </div>
 
+    {{-- *** NEW BALANCE GRN MODAL *** --}}
+    <div class="modal fade" id="balanceModal" tabindex="-1" aria-labelledby="balanceModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="balanceModalLabel">Balance GRN to Sale</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body bg-light">
+                    <div class="mb-3 p-3 bg-white rounded border shadow-sm">
+                        <h5 class="fw-bold text-info mb-2" id="balanceModalItemName"></h5>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted"><strong>Code:</strong> <span id="balanceModalItemCode"></span></span>
+                            <span class="text-muted"><strong>Supplier Code:</strong> <span
+                                    id="balanceModalSupplierCode"></span></span>
+                        </div>
+                    </div>
+
+                    <form id="balanceForm">
+                        @csrf
+                        <input type="hidden" id="balanceGRNId">
+                        <input type="hidden" id="balanceSupplierCode">
+                        <input type="hidden" id="balanceCode">
+                        <input type="hidden" id="balanceItemCode">
+                        <input type="hidden" id="balanceCustomerCode" value="B32">
+                        <input type="hidden" id="balanceCustomerName" value="B32 Traders">
+                        <input type="hidden" id="balanceBillNo"> {{-- MODIFIED: Removed hardcoded value, now server-generated --}}
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Packs</label>
+                            <input type="number" id="balancePacks" class="form-control" step="any" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Weight</label>
+                            <input type="number" id="balanceWeight" class="form-control" step="any" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Price Per KG</label>
+                            <input type="number" id="balancePricePerKg" class="form-control" step="0.01" min="0">
+                        </div>
+
+                        <div class="mb-3 p-2 bg-white rounded border">
+                            <label class="form-label fw-bold">Total Amount</label>
+                            <input type="text" id="balanceTotal" class="form-control text-success fw-bold" readonly>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="saveBalance" class="btn btn-info">Save Sale Record</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{-- *** END NEW BALANCE GRN MODAL *** --}}
+
+
     <script>
+        let editModalInstance = null;
+        let balanceModalInstance = null;
+
         document.addEventListener("DOMContentLoaded", function () {
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap JavaScript not loaded!');
+                return;
+            }
+
+            editModalInstance = new bootstrap.Modal(document.getElementById('editModal'), {});
+            balanceModalInstance = new bootstrap.Modal(document.getElementById('balanceModal'), {});
+
             const codeSearch = document.getElementById("codeSearch");
             const codeList = document.getElementById("codeList");
             const tableRows = document.querySelectorAll(".table-row");
@@ -223,12 +292,11 @@
             const supplierList = document.getElementById("supplierList");
             const realSupplierCodeInput = document.getElementById("real_supplier_code");
 
-            // *** UNREAD GRN UPDATE *** Get initial count element ***
             const unreadCountElement = document.getElementById("unreadCount");
             let unreadCount = parseInt(unreadCountElement.textContent);
 
 
-            // --- Code Search ---
+            // --- Code Search (unchanged) ---
             codeSearch.addEventListener("keyup", function () {
                 const term = this.value.trim();
                 if (term.length === 0) {
@@ -257,7 +325,7 @@
                     });
             });
 
-            // --- Supplier Search ---
+            // --- Supplier Search (unchanged) ---
             supplierSearch.addEventListener("keyup", function () {
                 const term = this.value.trim();
                 if (term.length === 0) {
@@ -288,7 +356,7 @@
                     });
             });
 
-            // --- Hide dropdowns on outside click ---
+            // --- Hide dropdowns on outside click (unchanged) ---
             document.addEventListener("click", function (e) {
                 if (!codeList.contains(e.target) && e.target !== codeSearch) {
                     codeList.style.display = "none";
@@ -298,19 +366,18 @@
                 }
             });
 
-            // --- Table Row Click (to open modal) ---
+
+            // --- Table Row Click (to open Edit modal - unchanged logic) ---
             tableRows.forEach(row => {
-                row.addEventListener("click", function () {
-                    
-                    {{-- 
-                      *** 3. UPDATE HERE ***
-                      Added lines to populate the new display elements
-                    --}}
+                row.addEventListener("click", function (e) {
+                    if (e.target.classList.contains('balance-grn-btn') || e.target.closest('.balance-grn-btn')) {
+                        return;
+                    }
+
                     document.getElementById("modalItemName").textContent = this.dataset.item_name;
                     document.getElementById("modalItemCode").textContent = this.dataset.code;
                     document.getElementById("modalSupplierCode").textContent = this.dataset.real_supplier_code;
 
-                    // --- Populate form inputs ---
                     document.getElementById("recordId").value = this.dataset.id;
                     document.getElementById("packs").value = this.dataset.packs;
                     document.getElementById("weight").value = this.dataset.weight;
@@ -321,45 +388,37 @@
                     document.getElementById("real_supplier_code").value = currentSupplierCode;
                     document.getElementById("real_supplier_search").value = currentSupplierCode;
 
-                    
-                    // *** UNREAD GRN UPDATE *** Logic to mark as read and update UI ***
                     const recordId = this.dataset.id;
                     const isRead = this.dataset.is_read;
 
                     if (isRead === '0') {
-                        // Mark the record as read in the database
-                        fetch(`/grn-report/mark-read/${recordId}`, { // *** YOU MUST IMPLEMENT THIS ROUTE/CONTROLLER METHOD ***
+                        fetch(`/grn-report/mark-read/${recordId}`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ _token: "{{ csrf_token() }}" }),
                         })
-                        .then(res => res.json())
-                        .then(resp => {
-                            if (resp.success) {
-                                // Update UI locally
-                                row.classList.remove("table-unread");
-                                row.dataset.is_read = '1';
-                                unreadCount--;
-                                unreadCountElement.textContent = unreadCount;
-                            }
-                            // Show the modal regardless of the API call's success, 
-                            // as the primary action is editing.
-                            new bootstrap.Modal(document.getElementById('editModal')).show();
-                        })
-                        .catch(error => {
-                            console.error('Error marking as read:', error);
-                            // Show the modal even if the update failed
-                            new bootstrap.Modal(document.getElementById('editModal')).show();
-                        });
+                            .then(res => res.json())
+                            .then(resp => {
+                                if (resp.success) {
+                                    row.classList.remove("table-unread");
+                                    row.dataset.is_read = '1';
+                                    unreadCount--;
+                                    unreadCountElement.textContent = unreadCount;
+                                }
+                                editModalInstance.show();
+                            })
+                            .catch(error => {
+                                console.error('Error marking as read:', error);
+                                editModalInstance.show();
+                            });
                     } else {
-                         // If already read, just show the modal
-                        new bootstrap.Modal(document.getElementById('editModal')).show();
+                        editModalInstance.show();
                     }
-                    
                 });
             });
 
-            // --- Save Changes Button ---
+
+            // --- Save Changes Button - Edit Modal (unchanged) ---
             document.getElementById("saveChanges").addEventListener("click", function () {
                 const id = document.getElementById("recordId").value;
                 const data = {
@@ -385,6 +444,93 @@
                         }
                     });
             });
+
+            // *** NEW BALANCE GRN LOGIC ***
+            const balanceWeightInput = document.getElementById('balanceWeight');
+            const balancePricePerKgInput = document.getElementById('balancePricePerKg');
+            const balanceTotalInput = document.getElementById('balanceTotal');
+            const saveBalanceButton = document.getElementById('saveBalance');
+
+            // Function to calculate and update total (unchanged)
+            function calculateTotal() {
+                const weight = parseFloat(balanceWeightInput.value) || 0;
+                const pricePerKg = parseFloat(balancePricePerKgInput.value) || 0;
+                const total = weight * pricePerKg;
+                balanceTotalInput.value = total.toFixed(2);
+            }
+
+            balanceWeightInput.addEventListener('input', calculateTotal);
+            balancePricePerKgInput.addEventListener('input', calculateTotal);
+
+
+            // Event listener for opening the new modal 
+            document.querySelectorAll('.balance-grn-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const rowId = this.getAttribute('data-row-id');
+                    const row = document.querySelector(`.table-row[data-id="${rowId}"]`);
+
+                    document.getElementById('balanceModalItemName').textContent = row.dataset.item_name;
+                    document.getElementById('balanceModalItemCode').textContent = row.dataset.code;
+                    document.getElementById('balanceModalSupplierCode').textContent = row.dataset.real_supplier_code;
+
+                    document.getElementById('balanceGRNId').value = rowId;
+                    document.getElementById('balanceSupplierCode').value = row.dataset.real_supplier_code;
+                    
+                    document.getElementById('balanceCode').value = row.dataset.code; 
+                    document.getElementById('balanceItemCode').value = row.dataset.item_code; 
+
+                    // Initialize inputs
+                    document.getElementById('balancePacks').value = row.dataset.packs; 
+                    document.getElementById('balanceWeight').value = row.dataset.weight; 
+                    document.getElementById('balancePricePerKg').value = 0;
+                    calculateTotal();
+
+                    balanceModalInstance.show();
+                });
+            });
+
+            // Save Sale Record Button - Balance Modal 
+            saveBalanceButton.addEventListener('click', function () {
+                const data = {
+                    _token: "{{ csrf_token() }}",
+                    grn_id: document.getElementById('balanceGRNId').value,
+                    customer_name: document.getElementById('balanceCustomerName').value,
+                    customer_code: document.getElementById('balanceCustomerCode').value,
+                    supplier_code: document.getElementById('balanceSupplierCode').value,
+                    
+                    code: document.getElementById('balanceCode').value,
+                    item_code: document.getElementById('balanceItemCode').value, 
+                    
+                    item_name: document.getElementById('balanceModalItemName').textContent,
+                    // bill_no is now intentionally omitted as it is generated by the server.
+
+                    packs: document.getElementById('balancePacks').value,
+                    weight: document.getElementById('balanceWeight').value,
+                    price_per_kg: document.getElementById('balancePricePerKg').value,
+                    total: document.getElementById('balanceTotal').value,
+                };
+
+                fetch(`/grn-report/balance-grn`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                })
+                    .then(res => res.json())
+                    .then(resp => {
+                        if (resp.success) {
+                            balanceModalInstance.hide();
+                            location.reload();
+                        } else {
+                            alert("Error creating sale record: " + resp.message);
+                            console.error('Server response error:', resp.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error balancing GRN:', error);
+                        alert("An unexpected error occurred while trying to save the sale record.");
+                    });
+            });
+            // *** END NEW BALANCE GRN LOGIC ***
         });
     </script>
 @endsection

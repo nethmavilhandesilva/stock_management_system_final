@@ -2675,7 +2675,7 @@ public function supplierpaymentreport()
 
         return view('dashboard.suppliers2.suppliers', compact('suppliers'));
     }
-  public function grnSalesReport(Request $request)
+ public function grnSalesReport(Request $request)
 {
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
@@ -2685,17 +2685,17 @@ public function supplierpaymentreport()
     if ($startDate && $endDate) {
         // --- Use SalesHistory when date range is selected ---
         $salesAggQuery = \App\Models\SalesHistory::select(
-            'sales_history.code', // Specify table
-            DB::raw('SUM(sales_history.weight) AS sold_weight'),
-            DB::raw('SUM(sales_history.packs) AS sold_packs'),
-            DB::raw('SUM(grn_entries.BP * sales_history.weight) AS total_cost'),
+            'sales_histories.code', // Specify table
+            DB::raw('SUM(sales_histories.weight) AS sold_weight'),
+            DB::raw('SUM(sales_histories.packs) AS sold_packs'),
+            DB::raw('SUM(grn_entries.BP * sales_histories.weight) AS total_cost'),
             // --- NEW CALCULATION ADDED ---
             // This calculates Net Sale based on actual sales records
-            DB::raw('SUM(sales_history.weight * sales_history.price_per_kg) AS calculated_netsale') 
+            DB::raw('SUM(sales_histories.weight * sales_histories.price_per_kg) AS calculated_netsale') 
         )
-            ->join('grn_entries', 'sales_history.code', '=', 'grn_entries.code') // Added JOIN
-            ->whereBetween('sales_history.Date', [$startDate, $endDate]) // Specify table
-            ->groupBy('sales_history.code'); // Specify table
+            ->join('grn_entries', 'sales_histories.code', '=', 'grn_entries.code') // Added JOIN
+            ->whereBetween('sales_histories.Date', [$startDate, $endDate]) // Specify table
+            ->groupBy('sales_histories.code'); // Specify table
 
     } else {
         // --- Use Sale when no date range ---
@@ -2721,9 +2721,6 @@ public function supplierpaymentreport()
         'grn_entries.SalesKGPrice AS selling_price',
         DB::raw('COALESCE(s.total_cost, 0) AS total_cost'),
         
-        // --- THIS LINE IS REPLACED ---
-        // Old calculation: DB::raw('COALESCE(grn_entries.SalesKGPrice, 0) * COALESCE(s.sold_weight, 0) AS netsale')
-        
         // --- NEW VALUE FROM SUBQUERY ---
         DB::raw('COALESCE(s.calculated_netsale, 0) AS netsale')
     ])
@@ -2736,15 +2733,18 @@ public function supplierpaymentreport()
     }
     $report = $report->orderBy('grn_entries.code')->get();
 
-    // --- 💰 Fetch Loan/Expense Totals (SHARED LOGIC) ---
-    $allowedDates = \App\Models\Setting::pluck('value')->toArray();
+    // --- 💰 Fetch Loan/Expense Totals (REVISED LOGIC BELOW) ---
     
     // Base query for both Loans and Expenses
-    $baseIncomeExpenseQuery = \App\Models\IncomeExpenses::query()
-                                ->whereIn('Date', $allowedDates);
+    $baseIncomeExpenseQuery = \App\Models\IncomeExpenses::query();
 
     if ($startDate && $endDate) {
+        // Filter by date range if selected
         $baseIncomeExpenseQuery->whereBetween('Date', [$startDate, $endDate]);
+    } else {
+        // Filter by specific allowed dates if NO date range is selected
+        $allowedDates = \App\Models\Setting::pluck('value')->toArray();
+        $baseIncomeExpenseQuery->whereIn('Date', $allowedDates);
     }
 
     // --- 1. Calculate Loan Totals ---
@@ -2850,29 +2850,36 @@ public function fetchLoanDetails(Request $request)
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
 
-    // 1. Get the list of allowed dates from the Setting table
-    $allowedDates = \App\Models\Setting::pluck('value')->toArray();
+    // ----------------------------------------------------------
+    // BASE QUERY (same logic you used in the main report)
+    // ----------------------------------------------------------
+    $baseIncomeExpenseQuery = \App\Models\IncomeExpenses::query();
 
-    // 2. Start the query and JOIN the customers table
-    $query = \App\Models\IncomeExpenses::where('income_expenses.loan_type', $loanType)
-                ->leftJoin('customers', 'income_expenses.customer_id', '=', 'customers.id') // JOIN customers table
-                ->select('customers.short_name', 'income_expenses.amount'); // SELECT short_name and amount
-
-    // 3. Apply the logic: Date MUST be in the list from Settings
-    //    We specify the table to avoid 'Date' column ambiguity
-    $query->whereIn('income_expenses.Date', $allowedDates);
-
-    // 4. Apply the optional date range filter from the form
     if ($startDate && $endDate) {
-        // Specify table for 'Date' column
-        $query->whereBetween('income_expenses.Date', [$startDate, $endDate]);
+        // ✔ When date range is selected → use ONLY date range
+        $baseIncomeExpenseQuery->whereBetween('income_expenses.Date', [$startDate, $endDate]);
+    } else {
+        // ✔ When NO date range → use allowed dates from Setting
+        $allowedDates = \App\Models\Setting::pluck('value')->toArray();
+        $baseIncomeExpenseQuery->whereIn('income_expenses.Date', $allowedDates);
     }
 
-    // 5. Get the final results
-    $loans = $query->get();
+    // ----------------------------------------------------------
+    // APPLY LOAN-TYPE FILTER AND JOIN CUSTOMERS
+    // ----------------------------------------------------------
+    $loans = $baseIncomeExpenseQuery
+        ->where('income_expenses.loan_type', $loanType)
+        ->leftJoin('customers', 'income_expenses.customer_id', '=', 'customers.id')
+        ->select(
+            'customers.short_name',
+            'income_expenses.amount'
+        )
+        ->orderBy('customers.short_name')
+        ->get();
 
     return response()->json($loans);
 }
+
  public function grnfinal(Request $request)
     {
         $query = GrnEntry::query();

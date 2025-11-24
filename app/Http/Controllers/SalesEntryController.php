@@ -1364,6 +1364,76 @@ public function dayStart(Request $request)
             'sale' => $sale
         ]);
     }
+   protected function generateNextBalBillNo()
+    {
+        // Find the latest bill number starting with 'BAL'
+        $latestSale = Sale::where('bill_no', 'like', 'BAL%')
+                          // Order by the numeric part after 'BAL' for correct sequencing
+                          ->orderByRaw('CAST(SUBSTRING(bill_no, 4) AS UNSIGNED) DESC') 
+                          ->first();
+
+        if ($latestSale) {
+            // Extract the numeric part (everything after 'BAL')
+            $lastNumber = (int) substr($latestSale->bill_no, 3);
+            $newNumber = $lastNumber + 1;
+        } else {
+            // Start from 1 if no previous 'BAL' records are found
+            $newNumber = 1;
+        }
+
+        return 'BAL' . $newNumber;
+    }
+
+
+    public function balanceGrn(Request $request)
+    {
+        // 1. Validation: bill_no is omitted since it is server-generated
+        $validatedData = $request->validate([
+            'grn_id' => 'required|exists:grn_entries,id',
+            'customer_name' => 'required|string|max:255',
+            'customer_code' => 'required|string|max:255',
+            'supplier_code' => 'nullable|string|max:255',
+            'code' => 'required|string|max:255',
+            'item_code' => 'required|string|max:255',
+            'item_name' => 'required|string|max:255',
+            
+            'packs' => 'nullable|numeric|min:0',
+            'weight' => 'nullable|numeric|min:0',
+            'price_per_kg' => 'nullable|numeric|min:0',
+            'total' => 'nullable|numeric|min:0',
+        ]);
+
+        try {
+            // 2. Auto-generate the new sequential Bill No
+            $validatedData['bill_no'] = $this->generateNextBalBillNo(); // *** SETS THE BALX VALUE ***
+
+            // 3. Default nullable fields to 0 before saving
+            $validatedData['packs'] = $validatedData['packs'] ?? 0;
+            $validatedData['weight'] = $validatedData['weight'] ?? 0;
+            $validatedData['price_per_kg'] = $validatedData['price_per_kg'] ?? 0;
+            $validatedData['total'] = $validatedData['total'] ?? 0;
+
+            // 4. Create a new Sale record
+            $sale = Sale::create($validatedData);
+
+            // 5. Call the stock update method to recalculate remaining stock
+            $this->updateGrnRemainingStock();
+
+            // 6. Return success response, including the new bill_no for the alert
+            return response()->json([
+                'success' => true,
+                'message' => 'Sale record created and GRN stock updated successfully.',
+                'sale' => $sale
+            ], 201);
+        } catch (\Exception $e) {
+            // Log the error and return failure message
+            Log::error('Error creating Sale record or updating stock: ' . $e->getMessage());
+            
+            $errorMessage = config('app.debug') ? $e->getMessage() : 'Failed to create sale record or update stock due to a server error.';
+
+            return response()->json(['success' => false, 'message' => $errorMessage], 500);
+        }
+    }
 
 }
 

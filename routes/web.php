@@ -227,4 +227,6 @@ Route::post('/suppliers2/payment-many', [App\Http\Controllers\SupplierController
 // 2. This route is used by JavaScript to fetch unpaid GRNs for a supplier
 Route::get('/suppliers/get-unpaid-grns/{supplier_code}', [App\Http\Controllers\SupplierController2::class, 'getUnpaidGrns'])
      ->name('suppliers.getUnpaidGrns');
+//Balance
+Route::post('/grn-report/balance-grn', [SalesEntryController::class, 'balanceGrn'])->name('grn.balance');
 require __DIR__.'/auth.php';
