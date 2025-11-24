@@ -2558,12 +2558,102 @@ public function salesReport(Request $request)
         ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
 }
 public function showReport()
-    {
-        // Get the report using the optimized method
-        $report = IncomeExpenses::generateReport();
-        
-        return view('dashboard.reports.loan-report2', compact('report'));
+{
+    $rawReport = IncomeExpenses::generateReport();
+
+    // Normalize to array rows
+    $rows = collect($rawReport)->map(function ($r) {
+        if (is_object($r)) {
+            // convert object to array (keeps public props)
+            $r = (array) $r;
+        }
+        return is_array($r) ? $r : (array) $r;
+    });
+
+    // detect possible customer id key
+    $possibleIdKeys = ['customer_id', 'customer_no', 'cust_id', 'id', 'customerId', 'customerCode', 'customer_code'];
+    $first = $rows->first() ?: [];
+    $customerKey = null;
+    foreach ($possibleIdKeys as $k) {
+        if (array_key_exists($k, $first)) {
+            $customerKey = $k;
+            break;
+        }
     }
+
+    if (!$customerKey) {
+        // if we couldn't find an ID key, log and we'll fallback to grouping by short name / name / telephone
+        Log::warning('Report grouping: no recognized customer id key found. Falling back to name/telephone grouping.', [
+            'first_row_keys' => array_keys($first)
+        ]);
+    }
+
+    // helper to safely get a field from a row with alternate names
+    $get = function ($row, array $keys, $default = null) {
+        foreach ($keys as $k) {
+            if (array_key_exists($k, $row) && $row[$k] !== null && $row[$k] !== '') {
+                return $row[$k];
+            }
+        }
+        return $default;
+    };
+
+    $grouped = $rows->groupBy(function ($row) use ($customerKey, $get) {
+        if ($customerKey && array_key_exists($customerKey, $row)) {
+            return (string) $row[$customerKey];
+        }
+
+        // fallback composite key (less safe but better than crash)
+        $short = $get($row, ['customer_short_name','short_name','shortname']);
+        $name  = $get($row, ['customer_name','name']);
+        $tel   = $get($row, ['customer_telephone','telephone','tel','phone']);
+
+        return trim(sprintf('%s|%s|%s', $short ?? '', $name ?? '', $tel ?? ''));
+    })->map(function ($rowsGroup, $groupKey) use ($get) {
+        // rowsGroup is a collection of arrays
+        $first = $rowsGroup->first();
+
+        // sum amount (try common keys)
+        $amount = $rowsGroup->sum(function ($r) use ($get) {
+            return floatval($get($r, ['amount_difference','amount','balance','diff'], 0));
+        });
+
+        // pick latest last_loan_taken (try parseable strings)
+        $lastLoanTaken = $rowsGroup
+            ->pluck('last_loan_taken')
+            ->filter()
+            ->merge($rowsGroup->pluck('lastLoanTaken')->filter()) // alternate key
+            ->filter()
+            ->map(function ($d) { return $d; })
+            ->max();
+
+        $lastLoanSettled = $rowsGroup
+            ->pluck('last_loan_settled')
+            ->filter()
+            ->merge($rowsGroup->pluck('lastLoanSettled')->filter())
+            ->filter()
+            ->max();
+
+        // days not settled: prefer explicit key, otherwise 0
+        $daysNotSettled = $rowsGroup->max(function ($r) use ($get) {
+            return intval($get($r, ['days_not_settled','days_not_settled_count','days'], 0));
+        });
+
+        return [
+            'customer_id'         => $get($first, ['customer_id','customer_no','cust_id','id'], $groupKey),
+            'customer_short_name' => $get($first, ['customer_short_name','short_name','shortname'], null),
+            'customer_name'       => $get($first, ['customer_name','name'], null),
+            'customer_telephone'  => $get($first, ['customer_telephone','telephone','phone','tel'], null),
+            'amount_difference'   => $amount,
+            'last_loan_taken'     => $lastLoanTaken,
+            'last_loan_settled'   => $lastLoanSettled,
+            'days_not_settled'    => intval($daysNotSettled),
+            'raw_rows'            => $rowsGroup->values()->toArray(), // optional: keep group detail if you want expand/collapse in UI
+        ];
+    })->values()->toArray();
+
+    return view('dashboard.reports.loan-report2', ['report' => $grouped]);
+}
     
     public function refreshReport(Request $request)
     {
